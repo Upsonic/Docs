@@ -10,7 +10,7 @@ Upsonic On-Prem consists of two subsystems: the Dashboard and the API. Both syst
 To get started, you will need:
 
 - The latest version of Docker installed and functioning properly
-- TCP ports 5001 and 5000 ready for use
+- TCP ports 7501 and 7500 ready for use
 
 ## Deployment
 
@@ -39,14 +39,14 @@ after adjusting the settings, you can exit by pressing Ctrl+X, then confirming w
 Now, let's proceed with the download, installation, and execution of the Upsonic On-Prem container:
 
 ```console
-docker run --env-file .env -d -p 5001:5001 -p 5000:5000 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/var/lib/redis ghcr.io/upsonic/on-prem:latest
+docker run --env-file .env -d -p 7501:7501 -p 7500:7500 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/var/lib/redis ghcr.io/upsonic/on-prem:latest
 ```
 
 After that, you should see:
 ```console
 root@server:~# docker ps
 CONTAINER ID   IMAGE                     COMMAND          CREATED          STATUS          PORTS                                                           NAMES
-918a4c74185a   ghcr.io/upsonic/on-prem   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:5000-5001->5000-5001/tcp, :::5000-5001->5000-5001/tcp   upsonic_on_prem
+918a4c74185a   ghcr.io/upsonic/on-prem   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7500-7501->7500-7501/tcp, :::7500-7501->7500-7501/tcp   upsonic_on_prem
 ```
 
 ## Extra Options
@@ -70,6 +70,6 @@ default_model=gpt-4 # or gpt-3.5-turbo
 ## Logging In
 Now, you can access your Upsonic On-Prem via localhost or any other method of accessing your server:
 ```console
-https://localhost:5001
+https://localhost:7501
 ````
 
