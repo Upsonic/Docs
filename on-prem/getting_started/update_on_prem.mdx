@@ -30,12 +30,12 @@ And finally, we will install and run the latest Upsonic On-Prem:
 
 
 ```console
-docker run --env-file .env -d -p 5001:5001 -p 5000:5000 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/var/lib/redis ghcr.io/upsonic/on-prem
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/var/lib/redis ghcr.io/upsonic/on-prem
 
 ```
 
 ## Checking
 Now, you can access your Upsonic On-Prem via localhost or any other method to connect to your server:
 ```console
-https://localhost:5001
+https://localhost:7341
 ```
