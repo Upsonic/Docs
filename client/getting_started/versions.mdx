@@ -7,6 +7,37 @@ iconType: "solid"
 In this document we are giving our test results and informations for each version of client.
 
 
+# 0.20.3
+
+**The Patches are**:
+
+- The python version check system fixed, now the client warnings about not same minor python version situations.
+
+**The Limitaions are**:
+
+- **Depth of Local .py Files Dependent on Your Function**
+<br />In this scenario, when you use multiple layers of depth for your function with local .py files, it is not supported. However, if there is only one dependent .py file, Upsonic can manage this seamlessly for your function.
+
+  - my_function.py
+  - my_sub_function.py | **Supported**
+  - my_sub_sub_function | **Unsupported**
+
+
+- **Usage of Module-Dependent Objects in Elastic Dependencies**
+<br />When you instantiate a class object, such as a pandas DataFrame, within an elastic dependency, you cannot fully use this object in other areas, such as another elastic function or the root runtime.
+
+
+
+- **Requirement Extraction**
+<br />This is only supported for functions.
+
+- **Extraction of Required Local .py Files**
+<br />This is only supported for functions.
+
+- **Across Python Versions**
+<br />Upsonic requires the dumper client and loader client to be running the exact same Python version, which must be 3.8 or higher.
+
+
 # 0.20.2
 
 **The Patches are**:
