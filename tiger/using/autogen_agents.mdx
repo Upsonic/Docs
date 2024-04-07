@@ -3,3 +3,49 @@ title: AutoGen Agents
 icon: "autoprefixer"
 iconType: "solid"
 ---
+
+Tiger is also have a integration with AutoGen agents. You can put a tiger to your AutoGen agents. In this examples we will use the 'interpreter.python' module and with this your autogen agent able to run and view result of python codes. With this your agent will able to wait 2 second as we request.
+
+```python
+# Generating Agents with tiger tool set
+from typing_extensions import Annotated
+import autogen
+
+config_list = [
+    {
+        'model': 'gpt-4',
+        'api_key': 'OPENAI_API_KEY',
+    },
+]
+
+llm_config = {
+    "config_list": config_list,
+    "timeout": 120,
+}
+chatbot = autogen.AssistantAgent(
+    name="chatbot",
+    system_message="For coding tasks, only use the functions you have been provided with. Reply TERMINATE when the task is done.",
+    llm_config=llm_config,
+)
+
+user_proxy = autogen.UserProxyAgent(
+    name="user_proxy",
+    is_termination_msg=lambda x: x.get("content", "") and x.get("content", "").rstrip().endswith("TERMINATE"),
+    human_input_mode="NEVER",
+    max_consecutive_auto_reply=10,
+)
+
+
+
+# Geting the tiger tools about interpreter.python
+from upsonic import Tiger
+Tiger().autogen(chatbot, userproxy)
+
+
+
+# Asking sleep 2 second
+user_proxy.initiate_chat(
+        chatbot,
+        message="What is Upsonic.co",
+    )
+```
