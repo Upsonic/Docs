@@ -3,3 +3,32 @@ title: Search
 icon: "searchengin"
 iconType: "solid"
 ---
+
+# Google
+
+```python
+from upsonic import Tiger
+
+query = "Upsonic co"
+
+
+google_search_results = Tiger().load("search.google")(query)
+
+print(google_search_results)
+
+
+```
+
+# Read Website
+
+```python
+from upsonic import Tiger
+
+
+website = "https://upsonic.co"
+
+
+read_website_result = Tiger().load("search.read_website")(website)
+
+print(read_website_result)
+```
