@@ -12,6 +12,69 @@ To get started, you will need:
 - The latest version of Docker installed and functioning properly
 - TCP ports 7341 and 7340 ready for use
 
+
+<Tabs>
+
+  <Tab title="With OpenAI">
+
+
+
+## Deployment
+
+First, we will create a volume to store everything:
+
+```console
+docker volume create upsonic_on_prem_data
+```
+
+
+Setting .env
+
+```console
+nano .env
+```
+
+```console
+admin_key=YOUR_ADMIN_KEY_FOR_API # 123
+admin_pass=YOUR_ADMIN_PASS_FOR_DASHBOARD # 123456
+admin_username=YOUR_ADMIN_USERNAME #upsonic_admin
+openai_api_key=YOUR_OPENAI_API_KEY
+
+default_model=gpt-4 # or gpt-3.5-turbo
+default_search_model=text-embedding-3-large
+
+```
+
+after adjusting the settings, you can exit by pressing Ctrl+X, then confirming with 'Y' and pressing Enter.
+
+
+Now, let's proceed with the download, installation, and execution of the Upsonic On-Prem container:
+
+
+```console
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/var/lib/redis ghcr.io/upsonic/on-prem_without_models:v0.20.1
+```
+
+After that, you should see:
+```console
+root@server:~# docker ps
+CONTAINER ID   IMAGE                     COMMAND          CREATED          STATUS          PORTS                                                           NAMES
+918a4c74185a   ghcr.io/upsonic/on-prem_without_models   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
+```
+
+### Suggested Version
+
+As you can observe, we are recommending a specific version, `v0.20.1`. This recommendation is based on our functionality testing and stability analysis.
+
+If you wish to explore other versions, please visit the [Release Notes](/on-prem/release_notes) page.
+
+
+
+  </Tab>
+
+  <Tab title="With Gemma (Offline)">
+
+
 ## Deployment
 
 First, we will create a volume to store everything:
@@ -38,8 +101,9 @@ after adjusting the settings, you can exit by pressing Ctrl+X, then confirming w
 
 Now, let's proceed with the download, installation, and execution of the Upsonic On-Prem container:
 
+
 ```console
-docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/var/lib/redis ghcr.io/upsonic/on-prem:v0.19.3
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/var/lib/redis ghcr.io/upsonic/on-prem:v0.20.1
 ```
 
 After that, you should see:
@@ -51,7 +115,7 @@ CONTAINER ID   IMAGE                     COMMAND          CREATED          STATU
 
 ### Suggested Version
 
-As you can observe, we are recommending a specific version, `v0.19.3`. This recommendation is based on our functionality testing and stability analysis.
+As you can observe, we are recommending a specific version, `v0.20.1`. This recommendation is based on our functionality testing and stability analysis.
 
 If you wish to explore other versions, please visit the [Release Notes](/on-prem/release_notes) page.
 
@@ -62,14 +126,13 @@ Limiting model CPU usage is improves the general performance of application. Bec
 ```console
 main_model_cpu=3
 ```
+  </Tab>
 
-### Using OpenAI Model Instead of Gemma
-If you want to use OpenAI `gpt-3.5-turbo` or `gpt-4` models to use as default model. You just need to specify env variables.
+</Tabs>
 
-```console
-openai_api_key=YOUR_OPENAI_API_KEY
-default_model=gpt-4 # or gpt-3.5-turbo
-```
+
+
+
 
 
 
