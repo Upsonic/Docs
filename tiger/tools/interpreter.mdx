@@ -3,3 +3,69 @@ title: Interpreter
 icon: "person-running"
 iconType: "solid"
 ---
+
+## Python
+
+### Execute
+
+```python
+from upsonic import Tiger
+
+python_code = "2*2"
+
+
+python_execute_results = Tiger().load("interpreter.python.execute")(python_code)
+
+print(python_execute_results)
+
+```
+
+### Install Package
+
+```python
+from upsonic import Tiger
+
+the_package = "upsonic==0.20.3"
+
+install_package_results = Tiger().load("interpreter.python.install_package")(the_package)
+
+print(install_package_results)
+
+
+
+
+```
+
+### Check Package
+
+```python
+from upsonic import Tiger
+
+the_package = "upsonic"
+
+check_package_results = Tiger().load("interpreter.python.check_package")(the_package)
+
+print(check_package_results)
+
+```
+
+
+## SH
+### Execute
+```python
+from upsonic import Tiger
+
+sh_command = "pip3 --version"
+
+
+sh_execute_results = Tiger().load("interpreter.sh.execute")(sh_command)
+
+print(sh_execute_results)
+
+```
+
+
+
+
+
+
