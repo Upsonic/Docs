@@ -28,3 +28,129 @@ let enable your telegram account to AI agents for talking with your friends as y
     At the end we will connect the tiger in just 1-line to your agents for enable telegram access, google search, code run and many other ability.
   </Step>
 </Steps>
+
+
+<Tabs>
+
+  <Tab title="Step by Step">
+
+
+
+## Installing Requirements
+
+For this operation we'll need the CrewAI and Upsonic libraries.
+
+```bash
+pip3 instal crewai 'crewai[tools]' upsonic
+
+```
+
+
+## Imports
+```python
+from crewai import Agent, Task, Crew, Process
+from upsonic import Tiger
+```
+
+
+## Connecting to telegram
+In this point we will use the [Tiger](https://github.com/Upsonic/Tiger) its an function hub for ai agents, and its have a ready-to-use telegram interface for our agent. Also its have search-engines, code-interpreters and more.
+
+```python
+Tiger().get(
+  "communication.telegram.as_user.signin__user"
+  )()
+```
+Its will ask
+```
+Your phone number:
+```
+
+## Creating Agents
+### OpenAI Connection
+In this point we will use `gpt-4-0125-preview` for more context.
+```python
+OPENAI_API_KEY = "sk-" # Your openai api key
+
+from langchain_openai import ChatOpenAI
+llm = ChatOpenAI(model="gpt-4-0125-preview", api_key=OPENAI_API_KEY)
+```
+
+### Agents
+
+```python
+# Captain agent for managing mission
+captain = Agent(
+  role='You are the captain of mission',
+  goal='Managing the crew for complating mission as want,
+  backstory="You are graduated from Captaining section of University",
+  verbose=True,
+  allow_delegation=False,
+  llm=llm
+)
+
+# Planner agent for generating a plan for mission
+planner = Agent(
+  role='The great plan master in the World',
+  goal='Generating plans for mission'
+  backstory="You are graduated from Planning section of University",
+  verbose=True,
+  allow_delegation=False,
+  llm=llm
+)
+
+# Executor agent for making executions for mission
+executor = Agent(
+  role='The great executor in the World',
+  goal='Executing plan and complating the mission'
+  backstory="You are graduated from Executing section of University",
+  verbose=True,
+  allow_delegation=False,
+  llm=llm
+)
+```
+
+
+### Connecting to Tiger and run
+In this stage we will give writing answers to incoming messages task and connecting to Tiger.
+```python
+tools = Tiger().crewai()
+
+telegram_task = Task(
+  description="""Writing friendly and solution-focus answers to unreaded messages in telegram""",
+  expected_output="I write to this, this and this.",
+  agent=captain
+  tools=tools
+)
+```
+
+
+### Kick Off
+crew = Crew(
+  agents=[captain, planner, executor],
+  tasks=[telegram_task],
+  verbose=2,
+)
+
+
+result = crew.kickoff()
+```
+
+
+
+
+</Tab>
+
+<Tab title="Full Code">
+```python
+a
+```
+
+</Tab>
+
+
+</Tabs>
+
+
+
+
