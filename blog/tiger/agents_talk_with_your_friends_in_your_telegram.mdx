@@ -79,8 +79,8 @@ llm = ChatOpenAI(
 ```python
 # Captain agent for managing mission
 captain = Agent(
-  role='You are the captain of mission',
-  goal='Managing the crew for complating mission as want,
+  role="You are the captain of mission",
+  goal="Managing the crew for complating mission as want",
   backstory="You are graduated from Captaining section of University",
   verbose=True,
   allow_delegation=False,
@@ -89,8 +89,8 @@ captain = Agent(
 
 # Planner agent for generating a plan for mission
 planner = Agent(
-  role='The great plan master in the World',
-  goal='Generating plans for mission'
+  role="The great plan master in the World",
+  goal="Generating plans for mission",
   backstory="You are graduated from Planning section of University",
   verbose=True,
   allow_delegation=False,
@@ -99,8 +99,8 @@ planner = Agent(
 
 # Executor agent for making executions for mission
 executor = Agent(
-  role='The great executor in the World',
-  goal='Executing plan and complating the mission'
+  role="The great executor in the World",
+  goal="Executing plan and complating the mission",
   backstory="You are graduated from Executing section of University",
   verbose=True,
   allow_delegation=False,
@@ -116,8 +116,11 @@ tools = Tiger().crewai()
 
 telegram_task = Task(
   description="""
-Writing friendly and solution-focus answers
-For unreaded messages in telegram"
+Writing friendly and solution-focus answers.
+For unreaded messages in telegram.
+Read the last messages and answer them.
+Please answer as a normal human. 
+You can make many think with your functions also.
 """,
   expected_output="I write to this, this and this.",
   agent=captain
@@ -162,8 +165,8 @@ llm = ChatOpenAI(
 
 # Captain agent for managing mission
 captain = Agent(
-  role='You are the captain of mission',
-  goal='Managing the crew for complating mission as want,
+  role="You are the captain of mission",
+  goal="Managing the crew for complating mission as want",
   backstory="You are graduated from Captaining section of University",
   verbose=True,
   allow_delegation=False,
@@ -172,8 +175,8 @@ captain = Agent(
 
 # Planner agent for generating a plan for mission
 planner = Agent(
-  role='The great plan master in the World',
-  goal='Generating plans for mission'
+  role="The great plan master in the World",
+  goal="Generating plans for mission",
   backstory="You are graduated from Planning section of University",
   verbose=True,
   allow_delegation=False,
@@ -182,8 +185,8 @@ planner = Agent(
 
 # Executor agent for making executions for mission
 executor = Agent(
-  role='The great executor in the World',
-  goal='Executing plan and complating the mission'
+  role="The great executor in the World",
+  goal="Executing plan and complating the mission",
   backstory="You are graduated from Executing section of University",
   verbose=True,
   allow_delegation=False,
@@ -195,8 +198,11 @@ tools = Tiger().crewai()
 
 telegram_task = Task(
   description="""
-Writing friendly and solution-focus answers
-For unreaded messages in telegram"
+Writing friendly and solution-focus answers.
+For unreaded messages in telegram.
+Read the last messages and answer them.
+Please answer as a normal human. 
+You can make many think with your functions also.
 """,
   expected_output="I write to this, this and this.",
   agent=captain
