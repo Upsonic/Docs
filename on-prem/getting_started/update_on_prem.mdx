@@ -18,6 +18,33 @@ docker stop upsonic_on_prem
 docker remove upsonic_on_prem
 ```
 
+
+<Tabs>
+
+  <Tab title="With OpenAI">
+
+With these commands, your installation will be removed. However, as you know, the volume will remain intact. Now, let's pull the latest image using the `docker pull` command:
+
+```console
+docker pull ghcr.io/upsonic/on-prem_without_models
+```
+
+And finally, we will install and run the latest Upsonic On-Prem:
+
+<Warning>Please check the .env file, and it should be the same as your first installation.</Warning>
+
+
+```console
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/var/lib/redis ghcr.io/upsonic/on-prem_without_models
+
+```
+
+
+  </Tab>
+
+  <Tab title="With Gemma (Offline)">
+
+
 With these commands, your installation will be removed. However, as you know, the volume will remain intact. Now, let's pull the latest image using the `docker pull` command:
 
 ```console
@@ -33,6 +60,12 @@ And finally, we will install and run the latest Upsonic On-Prem:
 docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/var/lib/redis ghcr.io/upsonic/on-prem
 
 ```
+
+
+
+  </Tab>
+
+</Tabs>
 
 ## Checking
 Now, you can access your Upsonic On-Prem via localhost or any other method to connect to your server:
