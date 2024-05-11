@@ -52,14 +52,14 @@ Now, let's proceed with the download, installation, and execution of the Upsonic
 
 
 ```console
-docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/var/lib/redis ghcr.io/upsonic/on-prem_without_models:v0.21.0
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem_without_models:v0.22.0
 ```
 
 After that, you should see:
 ```console
 root@server:~# docker ps
 CONTAINER ID   IMAGE                     COMMAND          CREATED          STATUS          PORTS                                                           NAMES
-918a4c74185a   ghcr.io/upsonic/on-prem_without_models   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
+918a4c74185a   upsonic/on-prem_without_models   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
 ```
 
 ### Suggested Version
@@ -103,19 +103,19 @@ Now, let's proceed with the download, installation, and execution of the Upsonic
 
 
 ```console
-docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/var/lib/redis ghcr.io/upsonic/on-prem:v0.21.0
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem:v0.22.0
 ```
 
 After that, you should see:
 ```console
 root@server:~# docker ps
 CONTAINER ID   IMAGE                     COMMAND          CREATED          STATUS          PORTS                                                           NAMES
-918a4c74185a   ghcr.io/upsonic/on-prem   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
+918a4c74185a   upsonic/on-prem   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
 ```
 
 ### Suggested Version
 
-As you can observe, we are recommending a specific version, `v0.21.0`. This recommendation is based on our functionality testing and stability analysis.
+As you can observe, we are recommending a specific version, `v0.22.0`. This recommendation is based on our functionality testing and stability analysis.
 
 If you wish to explore other versions, please visit the [Release Notes](/on-prem/release_notes) page.
 
