@@ -1,0 +1,51 @@
+---
+title: Auto Dump
+---
+
+## Auto Dump
+
+The auto_dump function automatically decides the best location for a function in the codebase. It helps in organizing and placing the functions in an optimal manner to maintain code quality and structure.
+
+### Example
+
+#### Auto Dump a Math Function
+```python
+def multiply(a, b):
+    return a * b
+
+upsonic.auto_dump(multiply)
+```
+Output:
+```
+Commands:
+(Y)es/(N)o
+math.basics.multiply y
+Dumped
+```
+
+#### Auto Dump a Database Connection Function
+```python
+import sqlite3
+
+def create_connection(db_file):
+    conn = None
+    try:
+        conn = sqlite3.connect(db_file)
+        print(f"Connected to SQLite version: {sqlite3.version}")
+        return conn
+    except sqlite3.Error as e:
+        print(f"Error connecting to SQLite database: {e}")
+        return conn
+
+upsonic.auto_dump(create_connection)
+```
+Output:
+```Commands:
+(Y)es/(N)o
+data_gathering.create_connection y
+Dumped
+```
+
+
+<Warning>Users who use the LLaMA-3 model with 8 billion parameters cannot access the check_function system behind the auto_dump. The check_function system is a control mechanism for identifying duplication risks in the current codebase. For example, if there is already a multiply function in the codebase and you use auto_dump, the check_function will automatically find this duplication risk and notify you that there is already a function for multiplying. This feature works with GPT models but does not work with LLaMA-3 models.</Warning>
+

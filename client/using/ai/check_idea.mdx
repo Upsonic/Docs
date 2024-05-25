@@ -1,0 +1,54 @@
+---
+title: Check Idea
+---
+
+
+If you are preparing to write a function, you can check the current codebase via the `check_idea` function. It automatically reads and analyzes the current codebase to find any duplication of your idea.
+
+### Example
+
+#### Successful Check
+```python
+upsonic.check_idea("Creating user in db")
+```
+Output:
+```
+Pass: There is no same functionality in the library
+```
+
+#### Failed Check
+```python
+upsonic.check_idea("Adding two numbers")
+```
+Output:
+```
+Fail: Both the current idea and math.basics.sum involve performing the operation of adding two numbers together.
+```
+
+## Check Idea
+
+If you are preparing to write a function, you can check the current codebase via the `check_idea` function. It automatically reads and analyzes the current codebase to find any duplication of your idea.
+
+### Example
+
+#### Successful Check
+```python
+upsonic.check_idea("Creating user in db")
+```
+Output:
+```
+Pass: There is no same functionality in the library
+```
+
+#### Failed Check
+```python
+upsonic.check_idea("Adding two numbers")
+```
+Output:
+```
+Fail: Both the current idea and math.basics.sum involve performing the operation of adding two numbers together.
+```
+
+**Warning:** Users who use the LLaMA-3 model with 8 billion parameters cannot access the check_idea function. But ther can use [upsonic.search](/client/using/ai/) function as well. </Warning>
+
+
