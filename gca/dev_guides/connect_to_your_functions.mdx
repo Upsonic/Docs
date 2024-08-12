@@ -1,0 +1,23 @@
+---
+title: 4. Connect Your Functions
+---
+
+With this part your GCA or "X Intelligence" will connect to your services, applications or anything else. Maybe databases.
+
+### @remote.custom_tool
+
+For connecting your applications you should write **good quality** python functions. GCA have an `decorator` for your functions.
+
+```python
+@remote.custom_tool
+def my_server_status() -> bool:
+  """
+  Check the server status.
+  """
+  return True
+```
+
+
+<Tip>
+If you dont write the function docstring or return signature the llm doesnt work and gca not accept your functions.
+</Tip>
