@@ -1,0 +1,80 @@
+---
+title: GUI custominization
+---
+
+
+# <div class="hidden">Introduction Assistant UI</div>
+
+Assistant UI designed to be friendly and functional as much as we can. So we just add some buttons for functionality and added some custominization API's.
+
+## Styling
+
+### remote.set_background_color
+
+You can give bacground color as `r`, `g`, `b` format.
+
+```python
+remote.set_background_color(255, 0, 255)
+```
+
+
+
+### remote.set_opacity
+
+You able to change `bacground opacity` of your GCA or "X Intelligence" as well. The maxiumum value is `255`. It means opaque.
+
+```python
+remote.set_opacity(150)
+```
+
+
+### remote.set_border_radius
+
+Assistant border radius has also an API to control it. The value is based od `px`. The default border radius value is `10`.
+
+```python
+remote.set_border_radius(5)
+```
+
+
+
+## Assistant Apperance Modes
+
+### Collapsing
+
+
+<CardGroup cols={2}>
+```python Collapsed
+remote.collapse()
+```
+
+```python Expand
+remote.expand()
+```
+</CardGroup>
+
+<CardGroup cols={2}>
+<img height="400" src="https://github.com/user-attachments/assets/25d34ae5-a9b7-4f4d-84b4-e6dca36b06d3" />
+<img height="400" src="https://github.com/user-attachments/assets/16cc40bc-103d-4876-8ff5-325c3392cd1a" />
+</CardGroup>
+
+
+
+### Long GCA 
+
+
+
+<CardGroup cols={2}>
+```python Collapsed
+remote.activate_long_gca()
+```
+
+```python Expand
+remote.deactivate_long_gca()
+```
+</CardGroup>
+
+<CardGroup cols={2}>
+<img height="400" src="https://github.com/user-attachments/assets/16cc40bc-103d-4876-8ff5-325c3392cd1a" />
+<img height="400" src="https://github.com/user-attachments/assets/d5629678-1c31-4313-8b2f-46f9f89d2c23" />
+</CardGroup>
