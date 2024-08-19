@@ -6,7 +6,7 @@ iconType: "solid"
 
 
 
-Upsonic On-Prem is designed to work with read and write permissions on the API. Additionally, the dashboard gathers information from the API using the access key of the logged-in user. Therefore, you must set  `READ` and `WRITE`permissions to gather information and perform operations, including dump & load functions.
+Upsonic Server is designed to work with read and write permissions on the API. Additionally, the dashboard gathers information from the API using the access key of the logged-in user. Therefore, you must set  `READ` and `WRITE`permissions to gather information and perform operations, including dump & load functions.
 
 
 Additionally, we have `enabled` and `is_admin` booleans, and the **admins doesnt have any limits* , so you must be careful about that. When you disable a user, the user will lose all permissions. After disabling, everything reverts to the default configuration and permissions.
@@ -16,7 +16,7 @@ Additionally, we have `enabled` and `is_admin` booleans, and the **admins doesnt
 You can perform enable, disable, set_admin, unset_admin operations, and delete operations as well. Additionally, for tasks like viewing access keys and changing passwords, you can use the `edit` button.
 
 
-<Warning>You cannot make any changes or deletions to the Robust Admin. It is defined from the beginning in the [configuration](/on-prem/getting_started/install_on_prem#deployment).</Warning>
+<Warning>You cannot make any changes or deletions to the Robust Admin. It is defined from the beginning in the [configuration](/server/getting_started/install_on_prem#deployment).</Warning>
 
 
 <img height="300" src="/images/users.svg" />
@@ -35,7 +35,7 @@ When you click on `Edit`, you will see this section where you can perform the fo
 
 
 ### Permissions
-Upsonic On-Prem has scope-based permissions for easy management and onboarding. When you add `math.sum` to the read scopes of a user, the user can easily read and retrieve the function. Write permissions are also similar to reads; when granted, the user can make dumps. Additionally, we support the `asterisk` (*) wildcard, so when you use `math.*` for a user, the user will have permissions for all sub-elements of math.
+Upsonic Server has scope-based permissions for easy management and onboarding. When you add `math.sum` to the read scopes of a user, the user can easily read and retrieve the function. Write permissions are also similar to reads; when granted, the user can make dumps. Additionally, we support the `asterisk` (*) wildcard, so when you use `math.*` for a user, the user will have permissions for all sub-elements of math.
 
 
 <Warning>If you see a 'None' document for an element in libraries, it is due to permissions. Users should try clicking on the element, and after the first click, the system will generate the document in the backend.</Warning>

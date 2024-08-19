@@ -1,5 +1,5 @@
 ---
-title: Update On-Prem
+title: Update Server
 icon: "arrows-rotate"
 iconType: "solid"
 ---
@@ -8,7 +8,7 @@ iconType: "solid"
 <Warning>Before performing an update, we recommend taking a backup of your **upsonic_on_prem_data** volume.</Warning>
 
 
-With these instructions, we will update your installation to the latest version that we have released, and you should check for the [latest updatest](https://docs.upsonic.co/on-prem/what_news). We will stop and remove your current container named **upsonic_on_prem** ; the volume and other containers or applications will not be affected.
+With these instructions, we will update your installation to the latest version that we have released, and you should check for the [latest updatest](https://docs.upsonic.co/server/what_news). We will stop and remove your current container named **upsonic_on_prem** ; the volume and other containers or applications will not be affected.
 
 ```console
 docker stop upsonic_on_prem
@@ -26,16 +26,16 @@ docker remove upsonic_on_prem
 With these commands, your installation will be removed. However, as you know, the volume will remain intact. Now, let's pull the latest image using the `docker pull` command:
 
 ```console
-docker pull ghcr.io/upsonic/on-prem_without_models:v0.25.0
+docker pull ghcr.io/upsonic/server_without_models:v0.25.0
 ```
 
-And finally, we will install and run the latest Upsonic On-Prem:
+And finally, we will install and run the latest Upsonic Server:
 
 <Warning>Please check the .env file, and it should be the same as your first installation.</Warning>
 
 
 ```console
-docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem_without_models:v0.25.0
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/server_without_models:v0.25.0
 ```
 
 
@@ -48,16 +48,16 @@ docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem -
 With these commands, your installation will be removed. However, as you know, the volume will remain intact. Now, let's pull the latest image using the `docker pull` command:
 
 ```console
-docker pull ghcr.io/upsonic/on-prem:v0.25.0
+docker pull ghcr.io/upsonic/server:v0.25.0
 ```
 
-And finally, we will install and run the latest Upsonic On-Prem:
+And finally, we will install and run the latest Upsonic Server:
 
 <Warning>Please check the .env file, and it should be the same as your first installation.</Warning>
 
 
 ```console
-docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem:v0.25.0
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/server:v0.25.0
 ```
 
 
@@ -67,7 +67,7 @@ docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem -
 </Tabs>
 
 ## Checking
-Now, you can access your Upsonic On-Prem via localhost or any other method to connect to your server:
+Now, you can access your Upsonic Server via localhost or any other method to connect to your server:
 ```console
 https://localhost:7341
 ```

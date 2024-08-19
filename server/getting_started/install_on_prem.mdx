@@ -1,11 +1,11 @@
 ---
-title: Install On-Prem
+title: Install Server
 icon: "download"
 iconType: "solid"
 ---
  
 
-Upsonic On-Prem consists of two subsystems: the Dashboard and the API. Both systems run in a single container and connect internally. This document guides you through the installation and execution of the container without any issues.
+Upsonic Server consists of two subsystems: the Dashboard and the API. Both systems run in a single container and connect internally. This document guides you through the installation and execution of the container without any issues.
 
 To get started, you will need:
 
@@ -48,25 +48,25 @@ default_search_model=text-embedding-3-large
 after adjusting the settings, you can exit by pressing Ctrl+X, then confirming with 'Y' and pressing Enter.
 
 
-Now, let's proceed with the download, installation, and execution of the Upsonic On-Prem container:
+Now, let's proceed with the download, installation, and execution of the Upsonic Server container:
 
 
 ```console
-docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem_without_models:v0.25.0
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/server_without_models:v0.25.0
 ```
 
 After that, you should see:
 ```console
 root@server:~# docker ps
 CONTAINER ID   IMAGE                     COMMAND          CREATED          STATUS          PORTS                                                           NAMES
-918a4c74185a   upsonic/on-prem_without_models   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
+918a4c74185a   upsonic/server_without_models   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
 ```
 
 ### Suggested Version
 
 As you can observe, we are recommending a specific version, `v0.25.0`. This recommendation is based on our functionality testing and stability analysis.
 
-If you wish to explore other versions, please visit the [Release Notes](/on-prem/release_notes) page.
+If you wish to explore other versions, please visit the [Release Notes](/server/release_notes) page.
 
 
 
@@ -99,25 +99,25 @@ admin_username=YOUR_ADMIN_USERNAME #upsonic_admin
 after adjusting the settings, you can exit by pressing Ctrl+X, then confirming with 'Y' and pressing Enter.
 
 
-Now, let's proceed with the download, installation, and execution of the Upsonic On-Prem container:
+Now, let's proceed with the download, installation, and execution of the Upsonic Server container:
 
 
 ```console
-docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem:v0.25.0
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/server:v0.25.0
 ```
 
 After that, you should see:
 ```console
 root@server:~# docker ps
 CONTAINER ID   IMAGE                     COMMAND          CREATED          STATUS          PORTS                                                           NAMES
-918a4c74185a   upsonic/on-prem   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
+918a4c74185a   upsonic/server   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
 ```
 
 ### Suggested Version
 
 As you can observe, we are recommending a specific version, `v0.25.0`. This recommendation is based on our functionality testing and stability analysis.
 
-If you wish to explore other versions, please visit the [Release Notes](/on-prem/release_notes) page.
+If you wish to explore other versions, please visit the [Release Notes](/server/release_notes) page.
 
 ## Extra Options
 ### Limiting Model CPU usage
@@ -137,7 +137,7 @@ main_model_cpu=3
 
 
 ## Logging In
-Now, you can access your Upsonic On-Prem via localhost or any other method of accessing your server:
+Now, you can access your Upsonic Server via localhost or any other method of accessing your server:
 ```console
 https://localhost:7341
 ````
