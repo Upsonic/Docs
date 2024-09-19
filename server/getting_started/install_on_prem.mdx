@@ -15,6 +15,65 @@ To get started, you will need:
 
 <Tabs>
 
+  <Tab title="With Llama3.1 (Offline)">
+
+
+## Deployment
+
+First, we will create a volume to store everything:
+
+```console
+docker volume create upsonic_on_prem_data
+```
+
+
+Setting .env
+
+```console
+nano .env
+```
+
+```console
+admin_key=YOUR_ADMIN_KEY_FOR_API # 123
+admin_pass=YOUR_ADMIN_PASS_FOR_DASHBOARD # 123456
+admin_username=YOUR_ADMIN_USERNAME #upsonic_admin
+```
+
+after adjusting the settings, you can exit by pressing Ctrl+X, then confirming with 'Y' and pressing Enter.
+
+
+Now, let's proceed with the download, installation, and execution of the Upsonic Server container:
+
+
+```console
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem:v0.30.3-AMD64
+```
+
+After that, you should see:
+```console
+root@server:~# docker ps
+CONTAINER ID   IMAGE                     COMMAND          CREATED          STATUS          PORTS                                                           NAMES
+918a4c74185a   upsonic/on-prem   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
+```
+
+### Suggested Version
+
+As you can observe, we are recommending a specific version, `v0.30.3`. This recommendation is based on our functionality testing and stability analysis.
+
+If you wish to explore other versions, please visit the [Release Notes](/server/release_notes) page.
+
+## Extra Options
+### Limiting Model CPU usage
+Limiting model CPU usage is improves the general performance of application. Because if you dont specify anything the model can take whole CPU to making analyses. But with this env variable you can limit how many CPU core that you want to give to model:
+
+```console
+main_model_cpu=3
+```
+  </Tab>
+
+
+
+
   <Tab title="With OpenAI">
 
 
@@ -72,61 +131,6 @@ If you wish to explore other versions, please visit the [Release Notes](/server/
 
   </Tab>
 
-  <Tab title="With Llama3 (Offline)">
-
-
-## Deployment
-
-First, we will create a volume to store everything:
-
-```console
-docker volume create upsonic_on_prem_data
-```
-
-
-Setting .env
-
-```console
-nano .env
-```
-
-```console
-admin_key=YOUR_ADMIN_KEY_FOR_API # 123
-admin_pass=YOUR_ADMIN_PASS_FOR_DASHBOARD # 123456
-admin_username=YOUR_ADMIN_USERNAME #upsonic_admin
-```
-
-after adjusting the settings, you can exit by pressing Ctrl+X, then confirming with 'Y' and pressing Enter.
-
-
-Now, let's proceed with the download, installation, and execution of the Upsonic Server container:
-
-
-```console
-docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem:v0.25.0
-```
-
-After that, you should see:
-```console
-root@server:~# docker ps
-CONTAINER ID   IMAGE                     COMMAND          CREATED          STATUS          PORTS                                                           NAMES
-918a4c74185a   upsonic/on-prem   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
-```
-
-### Suggested Version
-
-As you can observe, we are recommending a specific version, `v0.25.0`. This recommendation is based on our functionality testing and stability analysis.
-
-If you wish to explore other versions, please visit the [Release Notes](/server/release_notes) page.
-
-## Extra Options
-### Limiting Model CPU usage
-Limiting model CPU usage is improves the general performance of application. Because if you dont specify anything the model can take whole CPU to making analyses. But with this env variable you can limit how many CPU core that you want to give to model:
-
-```console
-main_model_cpu=3
-```
-  </Tab>
 
 </Tabs>
 
