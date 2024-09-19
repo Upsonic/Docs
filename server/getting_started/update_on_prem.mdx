@@ -21,6 +21,29 @@ docker remove upsonic_on_prem
 
 <Tabs>
 
+  <Tab title="With Llama3 (Offline)">
+
+
+With these commands, your installation will be removed. However, as you know, the volume will remain intact. Now, let's pull the latest image using the `docker pull` command:
+
+```console
+docker pull upsonic/on-prem:v0.30.3-AMD64
+```
+
+And finally, we will install and run the latest Upsonic Server:
+
+<Warning>Please check the .env file, and it should be the same as your first installation.</Warning>
+
+
+```console
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem:v0.30.3-AMD64
+```
+
+
+
+  </Tab>
+
+
   <Tab title="With OpenAI">
 
 With these commands, your installation will be removed. However, as you know, the volume will remain intact. Now, let's pull the latest image using the `docker pull` command:
@@ -42,27 +65,6 @@ docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem -
 
   </Tab>
 
-  <Tab title="With Llama3 (Offline)">
-
-
-With these commands, your installation will be removed. However, as you know, the volume will remain intact. Now, let's pull the latest image using the `docker pull` command:
-
-```console
-docker pull ghcr.io/upsonic/on-prem:v0.25.0
-```
-
-And finally, we will install and run the latest Upsonic Server:
-
-<Warning>Please check the .env file, and it should be the same as your first installation.</Warning>
-
-
-```console
-docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem:v0.25.0
-```
-
-
-
-  </Tab>
 
 </Tabs>
 
