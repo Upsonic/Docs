@@ -27,7 +27,7 @@ docker remove upsonic_on_prem
 With these commands, your installation will be removed. However, as you know, the volume will remain intact. Now, let's pull the latest image using the `docker pull` command:
 
 ```console
-docker pull upsonic/on-prem:v0.30.6-AMD64
+docker pull upsonic/on-prem:v0.30.7-AMD64
 ```
 
 And finally, we will install and run the latest Upsonic Server:
@@ -36,7 +36,7 @@ And finally, we will install and run the latest Upsonic Server:
 
 
 ```console
-docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem:v0.30.6-AMD64
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem:v0.30.7-AMD64
 ```
 
 
