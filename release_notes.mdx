@@ -1,0 +1,357 @@
+---
+icon: "book"
+iconType: "solid"
+---
+
+
+# Upsonic v0.30.7
+- Resolved search bar bug
+
+# Upsonic v0.30.6
+- Resolved DevOps process prioritization. 
+
+# Upsonic v0.30.2
+- Improved python 3.6 Support (Natively)
+
+# Upsonic v0.30.1
+- Resolved version generation problem on users.
+
+
+# Upsonic v0.30.0
+In this version we made some fixed and improvements. And added an integration with Azure OpenAI
+
+## Docs Redesigned
+![image](/images/release_notes/new_doc_format.png)
+
+## Added Azure OpenAI Support
+![image](/images/release_notes/azure_openai.png)
+
+
+
+
+- Search bar UI improvements
+- Commit Messages Improved
+- Added auto dark and light mode feature
+- Fixed 500 errors
+- Added pip3 install command
+- Added cardview to libraries page
+- Added an information about regenerating documentation proccess
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.29.0...v0.30.0
+
+
+# Upsonic v0.29.0
+In this version we made many update for development proccess and controlling interfaces. And New UI.
+
+## New UI
+![image](/images/release_notes/new_ui.png)
+
+
+## Settings now in Dashboard
+![image](/images/release_notes/settings_in_dash.png)
+
+
+## Added Diagnostic Page
+![image](/images/release_notes/diagnostic_page.png)
+
+
+
+- Fixed User and Version Relationship
+- Added missing ports to docker file for expose
+- Added ARM Builds
+- Performance Analyses Default is Active Now
+- Added AI History System for Devlepment Speed
+- Added last version of ollama
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.25.0...v0.29.0
+
+# Upsonic v0.28.0
+
+## What's Changed
+* Made auto_requirements default disabled by @onuratakan in https://github.com/Upsonic/Upsonic/pull/17
+* Added parameter tracking for run history by @onuratakan in https://github.com/Upsonic/Upsonic/pull/18
+
+
+**Full Changelog**: https://github.com/Upsonic/Upsonic/compare/v0.27.0...v0.28.0
+
+# Upsonic v0.27.0
+
+## Check Idea [NEW]
+This function helps in identifying duplicate or similar code snippets, ensuring code quality and reducing redundancy.
+![image](https://github.com/Upsonic/Upsonic/assets/41792982/107f14ac-749e-4c91-8b1a-50691efe36eb)
+
+## Dump Together [NEW]
+Added dump_together for improved reliability and speed. With this, the dump operation is complete with only one request.
+
+## Auto Dump with Llama3-8b
+With this release users who run with llama3-8b will available to use auto_dump.
+
+## What's Changed
+* Fixed class name with UpsonicOnPrem by @onuratakan in https://github.com/Upsonic/Upsonic/pull/12
+* Fix for auto_dump for llama3-8b by @onuratakan in https://github.com/Upsonic/Upsonic/pull/13
+* Faster dump with dump_together api by @onuratakan in https://github.com/Upsonic/Upsonic/pull/14
+* Added check_idea function to search for similar functionalities in the codebase. by @onuratakan in https://github.com/Upsonic/Upsonic/pull/16
+
+
+**Full Changelog**: https://github.com/Upsonic/Upsonic/compare/v0.26.0...v0.27.0
+
+
+# Upsonic v0.25.0
+
+**Supported client version: `0.28.0`**
+
+## Deep Analyze for Run History
+With this release we just increase functionality of run history elements.
+![image](https://github.com/Upsonic/Server/assets/41792982/9c254347-d9c2-48df-ba2f-958e1dfbcf47)
+![image](https://github.com/Upsonic/Server/assets/41792982/cdc723d7-a398-4308-a719-803f47621cc0)
+
+
+
+## What's Changed
+* Added llm and vector db observability by @onuratakan in https://github.com/Upsonic/Server/pull/151
+* Fixed lock stuck bug after delete by @onuratakan in https://github.com/Upsonic/Server/pull/152
+* Added deep analyze to run history by @onuratakan in https://github.com/Upsonic/Server/pull/153
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.24.0...v0.25.0
+
+
+# Upsonic v0.24.0
+**Supported client version: `0.27.0`**
+
+## Dump Together [NEW]
+Added dump_together for improved reliability and speed. With this the dump operation is complete with only one request.
+
+## What's Changed
+* Changed upsonic connection code class name by @onuratakan in https://github.com/Upsonic/Server/pull/146
+* Changed dependency key by @onuratakan in https://github.com/Upsonic/Server/pull/147
+* Added dump_together for improved reliability and speed by @onuratakan in https://github.com/Upsonic/Server/pull/148
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.23.0...v0.24.0
+
+# Upsonic v0.23.0
+
+**Supported client version: `0.26.0`**
+
+## Dependency Graph [NEW]
+In this version, we add a dependency analysis system in the backend and a frontend page. With this, you can analyze the dependent object and the object whose dependent currently object.
+![image](https://github.com/Upsonic/Server/assets/41792982/3f285ef5-2450-45f7-8e7a-7799596ad458)
+
+## Events [NEW]
+Now you can see the events of a user. Currently just dumps but we will increase the events in the next versions.
+![image](https://github.com/Upsonic/Server/assets/41792982/c826ba62-e191-4018-8dfb-40fd03fd307c)
+
+## LLM Proxy [NEW]
+With this version, we just add an infrastructure for future agent systems. Now you can connect OpenAI and Ollama over the Upsonic container.
+
+## Some UI improvements
+We just fix the run history, users, scopes tables view.
+
+## What's Changed
+* Added bypass ai feature for testing purposes by @onuratakan in https://github.com/Upsonic/Server/pull/136
+* Added openai and ollama proxies by @onuratakan in https://github.com/Upsonic/Server/pull/137
+* Removed openai api key system from user by @onuratakan in https://github.com/Upsonic/Server/pull/139
+* Added openai ollama proxy by @onuratakan in https://github.com/Upsonic/Server/pull/140
+* Added event system and dump event by @onuratakan in https://github.com/Upsonic/Server/pull/142
+* Added upsonic dependency analyze by @onuratakan in https://github.com/Upsonic/Server/pull/143
+* Users section ui improved by @onuratakan in https://github.com/Upsonic/Server/pull/144
+* Run history ui improvements by @onuratakan in https://github.com/Upsonic/Server/pull/145
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.22.3...v0.23.0
+
+# Upsonic v0.22.3
+
+**Supported client version: `0.25.0`**
+
+## What's Changed
+* Fixed None text while documentation is generating by @onuratakan in https://github.com/Upsonic/Server/pull/134
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.22.2...v0.22.3
+
+
+# Upsonic v0.22.2
+
+**Supported client version: `0.25.0`**
+
+## What's Changed
+* Many access control fix by @onuratakan in https://github.com/Upsonic/Server/pull/133
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.22.1...v0.22.2
+
+# Upsonic v0.22.1
+
+**Supported client version: `0.25.0`**
+
+## Light Mode [NEW]
+In this release we just happy to share our Light Mode. You can easily switch with left bottom button.
+![Frame 4](https://github.com/Upsonic/Server/assets/41792982/ddd6b9cb-62f8-4ff3-a3b9-b3808a9cd0b0)
+
+
+## Code Styling
+Now we have a code styling for more good experience and view.
+![image](https://github.com/Upsonic/Server/assets/41792982/425f8de6-1f6d-43ce-8e56-5094d4cc0ec9)
+
+
+
+## Custom Commit Messages
+With this release you will be able to use custom commit messages via Upsonic Client 0.25.0 version. 
+````python
+def sum(a, b):
+    return a + b
+
+upsonic.dump("math.sum", sum, message="Added math.sum function")
+````
+
+## What's Changed
+* Improved UI, added code styling and dark mode by @onuratakan in https://github.com/Upsonic/Server/pull/131
+* Added custom commit message ability by @onuratakan in https://github.com/Upsonic/Server/pull/132
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.22.0...v0.22.1
+
+# Upsonic v0.22.0
+
+## Automatic Updates with Each Dump Operations [NEW]
+In this release we just complete our documentation lifecycle system. Now we are updating the documentations in each update. So you don't need regenerate buttons or anything more.
+
+> Your captain speaking, your all auto documents are now up do date ! :nerd_face: '
+
+
+
+
+## Added Detailed Commit View and Auto Commit Message [NEW]
+With this release we just show the commit date, difference and auto generated commit message. Your well designed version control system is ready on your server with low costs. :dollar: 
+![image](https://github.com/Upsonic/Server/assets/41792982/243de56e-8231-4df4-bc90-2ef101e54b34)
+![image](https://github.com/Upsonic/Server/assets/41792982/565f506d-fc99-447d-916d-f4f2068cb703)
+
+
+
+
+## Added Auto Release Note [NEW]
+Just like auto commit messages now we have auto release notes as well. We are working for providing everything that can be make with LLM's :rocket: 
+![image](https://github.com/Upsonic/Server/assets/41792982/ef210428-415f-40df-90a1-6832217780e7)
+
+
+## Switched to Llama 3
+Good bye Gemma, thanks for everything. :handshake: 
+
+![Designer (1)](https://github.com/Upsonic/Server/assets/41792982/486a7a4c-38b8-4ecd-a517-4cac0985fc01)
+
+
+## What's Changed
+* Added readme Implementation for github sync by @onuratakan in https://github.com/Upsonic/Server/pull/121
+* Added automatic documentation update mechanism by @onuratakan in https://github.com/Upsonic/Server/pull/122
+* Fixed user scope inputs, delete button location for scopes, removed regenerate buttons, added date and difference to commits and versions. removed ai section, fixed search input size by @onuratakan in https://github.com/Upsonic/Server/pull/123
+* Added automatic commit message and release note generation and some bug fixes for readme and doc generations by @onuratakan in https://github.com/Upsonic/Server/pull/124
+* Added ai_task sync for api and dashboard backend by @onuratakan in https://github.com/Upsonic/Server/pull/125
+* Added a small animation to new version create operation by @onuratakan in https://github.com/Upsonic/Server/pull/126
+* Switched to llama3-8b, added dump locking and made many fix by @onuratakan in https://github.com/Upsonic/Server/pull/128
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.21.0...v0.22.0
+
+
+# Upsonic v0.21.0
+
+## GitHub Sync Ability [NEW]
+In this release, we just added an initial GitHub Sync support. With this, all of your operations in Upsonic are mirrored to your GitHub repo immediately.
+![image](https://github.com/Upsonic/Server/assets/41792982/a0abd657-7fcf-40ea-b651-fa32e8c41d86)
+![image](https://github.com/Upsonic/Server/assets/41792982/c769e12d-120a-4877-85a4-1b71759e39fb)
+
+
+## What's Changed
+* Added github sync feature by @onuratakan in https://github.com/Upsonic/Server/pull/120
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.20.9...v0.21.0
+
+# Upsonic v0.20.0
+
+## Version Control and Commit History [NEW]
+The version control ability update 🚀. In this release we introduce the version control and commit history. Also we have a bug fix for regenerating documentation situation.
+
+
+
+<img height="400" src="https://github.com/Upsonic/Server/assets/41792982/d5cde260-acb7-4060-a120-546b3efa606c" />
+
+## What's Changed
+* Added commit history and authors of commits and versions by @onuratakan in https://github.com/Upsonic/Server/pull/103
+* Added without_models docker images by @onuratakan in https://github.com/Upsonic/Server/pull/104
+* Fixed for regenerate docs readme stuck bug by @onuratakan in https://github.com/Upsonic/Server/pull/105
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.19.3...v0.20.0
+
+# Upsonic v0.19.2
+In this release we changed our default ports to 7341 (dashboard) and 7340 (api). Also we added some systems for next version control system. And parallel AI tasks limit feature added for solving some bugs.
+
+
+## What's Changed
+* Added /load_specific_version API by @onuratakan in https://github.com/Upsonic/Server/pull/96
+* Added /delete_version API by @onuratakan in https://github.com/Upsonic/Server/pull/97
+* Added /get_version_code_of_scope API by @onuratakan in https://github.com/Upsonic/Server/pull/98
+* Added /create_version_prefix API by @onuratakan in https://github.com/Upsonic/Server/pull/99
+* Version Control system added by @onuratakan in https://github.com/Upsonic/Server/pull/100
+* Added parallel_ai_task_limit mechanism by @onuratakan in https://github.com/Upsonic/Server/pull/101
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.19.1...v0.19.2
+
+# Upsonic v0.19.1
+In this release we made some fixes for Readme Generation.
+
+
+
+## What's Changed
+* Fixed user creation error info by @onuratakan in https://github.com/Upsonic/Server/pull/94
+* Fixed non generated documents on Readme generation by @onuratakan in https://github.com/Upsonic/Server/pull/95
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.19.0...v0.19.1
+
+# Upsonic v0.19.0
+## Automatic Readme Generation [NEW]
+In this version we added automatic Readme generation for all top modules and sub modules. The Readme also regenerate in changes. You can see the `Explanation` and `Use Cases`.
+
+![image](https://github.com/Upsonic/Server/assets/41792982/2d82db13-f1b3-464a-a109-38c6203ee502)
+![image](https://github.com/Upsonic/Server/assets/41792982/f361a0b5-bfe6-4709-ad19-88d508abfea7)
+
+
+
+## What's Changed
+* Added Quick Question&Answering to AI page by @onuratakan in https://github.com/Upsonic/Server/pull/83
+* Added automatic README generation feature to libraries by @onuratakan in https://github.com/Upsonic/Server/pull/84
+* UI improvements for library table and back button by @onuratakan in https://github.com/Upsonic/Server/pull/85
+* Added /get_default_ai_model API and informaton in sidebar by @onuratakan in https://github.com/Upsonic/Server/pull/86
+* Added openai api key serve mechanism by @onuratakan in https://github.com/Upsonic/Server/pull/93
+
+
+**Full Changelog**: https://github.com/Upsonic/Server/compare/v0.18.0...v0.19.0
+
+# Upsonic v0.18.0
+
+
+
+## Search Mechanism [New]
+In this version we just added a search infrastructure to easily find anything with your question. 
+
+For this we are using embedding search infrastructure with ollama. You can access and get results by your read permissions and going with just clicking.
+
+Features:
+- **Minimum Score Threshold**: Users can specify a minimum score for search results, ensuring that only the most relevant documentation is returned. The closer it is to 1, the more relevant it is.
+- **Result Limit**: To manage the volume of information, users have the option to limit the number of results returned by the search.
+
+
+<img height="400" src="/images/search_in_home.gif" />
+
+## OpenAI Model Support [New]
+With this version we just add a ability to use `gpt-3.5-turbo` and `gpt-4` instead of `gemma-2b` model. 
+
+For this you just need to add env variabes:
+- `openai_api_key`
+- `default_model`
