@@ -1,0 +1,174 @@
+---
+title: Install Upsonic BE with Docker on WSL / Docker Desktop
+
+---
+ 
+
+<Info>
+These installation instructions are for Upsonic Business Edition (BE). For Upsonic Business Edition (BE) refer to the BE install documentation.
+</Info>
+
+
+
+Upsonic Server is run as lightweight Docker containers on a Docker engine. This document will help you install the Upsonic Server container on your Linux environment.
+
+
+To get started, you will need:
+
+- The latest version of Docker installed and working. We recommend following the [official installation instructions](https://docs.docker.com/engine/install/) for Docker - in particular, we advise against installing Docker via snap on Ubuntu distributions as you may run into compatibility issues.
+- By default, Upsonic Server will expose the UI over port 7341 and expose a HTTP API server over port 7340. 
+
+The installation instructions also make the following assumptions about your environment:
+
+- Your environment meets [our requirements](https://docs.upsonic.co/getting_started/requirements_and_prerequisites). While Upsonic may work with other configurations, it may require configuration changes or have limited functionality.
+- SELinux is disabled on the machine running Docker. If you require SELinux, you will need to pass the --privileged flag to Docker when deploying Upsonic.
+- Docker is running as root. Upsonic with rootless Docker has no limitations you can use without root.
+
+# Deployment
+<Tabs>
+
+  <Tab title="With Llama3.1 (Offline)">
+
+
+## Deployment
+
+First, we will create a volume to store everything:
+
+```console
+docker volume create upsonic_on_prem_data
+```
+
+
+Setting .env
+
+```console
+nano .env
+```
+
+```console
+admin_key=YOUR_ADMIN_KEY_FOR_API # 123
+admin_pass=YOUR_ADMIN_PASS_FOR_DASHBOARD # 123456
+admin_username=YOUR_ADMIN_USERNAME #upsonic_admin
+```
+
+after adjusting the settings, you can exit by pressing Ctrl+X, then confirming with 'Y' and pressing Enter.
+
+
+Then, download and install the Upsonic Server container:
+
+
+```console
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem:v0.31.0-AMD64
+```
+
+<Info>
+By default, Upsonic generates and uses a self-signed SSL certificate to secure port `7341` and `7340`.
+</Info>
+
+
+Upsonic Server has now been installed. You can check to see whether the Upsonic Server container has started by running docker ps:
+```console
+root@server:~# docker ps
+CONTAINER ID   IMAGE                     COMMAND          CREATED          STATUS          PORTS                                                           NAMES
+918a4c74185a   upsonic/on-prem   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
+```
+
+### Suggested Version
+
+As you can observe, we are recommending a specific version, `v0.31.0`. This recommendation is based on our functionality testing and stability analysis.
+
+If you wish to explore other versions, please visit the [Release Notes](/server/release_notes) page.
+
+## Extra Options
+### Limiting Model CPU usage
+Limiting model CPU usage is improves the general performance of application. Because if you dont specify anything the model can take whole CPU to making analyses. But with this env variable you can limit how many CPU core that you want to give to model:
+
+```console
+main_model_cpu=3
+```
+  </Tab>
+
+
+
+
+  <Tab title="With OpenAI">
+
+
+
+## Deployment
+
+First, we will create a volume to store everything:
+
+```console
+docker volume create upsonic_on_prem_data
+```
+
+
+Setting .env
+
+```console
+nano .env
+```
+
+```console
+admin_key=YOUR_ADMIN_KEY_FOR_API # 123
+admin_pass=YOUR_ADMIN_PASS_FOR_DASHBOARD # 123456
+admin_username=YOUR_ADMIN_USERNAME #upsonic_admin
+openai_api_key=YOUR_OPENAI_API_KEY
+
+default_model=gpt-4 # or gpt-3.5-turbo
+default_search_model=text-embedding-3-large
+
+```
+
+after adjusting the settings, you can exit by pressing Ctrl+X, then confirming with 'Y' and pressing Enter.
+
+
+
+Then, download and install the Upsonic Server container:
+
+```console
+docker run --env-file .env -d -p 7341:7341 -p 7340:7340 --name upsonic_on_prem --restart=always -v upsonic_on_prem_data:/db upsonic/on-prem_without_models:v0.31.0
+```
+
+<Info>
+By default, Upsonic generates and uses a self-signed SSL certificate to secure port `7341` and `7340`.
+</Info>
+
+
+Upsonic Server has now been installed. You can check to see whether the Upsonic Server container has started by running docker ps:
+```console
+root@server:~# docker ps
+CONTAINER ID   IMAGE                     COMMAND          CREATED          STATUS          PORTS                                                           NAMES
+918a4c74185a   upsonic/on-prem_without_models   "bash /run.sh"   11 seconds ago   Up 10 seconds   0.0.0.0:7340-7341->7340-7341/tcp, :::7340-7341->7340-7341/tcp   upsonic_on_prem
+```
+
+### Suggested Version
+
+As you can observe, we are recommending a specific version, `v0.31.0`. This recommendation is based on our functionality testing and stability analysis.
+
+If you wish to explore other versions, please visit the [Release Notes](/server/release_notes) page.
+
+
+
+  </Tab>
+
+
+</Tabs>
+
+
+
+
+
+
+
+## Logging In
+Now that the installation is complete, you can log into your Upsonic Server instance by opening a web browser and going to:
+
+```console
+https://localhost:7341
+````
+
+Replace `localhost` with the relevant IP address or FQDN if needed, and adjust the port if you changed it earlier.
+
+You will be presented with the initial setup page for Upsonic Server.
