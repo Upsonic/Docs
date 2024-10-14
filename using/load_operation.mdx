@@ -1,0 +1,47 @@
+---
+title: Load Operation
+
+---
+
+
+The load function is the final stage in using Upsonic. With this function, you can retrieve your stored items just like the original statements. The load function retrieves and deserializes the items that you previously sent to the Upsonic Server system.
+
+To get started, you will need:
+
+- Implemented [connection code](/client/getting_started/connection)
+
+
+
+## upsonic.load
+
+This function is for loading a singular item from Upsonic. With this, you can load a Function, Class, Object, or any Variable. You just need to provide a name with the `key` parameter.
+
+<ParamField path="key" type="string">
+  The virtual and freely chosen path for your dumped value
+</ParamField>
+
+```python
+sum = upsonic.load("math.sum")
+sum(1, 2)
+```
+
+
+
+## upsonic.load_module
+
+This command is designed for loading an entire library with just one line. You only need to provide the `key`.
+
+<ParamField path="key" type="string">
+  The name of the library that you want to retrieve.
+</ParamField>
+
+
+
+```python
+math = upsonic.load_module("math")
+math.sum(1, 2)
+
+random = upsonic.load_module("random")
+
+random.Random().random()
+```
