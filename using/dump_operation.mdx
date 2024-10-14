@@ -1,0 +1,55 @@
+---
+title: Dump Operation
+icon: "file-export"
+iconType: "solid"
+---
+
+
+The dump functions are the initial step in using Upsonic. These functions serialize and prepare the data, sending it to the Upsonic Server system.
+
+
+To get started, you will need:
+
+- Implemented [connection code](/client/getting_started/connection)
+
+
+
+## upsonic.dump
+
+This function is used for dumping a singular item to Upsonic. With this, you can dump a Function, Class, Object, or any Variable. You just need to provide a name with the `key` parameter and assign the element with the `value` parameter.
+
+<ParamField path="key" type="string">
+  The virtual and freely chosen path for your dumped value.
+</ParamField>
+<ParamField path="value" type="any_python_thing">
+  The value that you want to dump.
+</ParamField>
+
+
+```python
+def sum(a, b):
+    return a + b
+
+upsonic.dump("math.sum", sum)
+```
+<Info>You can include any class just as it is; no changes are required.</Info>
+
+
+
+## upsonic.dump_module
+
+This command is designed to dump an entire library with just one line. You can use it to dump a folder containing your existing library. You only need to provide a 'key' and the 'module' as its 'value' .
+
+<ParamField path="key" type="string">
+  The name you want to use in load operations.
+</ParamField>
+<ParamField path="value" type="module">
+  The module that you want to dump, including all its contents.
+</ParamField>
+
+
+```python
+import random
+
+upsonic.dump_module("random", random)
+```
