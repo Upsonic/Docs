@@ -1,0 +1,26 @@
+In this tutorial we will send a function to Upsonic Server. In Upsonic you are able to send any kind of function but in this example we will send the basic function to demonstrate.
+
+# 1) Install Upsonic Python SDK
+First of all we need to install Upsonic, you can do it via:
+
+```console
+pip3 install upsonic
+```
+
+# 2) Connect to Upsonic
+You can get the credential in this code via your Upsonic Server `Home` page.
+
+```python
+from upsonic import UpsonicOnPrem
+upsonic = UpsonicOnPrem('https://********', '*****')
+```
+
+# 3) Send Your First function
+
+```python
+def sum(a, b):
+    return a + b
+
+upsonic.dump("math.basics.sum", sum)
+```
+
