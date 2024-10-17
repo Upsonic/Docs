@@ -1,0 +1,26 @@
+The first question after first function sending is: "So, how can i update it?". 
+
+# 1) Updating an Function Inside of Upsonic
+Just write the new version of function and redump it. Its will update the function and it will effect all clients that use standart `upsonic.load` and `upsonic.load_module` functions.
+
+<Info>
+But if you create an version and giving `version=*.*.*` parameter in the load functions they wont be effect. They are stable always.
+</Info>
+
+
+```python
+
+""" Old Function
+def sum(a, b):
+    return a + b
+"""
+
+# New Function
+def sum(a, b):
+    print("Calculating")
+    return a + b
+
+# Dump it again
+upsonic.dump("math.basics.sum", sum)
+```
+
