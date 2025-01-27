@@ -4,3 +4,84 @@ description: 'Build your first AI agent with Upsonic In under 2 Minute'
 icon: rocket
 ---
 
+## Build your first Upsonic Agent
+
+Let's create a simple agent that expert on our company and roled as Product Manager.
+
+Before we proceed, make sure you have `Upsonic` installed.
+If you haven't installed them yet, you can do so by following the [installation guide](/installation).
+
+Follow the steps below to get your sonics! 🦔
+
+
+
+<Steps>
+  <Step title="Creating Client">
+    Upsonic base on Server and Client architecture. In this example we will create an `localserver` to run our agent in our envinronment. This architecture helps you to be able to scale your agents.
+
+    ```python
+    from upsonic import UpsonicClient, ObjectResponse, Task, AgentConfiguration
+    from upsonic.client.tools import Search
+
+    # Create Client and and Set Configurations
+    client = UpsonicClient("localserver")
+
+    # Set OpenAI Configuration
+    client.set_config("OPENAI_API_KEY", "YOUR_API_KEY")
+
+    ```
+
+
+
+
+  </Step>
+
+  <Step title="Generate your First Task">
+    The task-centric structure important to create an programatic design in Agent systems. In Upsonic you can generate an task oriented structure with task **description**, **tools**, **context**, **knowledge bases** and etc. In this example we will give `Search` tools to our task. The agent will use the `Search` tool at the run time.
+
+
+
+    ```python
+
+    task1 = Task(
+      description="Research latest news in Anthropic and OpenAI", 
+      tools=[Search]
+    )
+    ```
+
+
+  </Step>
+
+  <Step title="Generate an Expert Agent of Our Company">
+    Upsonic have an **automatic characterization** mechanism. Its important to create agents that belongs on your company. Upsonic visit the `company_url`, read the `job_title` and `company_objective` and creates an **enhanced profile** for your agent.
+
+
+
+    ```python
+    product_manager_agent = AgentConfiguration(
+        job_title="Product Manager",
+        company_url="https://upsonic.ai",
+        company_objective="To build AI Agent framework that helps people get things done",
+    )
+    ```
+
+
+
+
+  </Step>
+
+  <Step title="Running the Task on Agent">
+    ```python
+    # Running the task
+    client.agent(product_manager_agent, task1)
+
+    # Getting the result from task1 object
+    result = task1.response
+    print(result)
+    ```
+
+
+
+
+  </Step>
+</Steps>
