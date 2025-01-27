@@ -13,8 +13,6 @@ If you haven't installed them yet, you can do so by following the [installation 
 
 Follow the steps below to get your sonics! 🦔
 
-
-
 <Steps>
   <Step title="Creating Client">
     Upsonic base on Server and Client architecture. In this example we will create an `localserver` to run our agent in our envinronment. This architecture helps you to be able to scale your agents.
@@ -30,16 +28,10 @@ Follow the steps below to get your sonics! 🦔
     client.set_config("OPENAI_API_KEY", "YOUR_API_KEY")
 
     ```
-
-
-
-
   </Step>
 
   <Step title="Generate your First Task">
     The task-centric structure important to create an programatic design in Agent systems. In Upsonic you can generate an task oriented structure with task **description**, **tools**, **context**, **knowledge bases** and etc. In this example we will give `Search` tools to our task. The agent will use the `Search` tool at the run time.
-
-
 
     ```python
 
@@ -48,14 +40,10 @@ Follow the steps below to get your sonics! 🦔
       tools=[Search]
     )
     ```
-
-
   </Step>
 
   <Step title="Generate an Expert Agent of Our Company">
     Upsonic have an **automatic characterization** mechanism. Its important to create agents that belongs on your company. Upsonic visit the `company_url`, read the `job_title` and `company_objective` and creates an **enhanced profile** for your agent.
-
-
 
     ```python
     product_manager_agent = AgentConfiguration(
@@ -64,10 +52,6 @@ Follow the steps below to get your sonics! 🦔
         company_objective="To build AI Agent framework that helps people get things done",
     )
     ```
-
-
-
-
   </Step>
 
   <Step title="Running the Task on Agent">
@@ -79,9 +63,32 @@ Follow the steps below to get your sonics! 🦔
     result = task1.response
     print(result)
     ```
-
-
-
-
   </Step>
 </Steps>
+
+## Connect Any MCP
+
+Upsonic framework, support to start and connect any MCP server for your purposes. Model Context Protocol servers are varously and maintain by companies and community. Upsonic support all MCP servers.
+
+* [List of mcp servers](https://glama.ai/mcp/servers?attributes=)
+
+At this step you need to use  `@client.mcp()` decorator to an class with **command**, **args** and **env.**&#x20;
+
+```python
+# Hackernews MCP Server
+
+@client.mcp()
+class HackerNewsMCP:
+    command = "uvx"
+    args = ["mcp-hn"]
+    # env = {"": ""}
+    
+ 
+# Creating Task with Tool 
+tools = [HackerNewsMCP]   
+
+task1 = Task(
+  description="Research latest news in Anthropic and OpenAI", 
+  tools=tools
+)}
+```
