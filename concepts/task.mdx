@@ -198,10 +198,10 @@ task1 = Task(
 
 ## Running Task on Direct LLM Call
 
-When you define your task its ready to action. You can choose the runtime (Agent or direct LLM call). If your task is short and don't have sub-steps. The agent side is just high cost of time and money. You dont need to sub tasks and characterization steps for some cases. You can positionate this feature for some tasks at your Agentic application logic.
+Once you've defined your task, you're all set to go. You can pick the runtime (Agent or direct LLM call). If your task is short and doesn't have possible sub-steps, the Agent side is just high cost in terms of time and money. You don't need to sub-task or characterize steps for some cases. You can position this feature for some tasks in your Agent application logic.
 
 ```python
-task1 = Task(description="Explain the World planet in the universe")
+task1 = Task(description="Describe planet Earth")
 
 client.call(task1) # Direct and fast way to complete task
 ```
@@ -209,18 +209,18 @@ client.call(task1) # Direct and fast way to complete task
 <Tip>
   Direct LLM Calls Support **<u>Tools</u>**
 
-  You dont need to cut your tools when you use Direct LLM Calls.
+  Don't sweat it—Direct LLM Calls takes care of all your tools. They'll work like agents, no sweat!
 </Tip>
 
 ## Running Task on Agent
 
-You can run the task on the characterized LLM's, Agents. This key concept, The Agents mean **specific** and **task focused** LLM's for your company. The Agent mechanism working with `AgentConfiguration` objects. This objects defining the code resources of character of Agent.&#x20;
+You can run the task on the characterized LLM agents. This key concept means that the agents are specific and task-focused LLM's for your company. The agent mechanism works with "AgentConfiguration" objects, which define the characterization of the agent. 
 
-You can view the details of Agent creation and custominization [from here](/agent).
+You can view the details of agent creation and customization here.
 
 <Steps>
   <Step title="Creating Agent">
-    To create an agent we will import the `AgentConfiguration` and make a basic custominization.
+    To create an agent, we're going to import the "AgentConfiguration" and make a basic customization.
 
     ```python
     from upsonic import AgentConfiguration
@@ -235,12 +235,12 @@ You can view the details of Agent creation and custominization [from here](/agen
 
   <Step title="Creating Task">
     ```python
-    task1 = Task(description="Make an deep analyze to history of chips")
+    task1 = Task(description="Make a deep analyze to history of chips")
     ```
   </Step>
 
   <Step title="Running Task with Agent">
-    In the client we have a function called `agent` with this we will give product\_manager\_agent and task1.
+    We've got a function called "agent" in the client that we'll use to give product_manager_agent and task1.
 
     ```python
     client.agent(product_manager_agent, task1)
@@ -252,12 +252,12 @@ You can view the details of Agent creation and custominization [from here](/agen
 
 ## Accessing to Task Results
 
-There is two way to run an task. **Direct LLM Call** or **Agent**. They are runners for running the Task and generating result. The runners can be work <u>parallel</u> or <u>clients can be multiple</u>. By the way, we choose to store result in the `Task` object itself. It will generate an controllable infrastructure for your purposes.
+There are two ways to run a task: direct LLM call or agent. They're runners for running the task and generating results. The runners can work in parallel or there can be multiple clients. We choose to store results in the Task object itself. This will generate an controllable infrastructure for your purposes.
 
-When you run the task. The results storing in the `Task.response`. You can get it directly.
+When you run the task, the results are stored in the Task.response. You can get it directly.
 
 ```python
-task1 = Task(description="Make an deep analyze to history of chips")
+task1 = Task(description="Make a deep analyze to history of chips")
 
 ## Run the task
 
@@ -272,7 +272,7 @@ print(response)
 ```
 
 <Tip>
-  If you specify an `response_format`, the task response will be an **<u>object</u>** of your Class.
+  Hey, just a heads-up: if you set a response_format, the task response will be an object of your class.
 
   ```python
   from upsonic import ObjectResponse
