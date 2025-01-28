@@ -121,8 +121,6 @@ task2 = Task(
   Upsonic framework explain the context to LLM for your purposes. Don't worry to share multiple contexts.
 </Info>
 
-
-
 ## Giving string as Context
 
 Tasks are the jobs that needs to complete. By the way, jobs have some variables like, url, name, person or topic. In first time we need to give an prompt and putting all to the prompt. This way seems cool. But not programmatic. You need to work with `f-strings` or `formats` and this disabling prompt management at the outside of your main flow.
@@ -133,14 +131,12 @@ In the context system we also support **str as context**. This provide an capabi
   Use this when you need to separate your description and contexts like city list. If you have a prompt that don't have variable. You don't need to use it.
 </Tip>
 
-
-
 ```python
 city = "New Yorg"
 
 task1 = Task(
   description="Find the resources in the city",
-  context=[city]
+  context=[city] # Adding city string as context
 )
 
 ```
@@ -149,35 +145,27 @@ And when you turn it to the production or you need to make it for different citi
 
 <Steps>
   <Step title="City List and Base Description">
-
-
     ```python
     cities = ["New Yorg", "San Fransisco", "San Jose"]
     base_description = "Find the resources in the city"
     ```
-
-
   </Step>
 
   <Step title="Creating a for loop">
-    ```
+    ```python
     tasks = []
 
     for city in cities:
       city_task = Task(
-        description=base_description,
-        context=[city]
+        description=base_description, # Setting description from base_description
+        context=[city] # Setting city string as context
       )
       tasks.append(city_task)
     ```
   </Step>
 </Steps>
 
-
-
 ## Running Task on Direct LLM Call
-
-
 
 ## Accessing to Task results
 
