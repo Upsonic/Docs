@@ -61,8 +61,6 @@ The tools are one of the most important think of Agents. The tools are an bridge
 
 The task can be in 2 format. First is Python function. You can write python functions as tool and use in Upsonic agents. The other format is Model Context Protocol (MCP) its general protocol for LLM tools. MCP tools can be base on Python, NodeJS and Docker. These tools developed by the Companies and Community. You can read more in [Tools](/tools) section.
 
-
-
 To connect an tool you can put the tool Class name inside a list and define as `tools` in the Task object.
 
 <Steps>
@@ -90,8 +88,6 @@ To connect an tool you can put the tool Class name inside a list and define as `
         command = "uvx"
         args = ["mcp-hn"]
     ```
-
-
   </Step>
 
   <Step title="Put to Task">
@@ -105,12 +101,8 @@ To connect an tool you can put the tool Class name inside a list and define as `
       tools=tools # Specify the tools list
     )
     ```
-
-
   </Step>
 </Steps>
-
-
 
 ## Creating Chain of Task
 
@@ -133,16 +125,62 @@ task2 = Task(
 
 ## Giving string as Context
 
+Tasks are the jobs that needs to complete. By the way, jobs have some variables like, url, name, person or topic. In first time we need to give an prompt and putting all to the prompt. This way seems cool. But not programmatic. You need to work with `f-strings` or `formats` and this disabling prompt management at the outside of your main flow.
+
+In the context system we also support **str as context**. This provide an capability to put your variables to outside of the prompt.
+
+<Tip>
+  Use this when you need to separate your description and contexts like city list. If you have a prompt that don't have variable. You don't need to use it.
+</Tip>
 
 
 
+```python
+city = "New Yorg"
+
+task1 = Task(
+  description="Find the resources in the city",
+  context=[city]
+)
+
+```
+
+And when you turn it to the production or you need to make it for different cities. You can use this way:
+
+<Steps>
+  <Step title="City List and Base Description">
 
 
+    ```python
+    cities = ["New Yorg", "San Fransisco", "San Jose"]
+    base_description = "Find the resources in the city"
+    ```
+
+
+  </Step>
+
+  <Step title="Creating a for loop">
+    ```
+    tasks = []
+
+    for city in cities:
+      city_task = Task(
+        description=base_description,
+        context=[city]
+      )
+      tasks.append(city_task)
+    ```
+  </Step>
+</Steps>
+
+
+
+## Running Task on Direct LLM Call
+
+
+
+## Accessing to Task results
 
 ## Giving Knowledge Base as Context
 
 ## Running Task on Agent
-
-## Running Task on Direct LLM Call
-
-## Accessing to Task results
