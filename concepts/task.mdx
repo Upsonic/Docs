@@ -4,3 +4,81 @@ description: 'Design your tasks in a crystal clear format.'
 icon: bullseye
 ---
 
+The tasks are define the job that we want to make done via agent. In Upsonic framework you can clearly define your task via `Task` class. The tasks can be run via agents or direct llm calls. As first of all your works, you need to define the task. Tasks are also have some parameters, `tools` and `context`. This definations helps you to build an comprehensive systems. With context, you can connect your task to another task or giving an knowledge base.
+
+
+
+**You dont need to create tasks as step of your job. Agent will automatically generate this steps.**
+
+
+
+We create this mechanism to be clear at the tasks. The other systems use interactions and non-task structures. This way create two problem; first, you cannot use the agents for varously tasks. In other way you need to use your agent for only one job. Second problem is non-programmatic situation. When you create an task. You have some dependencies like the website you reffered, the company you sad or the competitor. If you don't have systems like tasks. You need to define this things inside of your agent and like the first problem its creates an non-programmatic structure. You shouldn't create agents for every competitor analyses in a for loop.
+
+
+
+## Creating a Task
+
+Task class is belongs to `upsonic` so you can easily import. After the import you can define your task as task1, task2, task3 and more.&#x20;
+
+```python
+from upsonic import Task
+
+task1 = Task(description="Making an deep analyze for US history")
+```
+
+
+
+## Task Attributest
+
+The tasks are can be basic or complex by your aim. In the framework side we design to have onyl one parameter needed, description. Other parameters are Optional.
+
+| Attribute                    | Parameters        | Type                                               | Description                                                 |
+| ---------------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------------------- |
+| Description                  | `description`     | `str`                                              | A clear and concise statement of what the task.             |
+| Response Format *(Optional)* | `response_format` | `Optional[List[Union(BaseModal, ObjectResponse)]]` | Define the reponse that you expect.                         |
+| **Tools** *(Optional)*       | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The needed tools to complete the task.                      |
+| Context *(Optional)*         | `context`         | Optional\[List\[Union(Task, KnowledgeBase, str)]]  | The context that we want to agent while completing the task |
+
+## Response Format
+
+In Upsonic we support Pydantic BaseModel to define the requested result. With this you can get programmable results from agents. when you specify and response\_format the result will be object. With this object you can create an logic in your application.&#x20;
+
+If you need to get list of cities it will return a list string. So you can focus on the value, not to the way.
+
+<Note>
+  You can use **Pydantic** `BaseModel` instead of `ObjectReponse`. We made this wrapper to make it easy to understand.
+</Note>
+
+
+
+```python
+from upsonic import ObjectResponse
+
+class TravelResponse(ObjectResponse):
+  cities: str
+```
+
+```python
+task1 = Task(
+  description="Generate a plan to visit cities in Canada", 
+  reponse_format=TravelResponse # Specift the response format
+)
+```
+
+
+
+
+
+## Adding Tools to Task
+
+## Creating Chain of Task
+
+## Giving string as Context
+
+## Giving Knowledge Base as Context
+
+## Running Task on Agent
+
+## Running Task on Direct LLM Call
+
+## Accessing to Task results
