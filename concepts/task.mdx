@@ -181,15 +181,11 @@ client.call(task1) # Direct and fast way to complete task
   You dont need to cut your tools when you use Direct LLM Calls.
 </Tip>
 
-
-
 ## Running Task on Agent
 
 You can run the task on the characterized LLM's, Agents. This key concept, The Agents mean **specific** and **task focused** LLM's for your company. The Agent mechanism working with `AgentConfiguration` objects. This objects defining the code resources of character of Agent.&#x20;
 
 You can view the details of Agent creation and custominization [from here](/agent).
-
-
 
 <Steps>
   <Step title="Creating Agent">
@@ -223,10 +219,6 @@ You can view the details of Agent creation and custominization [from here](/agen
   </Step>
 </Steps>
 
-
-
-
-
 ## Accessing to Task Results
 
 There is two way to run an task. **Direct LLM Call** or **Agent**. They are runners for running the Task and generating result. The runners can be work <u>parallel</u> or <u>clients can be multiple</u>. By the way, we choose to store result in the `Task` object itself. It will generate an controllable infrastructure for your purposes.
@@ -248,12 +240,8 @@ result = task1.response
 print(response)
 ```
 
-
-
 <Tip>
   If you specify an `response_format`, the task response will be an **<u>object</u>** of your Class.
-
-
 
   ```python
   from upsonic import ObjectResponse
@@ -280,12 +268,45 @@ print(response)
   for i in result.cities:
     print(i)
   ```
-
-
 </Tip>
 
-
-
-
-
 ## Giving Knowledge Base as Context
+
+Your task actually limited to LLM model informations and if you run in agent, automatic characterization of Upsonic. But still we need to put some **<u>PDFs</u>**<u>, **Docs**, **Excels**</u> to task to complete the job. At this kind of requests we have an mechanism called `KnowledgeBase`. The KnowledgeBase mechanism is compatible with Context system. You can give the **one or multiple** knowledge base as context.
+
+You can see the supported files, options of <u>Knowledge Base System</u> [**from here**](/knowledge_base).
+
+
+
+<Steps>
+  <Step title="Define a KnowledgeBase">
+    In this example we will put an **PDF** and a **Web Link** to create an `KnowledgeBase`.
+
+
+
+    ```python
+    from upsonic import KnowledgeBase
+
+    firm_knowledge_base = KnowledgeBase(
+      files=["february_technical_tasks.pdf", "https://upsonic.ai"]
+    )
+    ```
+
+
+
+
+  </Step>
+
+  <Step title="Add as Context to Task">
+
+
+    ```python
+    task1 = Task(
+      description="Create a general technical report of this month.",
+      context=[firm_knowledge_base] # Adding firm_knowledge_base to task
+    )
+    ```
+
+
+  </Step>
+</Steps>
