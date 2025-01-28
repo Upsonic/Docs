@@ -114,7 +114,30 @@ To connect an tool you can put the tool Class name inside a list and define as `
 
 ## Creating Chain of Task
 
+Multiple tasks can handle more complex structures. This is important in comprehensive situations like creating an report after deep analyze. This tasks are enough complexity itself.  But the combination is our main aim. So, you can create a chain of `Task` .  You can connect task to another task via `context`.
+
+```python
+task1 = Task(description="Make an deep analyze to history of chips")
+
+task2 = Task(
+  description="Draft an report for Europe position.", 
+  context=[task1] # Add task1 in a list as task context
+)}
+```
+
+<Info>
+  Upsonic framework explain the context to LLM for your purposes. Don't worry to share multiple contexts.
+</Info>
+
+
+
 ## Giving string as Context
+
+
+
+
+
+
 
 ## Giving Knowledge Base as Context
 
