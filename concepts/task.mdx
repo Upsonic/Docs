@@ -4,45 +4,45 @@ description: 'Design your tasks in a crystal clear format.'
 icon: bullseye
 ---
 
-The tasks are define the job that we want to make done via agent. In Upsonic framework you can clearly define your task via `Task` class. The tasks can be run via agents or direct llm calls. As first of all your works, you need to define the task. Tasks are also have some parameters, `tools` and `context`. This definations helps you to build an comprehensive systems. With context, you can connect your task to another task or giving an knowledge base.
+In the Upsonic framework, you can use the Task class to define your tasks. You can run tasks via agents or direct LLM calls. First, you need to define your tasks. Tasks also have some parameters, tools, and context. These definitions help you build comprehensive systems. With the context, you can link your task to another one or connect it to a knowledge base or a string.
 
-**You dont need to create tasks as step of your job. Agent will automatically generate this steps.**
+**You don't have to create tasks like steps. The agent will automatically generate these steps for you.**
 
-We create this mechanism to be clear at the tasks. The other systems use interactions and non-task structures. This way create two problem; first, you cannot use the agents for varously tasks. In other way you need to use your agent for only one job. Second problem is non-programmatic situation. When you create an task. You have some dependencies like the website you reffered, the company you sad or the competitor. If you don't have systems like tasks. You need to define this things inside of your agent and like the first problem its creates an non-programmatic structure. You shouldn't create agents for every competitor analyses in a for loop.
+We made this tool so you'd have a clear understanding of the tasks.Other systems use non-task structures, and these systems have two problems.First, you can't use one agent for multiple tasks—in other words, you have to use one agent for only one task.The second problem is the lack of programmability.When you create a task, there are some dependencies, such as the website you referenced, the company you mentioned, or the competitor. You have to define these things inside your agent, and like the first problem, this creates an non-programmatic structure.You shouldn't create agents for every competitor analysis in a for loop.
 
 ## Creating a Task
 
-Task class is belongs to `upsonic` so you can easily import. After the import you can define your task as task1, task2, task3 and more.&#x20;
+The Task class is part of the upsonic, so it's pretty easy to import it. After the import, you can define tasks as "task1," "task2," "task3," and more.
 
 ```python
 from upsonic import Task
 
-task1 = Task(description="Making an deep analyze for US history")
+task1 = Task(description="Do an in-depth analysis of US history")
 ```
 
 ## Task Attributest
 
-The tasks are can be basic or complex by your aim. In the framework side we design to have **only** one parameter needed, description. Other parameters are Optional.
+The tasks can be basic or complex, depending on your goal. On the framework side, we design to have only one parameter needed: description. The other parameters are optional.
 
 | Attribute                    | Parameters        | Type                                               | Description                                                 |
 | ---------------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------------------- |
 | Description                  | `description`     | `str`                                              | A clear and concise statement of what the task.             |
-| Response Format *(Optional)* | `response_format` | `Optional[List[Union(BaseModal, ObjectResponse)]]` | Define the reponse that you expect.                         |
-| Tools *(Optional)*           | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The needed tools to complete the task.                      |
-| Context *(Optional)*         | `context`         | `Optional[List[Union(Task, KnowledgeBase, str)]]`  | The context that we want to agent while completing the task |
+| Response Format *(Optional)* | `response_format` | `Optional[List[Union(BaseModal, ObjectResponse)]]` | Describe the response you expect.                         |
+| Tools *(Optional)*           | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The tools needed to complete the task.                      |
+| Context *(Optional)*         | `context`         | `Optional[List[Union(Task, KnowledgeBase, str)]]`  | Context that helps accomplish the task |
 
 
-## Adding Tools to Task
+## Adding Tools to a Task
 
-The tools are one of the most important think of Agents. The tools are an bridge with LLM and the real world items. That can be an API, a service or an search engine query. In Upsonic we support variously.
+Tools are a huge part of what agents do. They connect LLM with real-life items. Some examples are APIs, services, and search engines.
 
-The task can be in 2 format. First is Python function. You can write python functions as tool and use in Upsonic agents. The other format is Model Context Protocol (MCP) its general protocol for LLM tools. MCP tools can be base on Python, NodeJS and Docker. These tools developed by the Companies and Community. You can read more in [Tools](/tools) section.
+The tool can be in two type. First, you can use a Python function as a tool and use it in Upsonic agents. The other way is with Model Context Protocol (MCP), which is a general protocol for LLM tools. MCP tools can be based on Python, Node.js, and Docker. MCP tools are developed by companies and the community. You can read more in the "Tools" section.
 
-To connect an tool you can put the tool Class name inside a list and define as `tools` in the Task object.
+If you want to connect a tool, just put the tool's class name in a list and define it as "tools" in the Task object.
 
 <Steps>
   <Step title="Function Tools">
-    Now we will define a class called `MyTools` and we will put an `is_page_available` function. This function returns True if the given url accessible.
+    So, first we're going to define a class called MyTools and add an is_page_available function. This function will return true if the given URL is accessible.
 
     ```python
     import requests
@@ -57,7 +57,7 @@ To connect an tool you can put the tool Class name inside a list and define as `
   </Step>
 
   <Step title="MCP Tools">
-    In this example we will use the [HackerNews MCP Server](https://glama.ai/mcp/servers/e0rco8dfgt). Its provide `get_stories`, `get_story_info`, `search_stories`, and `get_user_info` functions itself. As you can see with MCP we can connect our agents to out services easily.
+    In this example, we're going to use the [HackerNews MCP Server](https://glama.ai/mcp/servers/e0rco8dfgt). It provides functions like get_stories, get_story_info, search_stories, and get_user_info. As you can see, with MCP, we can connect our agents to our services easily.
 
     ```python
     @client.mcp()
@@ -68,7 +68,7 @@ To connect an tool you can put the tool Class name inside a list and define as `
   </Step>
 
   <Step title="Put to Task">
-    After creating these kind tools for your purposes, you can put to Task object directly. The agent will use these tools at required points.
+    After you connect these tools for your own use, you can put them to Task object directly. The agent will use these tools when needed.
 
     ```python
     tools = [Search, MyTools]
@@ -83,30 +83,31 @@ To connect an tool you can put the tool Class name inside a list and define as `
 
 ## Putting Task to Another Task as Context
 
-Multiple tasks can handle more complex structures. This is important in comprehensive situations like creating an report after deep analyze. This tasks are enough complexity itself.  But the combination is our main aim. So, you can create a chain of `Task` .  You can connect task to another task via `context`.
+You can use multiple tasks to handle more complex structures, which is really important in situations where you need to create a report after doing a deep analysis. These tasks are complex enough on their own, but combining them is our main goal in the example. So, you can create a chain of tasks and connect them via context.
+
 
 ```python
-task1 = Task(description="Make an deep analyze to history of chips")
+task1 = Task(description="Do an in-depth analysis of the history of chips")
 
 task2 = Task(
-  description="Draft an report for Europe position.", 
+  description="Prepare a draft report on Europe's position", 
   context=[task1] # Add task1 in a list as task context
 )}
 ```
 
 <Info>
-  Upsonic framework explain the context to LLM for your purposes. Don't worry to share multiple contexts.
+  The Upsonic framework explains the context to the LLM for your purposes. You don't have to worry about sharing multiple contexts.
 </Info>
 
 ## Giving Knowledge Base as Context
 
-Your task actually limited to LLM model informations and if you run in agent, automatic characterization of Upsonic. But still we need to put some **<u>PDFs</u>**<u>, **Docs**, **Excels**</u> to task to complete the job. At this kind of requests we have an mechanism called `KnowledgeBase`. The KnowledgeBase mechanism is compatible with Context system. You can give the **one or multiple** knowledge base as context.
+Your job is limited to the info on the LLM model. At some cases you need to attach some PDFs, docs, and spreadsheets to the task to finish it. For stuff like this, we've got this thing called the KnowledgeBase. It works with the Context system.
 
-You can see the supported files, options of <u>Knowledge Base System</u> [**from here**](/knowledge_base).
+You can see the supported files and options of the <u>Knowledge Base System</u> [**from here**](/knowledge_base).
 
 <Steps>
   <Step title="Define a KnowledgeBase">
-    In this example we will put an **PDF** and a **Web Link** to create an `KnowledgeBase`.
+    In this example, we'll use a PDF and a web link to make a knowledge base.
 
     ```python
     from upsonic import KnowledgeBase
@@ -120,7 +121,7 @@ You can see the supported files, options of <u>Knowledge Base System</u> [**from
   <Step title="Add as Context to Task">
     ```python
     task1 = Task(
-      description="Create a general technical report of this month.",
+      description="Create this month's overall technical report.",
       context=[firm_knowledge_base] # Adding firm_knowledge_base to task
     )
     ```
@@ -129,31 +130,31 @@ You can see the supported files, options of <u>Knowledge Base System</u> [**from
 
 ## Giving string as Context
 
-Tasks are the jobs that needs to complete. By the way, jobs have some variables like, url, name, person or topic. In first time we need to give an prompt and putting all to the prompt. This way seems cool. But not programmatic. You need to work with `f-strings` or `formats` and this disabling prompt management at the outside of your main flow.
+Tasks are the things you need to get done. Task descriptions could have some variables, like a URL, name, person, or topic. At first way, we need to give all this stuffs in a a prompt. This way isn't programmatic. You need to work with f-strings or formats, and this disables prompt management outside of your main flow.
 
 In the context system we also support **str as context**. This provide an capability to put your variables to outside of the prompt.
 
 <Tip>
-  Use this when you need to separate your description and contexts like city list. If you have a prompt that don't have variable. You don't need to use it.
+  Use this when you need to separate your prompt and variable, like in a city list. You don't need to use it if your prompt doesn't have variables.
 </Tip>
 
 ```python
 city = "New Yorg"
 
 task1 = Task(
-  description="Find the resources in the city",
+  description="Find resources in the city",
   context=[city] # Adding city string as context
 )
 
 ```
 
-And when you turn it to the production or you need to make it for different cities. You can use this way:
+When you need to create task for different cities, you can use this method:
 
 <Steps>
   <Step title="City List and Base Description">
     ```python
     cities = ["New Yorg", "San Fransisco", "San Jose"]
-    base_description = "Find the resources in the city"
+    base_description = "Find resources in the city"
     ```
   </Step>
 
@@ -173,12 +174,12 @@ And when you turn it to the production or you need to make it for different citi
 
 ## Response Format
 
-In Upsonic we support Pydantic BaseModel to define the requested result. With this you can get programmable results from agents. when you specify and response\_format the result will be object. With this object you can create an logic in your application.&#x20;
+In Upsonic we are compatible with Pydantic BaseModel to define the requested result. This lets you get programmable results from agents. When you specify the response format, the result will be an object. You can then use this object to create logic in your application.
 
-If you need to get list of cities it will return a list string. So you can focus on the value, not to the way.
+If you need a list of cities, it'll give you a list of strings that include cities. So you can focus on the value instead of the way.
 
 <Note>
-  You can use **Pydantic** `BaseModel` instead of `ObjectReponse`. We made this wrapper to make it easy to understand.
+  You can use Pydantic's BaseModel instead of ObjectResponse. We created this wrapper to make it easier to understand.
 </Note>
 
 ```python
@@ -190,8 +191,8 @@ class TravelResponse(ObjectResponse):
 
 ```python
 task1 = Task(
-  description="Generate a plan to visit cities in Canada", 
-  reponse_format=TravelResponse # Specift the response format
+  description="Create a plan to visit cities in Canada", 
+  reponse_format=TravelResponse # Specify the response format
 )
 ```
 
