@@ -31,29 +31,6 @@ The tasks are can be basic or complex by your aim. In the framework side we desi
 | Tools *(Optional)*           | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The needed tools to complete the task.                      |
 | Context *(Optional)*         | `context`         | `Optional[List[Union(Task, KnowledgeBase, str)]]`  | The context that we want to agent while completing the task |
 
-## Response Format
-
-In Upsonic we support Pydantic BaseModel to define the requested result. With this you can get programmable results from agents. when you specify and response\_format the result will be object. With this object you can create an logic in your application.&#x20;
-
-If you need to get list of cities it will return a list string. So you can focus on the value, not to the way.
-
-<Note>
-  You can use **Pydantic** `BaseModel` instead of `ObjectReponse`. We made this wrapper to make it easy to understand.
-</Note>
-
-```python
-from upsonic import ObjectResponse
-
-class TravelResponse(ObjectResponse):
-  cities: str
-```
-
-```python
-task1 = Task(
-  description="Generate a plan to visit cities in Canada", 
-  reponse_format=TravelResponse # Specift the response format
-)
-```
 
 ## Adding Tools to Task
 
@@ -104,7 +81,7 @@ To connect an tool you can put the tool Class name inside a list and define as `
   </Step>
 </Steps>
 
-## Creating Chain of Task
+## Putting Task to Another Task Context
 
 Multiple tasks can handle more complex structures. This is important in comprehensive situations like creating an report after deep analyze. This tasks are enough complexity itself.  But the combination is our main aim. So, you can create a chain of `Task` .  You can connect task to another task via `context`.
 
@@ -120,6 +97,35 @@ task2 = Task(
 <Info>
   Upsonic framework explain the context to LLM for your purposes. Don't worry to share multiple contexts.
 </Info>
+
+## Giving Knowledge Base as Context
+
+Your task actually limited to LLM model informations and if you run in agent, automatic characterization of Upsonic. But still we need to put some **<u>PDFs</u>**<u>, **Docs**, **Excels**</u> to task to complete the job. At this kind of requests we have an mechanism called `KnowledgeBase`. The KnowledgeBase mechanism is compatible with Context system. You can give the **one or multiple** knowledge base as context.
+
+You can see the supported files, options of <u>Knowledge Base System</u> [**from here**](/knowledge_base).
+
+<Steps>
+  <Step title="Define a KnowledgeBase">
+    In this example we will put an **PDF** and a **Web Link** to create an `KnowledgeBase`.
+
+    ```python
+    from upsonic import KnowledgeBase
+
+    firm_knowledge_base = KnowledgeBase(
+      files=["february_technical_tasks.pdf", "https://upsonic.ai"]
+    )
+    ```
+  </Step>
+
+  <Step title="Add as Context to Task">
+    ```python
+    task1 = Task(
+      description="Create a general technical report of this month.",
+      context=[firm_knowledge_base] # Adding firm_knowledge_base to task
+    )
+    ```
+  </Step>
+</Steps>
 
 ## Giving string as Context
 
@@ -164,6 +170,30 @@ And when you turn it to the production or you need to make it for different citi
     ```
   </Step>
 </Steps>
+
+## Response Format
+
+In Upsonic we support Pydantic BaseModel to define the requested result. With this you can get programmable results from agents. when you specify and response\_format the result will be object. With this object you can create an logic in your application.&#x20;
+
+If you need to get list of cities it will return a list string. So you can focus on the value, not to the way.
+
+<Note>
+  You can use **Pydantic** `BaseModel` instead of `ObjectReponse`. We made this wrapper to make it easy to understand.
+</Note>
+
+```python
+from upsonic import ObjectResponse
+
+class TravelResponse(ObjectResponse):
+  cities: str
+```
+
+```python
+task1 = Task(
+  description="Generate a plan to visit cities in Canada", 
+  reponse_format=TravelResponse # Specift the response format
+)
+```
 
 ## Running Task on Direct LLM Call
 
@@ -270,43 +300,3 @@ print(response)
   ```
 </Tip>
 
-## Giving Knowledge Base as Context
-
-Your task actually limited to LLM model informations and if you run in agent, automatic characterization of Upsonic. But still we need to put some **<u>PDFs</u>**<u>, **Docs**, **Excels**</u> to task to complete the job. At this kind of requests we have an mechanism called `KnowledgeBase`. The KnowledgeBase mechanism is compatible with Context system. You can give the **one or multiple** knowledge base as context.
-
-You can see the supported files, options of <u>Knowledge Base System</u> [**from here**](/knowledge_base).
-
-
-
-<Steps>
-  <Step title="Define a KnowledgeBase">
-    In this example we will put an **PDF** and a **Web Link** to create an `KnowledgeBase`.
-
-
-
-    ```python
-    from upsonic import KnowledgeBase
-
-    firm_knowledge_base = KnowledgeBase(
-      files=["february_technical_tasks.pdf", "https://upsonic.ai"]
-    )
-    ```
-
-
-
-
-  </Step>
-
-  <Step title="Add as Context to Task">
-
-
-    ```python
-    task1 = Task(
-      description="Create a general technical report of this month.",
-      context=[firm_knowledge_base] # Adding firm_knowledge_base to task
-    )
-    ```
-
-
-  </Step>
-</Steps>
