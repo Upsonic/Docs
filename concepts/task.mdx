@@ -57,6 +57,61 @@ task1 = Task(
 
 ## Adding Tools to Task
 
+The tools are one of the most important think of Agents. The tools are an bridge with LLM and the real world items. That can be an API, a service or an search engine query. In Upsonic we support variously.
+
+The task can be in 2 format. First is Python function. You can write python functions as tool and use in Upsonic agents. The other format is Model Context Protocol (MCP) its general protocol for LLM tools. MCP tools can be base on Python, NodeJS and Docker. These tools developed by the Companies and Community. You can read more in [Tools](/tools) section.
+
+
+
+To connect an tool you can put the tool Class name inside a list and define as `tools` in the Task object.
+
+<Steps>
+  <Step title="Function Tools">
+    Now we will define a class called `MyTools` and we will put an `is_page_available` function. This function returns True if the given url accessible.
+
+    ```python
+    import requests
+
+    @client.tool()
+    class MyTools:
+
+      def is_page_available(url: str) -> bool:
+          return requests.get(url).status_code == 200
+
+    ```
+  </Step>
+
+  <Step title="MCP Tools">
+    In this example we will use the [HackerNews MCP Server](https://glama.ai/mcp/servers/e0rco8dfgt). Its provide `get_stories`, `get_story_info`, `search_stories`, and `get_user_info` functions itself. As you can see with MCP we can connect our agents to out services easily.
+
+    ```python
+    @client.mcp()
+    class HackerNewsMCP:
+        command = "uvx"
+        args = ["mcp-hn"]
+    ```
+
+
+  </Step>
+
+  <Step title="Put to Task">
+    After creating these kind tools for your purposes, you can put to Task object directly. The agent will use these tools at required points.
+
+    ```python
+    tools = [Search, MyTools]
+
+    task1 = Task(
+      description="Summarize the latest hackernews stories of today", 
+      tools=tools # Specify the tools list
+    )
+    ```
+
+
+  </Step>
+</Steps>
+
+
+
 ## Creating Chain of Task
 
 ## Giving string as Context
