@@ -4,15 +4,15 @@ description: 'Design your tasks in a crystal clear format.'
 icon: bullseye
 ---
 
-In the Upsonic framework, you can use the Task class to define your tasks. You can run tasks via agents or direct LLM calls. First, you need to define your tasks. Tasks also have some parameters, tools, and context. These definitions help you build comprehensive systems. With the context, you can link your task to another one or connect it to a knowledge base or a string.
+The Upsonic framework employs the Task class as its fundamental building block for defining and executing tasks, whether through agents or direct LLM calls. Tasks can be configured with various parameters, tools, and contextual elements, enabling the construction of comprehensive systems. Through context management, you can establish connections between tasks, link them to knowledge bases, or associate them with string values.
 
 **You don't have to create tasks like steps. The agent will automatically generate these steps for you.**
 
-We made this tool so you'd have a clear understanding of the tasks.Other systems use non-task structures, and these systems have two problems.First, you can't use one agent for multiple tasks—in other words, you have to use one agent for only one task.The second problem is the lack of programmability.When you create a task, there are some dependencies, such as the website you referenced, the company you mentioned, or the competitor. You have to define these things inside your agent, and like the first problem, this creates an non-programmatic structure.You shouldn't create agents for every competitor analysis in a for loop.
+Unlike other systems that employ non-task structures, Upsonic addresses two critical limitations commonly found in alternative solutions. First, it eliminates the restriction of binding one agent to a single task, allowing agents to handle multiple tasks efficiently. Second, it significantly improves programmability. When creating tasks that involve dependencies—such as referenced websites, company information, or competitor data—Upsonic enables you to define these elements programmatically rather than embedding them within individual agents. This approach prevents the need to create separate agents for repetitive operations like competitor analysis, resulting in a more scalable and maintainable system architecture.
 
 ## Creating a Task
 
-The Task class is part of the upsonic, so it's pretty easy to import it. After the import, you can define tasks as "task1," "task2," "task3," and more.
+The Task class is an integral component of Upsonic and can be easily imported into your project. Once imported, you can define multiple tasks by assigning them identifiers such as "task1," "task2," "task3," or any other descriptive names of your choice.
 
 ```python
 from upsonic import Task
@@ -22,7 +22,7 @@ task1 = Task(description="Do an in-depth analysis of US history")
 
 ## Task Attributest
 
-The tasks can be basic or complex, depending on your goal. On the framework side, we design to have only one parameter needed: description. The other parameters are optional.
+Tasks within the framework can range from basic to complex, depending on your specific requirements. The framework is designed with simplicity in mind, requiring only one mandatory parameter: the description. All other parameters are optional, providing flexibility in task configuration.
 
 | Attribute                    | Parameters        | Type                                               | Description                                                 |
 | ---------------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------------------- |
@@ -34,15 +34,15 @@ The tasks can be basic or complex, depending on your goal. On the framework side
 
 ## Adding Tools to a Task
 
-Tools are a huge part of what agents do. They connect LLM with real-life items. Some examples are APIs, services, and search engines.
+Tools play a crucial role in agent functionality by bridging the gap between LLMs and real-world applications such as APIs, services, and search engines. 
 
-The tool can be in two type. First, you can use a Python function as a tool and use it in Upsonic agents. The other way is with Model Context Protocol (MCP), which is a general protocol for LLM tools. MCP tools can be based on Python, Node.js, and Docker. MCP tools are developed by companies and the community. You can read more in the "Tools" section.
+The framework supports two distinct types of tool implementation. The first option allows you to utilize Python functions directly as tools within Upsonic agents. The second approach leverages the Model Context Protocol (MCP), a standardized protocol for LLM tools that supports multiple platforms including Python, Node.js, and Docker. MCP tools are continuously developed and maintained by both companies and the community, with detailed information available in the "Tools" section.
 
-If you want to connect a tool, just put the tool's class name in a list and define it as "tools" in the Task object.
+Integrating a tool into your task is straightforward: simply create a list containing the desired tool's class name and assign it to the "tools" parameter in the Task object.
 
 <Steps>
   <Step title="Function Tools">
-    So, first we're going to define a class called MyTools and add an is_page_available function. This function will return true if the given URL is accessible.
+    Let's define a class called MyTools that includes a function named is_page_available. This function will perform a simple URL validation check, returning True if the specified URL is accessible, making it useful for verifying web resources.
 
     ```python
     import requests
@@ -57,7 +57,7 @@ If you want to connect a tool, just put the tool's class name in a list and defi
   </Step>
 
   <Step title="MCP Tools">
-    In this example, we're going to use the [HackerNews MCP Server](https://glama.ai/mcp/servers/e0rco8dfgt). It provides functions like get_stories, get_story_info, search_stories, and get_user_info. As you can see, with MCP, we can connect our agents to our services easily.
+    This example demonstrates integration with the HackerNews MCP Server, which provides several functions including get_stories, get_story_info, search_stories, and get_user_info. The MCP framework simplifies the process of connecting our agents to external services, as illustrated by this HackerNews integration.
 
     ```python
     @client.mcp()
@@ -68,7 +68,7 @@ If you want to connect a tool, just put the tool's class name in a list and defi
   </Step>
 
   <Step title="Put to Task">
-    After you connect these tools for your own use, you can put them to Task object directly. The agent will use these tools when needed.
+    Once you've configured your custom tools, they can be directly incorporated into the Task object. The agent will then automatically utilize these tools as needed during task execution.
 
     ```python
     tools = [Search, MyTools]
@@ -83,7 +83,7 @@ If you want to connect a tool, just put the tool's class name in a list and defi
 
 ## Putting Task to Another Task as Context
 
-You can use multiple tasks to handle more complex structures, which is really important in situations where you need to create a report after doing a deep analysis. These tasks are complex enough on their own, but combining them is our main goal in the example. So, you can create a chain of tasks and connect them via context.
+The framework supports the combination of multiple tasks to handle complex operations, particularly useful in scenarios requiring deep analysis followed by report generation. While individual tasks may be complex, the true power lies in their interconnection. By creating task chains and linking them through shared context, you can build sophisticated workflows that seamlessly pass information between tasks.
 
 
 ```python
@@ -101,7 +101,7 @@ task2 = Task(
 
 ## Giving Knowledge Base as Context
 
-Your job is limited to the info on the LLM model. At some cases you need to attach some PDFs, docs, and spreadsheets to the task to finish it. For stuff like this, we've got this thing called the KnowledgeBase. It works with the Context system.
+The framework incorporates a robust KnowledgeBase feature designed to extend LLM models beyond their inherent knowledge limitations. While LLM models are constrained by their training data boundaries, real-world applications frequently demand access to external information sources such as PDFs, documents, and spreadsheets. Through seamless integration with the Context system, the KnowledgeBase feature enables you to efficiently incorporate these external data sources into your tasks, enhancing the model's capability to process and utilize supplementary information.
 
 You can see the supported files and options of the <u>Knowledge Base System</u> [**from here**](/knowledge_base).
 
@@ -130,7 +130,7 @@ You can see the supported files and options of the <u>Knowledge Base System</u> 
 
 ## Giving string as Context
 
-Tasks are the things you need to get done. Task descriptions could have some variables, like a URL, name, person, or topic. At first way, we need to give all this stuffs in a a prompt. This way isn't programmatic. You need to work with f-strings or formats, and this disables prompt management outside of your main flow.
+Tasks represent specific objectives that need to be accomplished within the system. These tasks often contain variable elements such as URLs, names, individuals, or topics. Traditionally, all these components would need to be incorporated directly into the prompt, resulting in a non-programmatic approach. This conventional method relies heavily on f-strings or format operations, which significantly limits prompt management capabilities and constrains it within the main execution flow.
 
 In the context system we also support **str as context**. This provide an capability to put your variables to outside of the prompt.
 
@@ -174,9 +174,9 @@ When you need to create task for different cities, you can use this method:
 
 ## Response Format
 
-In Upsonic we are compatible with Pydantic BaseModel to define the requested result. This lets you get programmable results from agents. When you specify the response format, the result will be an object. You can then use this object to create logic in your application.
+The Upsonic framework leverages Pydantic BaseModel compatibility for defining expected results, enabling programmatic handling of agent responses. By specifying a response format, the system returns structured objects rather than raw text, allowing for seamless integration and logic implementation within your application.
 
-If you need a list of cities, it'll give you a list of strings that include cities. So you can focus on the value instead of the way.
+For instance, when requesting a list of cities, the system returns a structured list of strings containing city names. This approach emphasizes value-oriented development by abstracting away the implementation details, allowing developers to focus on utilizing the data rather than managing its format and parsing.
 
 <Note>
   You can use Pydantic's BaseModel instead of ObjectResponse. We created this wrapper to make it easier to understand.
@@ -198,7 +198,9 @@ task1 = Task(
 
 ## Running Task on Direct LLM Call
 
-Once you've defined your task, you're all set to go. You can pick the runtime (Agent or direct LLM call). If your task is short and doesn't have possible sub-steps, the Agent side is just high cost in terms of time and money. You don't need to sub-task or characterize steps for some cases. You can position this feature for some tasks in your Agent application logic.
+After task definition, you have the flexibility to choose between two runtime options: Agent execution or direct LLM calls. While Agents provide powerful capabilities for complex tasks, they may not always be the most efficient choice. For simple tasks without potential sub-steps, utilizing an Agent can result in unnecessary time and cost overhead.
+
+Direct LLM calls are particularly advantageous for straightforward operations that don't require sub-task generation or characterization. This runtime selection can be strategically implemented within your Agent application logic, allowing you to optimize performance and resource utilization based on task complexity.
 
 ```python
 task1 = Task(description="Describe planet Earth")
@@ -214,7 +216,9 @@ client.call(task1) # Direct and fast way to complete task
 
 ## Running Task on Agent
 
-You can run the task on the characterized LLM agents. This key concept means that the agents are specific and task-focused LLM's for your company. The agent mechanism works with "AgentConfiguration" objects, which define the characterization of the agent. 
+Tasks can be executed through characterized LLM agents, a key feature that enables specialized, task-focused LLM implementations tailored to your company's needs. The agent mechanism is governed by "AgentConfiguration" objects, which serve as the foundation for defining and customizing agent characteristics and behaviors.
+
+This characterization system allows for precise control over how agents process and respond to tasks, ensuring alignment with specific business requirements and objectives. Through these configurations, you can create purpose-built agents that maintain consistency and relevance in their operations while adhering to your organization's specific requirements.
 
 You can view the details of agent creation and customization here.
 
@@ -252,7 +256,9 @@ You can view the details of agent creation and customization here.
 
 ## Accessing to Task Results
 
-There are two ways to run a task: direct LLM call or agent. They're runners for running the task and generating results. The runners can work in parallel or there can be multiple clients. We choose to store results in the Task object itself. This will generate an controllable infrastructure for your purposes.
+Tasks can be executed through two distinct runners: direct LLM calls or agents. These runners serve as execution mechanisms for task processing and result generation, offering flexibility in implementation. The system supports both parallel processing and multi-client operations, enhancing scalability and performance.
+
+To maintain a controlled and organized infrastructure, all results are stored within the Task object itself. This architectural decision provides a centralized approach to result management, enabling better monitoring, access, and control over task outcomes. Such design creates a robust and manageable infrastructure that can be effectively tailored to your specific requirements.
 
 When you run the task, the results are stored in the Task.response. You can get it directly.
 
