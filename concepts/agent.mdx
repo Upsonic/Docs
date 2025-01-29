@@ -4,3 +4,42 @@ description: 'Generate agents that belongs to your company.'
 icon: user-ninja
 ---
 
+# Overview
+The Upsonic framework provides a configurable AgentConfiguration to complete tasks. Configuring agents means setting them up in a structure where they think as if they're working in a company and stay focused on tasks. Additionally, it automatically configures the agent's decision points and objectives according to their job title.
+
+
+AgentConfigurations are designed in a reusable structure. For example, in server analysis, you can deploy a software engineer agent and framework can select it to an task, thereby improving the overall system's performance.
+
+
+## Creating an Agent
+
+The AgentConfiguration class is crucial for efficient task execution. Therefore, time should be devoted to configuring this class, and tests should be conducted with different configurations.
+
+```python
+from upsonic import AgentConfiguration
+
+product_manager_agent = AgentConfiguration(
+    job_title="Product Manager",
+    company_url="https://upsonic.ai",
+    company_objective="Developing an AI Agent Framework",
+)
+```
+
+
+## Agent Attributest
+
+Agents have certain additional features to help or increase success while completing tasks. These can be directly and easily adjusted to expand the agent's capacity during the task process, which will improve the likelihood of completing the work you want the agent to do.
+
+| Attribute                    | Parameters        | Type                                               | Description                                                 |
+| ---------------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------------------- |
+| Description                  | `description`     | `str`                                              | A clear and concise statement of what the task.             |
+| Response Format *(Optional)* | `response_format` | `Optional[List[Union(BaseModal, ObjectResponse)]]` | Describe the response you expect.                         |
+| Tools *(Optional)*           | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The tools needed to complete the task.                      |
+| Context *(Optional)*         | `context`         | `Optional[List[Union(Task, KnowledgeBase, str)]]`  | Context that helps accomplish the task |
+
+
+
+
+
+
+
