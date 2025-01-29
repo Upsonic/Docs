@@ -1,4 +1,8 @@
-##
+---
+title: 'Agent'
+description: 'Generate agents that belongs to your company.'
+icon: user-ninja
+---
 
 # Overview
 
@@ -140,6 +144,16 @@ product_manager_agent = AgentConfiguration(
 )
 ```
 
-
-
 ## Reflection
+
+While performing tasks, agents may sometimes provide incorrect results momentarily or misunderstand the true purpose of the given task. In such cases, if the problematic sub-task is an important component, it can affect the stability of the entire system and the quality of results. Therefore, it's important for the agent to provide self-feedback on its work. The reflection feature does exactly this. It both monitors all of the agent's operations and focuses on helping the agent complete the task by providing feedback when necessary. Additionally, when used in situations where the agent doesn't provide sufficient results for the task, it can detect and correct this as well.
+
+```python
+product_manager_agent = AgentConfiguration(
+    reflection=True, # Enabling the reflection
+    
+    job_title="Marketing Manager",
+    company_url="https://upsonic.ai",
+    company_objective="To build AI Agent framework that helps people get things done"
+)
+```
