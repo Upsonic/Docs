@@ -5,11 +5,10 @@ icon: user-ninja
 ---
 
 # Overview
+
 The Upsonic framework provides a configurable AgentConfiguration to complete tasks. Configuring agents means setting them up in a structure where they think as if they're working in a company and stay focused on tasks. Additionally, it automatically configures the agent's decision points and objectives according to their job title.
 
-
 AgentConfigurations are designed in a reusable structure. For example, in server analysis, you can deploy a software engineer agent and framework can select it to an task, thereby improving the overall system's performance.
-
 
 ## Creating an Agent
 
@@ -25,21 +24,126 @@ product_manager_agent = AgentConfiguration(
 )
 ```
 
-
 ## Agent Attributest
 
 Agents have certain additional features to help or increase success while completing tasks. These can be directly and easily adjusted to expand the agent's capacity during the task process, which will improve the likelihood of completing the work you want the agent to do.
 
-| Attribute                    | Parameters        | Type                                               | Description                                                 |
-| ---------------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------------------- |
-| Description                  | `description`     | `str`                                              | A clear and concise statement of what the task.             |
-| Response Format *(Optional)* | `response_format` | `Optional[List[Union(BaseModal, ObjectResponse)]]` | Describe the response you expect.                         |
-| Tools *(Optional)*           | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The tools needed to complete the task.                      |
-| Context *(Optional)*         | `context`         | `Optional[List[Union(Task, KnowledgeBase, str)]]`  | Context that helps accomplish the task |
+| Attribute                       | Parameters          | Type      | Description                                                 |
+| ------------------------------- | ------------------- | --------- | ----------------------------------------------------------- |
+| job\_title                      | `job_title`         | `str`     | The job title of Agent.                                     |
+| company\_url *(Optional)*       | `company_url`       | `str`     | The url of your company                                     |
+| company\_objective *(Optional)* | `company_objective` | `str`     | The objective of your company                               |
+| Name *(Optional)*               | `name`              | `str`     | The name of the human that represent from Agent             |
+| Contact *(Optional)*            | `contact`           | `str`     | The contact info of the human that represent from Agent     |
+| Memory *(Optional)*             | `memory`            | `boolean` | The persistent memory by the agent id (Default: False)      |
+| Reflection *(Optional)*         | `reflection`        | `boolean` | Reflection mode for agent. (Default: False)                 |
+| Compress Context *(Optional)*   | `compress_context`  | `boolean` | Compress the context for LLM context lenght (Default: True) |
+
+# Act like an Human
+
+While performing certain tasks, due to the nature of LLM, the agent leaves some parts blank for humans to fill in. If you provide the LLM with a name and contact information, it will write complete texts as the given human user in tasks like writing emails.
+
+
+
+<Steps>
+  <Step title="Without Human Acting">
+    Here, we will create an agent who will be the marketing manager of the Upsonic company. Then, we will assign this agent an email writing task.
+
+
+
+    ```python Agent
+
+
+    # Generating Task and Agent
+    task1 = Task(description="Write an outreach mail", tools=[Search])
+
+    product_manager_agent = AgentConfiguration(
+        job_title="Marketing Manager",
+        company_url="https://upsonic.ai",
+        company_objective="To build AI Agent framework that helps people get things done",
+    )
+
+
+    # Run and see the result
+    client.agent(product_manager_agent, task1)
+
+    result = task1.response
+
+    print(result)
+    ```
+
+
+
+    And in the results section, we will see that the agent has left some parts empty for us to fill in, as if we were in a chat screen.
+
+
+
+    ```markdown Result
+    My name is [Your Name], and I’m a [Your Position] at [Your Company]. I wanted to reach out to introduce [Company Name], a trusted partner in delivering innovative, reliable, and customer-focused technology solutions tailored to your business needs.  
+
+    ****** MAIL Body
+
+    Thank you for considering this opportunity. I genuinely look forward to the possibility of working together and supporting your organization in achieving success.  
+
+    Warm regards,  
+    [Your Full Name]  
+    [Your Job Title]  
+    [Your Company Name]  
+    [Your Contact Information]  
+
+    ```
 
 
 
 
 
 
+  </Step>
 
+  <Step title="With Human Acting">
+    Now, we will enter a name and contact information for the agent, and as a result, it will not leave such empty spaces.
+
+
+
+    ```python New Agent
+
+    task1 = Task(description="Write an outreach mail", tools=[Search])
+
+    product_manager_agent = AgentConfiguration(
+        job_title="Marketing Manager",
+        company_url="https://upsonic.ai",
+        company_objective="To build AI Agent framework that helps people get things done",
+     
+        name="Onur ULUSOY",       # Now we have name and contact
+        contact="onur@upsonic.co"
+    )
+
+    # Run and see the result
+    client.agent(product_manager_agent, task1)
+
+    result = task1.response
+
+    print(result)
+    ```
+
+
+
+    ```markdown New Result
+
+    My name is Onur Ulusoy, and I am the Marketing Manager at Upsonic.ai. At Upsonic.ai, we are dedicated to helping businesses like yours harness the power of cutting-edge AI technology to address pain points, streamline operations, and achieve sustainable growth.  
+
+    ****** MAIL Body
+
+    Thank you for taking the time to consider Upsonic.ai. I’m confident we can help you unlock your organization’s true potential. Looking forward to hearing from you soon!  
+
+    Best regards,  
+    Onur Ulusoy  
+    Marketing Manager | Upsonic.ai  
+    onur@upsonic.co  
+    ```
+
+
+
+
+  </Step>
+</Steps>
