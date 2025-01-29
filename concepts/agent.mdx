@@ -6,13 +6,13 @@ icon: user-ninja
 
 # Overview
 
-The Upsonic framework provides a configurable AgentConfiguration to complete tasks. Configuring agents means setting them up in a structure where they think as if they're working in a company and stay focused on tasks. Additionally, it automatically configures the agent's decision points and objectives according to their job title.
+The Upsonic framework features a sophisticated AgentConfiguration system that optimizes task completion through structured agent setup. This configuration mechanism creates a simulated corporate environment where agents operate with defined roles and responsibilities, ensuring focused task execution. By leveraging job title parameters, the system automatically establishes appropriate decision-making frameworks and performance objectives for each agent, streamlining the workflow process.
 
-AgentConfigurations are designed in a reusable structure. For example, in server analysis, you can deploy a software engineer agent and framework can select it to an task, thereby improving the overall system's performance.
+AgentConfigurations implement a reusable architecture that enhances system efficiency and flexibility. For instance, in server analysis scenarios, you can deploy a software engineer agent that the framework can dynamically assign to relevant tasks. This modular approach not only promotes code reusability but also optimizes the overall system's performance through intelligent agent allocation.
 
 ## Creating an Agent
 
-The AgentConfiguration class is crucial for efficient task execution. Therefore, time should be devoted to configuring this class, and tests should be conducted with different configurations.
+The AgentConfiguration class serves as a fundamental component in ensuring optimal task execution within the system. Given its critical role, developers should allocate sufficient time to properly configure and fine-tune this class. Additionally, it is essential to conduct comprehensive testing across various configuration scenarios to validate performance and behavior under different operational conditions.
 
 ```python
 from upsonic import AgentConfiguration
@@ -26,7 +26,7 @@ product_manager_agent = AgentConfiguration(
 
 ## Agent Attributest
 
-Agents have certain additional features to help or increase success while completing tasks. These can be directly and easily adjusted to expand the agent's capacity during the task process, which will improve the likelihood of completing the work you want the agent to do.
+Agents are equipped with supplementary features designed to enhance their performance and increase success rates during task execution. These configurable capabilities can be dynamically adjusted throughout the task lifecycle, allowing for real-time optimization of the agent's processing capacity. By fine-tuning these features, users can significantly improve the probability of successful task completion while meeting specific operational requirements.
 
 | Attribute                       | Parameters          | Type      | Description                                                 |
 | ------------------------------- | ------------------- | --------- | ----------------------------------------------------------- |
@@ -41,11 +41,11 @@ Agents have certain additional features to help or increase success while comple
 
 ## Act like an Human
 
-While performing certain tasks, due to the nature of LLM, the agent leaves some parts blank for humans to fill in. If you provide the LLM with a name and contact information, it will write complete texts as the given human user in tasks like writing emails.
+During task execution, LLM-based agents may intentionally leave specific fields incomplete, requiring human input due to inherent LLM operational constraints. However, when provided with personal identifiers such as names and contact details, the system can generate fully personalized content. For example, in email composition tasks, the agent can authentically replicate a given user's and include appropriate signature information, creating more natural and contextually appropriate communications.
 
 <Steps>
   <Step title="Without Human Acting">
-    Here, we will create an agent who will be the marketing manager of the Upsonic company. Then, we will assign this agent an email writing task.
+    In this demonstration, we will configure an agent to function as Upsonic's marketing manager, showcasing the framework's role-specific capabilities. Subsequently, we will demonstrate practical implementation by assigning an email composition task to this specialized agent.
 
     ```python Agent
 
@@ -68,7 +68,7 @@ While performing certain tasks, due to the nature of LLM, the agent leaves some 
     print(result)
     ```
 
-    And in the results section, we will see that the agent has left some parts empty for us to fill in, as if we were in a chat screen.
+    In the output section, you will observe that the agent strategically leaves certain fields incomplete. This design needs human intervention and customization of critical content elements before finalization.
 
     ```markdown Result
     My name is [Your Name], and I’m a [Your Position] at [Your Company]. I wanted to reach out to introduce [Company Name], a trusted partner in delivering innovative, reliable, and customer-focused technology solutions tailored to your business needs.  
@@ -87,7 +87,7 @@ While performing certain tasks, due to the nature of LLM, the agent leaves some 
   </Step>
 
   <Step title="With Human Acting">
-    Now, we will enter a name and contact information for the agent, and as a result, it will not leave such empty spaces.
+    By inputting personal identifiers, including name and contact details, we can enhance the agent's functionality to generate complete, uninterrupted content. This configuration eliminates the need for manual field completion, enabling the agent to produce fully automated outputs without placeholder spaces.
 
     ```python New Agent
 
@@ -128,7 +128,7 @@ While performing certain tasks, due to the nature of LLM, the agent leaves some 
 
 ## Memory
 
-Memory is particularly important for agents that need to maintain a common context across different tasks at different times. The memory here is directly saved to disk and stored according to the agent's ID. If you want to provide memory, you need to define the ID yourself and maintain it across all agent definitions. This way, a persistent memory will be provided.
+Memory management plays a crucial role in maintaining contextual continuity across distributed tasks and timeframes for agent operations. The framework implements a disk-based persistence mechanism that associates memory storage with unique agent identifiers (IDs). To enable persistent memory functionality, developers must explicitly define and consistently maintain agent IDs across all agent definitions within their implementation.
 
 ```python
 
@@ -146,11 +146,25 @@ product_manager_agent = AgentConfiguration(
 
 ## Reflection
 
-While performing tasks, agents may sometimes provide incorrect results momentarily or misunderstand the true purpose of the given task. In such cases, if the problematic sub-task is an important component, it can affect the stability of the entire system and the quality of results. Therefore, it's important for the agent to provide self-feedback on its work. The reflection feature does exactly this. It both monitors all of the agent's operations and focuses on helping the agent complete the task by providing feedback when necessary. Additionally, when used in situations where the agent doesn't provide sufficient results for the task, it can detect and correct this as well.
+During task execution, agents may occasionally generate inaccurate results or misinterpret task objectives, which can significantly impact system stability and output quality, particularly when critical sub-tasks are involved. To address this challenge, the framework implements a sophisticated reflection feature that enables continuous self-monitoring and quality assurance.
 
 ```python
 product_manager_agent = AgentConfiguration(
     reflection=True, # Enabling the reflection
+    
+    job_title="Marketing Manager",
+    company_url="https://upsonic.ai",
+    company_objective="To build AI Agent framework that helps people get things done"
+)
+```
+
+## Compress Context
+
+One of the main limitations of LLMs is the Context Length Limit, which affects how much data the model can process at once when generating outputs. This directly impacts how well-referenced and accurate the results will be. The Upsonic framework handles this limitation by automatically summarizing resources when they exceed the context limit. When your input data is too large, the system compresses it while keeping the important information, allowing the LLM to continue functioning normally. This removes the need to manually calculate and manage context limits, letting you focus on your actual work.
+
+```python
+product_manager_agent = AgentConfiguration(
+    compress_context=True, # Enabling the Compress Context
     
     job_title="Marketing Manager",
     company_url="https://upsonic.ai",
