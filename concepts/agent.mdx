@@ -1,8 +1,4 @@
----
-title: 'Agent'
-description: 'Generate agents that belongs to your company.'
-icon: user-ninja
----
+##
 
 # Overview
 
@@ -39,17 +35,13 @@ Agents have certain additional features to help or increase success while comple
 | Reflection *(Optional)*         | `reflection`        | `boolean` | Reflection mode for agent. (Default: False)                 |
 | Compress Context *(Optional)*   | `compress_context`  | `boolean` | Compress the context for LLM context lenght (Default: True) |
 
-# Act like an Human
+## Act like an Human
 
 While performing certain tasks, due to the nature of LLM, the agent leaves some parts blank for humans to fill in. If you provide the LLM with a name and contact information, it will write complete texts as the given human user in tasks like writing emails.
-
-
 
 <Steps>
   <Step title="Without Human Acting">
     Here, we will create an agent who will be the marketing manager of the Upsonic company. Then, we will assign this agent an email writing task.
-
-
 
     ```python Agent
 
@@ -72,11 +64,7 @@ While performing certain tasks, due to the nature of LLM, the agent leaves some 
     print(result)
     ```
 
-
-
     And in the results section, we will see that the agent has left some parts empty for us to fill in, as if we were in a chat screen.
-
-
 
     ```markdown Result
     My name is [Your Name], and I’m a [Your Position] at [Your Company]. I wanted to reach out to introduce [Company Name], a trusted partner in delivering innovative, reliable, and customer-focused technology solutions tailored to your business needs.  
@@ -92,18 +80,10 @@ While performing certain tasks, due to the nature of LLM, the agent leaves some 
     [Your Contact Information]  
 
     ```
-
-
-
-
-
-
   </Step>
 
   <Step title="With Human Acting">
     Now, we will enter a name and contact information for the agent, and as a result, it will not leave such empty spaces.
-
-
 
     ```python New Agent
 
@@ -126,8 +106,6 @@ While performing certain tasks, due to the nature of LLM, the agent leaves some 
     print(result)
     ```
 
-
-
     ```markdown New Result
 
     My name is Onur Ulusoy, and I am the Marketing Manager at Upsonic.ai. At Upsonic.ai, we are dedicated to helping businesses like yours harness the power of cutting-edge AI technology to address pain points, streamline operations, and achieve sustainable growth.  
@@ -141,9 +119,27 @@ While performing certain tasks, due to the nature of LLM, the agent leaves some 
     Marketing Manager | Upsonic.ai  
     onur@upsonic.co  
     ```
-
-
-
-
   </Step>
 </Steps>
+
+## Memory
+
+Memory is particularly important for agents that need to maintain a common context across different tasks at different times. The memory here is directly saved to disk and stored according to the agent's ID. If you want to provide memory, you need to define the ID yourself and maintain it across all agent definitions. This way, a persistent memory will be provided.
+
+```python
+
+agent_id = "product_manager_agent" # Setting an agent id
+
+product_manager_agent = AgentConfiguration(
+    agent_id_=agent_id, # Setting agent id
+    memory=True, # Enabling the memory
+    
+    job_title="Marketing Manager",
+    company_url="https://upsonic.ai",
+    company_objective="To build AI Agent framework that helps people get things done"
+)
+```
+
+
+
+## Reflection
