@@ -10,12 +10,61 @@ The Upsonic framework leverages client-server architecture, offering significant
 
 Furthermore, the framework provides comprehensive operational management features, including seamless scaling of Agentic operations, robust error tracking mechanisms, and enhanced security through system isolation. These capabilities ensure reliable and secure execution of complex agent-based tasks while maintaining system integrity and performance optimization.
 
-
-
 ## Creating LocalServer
 
 The Upsonic framework has an automatic system to easily set up the client-server architecture locally. This way, you can safely and automatically use this architecture even on a small scale and easily complete your tasks. The LocalServer will start securely and shut down safely when agent operations are complete. Debugging and all other processes are managed compatibly within the client system.
 
+```python
+from upsonic import UpsonicClient, ClientConfig
+
+# Create Client
+client = UpsonicClient("localserver")
+```
+
+## Setting Configurations
+
+The Upsonic Framework offers comprehensive multi-provider support, enabling integration with various Large Language Model (LLM) providers and their associated configurations. Configuration management is streamlined through the ClientConfig class, which allows users to create a centralized configuration object. This object can store multiple API keys, model provider settings, and other essential parameters.
+
+Moreover, the framework provides flexibility in model selection through the DEFAULT\_LLM\_MODEL setting, allowing users to seamlessly switch between different language models based on their specific requirements. This adaptable architecture ensures that users can easily optimize their applications by selecting the most appropriate LLM provider and model configuration for their use case.
+
+<Tip>
+  The Upsonic framework implements intelligent configuration management by automatically checking environment variables when explicit configurations are not provided. For instance, if an OPENAI\_API\_KEY is present in the environment variables, the framework will automatically detect and utilize it without requiring manual configuration in ClientConfig.
 
 
 
+  This feature streamlines the setup process and provides additional flexibility in managing sensitive credentials. While the ClientConfig class offers manual configuration options, developers can leverage environment variables for credential management, adhering to security best practices and simplifying deployment across different environments.
+</Tip>
+
+
+
+```python
+my_settings = ClientConfig(
+    # OpenAI Config
+    OPENAI_API_KEY="sk-*****",
+    
+    # Anthropic Config
+    ANTHROPIC_API_KEY="sk-*****",
+    
+    # Azure OpenAI Config
+    AZURE_OPENAI_ENDPOINT="https://",
+    AZURE_OPENAI_API_VERSION="2024-06-01",
+    AZURE_OPENAI_API_KEY="*****",
+    
+    # AWS Config
+    AWS_ACCESS_KEY_ID="*****",
+    AWS_SECRET_ACCESS_KEY="*****",
+    AWS_REGION="us-east-2",
+    
+    # DeepSeek Config
+    DEEPSEEK_API_KEY="sk-*****",
+    
+    
+    # Model Selection
+    DEFAULT_LLM_MODEL="openai/gpt-4o",
+)
+
+
+
+client.config(my_settings)
+
+```
