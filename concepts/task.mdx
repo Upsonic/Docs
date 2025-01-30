@@ -1,10 +1,12 @@
 ---
-title: 'Task-Centric Structure'
-description: 'Design your tasks in a crystal clear format.'
-icon: bullseye
+title: "Task-Centric Structure"
+description: "Design your tasks in a crystal clear format."
+icon: "bullseye"
+sidebarTitle: "Task"
 ---
 
 ## Overview
+
 The Upsonic framework employs the Task class as its fundamental building block for defining and executing tasks, whether through agents or direct LLM calls. Tasks can be configured with various parameters, tools, and contextual elements, enabling the construction of comprehensive systems. Through context management, you can establish connections between tasks, link them to knowledge bases, or associate them with string values.
 
 **You don't have to create tasks like steps. The agent will automatically generate these steps for you.**
@@ -25,17 +27,16 @@ task1 = Task(description="Do an in-depth analysis of US history")
 
 Tasks within the framework can range from basic to complex, depending on your specific requirements. The framework is designed with simplicity in mind, requiring only one mandatory parameter: the description. All other parameters are optional, providing flexibility in task configuration.
 
-| Attribute                    | Parameters        | Type                                               | Description                                                 |
-| ---------------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------------------- |
-| Description                  | `description`     | `str`                                              | A clear and concise statement of what the task.             |
-| Response Format *(Optional)* | `response_format` | `Optional[List[Union(BaseModal, ObjectResponse)]]` | Describe the response you expect.                         |
-| Tools *(Optional)*           | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The tools needed to complete the task.                      |
-| Context *(Optional)*         | `context`         | `Optional[List[Union(Task, KnowledgeBase, str)]]`  | Context that helps accomplish the task |
-
+| Attribute                    | Parameters        | Type                                               | Description                                     |
+| ---------------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------- |
+| Description                  | `description`     | `str`                                              | A clear and concise statement of what the task. |
+| Response Format *(Optional)* | `response_format` | `Optional[List[Union(BaseModal, ObjectResponse)]]` | Describe the response you expect.               |
+| Tools *(Optional)*           | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The tools needed to complete the task.          |
+| Context *(Optional)*         | `context`         | `Optional[List[Union(Task, KnowledgeBase, str)]]`  | Context that helps accomplish the task          |
 
 ## Adding Tools to a Task
 
-Tools play a crucial role in agent functionality by bridging the gap between LLMs and real-world applications such as APIs, services, and search engines. 
+Tools play a crucial role in agent functionality by bridging the gap between LLMs and real-world applications such as APIs, services, and search engines.
 
 The framework supports two distinct types of tool implementation. The first option allows you to utilize Python functions directly as tools within Upsonic agents. The second approach leverages the Model Context Protocol (MCP), a standardized protocol for LLM tools that supports multiple platforms including Python, Node.js, and Docker. MCP tools are continuously developed and maintained by both companies and the community, with detailed information available in the "Tools" section.
 
@@ -43,7 +44,7 @@ Integrating a tool into your task is straightforward: simply create a list conta
 
 <Steps>
   <Step title="Function Tools">
-    Let's define a class called MyTools that includes a function named is_page_available. This function will perform a simple URL validation check, returning True if the specified URL is accessible, making it useful for verifying web resources.
+    Let's define a class called MyTools that includes a function named is\_page\_available. This function will perform a simple URL validation check, returning True if the specified URL is accessible, making it useful for verifying web resources.
 
     ```python
     import requests
@@ -58,7 +59,7 @@ Integrating a tool into your task is straightforward: simply create a list conta
   </Step>
 
   <Step title="MCP Tools">
-    This example demonstrates integration with the HackerNews MCP Server, which provides several functions including get_stories, get_story_info, search_stories, and get_user_info. The MCP framework simplifies the process of connecting our agents to external services, as illustrated by this HackerNews integration.
+    This example demonstrates integration with the HackerNews MCP Server, which provides several functions including get\_stories, get\_story\_info, search\_stories, and get\_user\_info. The MCP framework simplifies the process of connecting our agents to external services, as illustrated by this HackerNews integration.
 
     ```python
     @client.mcp()
@@ -85,7 +86,6 @@ Integrating a tool into your task is straightforward: simply create a list conta
 ## Putting Task to Another Task as Context
 
 The framework supports the combination of multiple tasks to handle complex operations, particularly useful in scenarios requiring deep analysis followed by report generation. While individual tasks may be complex, the true power lies in their interconnection. By creating task chains and linking them through shared context, you can build sophisticated workflows that seamlessly pass information between tasks.
-
 
 ```python
 task1 = Task(description="Do an in-depth analysis of the history of chips")
@@ -245,7 +245,7 @@ You can view the details of agent creation and customization here.
   </Step>
 
   <Step title="Running Task with Agent">
-    We've got a function called "agent" in the client that we'll use to give product_manager_agent and task1.
+    We've got a function called "agent" in the client that we'll use to give product\_manager\_agent and task1.
 
     ```python
     client.agent(product_manager_agent, task1)
@@ -279,7 +279,7 @@ print(response)
 ```
 
 <Tip>
-  Hey, just a heads-up: if you set a response_format, the task response will be an object of your class.
+  Hey, just a heads-up: if you set a response\_format, the task response will be an object of your class.
 
   ```python
   from upsonic import ObjectResponse
@@ -307,4 +307,3 @@ print(response)
     print(i)
   ```
 </Tip>
-
