@@ -1,5 +1,5 @@
 ---
-title: "Knowledge Base"
+title: "Knowledge"
 icon: "book"
 description: "Give the all required informations to LLM"
 ---
@@ -24,8 +24,6 @@ While both groups have their own advantages, LLM's search functionality is parti
   * Enhance decisions with real-world data
 </Info>
 
-
-
 ## Creating an Knowledge Base
 
 Knowledge base oluşturmak için doğrudan KnowledgeBase classını import etmek yeterlidir. Daha sonra bu klasa ait bir obje oluşturarak Task in içerisindeki context listesine ekleyeceğiz. KnowledgeBase contextin kullanılabldiği her yer ile uyumlu şekilde çalışır.
@@ -37,8 +35,6 @@ resume_list = KnowledgeBase(
   files=["resume1.pdf", "resume2.pdf"]
 )
 ```
-
-
 
 ## Put a Knowledge Base  into to Task
 
@@ -55,24 +51,40 @@ task1 = Task(
 
 ```
 
-
-
-
-
 ## Supported Formats
 
-| Files      | Other Formats |
-| ---------- | ------------- |
-| PDF        | STRING        |
-| PowerPoint |               |
-| Word       |               |
-| Excel      |               |
-| Images     |               |
-| Audio      |               |
-| HTML       |               |
-| CSV        |               |
-| JSON       |               |
-| XML        |               |
-| ZIP        |               |
+<CardGroup cols="2">
+  <Card title="Supported Files" icon="files">
+
+
+    * \- PDF
+
+    * \- PowerPoint
+
+    * \- Word
+
+    * \- Excel
+
+    * \- Images
+
+    * \- Audio
+
+    * \- HTML
+
+    * \- CSV
+
+    * \- JSON
+
+    * \- XML
+
+    * \- ZIP
+  </Card>
+
+  <Card title="Supported Variables" icon="code">
+
+
+    * \- STRING
+  </Card>
+</CardGroup>
 
 ##
