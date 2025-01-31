@@ -4,6 +4,27 @@ description: "Create an history for your agents"
 icon: "memory"
 ---
 
+## Overview
+
 Memory is crucial for agents to understand the flow of events and their causes. If you want your agent to be aware of the general application's progress, which can be beneficial in certain situations, you can activate Memory. Additionally, if you want your agent to maintain its context continuity even when the application is closed and reopened, persistent memory will solve this need.
 
 When you activate Memory, it saves the conversation history in the current directory based on your agent's ID. You can continue this by providing an agent ID while creating a new agent.
+
+## Enabling Memory
+
+To activate Memory, it is sufficient to set the memory parameter in the AgentConfiguration class to True and specify an agent ID. This way, the agent will persistently save the history and gain the opportunity to view events from a broader perspective.
+
+```python
+
+agent_id = "product_manager_agent" # Setting an agent id
+
+product_manager_agent = AgentConfiguration(
+    agent_id_=agent_id, # Setting agent id
+    memory=True, # Enabling the memory
+    
+    job_title="Marketing Manager",
+    company_url="https://upsonic.ai",
+    company_objective="To build AI Agent framework that helps people get things done"
+)
+
+```
