@@ -3,3 +3,76 @@ title: "Knowledge Base"
 icon: "book"
 description: "Give the all required informations to LLM"
 ---
+
+## What is Knowledeg Base?
+
+The Knowledge Base feature in the Upsonic framework serves as a critical component that supplies essential task-related data to the LLM during its analysis and processing operations. By providing relevant information to either task-performing agents or direct LLM calls, this feature significantly enhances the probability of successful task completion.
+
+A notable advantage of the Knowledge Base feature is its seamless integration with context compression, optimizing the handling of large datasets. The framework implements this functionality through two distinct types of knowledge bases 
+
+* The one that directly provides the data that needs to be kept and analyzed alongside each prompt.
+
+* Knowledge bases that exist as tools that the LLM can search when needed.
+
+While both groups have their own advantages, LLM's search functionality is particularly successful with large or unstructured data that requires reasoning. This is because the LLM can formulate its own queries, leading to more effective results than a user-defined query.
+
+<Info>
+  Key benefits of using Knowledge:
+
+  * Enhance agents for domain-specific situations
+
+  * Enhance decisions with real-world data
+</Info>
+
+
+
+## Creating an Knowledge Base
+
+Knowledge base oluşturmak için doğrudan KnowledgeBase classını import etmek yeterlidir. Daha sonra bu klasa ait bir obje oluşturarak Task in içerisindeki context listesine ekleyeceğiz. KnowledgeBase contextin kullanılabldiği her yer ile uyumlu şekilde çalışır.
+
+```python
+from upsonic import KnowledgeBase
+
+resume_list = KnowledgeBase(
+  files=["resume1.pdf", "resume2.pdf"]
+)
+```
+
+
+
+## Put a Knowledge Base  into to Task
+
+oluşturduğunuz KnowledeBase objesini kolaylıkla herhangi bir taskin context listesine ekelyebilrsiniz. Agent veyahut LLM bu contextleri iş yaparken değerlendirecektir.
+
+```python
+from upsonic import Task
+
+task1 = Task(
+  description="Summerize the resumes",
+
+  context=[resume_list] # Adding Knowledge Base to the task
+)
+
+```
+
+
+
+
+
+## Supported Formats
+
+| Files      | Other Formats |
+| ---------- | ------------- |
+| PDF        | STRING        |
+| PowerPoint |               |
+| Word       |               |
+| Excel      |               |
+| Images     |               |
+| Audio      |               |
+| HTML       |               |
+| CSV        |               |
+| JSON       |               |
+| XML        |               |
+| ZIP        |               |
+
+##
