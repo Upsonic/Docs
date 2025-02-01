@@ -18,7 +18,8 @@ The AgentConfiguration class serves as a fundamental component in ensuring optim
 from upsonic import Agent
 
 product_manager_agent = Agent(
-    job_title="Product Manager",
+    "Product Manager",
+
     company_url="https://upsonic.ai",
     company_objective="Developing an AI Agent Framework",
 )
@@ -54,7 +55,7 @@ During task execution, LLM-based agents may intentionally leave specific fields 
     task = Task(description="Write an outreach mail", tools=[Search])
 
     product_manager_agent = Agent(
-        job_title="Marketing Manager",
+        "Marketing Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
     )
@@ -94,7 +95,7 @@ During task execution, LLM-based agents may intentionally leave specific fields 
     task = Task(description="Write an outreach mail", tools=[Search])
 
     product_manager_agent = Agent(
-        job_title="Marketing Manager",
+        "Marketing Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
      
@@ -135,7 +136,7 @@ Memory management plays a crucial role in maintaining contextual continuity acro
 agent_id = "product_manager_agent" # Setting an agent id
 
 product_manager_agent = Agent(
-    job_title="Marketing Manager",
+    "Marketing Manager",
 
     agent_id_=agent_id, # Setting agent id
     memory=True, # Enabling the memory
@@ -148,7 +149,7 @@ During task execution, agents may occasionally generate inaccurate results or mi
 
 ```python
 product_manager_agent = Agent(  
-    job_title="Marketing Manager",
+    "Marketing Manager",
     
     reflection=True, # Enabling the reflection
 )
@@ -160,7 +161,7 @@ One of the main limitations of LLMs is the Context Length Limit, which affects h
 
 ```python
 product_manager_agent = Agent(  
-    job_title="Marketing Manager",
+    "Marketing Manager",
     
     compress_context=True, # Enabling the compress_context
 )
