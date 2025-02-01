@@ -14,54 +14,52 @@ If you haven't installed them yet, you can do so by following the [installation 
 Follow the steps below to get your sonics! 🦔
 
 <Steps>
-  <Step title="Creating Client">
-    Upsonic base on Server and Client architecture. In this example we will create an `localserver` to run our agent in our envinronment. This architecture helps you to be able to scale your agents.
+  <Step title="Providing OpenAI Api Key">
+    Upsonic supports multiple LLMs. In this example, we will use OpenAI's GPT-4 model, for which we need to set environment variables.
 
-    ```python
-    from upsonic import UpsonicClient, ObjectResponse, Task, AgentConfiguration
-    from upsonic.client.tools import Search
+    <CodeGroup>
+      ```python Python
+      import os
 
-    # Create Client and and Set Configurations
-    client = UpsonicClient("localserver")
+      os.environ["OPENAI_API_KEY"] = "sk-***"
+      ```
 
-    # Set OpenAI Configuration
-    client.set_config("OPENAI_API_KEY", "YOUR_API_KEY")
+      ```bash Mac
+      export OPENAI_API_KEY=sk-***
 
-    ```
+      ```
+
+      ```powershell Windows
+      setx OPENAI_API_KEY sk-***
+      ```
+    </CodeGroup>
   </Step>
 
   <Step title="Generate your First Task">
     The task-centric structure important to create an programatic design in Agent systems. In Upsonic you can generate an task oriented structure with task **description**, **tools**, **context**, **knowledge bases** and etc. In this example we will give `Search` tools to our task. The agent will use the `Search` tool at the run time.
 
     ```python
+    from upsonic import Task, Agent
 
-    task1 = Task(
-      description="Research latest news in Anthropic and OpenAI", 
+    task = Task(
+      "Research latest news in Anthropic and OpenAI", 
       tools=[Search]
     )
     ```
   </Step>
 
   <Step title="Generate an Expert Agent of Our Company">
-    Upsonic have an **automatic characterization** mechanism. Its important to create agents that belongs on your company. Upsonic visit the `company_url`, read the `job_title` and `company_objective` and creates an **enhanced profile** for your agent.
+    Upsonic have an **automatic characterization** mechanism. Its important to create agents that belongs on your purpose. In this example we will generate an Product Manager.
 
     ```python
-    product_manager_agent = AgentConfiguration(
-        job_title="Product Manager",
-        company_url="https://upsonic.ai",
-        company_objective="To build AI Agent framework that helps people get things done",
-    )
+    agent = Agent("Product Manager")
     ```
   </Step>
 
   <Step title="Running the Task on Agent">
     ```python
     # Running the task
-    client.agent(product_manager_agent, task1)
-
-    # Getting the result from task1 object
-    result = task1.response
-    print(result)
+    agent.print_do(task)
     ```
   </Step>
 </Steps>
@@ -76,19 +74,14 @@ At this step you need to use  `@client.mcp()` decorator to an class with **comma
 
 ```python
 # Hackernews MCP Server
-
-@client.mcp()
 class HackerNewsMCP:
     command = "uvx"
     args = ["mcp-hn"]
     # env = {"": ""}
-    
- 
-# Creating Task with Tool 
-tools = [HackerNewsMCP]   
+  
 
 task1 = Task(
-  description="Research latest news in Anthropic and OpenAI", 
-  tools=tools
-)}
+  "Research latest news in Anthropic and OpenAI", 
+  tools=[HackerNewsMCP]
+)
 ```
