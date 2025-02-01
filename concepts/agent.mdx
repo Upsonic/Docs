@@ -15,9 +15,9 @@ AgentConfigurations implement a reusable architecture that enhances system effic
 The AgentConfiguration class serves as a fundamental component in ensuring optimal task execution within the system. Given its critical role, developers should allocate sufficient time to properly configure and fine-tune this class. Additionally, it is essential to conduct comprehensive testing across various configuration scenarios to validate performance and behavior under different operational conditions.
 
 ```python
-from upsonic import AgentConfiguration
+from upsonic import Agent
 
-product_manager_agent = AgentConfiguration(
+product_manager_agent = Agent(
     job_title="Product Manager",
     company_url="https://upsonic.ai",
     company_objective="Developing an AI Agent Framework",
@@ -51,9 +51,9 @@ During task execution, LLM-based agents may intentionally leave specific fields 
 
 
     # Generating Task and Agent
-    task1 = Task(description="Write an outreach mail", tools=[Search])
+    task = Task(description="Write an outreach mail", tools=[Search])
 
-    product_manager_agent = AgentConfiguration(
+    product_manager_agent = Agent(
         job_title="Marketing Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
@@ -61,9 +61,9 @@ During task execution, LLM-based agents may intentionally leave specific fields 
 
 
     # Run and see the result
-    client.agent(product_manager_agent, task1)
+    product_manager_agent.do(task)
 
-    result = task1.response
+    result = task.response
 
     print(result)
     ```
@@ -91,9 +91,9 @@ During task execution, LLM-based agents may intentionally leave specific fields 
 
     ```python New Agent
 
-    task1 = Task(description="Write an outreach mail", tools=[Search])
+    task = Task(description="Write an outreach mail", tools=[Search])
 
-    product_manager_agent = AgentConfiguration(
+    product_manager_agent = Agent(
         job_title="Marketing Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
@@ -103,9 +103,9 @@ During task execution, LLM-based agents may intentionally leave specific fields 
     )
 
     # Run and see the result
-    client.agent(product_manager_agent, task1)
+    product_manager_agent.do(task)
 
-    result = task1.response
+    result = task.response
 
     print(result)
     ```
@@ -134,13 +134,11 @@ Memory management plays a crucial role in maintaining contextual continuity acro
 
 agent_id = "product_manager_agent" # Setting an agent id
 
-product_manager_agent = AgentConfiguration(
+product_manager_agent = Agent(
+    job_title="Marketing Manager",
+
     agent_id_=agent_id, # Setting agent id
     memory=True, # Enabling the memory
-    
-    job_title="Marketing Manager",
-    company_url="https://upsonic.ai",
-    company_objective="To build AI Agent framework that helps people get things done"
 )
 ```
 
@@ -149,12 +147,10 @@ product_manager_agent = AgentConfiguration(
 During task execution, agents may occasionally generate inaccurate results or misinterpret task objectives, which can significantly impact system stability and output quality, particularly when critical sub-tasks are involved. To address this challenge, the framework implements a sophisticated reflection feature that enables continuous self-monitoring and quality assurance.
 
 ```python
-product_manager_agent = AgentConfiguration(
-    reflection=True, # Enabling the reflection
-    
+product_manager_agent = Agent(  
     job_title="Marketing Manager",
-    company_url="https://upsonic.ai",
-    company_objective="To build AI Agent framework that helps people get things done"
+    
+    reflection=True, # Enabling the reflection
 )
 ```
 
@@ -163,11 +159,9 @@ product_manager_agent = AgentConfiguration(
 One of the main limitations of LLMs is the Context Length Limit, which affects how much data the model can process at once when generating outputs. This directly impacts how well-referenced and accurate the results will be. The Upsonic framework handles this limitation by automatically summarizing resources when they exceed the context limit. When your input data is too large, the system compresses it while keeping the important information, allowing the LLM to continue functioning normally. This removes the need to manually calculate and manage context limits, letting you focus on your actual work.
 
 ```python
-product_manager_agent = AgentConfiguration(
-    compress_context=True, # Enabling the Compress Context
-    
+product_manager_agent = Agent(  
     job_title="Marketing Manager",
-    company_url="https://upsonic.ai",
-    company_objective="To build AI Agent framework that helps people get things done"
+    
+    compress_context=True, # Enabling the compress_context
 )
 ```

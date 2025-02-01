@@ -49,9 +49,7 @@ Integrating a tool into your task is straightforward: simply create a list conta
     ```python
     import requests
 
-    @client.tool()
     class MyTools:
-
       def is_page_available(url: str) -> bool:
           return requests.get(url).status_code == 200
 
@@ -62,7 +60,6 @@ Integrating a tool into your task is straightforward: simply create a list conta
     This example demonstrates integration with the HackerNews MCP Server, which provides several functions including get\_stories, get\_story\_info, search\_stories, and get\_user\_info. The MCP framework simplifies the process of connecting our agents to external services, as illustrated by this HackerNews integration.
 
     ```python
-    @client.mcp()
     class HackerNewsMCP:
         command = "uvx"
         args = ["mcp-hn"]
@@ -73,11 +70,9 @@ Integrating a tool into your task is straightforward: simply create a list conta
     Once you've configured your custom tools, they can be directly incorporated into the Task object. The agent will then automatically utilize these tools as needed during task execution.
 
     ```python
-    tools = [Search, MyTools]
-
-    task1 = Task(
-      description="Summarize the latest hackernews stories of today", 
-      tools=tools # Specify the tools list
+    task = Task(
+      "Summarize the latest hackernews stories of today", 
+      tools=[Search, MyTools] # Specify the tools list
     )
     ```
   </Step>
@@ -88,10 +83,10 @@ Integrating a tool into your task is straightforward: simply create a list conta
 The framework supports the combination of multiple tasks to handle complex operations, particularly useful in scenarios requiring deep analysis followed by report generation. While individual tasks may be complex, the true power lies in their interconnection. By creating task chains and linking them through shared context, you can build sophisticated workflows that seamlessly pass information between tasks.
 
 ```python
-task1 = Task(description="Do an in-depth analysis of the history of chips")
+task = Task("Do an in-depth analysis of the history of chips")
 
 task2 = Task(
-  description="Prepare a draft report on Europe's position", 
+  "Prepare a draft report on Europe's position", 
   context=[task1] # Add task1 in a list as task context
 )}
 ```
@@ -121,8 +116,8 @@ You can see the supported files and options of the <u>Knowledge Base System</u> 
 
   <Step title="Add as Context to Task">
     ```python
-    task1 = Task(
-      description="Create this month's overall technical report.",
+    task = Task(
+      "Create this month's overall technical report.",
       context=[firm_knowledge_base] # Adding firm_knowledge_base to task
     )
     ```
@@ -142,8 +137,8 @@ In the context system we also support **str as context**. This provide an capabi
 ```python
 city = "New Yorg"
 
-task1 = Task(
-  description="Find resources in the city",
+task = Task(
+  "Find resources in the city",
   context=[city] # Adding city string as context
 )
 
@@ -165,7 +160,7 @@ When you need to create task for different cities, you can use this method:
 
     for city in cities:
       city_task = Task(
-        description=base_description, # Setting description from base_description
+        base_description, # Setting description from base_description
         context=[city] # Setting city string as context
       )
       tasks.append(city_task)
@@ -191,7 +186,7 @@ class TravelResponse(ObjectResponse):
 ```
 
 ```python
-task1 = Task(
+task = Task(
   description="Create a plan to visit cities in Canada", 
   reponse_format=TravelResponse # Specify the response format
 )
@@ -204,9 +199,11 @@ After task definition, you have the flexibility to choose between two runtime op
 Direct LLM calls are particularly advantageous for straightforward operations that don't require sub-task generation or characterization. This runtime selection can be strategically implemented within your Agent application logic, allowing you to optimize performance and resource utilization based on task complexity.
 
 ```python
-task1 = Task(description="Describe planet Earth")
+from upsonic import Direct
 
-client.call(task1) # Direct and fast way to complete task
+task = Task(description="Describe planet Earth")
+
+Direct.print_do(task1) # Direct and fast way to complete task
 ```
 
 <Tip>
@@ -228,10 +225,10 @@ You can view the details of agent creation and customization here.
     To create an agent, we're going to import the "AgentConfiguration" and make a basic customization.
 
     ```python
-    from upsonic import AgentConfiguration
+    from upsonic import Agent
 
-    product_manager_agent = AgentConfiguration(
-        job_title="Product Manager",
+    agent = AgentConfiguration(
+        "Product Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
     )
@@ -240,7 +237,7 @@ You can view the details of agent creation and customization here.
 
   <Step title="Creating Task">
     ```python
-    task1 = Task(description="Make a deep analyze to history of chips")
+    task = Task(description="Make a deep analyze to history of chips")
     ```
   </Step>
 
@@ -248,7 +245,7 @@ You can view the details of agent creation and customization here.
     We've got a function called "agent" in the client that we'll use to give product\_manager\_agent and task1.
 
     ```python
-    client.agent(product_manager_agent, task1)
+    agent.print_do(task)
     ```
 
     &#x20;
@@ -264,16 +261,16 @@ To maintain a controlled and organized infrastructure, all results are stored wi
 When you run the task, the results are stored in the Task.response. You can get it directly.
 
 ```python
-task1 = Task(description="Make a deep analyze to history of chips")
+task = Task(description="Make a deep analyze to history of chips")
 
 ## Run the task
 
-# client.call(task1)
-# client.agent(product_manager_agent, task1)
+# Direct.do(task)
+# agent.do(task)
 
 ## After Run the task
 
-result = task1.response
+result = task.response
 
 print(response)
 ```
@@ -287,8 +284,8 @@ print(response)
   class TravelResponse(ObjectResponse):
     cities: str
 
-  task1 = Task(
-    description="Generate a plan to visit cities in Canada", 
+  task = Task(
+    "Generate a plan to visit cities in Canada", 
     reponse_format=TravelResponse # Specift the response format
   )
 
@@ -300,7 +297,7 @@ print(response)
   ## After Run the task
 
 
-  result = task1.response
+  result = task.response
 
   print("Cities")
   for i in result.cities:
