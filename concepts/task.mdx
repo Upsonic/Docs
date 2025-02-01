@@ -187,7 +187,7 @@ class TravelResponse(ObjectResponse):
 
 ```python
 task = Task(
-  description="Create a plan to visit cities in Canada", 
+  "Create a plan to visit cities in Canada", 
   reponse_format=TravelResponse # Specify the response format
 )
 ```
@@ -201,7 +201,7 @@ Direct LLM calls are particularly advantageous for straightforward operations th
 ```python
 from upsonic import Direct
 
-task = Task(description="Describe planet Earth")
+task = Task("Describe planet Earth")
 
 Direct.print_do(task1) # Direct and fast way to complete task
 ```
@@ -227,7 +227,7 @@ You can view the details of agent creation and customization here.
     ```python
     from upsonic import Agent
 
-    agent = AgentConfiguration(
+    agent = Agent(
         "Product Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
@@ -237,7 +237,7 @@ You can view the details of agent creation and customization here.
 
   <Step title="Creating Task">
     ```python
-    task = Task(description="Make a deep analyze to history of chips")
+    task = Task("Make a deep analyze to history of chips")
     ```
   </Step>
 
@@ -261,7 +261,7 @@ To maintain a controlled and organized infrastructure, all results are stored wi
 When you run the task, the results are stored in the Task.response. You can get it directly.
 
 ```python
-task = Task(description="Make a deep analyze to history of chips")
+task = Task("Make a deep analyze to history of chips")
 
 ## Run the task
 
@@ -291,8 +291,8 @@ print(response)
 
   ## Run the task
 
-  # client.call(task1)
-  # client.agent(product_manager_agent, task1)
+  # Direct.do(task)
+  # agent.do(task)
 
   ## After Run the task
 
