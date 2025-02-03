@@ -1,8 +1,4 @@
----
-title: 'Agent'
-description: 'Generate agents that belongs to your company.'
-icon: user-ninja
----
+##
 
 ## Overview
 
@@ -25,6 +21,18 @@ product_manager_agent = Agent(
 )
 ```
 
+## Specify LLM
+
+To specify which LLM the agent will use, it's sufficient to directly use the model parameter. You can check the LLM support section to see all supported LLMs.
+
+```python
+product_manager_agent = Agent(  
+    "Product Manager",
+    
+    model="openai/gpt-4o"
+)
+```
+
 ## Agent Attributest
 
 Agents are equipped with supplementary features designed to enhance their performance and increase success rates during task execution. These configurable capabilities can be dynamically adjusted throughout the task lifecycle, allowing for real-time optimization of the agent's processing capacity. By fine-tuning these features, users can significantly improve the probability of successful task completion while meeting specific operational requirements.
@@ -39,6 +47,7 @@ Agents are equipped with supplementary features designed to enhance their perfor
 | Memory *(Optional)*             | `memory`            | `boolean` | The persistent memory by the agent id (Default: False)      |
 | Reflection *(Optional)*         | `reflection`        | `boolean` | Reflection mode for agent. (Default: False)                 |
 | Compress Context *(Optional)*   | `compress_context`  | `boolean` | Compress the context for LLM context lenght (Default: True) |
+| model *(Optional)*              | model               | str       | The llm model for Agent (Default: openai/gpt-4o)            |
 
 ## Act like an Human
 

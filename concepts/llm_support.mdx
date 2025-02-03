@@ -4,3 +4,72 @@ description: 'Use variously llms to handle your agents and tasks.'
 icon: microchip-ai
 ---
 
+## Overview
+
+The Upsonic framework can use .env variable files or environment variables for LLM support. Once you provide the keys for various services, you can easily select the LLM by using the model parameter within the agents.
+
+The supported LLMs are:
+
+* **OpenAI**
+
+  * gpt-4o
+
+  * o3-mini
+
+* **Azure**
+
+  * gpt-4o
+
+* **Anthropic**
+
+  * claude-3-5-sonnet
+
+* **AWS Bedrock**
+
+  * claude-3-5-sonnet
+
+* **DeepSeek**
+
+  * deepseek-chat
+
+## Setting up .env
+
+To use these LLMs, an example .env variable file is as follows. You can adjust the variables according to the LLM you want to use and fill in only the ones required. This .env file must be located in your working directory.
+
+```
+
+# OpenAI
+OPENAI_API_KEY="sk-***"
+
+# Anthropic
+ANTHROPIC_API_KEY="sk-***"
+
+# DeepSeek
+DEEPSEEK_API_KEY="sk-**"
+
+# AWS Bedrock
+AWS_ACCESS_KEY_ID="**"
+AWS_SECRET_ACCESS_KEY="***"
+AWS_REGION="**-**"
+
+# Azure
+AZURE_OPENAI_ENDPOINT="https://**.com/"
+AZURE_OPENAI_API_VERSION="****-**-**"
+AZURE_OPENAI_API_KEY="***"
+
+```
+
+## Using an specific model in Agent
+
+Using the model parameter, you can easily select which LLM each agent will use. You can refer to the example below:
+
+```python
+from upsonic import Agent
+
+product_manager_agent = Agent(
+    "Product Manager",
+
+    model="openai/gpt-4o" # Specify the model
+)
+
+```
