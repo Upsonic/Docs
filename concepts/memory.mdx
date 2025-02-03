@@ -1,167 +1,28 @@
 ---
-title: 'Agent'
-description: 'Generate agents that belongs to your company.'
-icon: user-ninja
+title: "Memory"
+description: "Create an history for your agents"
+icon: "memory"
 ---
 
 ## Overview
 
-The Upsonic framework features a sophisticated AgentConfiguration system that optimizes task completion through structured agent setup. This configuration mechanism creates a simulated corporate environment where agents operate with defined roles and responsibilities, ensuring focused task execution. By leveraging job title parameters, the system automatically establishes appropriate decision-making frameworks and performance objectives for each agent, streamlining the workflow process.
+Memory is crucial for agents to understand the flow of events and their causes. If you want your agent to be aware of the general application's progress, which can be beneficial in certain situations, you can activate Memory. Additionally, if you want your agent to maintain its context continuity even when the application is closed and reopened, persistent memory will solve this need.
 
-AgentConfigurations implement a reusable architecture that enhances system efficiency and flexibility. For instance, in server analysis scenarios, you can deploy a software engineer agent that the framework can dynamically assign to relevant tasks. This modular approach not only promotes code reusability but also optimizes the overall system's performance through intelligent agent allocation.
+When you activate Memory, it saves the conversation history in the current directory based on your agent's ID. You can continue this by providing an agent ID while creating a new agent.
 
-## Creating an Agent
+## Enabling Memory
 
-The AgentConfiguration class serves as a fundamental component in ensuring optimal task execution within the system. Given its critical role, developers should allocate sufficient time to properly configure and fine-tune this class. Additionally, it is essential to conduct comprehensive testing across various configuration scenarios to validate performance and behavior under different operational conditions.
-
-```python
-from upsonic import Agent
-
-product_manager_agent = Agent(
-    job_title="Product Manager",
-    company_url="https://upsonic.ai",
-    company_objective="Developing an AI Agent Framework",
-)
-```
-
-## Agent Attributest
-
-Agents are equipped with supplementary features designed to enhance their performance and increase success rates during task execution. These configurable capabilities can be dynamically adjusted throughout the task lifecycle, allowing for real-time optimization of the agent's processing capacity. By fine-tuning these features, users can significantly improve the probability of successful task completion while meeting specific operational requirements.
-
-| Attribute                       | Parameters          | Type      | Description                                                 |
-| ------------------------------- | ------------------- | --------- | ----------------------------------------------------------- |
-| job\_title                      | `job_title`         | `str`     | The job title of Agent.                                     |
-| company\_url *(Optional)*       | `company_url`       | `str`     | The url of your company                                     |
-| company\_objective *(Optional)* | `company_objective` | `str`     | The objective of your company                               |
-| Name *(Optional)*               | `name`              | `str`     | The name of the human that represent from Agent             |
-| Contact *(Optional)*            | `contact`           | `str`     | The contact info of the human that represent from Agent     |
-| Memory *(Optional)*             | `memory`            | `boolean` | The persistent memory by the agent id (Default: False)      |
-| Reflection *(Optional)*         | `reflection`        | `boolean` | Reflection mode for agent. (Default: False)                 |
-| Compress Context *(Optional)*   | `compress_context`  | `boolean` | Compress the context for LLM context lenght (Default: True) |
-
-## Act like an Human
-
-During task execution, LLM-based agents may intentionally leave specific fields incomplete, requiring human input due to inherent LLM operational constraints. However, when provided with personal identifiers such as names and contact details, the system can generate fully personalized content. For example, in email composition tasks, the agent can authentically replicate a given user's and include appropriate signature information, creating more natural and contextually appropriate communications.
-
-<Steps>
-  <Step title="Without Human Acting">
-    In this demonstration, we will configure an agent to function as Upsonic's marketing manager, showcasing the framework's role-specific capabilities. Subsequently, we will demonstrate practical implementation by assigning an email composition task to this specialized agent.
-
-    ```python Agent
-
-
-    # Generating Task and Agent
-    task = Task(description="Write an outreach mail", tools=[Search])
-
-    product_manager_agent = Agent(
-        job_title="Marketing Manager",
-        company_url="https://upsonic.ai",
-        company_objective="To build AI Agent framework that helps people get things done",
-    )
-
-
-    # Run and see the result
-    product_manager_agent.do(task)
-
-    result = task.response
-
-    print(result)
-    ```
-
-    In the output section, you will observe that the agent strategically leaves certain fields incomplete. This design needs human intervention and customization of critical content elements before finalization.
-
-    ```markdown Result
-    My name is [Your Name], and I’m a [Your Position] at [Your Company]. I wanted to reach out to introduce [Company Name], a trusted partner in delivering innovative, reliable, and customer-focused technology solutions tailored to your business needs.  
-
-    ****** MAIL Body
-
-    Thank you for considering this opportunity. I genuinely look forward to the possibility of working together and supporting your organization in achieving success.  
-
-    Warm regards,  
-    [Your Full Name]  
-    [Your Job Title]  
-    [Your Company Name]  
-    [Your Contact Information]  
-
-    ```
-  </Step>
-
-  <Step title="With Human Acting">
-    By inputting personal identifiers, including name and contact details, we can enhance the agent's functionality to generate complete, uninterrupted content. This configuration eliminates the need for manual field completion, enabling the agent to produce fully automated outputs without placeholder spaces.
-
-    ```python New Agent
-
-    task = Task(description="Write an outreach mail", tools=[Search])
-
-    product_manager_agent = Agent(
-        job_title="Marketing Manager",
-        company_url="https://upsonic.ai",
-        company_objective="To build AI Agent framework that helps people get things done",
-     
-        name="Onur ULUSOY",       # Now we have name and contact
-        contact="onur@upsonic.co"
-    )
-
-    # Run and see the result
-    product_manager_agent.do(task)
-
-    result = task.response
-
-    print(result)
-    ```
-
-    ```markdown New Result
-
-    My name is Onur Ulusoy, and I am the Marketing Manager at Upsonic.ai. At Upsonic.ai, we are dedicated to helping businesses like yours harness the power of cutting-edge AI technology to address pain points, streamline operations, and achieve sustainable growth.  
-
-    ****** MAIL Body
-
-    Thank you for taking the time to consider Upsonic.ai. I’m confident we can help you unlock your organization’s true potential. Looking forward to hearing from you soon!  
-
-    Best regards,  
-    Onur Ulusoy  
-    Marketing Manager | Upsonic.ai  
-    onur@upsonic.co  
-    ```
-  </Step>
-</Steps>
-
-## Memory
-
-Memory management plays a crucial role in maintaining contextual continuity across distributed tasks and timeframes for agent operations. The framework implements a disk-based persistence mechanism that associates memory storage with unique agent identifiers (IDs). To enable persistent memory functionality, developers must explicitly define and consistently maintain agent IDs across all agent definitions within their implementation.
+To activate Memory, it is sufficient to set the memory parameter in the AgentConfiguration class to True and specify an agent ID. This way, the agent will persistently save the history and gain the opportunity to view events from a broader perspective.
 
 ```python
 
 agent_id = "product_manager_agent" # Setting an agent id
 
 product_manager_agent = Agent(
-    job_title="Marketing Manager",
+    "Marketing Manager",
 
     agent_id_=agent_id, # Setting agent id
     memory=True, # Enabling the memory
 )
-```
 
-## Reflection
-
-During task execution, agents may occasionally generate inaccurate results or misinterpret task objectives, which can significantly impact system stability and output quality, particularly when critical sub-tasks are involved. To address this challenge, the framework implements a sophisticated reflection feature that enables continuous self-monitoring and quality assurance.
-
-```python
-product_manager_agent = Agent(  
-    job_title="Marketing Manager",
-    
-    reflection=True, # Enabling the reflection
-)
-```
-
-## Compress Context
-
-One of the main limitations of LLMs is the Context Length Limit, which affects how much data the model can process at once when generating outputs. This directly impacts how well-referenced and accurate the results will be. The Upsonic framework handles this limitation by automatically summarizing resources when they exceed the context limit. When your input data is too large, the system compresses it while keeping the important information, allowing the LLM to continue functioning normally. This removes the need to manually calculate and manage context limits, letting you focus on your actual work.
-
-```python
-product_manager_agent = Agent(  
-    job_title="Marketing Manager",
-    
-    compress_context=True, # Enabling the compress_context
-)
 ```
