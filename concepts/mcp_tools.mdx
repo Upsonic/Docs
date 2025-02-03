@@ -33,11 +33,16 @@ Upsonic uses a structure that involves class creation for connecting to MCP serv
 In this example, we will integrate the HackerNews MCP:
 
 
-```pyhton
+```python
 # Hackernews MCP Server
 class HackerNewsMCP:
     command = "uvx"
     args = ["mcp-hn"]
+
+task = Task(
+  "Get the latest tecnical news",
+  tools=[HackerNewsMCP]
+)
 ```
 
 and GitHub MCP:
@@ -50,4 +55,9 @@ class GitHubMCP:
     env = {
       "GITHUB_PERSONAL_ACCESS_TOKEN": "<YOUR_TOKEN>"
     }
+
+task = Task(
+  "Check the repositories",
+  tools=[GitHubMCP]
+)
 ```
