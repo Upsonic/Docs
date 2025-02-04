@@ -1,46 +1,27 @@
 ---
-title: 'Agent with Object Response'
-description: 'Get programmable results from your agent.'
+title: "Agent with Tools"
+description: "Connect tools to your agent to interact with real world."
+icon: "2"
 ---
 
+## Overview
 
-## Agent with Object Response
+## Agent with tools
 
-This agent will do the same thing as the agent above, fetching OpenAI developments, but this time it will bring back the results in a format we desire: a programmable and usable output.
+This agent will read and fetch the latest OpenAI developments from the internet.
 
-```python agent_with_object_response.py
+```python agent_with_tools.py
 from upsonic import Agent, Task
-from upsonic.client.tools import Search
-
-from upsonic import ObjectResponse # Importing Object Response
-
-class ANew(ObjectResponse):
-  title: str
-  content: str
-class News(ObjectResponse):
-  news: lists[ANew] # We want to get a list of ANew objects
+from upsonic.client.tools import Search # Importing Search Tool
 
 task = Task(
   "Find the latest OpenAI developments on the internet.", 
-  tools=[Search],
-  response_format=News # Specifying the Response that we want
+  tools=[Search] # Adding Search tool to the Task
 )
 
 agent = Agent("Reporter")
 
 agent.print_do(task)
-
-```
-
-When you want to use the news:
-
-```python agent_with_object_response.py
-result = task.response
-
-for each_new in result.news:
-  print()
-  print("Title:", each_new.title)
-  print("Content:", each_new.content)
 
 ```
 
@@ -87,7 +68,7 @@ To run the agent, install dependencies and export your OPENAI\_API\_KEY.
 
   <Step title="Run the agent to do the task">
     ```bash
-    python agent_with_object_response.py
+    python agent_with_tools.py
     ```
   </Step>
 </Steps>
