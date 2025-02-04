@@ -1,0 +1,65 @@
+---
+title: 'Your First Agent'
+description: 'Start with here to start to Upsonic'
+---
+
+## Overview
+
+In this example, we will create a sample agent, and while creating this agent, we will have the opportunity to analyze and learn Upsonic's fundamental mechanisms.
+
+Agents are like electronic employees that perform your tasks for you. Properly positioning them allows you to allocate time for more important and high-value tasks instead of spending time on many time-consuming and low-value-added tasks.
+
+## Basic Agent
+
+```python basic_agent.py
+from upsonic import Agent, Task
+
+task = Task("Do an in-depth analysis of US history")
+
+agent = Agent("Historian")
+
+agent.print_do(task)
+
+```
+
+To run the agent set OPENAI\_API\_KEY in your .env file.
+
+<Steps>
+  <Step title="Setup your virtual environment">
+    <CodeGroup>
+      ```bash Mac
+      python3 -m venv .venv
+      source .venv/bin/activate
+
+      ```
+
+      ```bash Windows
+      python3 -m venv aienv
+      aienv/scripts/activate
+
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Install dependencies">
+    <CodeGroup>
+      ```python Mac
+      pip install -U upsonic
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Put your OpenAI key">
+    <CodeGroup>
+      ```javascript helloWorld.js
+      console.log("Hello World");
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Run the agent to do the task">
+    ```bash
+    python basic_agent.py
+    ```
+  </Step>
+</Steps>
