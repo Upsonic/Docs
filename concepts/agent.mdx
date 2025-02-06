@@ -1,23 +1,23 @@
 ---
 title: 'Agent'
-description: 'Generate agents that belongs to your company.'
+description: 'LLMs that uses tools to complete tasks'
 icon: user-ninja
 ---
 
 ## Overview
 
-The Upsonic framework features a sophisticated AgentConfiguration system that optimizes task completion through structured agent setup. This configuration mechanism creates a simulated corporate environment where agents operate with defined roles and responsibilities, ensuring focused task execution. By leveraging job title parameters, the system automatically establishes appropriate decision-making frameworks and performance objectives for each agent, streamlining the workflow process.
+The Upsonic framework's Agent system optimizes tasks by creating a simulated corporate environment where agents operate with defined roles and responsibilities. By using job title parameters, the system sets decision-making frameworks and performance objectives for each agent to streamline workflows.
 
-AgentConfigurations implement a reusable architecture that enhances system efficiency and flexibility. For instance, in server analysis scenarios, you can deploy a software engineer agent that the framework can dynamically assign to relevant tasks. This modular approach not only promotes code reusability but also optimizes the overall system's performance through intelligent agent allocation.
+Agent provide a reusable architecture for better efficiency and flexibility. For example, when analyzing servers, a software engineer agent can be dynamically assigned to relevant tasks. This approach promotes code reuse and optimizes system performance through smart agent allocation.
 
 ## Creating an Agent
 
 The AgentConfiguration class serves as a fundamental component in ensuring optimal task execution within the system. Given its critical role, developers should allocate sufficient time to properly configure and fine-tune this class. Additionally, it is essential to conduct comprehensive testing across various configuration scenarios to validate performance and behavior under different operational conditions.
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 
-product_manager_agent = Agent(
+agent = Agent(
     "Product Manager",
 
     company_url="https://upsonic.ai",
@@ -30,7 +30,7 @@ product_manager_agent = Agent(
 To specify which LLM the agent will use, it's sufficient to directly use the model parameter. You can check the LLM support section to see all supported LLMs.
 
 ```python
-product_manager_agent = Agent(  
+agent = Agent(  
     "Product Manager",
     
     model="openai/gpt-4o"
@@ -67,7 +67,7 @@ During task execution, LLM-based agents may intentionally leave specific fields 
     # Generating Task and Agent
     task = Task(description="Write an outreach mail", tools=[Search])
 
-    product_manager_agent = Agent(
+    agent = Agent(
         "Marketing Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
@@ -75,7 +75,7 @@ During task execution, LLM-based agents may intentionally leave specific fields 
 
 
     # Run and see the result
-    product_manager_agent.do(task)
+    agent.do(task)
 
     result = task.response
 
@@ -107,7 +107,7 @@ During task execution, LLM-based agents may intentionally leave specific fields 
 
     task = Task(description="Write an outreach mail", tools=[Search])
 
-    product_manager_agent = Agent(
+    agent = Agent(
         "Marketing Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
@@ -117,7 +117,7 @@ During task execution, LLM-based agents may intentionally leave specific fields 
     )
 
     # Run and see the result
-    product_manager_agent.do(task)
+    agent.do(task)
 
     result = task.response
 
@@ -148,7 +148,7 @@ Memory management plays a crucial role in maintaining contextual continuity acro
 
 agent_id = "product_manager_agent" # Setting an agent id
 
-product_manager_agent = Agent(
+agent = Agent(
     "Marketing Manager",
 
     agent_id_=agent_id, # Setting agent id
@@ -161,7 +161,7 @@ product_manager_agent = Agent(
 During task execution, agents may occasionally generate inaccurate results or misinterpret task objectives, which can significantly impact system stability and output quality, particularly when critical sub-tasks are involved. To address this challenge, the framework implements a sophisticated reflection feature that enables continuous self-monitoring and quality assurance.
 
 ```python
-product_manager_agent = Agent(  
+agent = Agent(  
     "Marketing Manager",
     
     reflection=True, # Enabling the reflection
@@ -173,7 +173,7 @@ product_manager_agent = Agent(
 One of the main limitations of LLMs is the Context Length Limit, which affects how much data the model can process at once when generating outputs. This directly impacts how well-referenced and accurate the results will be. The Upsonic framework handles this limitation by automatically summarizing resources when they exceed the context limit. When your input data is too large, the system compresses it while keeping the important information, allowing the LLM to continue functioning normally. This removes the need to manually calculate and manage context limits, letting you focus on your actual work.
 
 ```python
-product_manager_agent = Agent(  
+agent = Agent(  
     "Marketing Manager",
     
     compress_context=True, # Enabling the compress_context

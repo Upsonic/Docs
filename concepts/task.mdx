@@ -7,15 +7,17 @@ sidebarTitle: "Task"
 
 ## Overview
 
-The Upsonic framework employs the Task class as its fundamental building block for defining and executing tasks, whether through agents or direct LLM calls. Tasks can be configured with various parameters, tools, and contextual elements, enabling the construction of comprehensive systems. Through context management, you can establish connections between tasks, link them to knowledge bases, or associate them with string values.
+The Upsonic framework uses Tasks as its core component. Tasks can be executed by agents or direct LLM calls and can be customized with various parameters, tools, and context. The framework automatically generates the necessary steps within tasks.
 
-**You don't have to create tasks like steps. The agent will automatically generate these steps for you.**
+The task-centric approach advantages:
 
-Unlike other systems that employ non-task structures, Upsonic addresses two critical limitations commonly found in alternative solutions. First, it eliminates the restriction of binding one agent to a single task, allowing agents to handle multiple tasks efficiently. Second, it significantly improves programmability. When creating tasks that involve dependencies—such as referenced websites, company information, or competitor data—Upsonic enables you to define these elements programmatically rather than embedding them within individual agents. This approach prevents the need to create separate agents for repetitive operations like competitor analysis, resulting in a more scalable and maintainable system architecture.
+1) It removes the restriction of binding agents to single tasks, allowing them to handle multiple tasks efficiently.
+2) It improves programmability by enabling task dependencies like websites, company data, and competitor information to be defined programmatically instead of being embedded in individual agents. This approach eliminates the need for separate agents for repetitive operations like competitor analysis, creating a more scalable and maintainable system.
+
 
 ## Creating a Task
 
-The Task class is an integral component of Upsonic and can be easily imported into your project. Once imported, you can define multiple tasks by assigning them identifiers such as "task1," "task2," "task3," or any other descriptive names of your choice.
+Tasks can be imported into your project and created with custom identifiers like 'task1', ‘task2’ or any descriptive name you choose.
 
 ```python
 from upsonic import Task
@@ -38,7 +40,7 @@ Tasks within the framework can range from basic to complex, depending on your sp
 
 Tools play a crucial role in agent functionality by bridging the gap between LLMs and real-world applications such as APIs, services, and search engines.
 
-The framework supports two distinct types of tool implementation. The first option allows you to utilize Python functions directly as tools within Upsonic agents. The second approach leverages the Model Context Protocol (MCP), a standardized protocol for LLM tools that supports multiple platforms including Python, Node.js, and Docker. MCP tools are continuously developed and maintained by both companies and the community, with detailed information available in the "Tools" section.
+The framework supports two distinct types of tool implementation. The first option allows you to utilize Python functions directly as tools within Upsonic agents. The second approach leverages the Model Context Protocol (MCP), a standardized protocol for LLM tools that supports multiple platforms including Python, Node.js, and Docker. MCP tools are continuously developed and maintained by both companies and the community, with detailed information available in the ["Tools"](/tools) section.
 
 Integrating a tool into your task is straightforward: simply create a list containing the desired tool's class name and assign it to the "tools" parameter in the Task object.
 
