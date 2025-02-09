@@ -3,3 +3,61 @@ title: 'Browser Use'
 description: 'Integration with browser-use'
 icon: 'chrome'
 ---
+
+Browser Use aslında web sitelerinde gezinmek, veri çıkarmak, form doldurmak ve aksiyonlar almak için geliştirilmiş olan bir sub-agent mekanizmasıdır. Zekice tasarlanmış yapısı sayesinde nerdeyse tüm llmler ile kolayca çalışabiliyor ve voyager benchmarkda çok yüksek skorlara erişebiliyor.
+
+Eğerki tasarlamak istediğiniz agentın bir websitesinde dolaşması veyahut aksiyon alması gerekiyor ise Upsonic ve browser-use entegrasyonu ile kolayca hem lokalinizde hemde Secure runtime içerisinde yapabilirsiniz.
+
+
+
+<Warning>
+  Currently, Computer Use is not supported in the deepseek models.
+</Warning>
+
+
+
+## Install browser-use
+
+<Steps>
+  <Step title="Install browser-use">
+    ```bash
+    pip install browser-use
+    ```
+  </Step>
+
+  <Step title="Install playwright">
+    ```bash
+    playwright install
+    ```
+  </Step>
+</Steps>
+
+
+
+## Example
+
+```python
+from upsonic import Task, Agent, ObjectResponse
+
+from upsonic.client.tools import BrowserUse # Importing Computer Use
+
+
+class Product(ObjectResponse):
+    name: str
+    price: float
+class ProductList(ObjectResponse):
+    products: list[Product]
+
+
+task = Task(
+  "Go and get the latest suggested phones in amazon.com", 
+  tools=[BrowserUse], # Enabling Computer Use
+  response_format=ProductList
+)
+
+
+agent = Agent("Browser Use Agent")
+
+agent.print_do(task)
+
+```

@@ -3,3 +3,36 @@ title: 'Computer Use'
 description: 'Use the computer like human-mouse interaction.'
 icon: 'display'
 ---
+
+Computer Use is a specialized structure that enables LLMs to understand any point on the screen. Currently, Anthropic and OpenAI have ongoing work in this area. When we want agents to perform actions that don't have an API or can't be directly accessed, Computer Use allows them to click, scroll, or type just like a human would.
+
+Within Upsonic, we support Computer Use both locally and in the Secure Runtime environment. This allows you to easily utilize Computer Use.
+
+
+
+<Warning>
+  Currently, Computer Use is only supported in the claude-3-sonnet models.
+</Warning>
+
+
+
+## Example
+
+```python
+from upsonic import Task, Agent, ObjectResponse
+
+from upsonic.client.tools import ComputerUse # Importing Computer Use
+
+
+
+task = Task(
+  "Open the Chrome and find find the latest health compenies in YC by searching inside companies section", 
+  tools=[ComputerUse] # Enabling Computer Use
+)
+
+
+agent = Agent("Browser Use Agent", model="claude/claude-3-5-sonnet")
+
+agent.print_do(task)
+
+```
