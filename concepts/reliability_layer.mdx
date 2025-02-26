@@ -4,6 +4,15 @@ description: 'Create reliable agents that creates value for your business.'
 icon: road-barrier
 ---
 
+Upsonic is a reliability-focused framework. The results in the table were generated with a small dataset. They show success rates in the transformation of JSON keys. No hard-coded changes were made to the frameworks during testing; only the existing features of each framework were activated and run. GPT-4o was used in the tests.
+
+10 transfers were performed for each section. The numbers show the error count. So if it says 7, it means 7 out of 10 were done **incorrectly**. The table has been created based on initial results. We are expanding the dataset. The tests will become more reliable after creating a larger test set. Reliability benchmark [repo](https://github.com/Upsonic/Reliability-Benchmark)
+
+| Name          | Reliability Score % | ASIN Code | HS Code | CIS Code | Marketing URL | Usage URL | Warranty Time | Policy Link | Policy Description |
+| ------------- | ------------------- | --------- | ------- | -------- | ------------- | --------- | ------------- | ----------- | ------------------ |
+| **Upsonic**   | **99.3**            | 0         | 1       | 0        | 0             | 0         | 0             | 0           | 0                  |
+| **CrewAI**    | **87.5**            | 0         | 3       | 2        | 1             | 1         | 0             | 1           | 2                  |
+| **Langgraph** | **6.3**             | 10        | 10      | 7        | 10            | 8         | 10            | 10          | 10                 |
 
 ## What is Reliability Layer ?
 
@@ -11,30 +20,30 @@ Reliability is the most crucial concept for AI agents. We use AI agents to conti
 
 As Upsonic, we have a layer system that enhances the reliability of agents precisely at this point. This layer is structured to strengthen and become more detailed according to specific levels, allowing you to create reliable agents for your use cases.
 
-
 ## How it works ?
+
 Just as different training and fine-tuning methods can surprisingly increase success in LLMs, a similar approach serves to dramatically improve quality in agents. We ensure reliability by placing two different types of agents on each result from the agents.
 
-- **Verifier Agent**: Checks the output, task and response format. It catches inconsistencies, incorrectly written numbers, estimated data, and similar hallucinations.
-- **Editor Agent**: If the verifier agent is not satisfied with the result, it provides feedback and requests the editor agent to revise the output. The editor agent then makes precisely the necessary adjustments to achieve a reliable result.
+* **Verifier Agent**: Checks the output, task and response format. It catches inconsistencies, incorrectly written numbers, estimated data, and similar hallucinations.
 
-- **Rounds**: The framework ensures further quality improvement by performing these operations in rounds and scoring them at the relevant reliability levels.
-- **Loops**: The framework puts itself into a limited loop at the relevant reliability levels to ensure that no hallucinations are observed and absolutely correct information is produced.
+* **Editor Agent**: If the verifier agent is not satisfied with the result, it provides feedback and requests the editor agent to revise the output. The editor agent then makes precisely the necessary adjustments to achieve a reliable result.
 
+* **Rounds**: The framework ensures further quality improvement by performing these operations in rounds and scoring them at the relevant reliability levels.
+
+* **Loops**: The framework puts itself into a limited loop at the relevant reliability levels to ensure that no hallucinations are observed and absolutely correct information is produced.
 
 ## Create an Reliability Layer
 
-Within Upsonic, a simple class definition is sufficient to add a reliability layer. This definition can be directly used by placing it in the reliability_layer parameter within the Agent class, thereby mounting a reliability layer to the agent.
+Within Upsonic, a simple class definition is sufficient to add a reliability layer. This definition can be directly used by placing it in the reliability\_layer parameter within the Agent class, thereby mounting a reliability layer to the agent.
 
 ```python reliability.py
 class MyReliabilityLayer:
   prevent_hallucination = 10 # 1-10
 ```
 
-
 ## Putting Reliability layer to the Agent
 
-The Agent class directly accepts the reliability_layer parameter and attempts to ensure the absolute quality of results by passing all operations through this layer after every type of process.
+The Agent class directly accepts the reliability\_layer parameter and attempts to ensure the absolute quality of results by passing all operations through this layer after every type of process.
 
 ```python reliability.py
 from upsonic import Agent
