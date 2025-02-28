@@ -11,9 +11,9 @@ The Upsonic framework uses Tasks as its core component. Tasks can be executed by
 
 The task-centric approach advantages:
 
-1) It removes the restriction of binding agents to single tasks, allowing them to handle multiple tasks efficiently.
-2) It improves programmability by enabling task dependencies like websites, company data, and competitor information to be defined programmatically instead of being embedded in individual agents. This approach eliminates the need for separate agents for repetitive operations like competitor analysis, creating a more scalable and maintainable system.
+1. It removes the restriction of binding agents to single tasks, allowing them to handle multiple tasks efficiently.
 
+2. It improves programmability by enabling task dependencies like websites, company data, and competitor information to be defined programmatically instead of being embedded in individual agents. This approach eliminates the need for separate agents for repetitive operations like competitor analysis, creating a more scalable and maintainable system.
 
 ## Creating a Task
 
@@ -32,6 +32,7 @@ Tasks within the framework can range from basic to complex, depending on your sp
 | Attribute                    | Parameters        | Type                                               | Description                                     |
 | ---------------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------- |
 | Description                  | `description`     | `str`                                              | A clear and concise statement of what the task. |
+| Images                       | `images`          | `List[str]`                                        | Put your images to your task                    |
 | Response Format *(Optional)* | `response_format` | `Optional[List[Union(BaseModal, ObjectResponse)]]` | Describe the response you expect.               |
 | Tools *(Optional)*           | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The tools needed to complete the task.          |
 | Context *(Optional)*         | `context`         | `Optional[List[Union(Task, KnowledgeBase, str)]]`  | Context that helps accomplish the task          |
@@ -125,6 +126,20 @@ You can see the supported files and options of the <u>Knowledge Base System</u> 
     ```
   </Step>
 </Steps>
+
+## Giving Images to Task
+
+LLMs are particularly successful in reading images. Therefore, within the task you assign to the agent, you can enable it to read text from images, understand yellow highlights, interpret graphs, and perform any analysis by including images. For this, the image path needs to be specified using the images parameter.
+
+```python
+from upsonic import Task
+
+task = Task(
+  "Extract the names in the paper",
+  images=["paper.png"] # Add your image paths
+)
+
+```
 
 ## Giving string as Context
 
