@@ -32,7 +32,7 @@ To create a knowledge base, it's sufficient to directly import the KnowledgeBase
 from upsonic import KnowledgeBase
 
 resume_list = KnowledgeBase(
-  files=["resume1.pdf", "resume2.pdf"]
+  sources=["resume1.pdf", "resume2.pdf"]
 )
 ```
 
@@ -54,6 +54,26 @@ task1 = Task(
 )
 
 ```
+
+## Enabling RAG
+
+When dealing with a large volume of sources, having the agent directly process all sources in raw format both weakens its focus and may hit context limits. In such cases, using RAG (Retrieval-Augmented Generation), which is a mechanism that retrieves only relevant content, is highly beneficial. To implement RAG within Upsonic, simply specifying the rag_model is sufficient. This ensures that the most relevant data is retrieved for the prompt during each agent execution or direct LLM call.
+
+**Supported Embedding Models:
+- openai/text-embedding-3-small
+
+
+```python
+from upsonic import KnowledgeBase
+
+resume_list = KnowledgeBase(
+  sources=["resume1.pdf", "resume2.pdf"],
+
+  rag_model="openai/text-embedding-3-small" # Specifying Model to enable rag
+)
+```
+
+
 
 ## Supported Formats
 
