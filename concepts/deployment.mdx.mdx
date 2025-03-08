@@ -1,0 +1,212 @@
+---
+title: "New file"
+description: "Description of your new file."
+icon: "person-running-fast"
+---
+
+***
+
+## title: Run Local Agent API
+
+This guide will walk you through:
+
+* Creating a minimal FastAPI app with a Upsonic agent
+
+* Containerizing it with Docker
+
+* Running it locally
+
+## Setup
+
+<Steps>
+  <Step title="Create a new directory for your project">
+    Create a new directory for your project and navigate to it:
+
+    ```shell
+    mkdir my-upsonic-project
+    cd my-upsonic-project
+    ```
+
+    After following this guide, your project structure will look like this:
+
+    ```shell
+    my-upsonic-project/
+    ├── main.py
+    ├── Dockerfile
+    ├── requirements.txt
+    ```
+  </Step>
+
+  <Step title="Create a `requirements.txt` file and add the required dependencies:">
+    ```txt requirements.txt
+    fastapi
+    upsonic
+    uvicorn
+    ```
+  </Step>
+</Steps>
+
+## Step 1: Create a FastAPI App with a Upsonic Agent
+
+<Steps>
+  <Step title="Create a new Python file, e.g., `main.py`, and add the following code to create a minimal FastAPI app with a Upsonic agent:">
+    ```python main.py
+    from fastapi import FastAPI
+    from upsonic import Agent, Task
+    from upsonic.client.tools import Search
+
+    app = FastAPI()
+
+    # Create an agent with a specific role
+    agent = Agent(
+        "Customer Support",
+        company_url="https://your-company.com",
+        company_objective="To provide excellent customer service and support",
+    )
+
+    @app.get("/ask")
+    async def ask(query: str):
+        # Create a task with the user's query
+        task = Task(query, tools=[Search])
+        
+        # Run the task with the agent
+        response = agent.do(task)
+        
+        return {"response": response}
+    ```
+  </Step>
+
+  <Step title="Create and activate a virtual environment:">
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+    ```
+  </Step>
+
+  <Step title="Install the required dependencies by running:">
+    ```bash
+    pip install -r requirements.txt
+    ```
+  </Step>
+
+  <Step title="Set your OPENAI_API_KEY environment variable:">
+    ```bash
+    export OPENAI_API_KEY=your_api_key  # On Windows: set OPENAI_API_KEY=your_api_key
+    ```
+  </Step>
+
+  <Step title="Run the FastAPI app with `uvicorn main:app --reload`.">
+    ```bash
+    uvicorn main:app --reload
+    ```
+  </Step>
+</Steps>
+
+## Step 2: Create a Dockerfile
+
+<Steps>
+  <Step title="In the same directory, create a new file named `Dockerfile` with the following content:">
+    ```dockerfile Dockerfile
+    FROM python:3.10-slim
+
+    WORKDIR /app
+
+    COPY requirements.txt .
+    RUN pip install --no-cache-dir -r requirements.txt
+
+    COPY . .
+
+    CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ```
+  </Step>
+
+  <Step title="Build the Docker image by running:">
+    ```bash
+    docker build -t my-upsonic-app .
+    ```
+  </Step>
+
+  <Step title="Run the Docker container with:">
+    ```bash
+    docker run -p 8000:8000 -e OPENAI_API_KEY=your_api_key my-upsonic-app
+    ```
+  </Step>
+
+  <Step title="Access your app">
+    You can now access the FastAPI app at `http://localhost:8000`.
+  </Step>
+</Steps>
+
+## Step 3: Advanced Configuration with Structured Responses
+
+<Steps>
+  <Step title="Enhance your `main.py` file to include structured responses using Pydantic models:">
+    ```python main.py
+    from fastapi import FastAPI
+    from upsonic import Agent, Task
+    from upsonic.client.tools import Search
+    from pydantic import BaseModel
+    from typing import List
+
+    app = FastAPI()
+
+    # Define a structured response model
+    class TravelRecommendation(BaseModel):
+        destination: str
+        attractions: List[str]
+        best_time_to_visit: str
+        estimated_budget: str
+
+    # Create an agent with a specific role
+    agent = Agent(
+        "Travel Advisor",
+        company_url="https://your-travel-company.com",
+        company_objective="To provide personalized travel recommendations and advice",
+    )
+
+    @app.get("/travel-recommendation")
+    async def get_travel_recommendation(destination_type: str, budget: str, duration: str):
+        # Create a task with structured response format
+        task = Task(
+            f"Recommend a travel destination for a {duration} trip with {destination_type} experience and {budget} budget",
+            tools=[Search],
+            response_format=TravelRecommendation
+        )
+        
+        # Run the task with the agent
+        response = agent.do(task)
+        
+        return response
+
+    @app.get("/ask")
+    async def ask(query: str):
+        # Create a general purpose task
+        task = Task(
+            query, 
+            tools=[Search]
+        )
+        
+        # Run the task with the agent
+        response = agent.do(task)
+        
+        return {"response": response}
+    ```
+  </Step>
+
+  <Step title="Run the updated Docker container:">
+    ```bash
+    docker build -t my-upsonic-app .
+    docker run -p 8000:8000 -e OPENAI_API_KEY=your_api_key my-upsonic-app
+    ```
+
+    Now your API provides both a general-purpose query endpoint and a specialized endpoint that returns structured travel recommendations.
+
+    You can test the structured response endpoint with:
+
+    ```bash
+    curl "http://localhost:8000/travel-recommendation?destination_type=beach&budget=medium&duration=7%20days"
+    ```
+
+    This will return a JSON object with structured travel recommendation information.
+  </Step>
+</Steps>
