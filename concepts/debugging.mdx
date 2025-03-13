@@ -1,0 +1,49 @@
+---
+title: "Debugging"
+description: "Debug your Upsonic Agents and Direct"
+icon: "bug"
+---
+
+## Overview
+
+Debugging in Upsonic provides detailed insights into the internal operations of your Agents and Direct calls. When enabled, debug mode displays comprehensive information about server connections, API requests, response data, and the execution flow of your AI tasks.
+
+Debug mode is particularly useful when developing new applications, troubleshooting issues, or when you need to understand exactly how your AI agents are processing information and making decisions.
+
+<Warning>
+  Enabling debug mode will generate a significant amount of output in your console. This is intended for development and troubleshooting purposes and should generally be disabled in production environments.
+</Warning>
+
+## Enabling Debug mode in Agents
+
+Debug mode can be enabled when initializing an Agent by setting the `debug` parameter to `True`. This will display detailed information about the agent's operations, including server connections, API calls, and the execution flow.
+
+```python
+from upsonic import Agent, Task
+
+# Initialize an agent with debug mode enabled
+agent = Agent("My AI Assistant", debug=True)
+
+# Create and execute a task
+task = Task("Analyze the sentiment of this text: I love this product!")
+agent.print_do(task)
+```
+
+When debug mode is enabled, you'll see comprehensive logs about the agent's initialization, server connections, and the complete execution flow of your tasks. This includes details about the prompts being sent to the language model, the responses received, and any intermediate processing steps.
+
+## Enabling Debug mode in Direct
+
+Similar to Agents, debug mode can be enabled for Direct calls by setting the `debug` parameter to `True` during initialization. This provides detailed information about the direct language model interactions.
+
+```python
+from upsonic import Direct, Task
+
+# Initialize Direct with debug mode enabled
+direct = Direct(debug=True)
+
+# Create and execute a task
+task = Task("Explain quantum computing in simple terms")
+direct.print_do(task)
+```
+
+When debug mode is enabled for Direct calls, you'll see detailed logs about the server connection, the exact prompts being sent to the language model, and the complete responses received. This is particularly useful when you need to fine-tune your prompts or understand why a particular response was generated.
