@@ -1,0 +1,129 @@
+---
+title: "Graph"
+description: "Generate Upsonic Agent and Direct Graphs"
+icon: "diagram-project"
+---
+
+## Overview
+
+The Graph feature in Upsonic allows you to create complex workflows by connecting multiple AI Tasks together. Tasks can be executed sequentially or in parallel, with outputs from one task flowing into subsequent tasks. This enables building sophisticated AI pipelines where each task builds upon the results of previous ones.
+
+## Creating a Graph
+
+A Graph is the main structure that manages task execution and workflow. It handles task scheduling, execution order, and state management between tasks.
+
+```python
+from upsonic import Agent, Direct, Task
+from upsonic.client.graph import Graph
+
+# Create a default agent for the graph
+agent = Direct()
+
+# Create a graph with the agent as default
+graph = Graph(default_agent=agent)
+
+# Alternatively, create a graph with parallel execution
+parallel_graph = Graph(default_agent=agent, parallel_execution=True)
+```
+
+You can configure a graph with several options:
+
+- `default_agent`: The default agent to use for tasks that don't specify their own
+- `parallel_execution`: Whether to execute independent tasks in parallel
+- `max_parallel_tasks`: Maximum number of tasks to execute in parallel (default: 4)
+- `show_progress`: Whether to display a progress bar during execution (default: True)
+
+## Creating Task Nodes
+
+Task nodes are the building blocks of a graph. Each node contains a Task object and connects to other nodes to form a workflow.
+
+```python
+# Create tasks
+task1 = Task("Analyze market trends")
+task2 = Task("Generate product recommendations")
+task3 = Task("Summarize findings")
+
+# Add tasks to the graph using the chain operator
+graph.add(task1 >> task2 >> task3)
+
+# Alternatively, add tasks individually
+graph.add(task1)
+graph.add(task2)
+graph.add(task3)
+```
+
+> **Note**: Tasks in a graph work exactly the same as regular Tasks in Upsonic. You can provide prompts, tools, and context just as you would with standalone tasks.
+
+### Using Agents in Graph
+
+You can use Agent configurations with your graph to process tasks. An Agent provides access to specific models with customized settings.
+
+```python
+from upsonic import Agent, Task
+from upsonic.client.graph import Graph
+
+# Create an agent
+agent = Agent("Research Assistant")
+
+# Create a graph with the agent
+graph = Graph(default_agent=agent)
+
+# Create tasks
+market_research = Task("Analyze recent trends in the smartphone market")
+competitor_analysis = Task("Identify key competitors and their strengths")
+summary = Task("Create a summary report of findings")
+
+# Connect tasks and add to graph
+graph.add(market_research >> competitor_analysis >> summary)
+
+# Run the graph
+result = graph.run(verbose=True)
+print(graph.get_output())
+```
+
+### Using Direct in Graph
+
+The Direct interface provides a simpler way to interact with AI models without creating a full Agent configuration.
+
+```python
+from upsonic import Direct, Task
+from upsonic.client.graph import Graph
+
+# Create a Direct interface to a model
+direct = Direct()
+
+# Create a graph with the Direct interface
+graph = Graph(default_agent=direct)
+
+# Create and connect tasks
+question1 = Task("What is artificial intelligence?")
+question2 = Task("How does it impact business operations?")
+question3 = Task("Summarize the key takeaways")
+
+# Add the task chain to the graph
+graph.add(question1 >> question2 >> question3)
+
+# Run the graph
+graph.run()
+print(graph.get_output())
+```
+
+## Running a Graph
+
+Once you've created a graph and added tasks, you can run the graph to execute all tasks in the proper order.
+
+```python
+# Run the graph with default settings
+result = graph.run()
+
+# Run with verbose output to see detailed information
+result = graph.run(verbose=True)
+
+# Get the final output (result of the last task)
+final_output = graph.get_output()
+
+# Get output of a specific task by description
+specific_output = graph.get_task_output("Analyze market trends")
+```
+
+When tasks are executed, outputs from each task are stored in the graph's state and can be accessed by subsequent tasks. This allows for complex workflows where later tasks build upon the results of earlier ones.
