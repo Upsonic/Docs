@@ -1,0 +1,198 @@
+---
+title: 'Parallel Task Execution'
+description: 'Learn how to execute tasks sequentially and in parallel with Upsonic'
+icon: 'arrow-down-up-across-line'
+---
+
+## Overview
+
+Upsonic provides flexible mechanisms for task execution, allowing you to run tasks both sequentially and in parallel, with synchronous and asynchronous options. This flexibility enables efficient task processing tailored to your specific requirements, whether you need ordered execution, concurrent processing, or non-blocking operations.
+
+## Task Execution Methods
+
+Upsonic offers four primary methods for task execution:
+
+1. **Sequential Synchronous** - Execute tasks one after another, waiting for each to complete. Ideal for workflows where tasks depend on previous results or when order matters.
+2. **Sequential Asynchronous** - Queue tasks for execution without blocking the main thread. Perfect for background processing where you want to continue executing your main program while tasks complete in the background.
+3. **Parallel Synchronous** - Execute multiple tasks concurrently, waiting for all to complete. Best for CPU-intensive independent operations where you need maximum throughput but still need all results before proceeding.
+4. **Parallel Asynchronous** - Execute multiple tasks concurrently without blocking the main thread. Excellent for responsive applications that need to handle multiple operations simultaneously without freezing the user interface.
+
+## Creating Tasks and Agents
+
+Before executing tasks, you need to define your tasks and create an agent to process them:
+
+```python
+from upsonic import Agent, Task
+
+# Define specific, concise tasks
+task1 = Task("Calculate the sum of numbers from 1 to 100")
+task2 = Task("Generate a random password with 12 characters")
+task3 = Task("Convert 'hello world' to uppercase")
+
+# Create an agent
+agent = Agent("Test Agent")
+```
+
+## Sequential Task Execution
+
+### Synchronous Sequential Execution
+
+Execute tasks one after another, waiting for each task to complete before moving to the next:
+
+```python
+# Run tasks sequentially in sync mode
+agent.print_do(task1)  # First task completes
+agent.print_do(task2)  # Then second task starts
+agent.print_do(task3)  # Finally third task executes
+```
+
+This method ensures tasks are executed in a specific order, with each task fully completing before the next begins. Use this approach when tasks must execute in a particular sequence, such as data preparation followed by analysis, or when subsequent tasks depend on the results of previous ones.
+
+### Asynchronous Sequential Execution
+
+Queue tasks for execution without blocking the main thread:
+
+```python
+# Run tasks sequentially in async mode
+agent.print_do_async(task1)
+agent.print_do_async(task2)
+agent.print_do_async(task3)
+```
+
+<Note>
+The `print_do_async` method returns immediately, allowing your code to continue execution while tasks are processed in the background.
+</Note>
+
+This execution model is particularly useful for user interfaces and web applications where you need to maintain responsiveness while processing tasks in a defined order. It's also valuable for long-running operations that shouldn't block the main application flow.
+
+## Parallel Task Execution
+
+### Synchronous Parallel Execution
+
+Execute multiple tasks concurrently and wait for all tasks to complete:
+
+```python
+# Execute multiple tasks in parallel (sync)
+tasks = [task1, task2, task3, task4, task5]
+agent.parallel_print_do(tasks)
+```
+
+This method significantly improves performance when handling independent tasks by utilizing multiple processing resources simultaneously, but it will block until all tasks are complete. Use this when you need to process a batch of operations as quickly as possible and your program logic requires all results before continuing execution, such as processing multiple data files for a consolidated report.
+
+### Asynchronous Parallel Execution
+
+Execute multiple tasks concurrently without blocking the main thread:
+
+```python
+# Execute multiple tasks in parallel (async)
+tasks = [task1, task2, task3, task4, task5]
+agent.parallel_print_do_async(tasks)
+```
+
+<Warning>
+When using asynchronous methods, make sure your application handles the continuation of execution appropriately, as it won't wait for tasks to complete.
+</Warning>
+
+This approach provides maximum performance and responsiveness, making it ideal for applications that need to handle multiple independent operations without affecting the user experience. Common use cases include background data syncing, concurrent API calls to different services, or processing large batches of items with no interdependencies.
+
+## Performance Considerations
+
+- **Sequential Execution**: Best for tasks that must be executed in a specific order or depend on each other's results
+- **Parallel Execution**: Ideal for independent tasks that can be processed simultaneously
+- **Synchronous Methods**: Provide predictable execution flow but block until completion
+- **Asynchronous Methods**: Improve responsiveness but require careful management of execution flow
+
+## Examples
+
+### Example 1: Data Processing Pipeline
+
+When processing data through multiple transformations, sequential execution ensures each step completes before moving to the next:
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("Data Processing Agent")
+
+# Define pipeline steps
+extract_task = Task("Extract data from source database")
+transform_task = Task("Clean and transform the extracted data")
+load_task = Task("Load transformed data into target warehouse")
+
+# Execute pipeline in strict sequence
+agent.print_do(extract_task)  # Must complete before transformation
+agent.print_do(transform_task)  # Must complete before loading
+agent.print_do(load_task)
+```
+
+### Example 2: Web Scraping Multiple Sites
+
+When scraping data from multiple websites, parallel execution maximizes efficiency:
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("Web Scraping Agent")
+
+# Define scraping tasks for different sites
+tasks = [
+    Task("Scrape data from website A"),
+    Task("Scrape data from website B"),
+    Task("Scrape data from website C"),
+    Task("Scrape data from website D")
+]
+
+# Execute all scraping tasks concurrently
+agent.parallel_print_do(tasks)
+```
+
+### Example 3: Responsive User Interface with Background Processing
+
+Keep a user interface responsive while performing complex calculations:
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("UI Agent")
+
+# When user clicks a button to generate reports
+generate_report1 = Task("Generate quarterly financial report")
+generate_report2 = Task("Generate customer analytics report")
+send_email = Task("Email reports to management team")
+
+# Start report generation without blocking the UI
+agent.parallel_print_do_async([generate_report1, generate_report2])
+
+# User can continue using the application
+print("UI remains responsive while reports generate in background")
+
+# Later, when reports are needed
+send_notification = Task("Notify user that reports are complete")
+agent.print_do(send_notification)
+agent.print_do(send_email)
+```
+
+### Example 4: Microservice Orchestration
+
+Coordinate calls to multiple microservices with different execution patterns:
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("Service Orchestrator")
+
+# Authentication must happen before other operations
+authenticate = Task("Authenticate with the API gateway")
+agent.print_do(authenticate)  # Synchronous - must complete first
+
+# These service calls can happen in parallel
+user_service = Task("Fetch user profile data")
+orders_service = Task("Fetch recent orders")
+recommendations_service = Task("Generate product recommendations")
+
+# Process these services in parallel for efficiency
+agent.parallel_print_do([user_service, orders_service, recommendations_service])
+
+# Send analytics event in the background (don't need to wait)
+analytics = Task("Log user activity for analytics")
+agent.print_do_async(analytics)
+```
