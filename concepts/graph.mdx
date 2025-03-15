@@ -127,3 +127,89 @@ specific_output = graph.get_task_output("Analyze market trends")
 ```
 
 When tasks are executed, outputs from each task are stored in the graph's state and can be accessed by subsequent tasks. This allows for complex workflows where later tasks build upon the results of earlier ones.
+
+## Creating Decision Nodes
+
+Decision nodes allow you to create conditional branches in your graph, enabling dynamic workflows that can take different paths based on the output of previous tasks. Upsonic provides two types of decision nodes:
+
+### Decision via Code (DecisionFunc)
+
+The `DecisionFunc` allows you to use a custom Python function to determine which path to take in your graph based on the output of previous tasks.
+
+```python
+from upsonic import Agent, Task
+from upsonic.client.graph import Graph, DecisionFunc
+
+# Create an agent and graph
+agent = Agent("Test Agent")
+graph = Graph(default_agent=agent)
+
+# Create tasks
+country_task = Task("What's an interesting country in Central Asia?")
+geography_task = Task("What is the geography of this country?")
+culture_task = Task("What is the culture of this country?")
+mountain_task = Task("What is the most popular mountain in this country?")
+
+# Define a decision function
+def has_mountains(output):
+    return "mountain" in output.lower()
+
+# Create a decision node
+decision = DecisionFunc("Has mountains?", has_mountains)
+
+# Add tasks with conditional branching to the graph
+graph.add(country_task >> geography_task >> decision.if_true(mountain_task).if_false(culture_task))
+
+```
+
+In this example, after getting information about a country's geography, the decision function checks if the word "mountain" appears in the output. If it does, the graph will execute the mountain task; otherwise, it will execute the culture task.
+
+### Decision via LLM (DecisionLLM)
+
+The `DecisionLLM` uses an AI model to make decisions based on the output of previous tasks, allowing for more complex decision-making without writing custom code.
+
+```python
+from upsonic import Agent, Task
+from upsonic.client.graph import Graph, DecisionLLM
+
+# Create an agent and graph
+agent = Agent("Test Agent")
+graph = Graph(default_agent=agent)
+
+# Create tasks
+country_task = Task("What's an interesting country which has the biggest mountains?")
+geography_task = Task("What is the geography of this country?")
+culture_task = Task("What is the culture of this country?")
+mountain_task = Task("What is the most popular mountain in this country?")
+
+# Create a decision node using LLM
+decision = DecisionLLM("Has the biggest trains?")
+
+# Add tasks with conditional branching to the graph
+graph.add(country_task >> geography_task >> decision.if_true(mountain_task).if_false(culture_task))
+```
+
+In this example, the LLM will analyze the output from the geography task and determine whether the country has "the biggest trains" based on the content. The decision will then direct the flow to either the mountain task or the culture task.
+
+Decision nodes provide powerful flexibility in creating dynamic workflows that can adapt based on the content and context of previous task outputs.
+
+
+## Running a Graph
+
+Once you've created a graph and added tasks, you can run the graph to execute all tasks in the proper order.
+
+```python
+# Run the graph with default settings
+result = graph.run()
+
+# Run with verbose output to see detailed information
+result = graph.run(verbose=True)
+
+# Get the final output (result of the last task)
+final_output = graph.get_output()
+
+# Get output of a specific task by description
+specific_output = graph.get_task_output("Analyze market trends")
+```
+
+When tasks are executed, outputs from each task are stored in the graph's state and can be accessed by subsequent tasks. This allows for complex workflows where later tasks build upon the results of earlier ones.
