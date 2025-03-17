@@ -13,17 +13,14 @@ The Graph feature in Upsonic allows you to create complex workflows by connectin
 A Graph is the main structure that manages task execution and workflow. It handles task scheduling, execution order, and state management between tasks.
 
 ```python
-from upsonic import Agent, Direct, Task
-from upsonic.client.graph import Graph
+from upsonic import Agent, Task
+from upsonic import Graph
 
 # Create a default agent for the graph
-agent = Direct()
+agent = Agent("Test Agent")
 
 # Create a graph with the agent as default
 graph = Graph(default_agent=agent)
-
-# Alternatively, create a graph with parallel execution
-parallel_graph = Graph(default_agent=agent, parallel_execution=True)
 ```
 
 You can configure a graph with several options:
@@ -54,40 +51,13 @@ graph.add(task3)
 
 > **Note**: Tasks in a graph work exactly the same as regular Tasks in Upsonic. You can provide prompts, tools, and context just as you would with standalone tasks.
 
-### Using Agents in Graph
-
-You can use Agent configurations with your graph to process tasks. An Agent provides access to specific models with customized settings.
-
-```python
-from upsonic import Agent, Task
-from upsonic.client.graph import Graph
-
-# Create an agent
-agent = Agent("Research Assistant")
-
-# Create a graph with the agent
-graph = Graph(default_agent=agent)
-
-# Create tasks
-market_research = Task("Analyze recent trends in the smartphone market")
-competitor_analysis = Task("Identify key competitors and their strengths")
-summary = Task("Create a summary report of findings")
-
-# Connect tasks and add to graph
-graph.add(market_research >> competitor_analysis >> summary)
-
-# Run the graph
-result = graph.run(verbose=True)
-print(graph.get_output())
-```
-
 ### Using Direct in Graph
 
 The Direct interface provides a simpler way to interact with AI models without creating a full Agent configuration.
 
-```python
+```python filename
 from upsonic import Direct, Task
-from upsonic.client.graph import Graph
+from upsonic import Graph
 
 # Create a Direct interface to a model
 direct = Direct()
@@ -138,7 +108,7 @@ The `DecisionFunc` allows you to use a custom Python function to determine which
 
 ```python
 from upsonic import Agent, Task
-from upsonic.client.graph import Graph, DecisionFunc
+from upsonic import Graph, DecisionFunc
 
 # Create an agent and graph
 agent = Agent("Test Agent")
@@ -159,7 +129,6 @@ decision = DecisionFunc("Has mountains?", has_mountains)
 
 # Add tasks with conditional branching to the graph
 graph.add(country_task >> geography_task >> decision.if_true(mountain_task).if_false(culture_task))
-
 ```
 
 In this example, after getting information about a country's geography, the decision function checks if the word "mountain" appears in the output. If it does, the graph will execute the mountain task; otherwise, it will execute the culture task.
@@ -170,7 +139,7 @@ The `DecisionLLM` uses an AI model to make decisions based on the output of prev
 
 ```python
 from upsonic import Agent, Task
-from upsonic.client.graph import Graph, DecisionLLM
+from upsonic import Graph, DecisionLLM
 
 # Create an agent and graph
 agent = Agent("Test Agent")
@@ -192,7 +161,6 @@ graph.add(country_task >> geography_task >> decision.if_true(mountain_task).if_f
 In this example, the LLM will analyze the output from the geography task and determine whether the country has "the biggest trains" based on the content. The decision will then direct the flow to either the mountain task or the culture task.
 
 Decision nodes provide powerful flexibility in creating dynamic workflows that can adapt based on the content and context of previous task outputs.
-
 
 ## Running a Graph
 
