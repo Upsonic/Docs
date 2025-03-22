@@ -10,19 +10,26 @@ The Knowledge Base feature in the Upsonic framework serves as a critical compone
 
 A notable advantage of the Knowledge Base feature is its seamless integration with context compression, optimizing the handling of large datasets. The framework implements this functionality through two distinct types of knowledge bases 
 
-* The one that directly provides the data that needs to be kept and analyzed alongside each prompt.
-
-* Knowledge bases that exist as tools that the LLM can search when needed.
+- The one that directly provides the data that needs to be kept and analyzed alongside each prompt.
+- Knowledge bases that exist as tools that the LLM can search when needed.
 
 While both groups have their own benefits, especially in cases requiring RAG (Retrieval-Augmented Generation), and when dealing with large or unstructured data, the LLM (Large Language Model) will return more successful results since it determines the search query by itself.
 
 <Info>
   Key benefits of using Knowledge:
 
-  * Enhance agents for domain-specific situations
-
-  * Enhance decisions with real-world data
+  - Enhance agents for domain-specific situations
+  - Enhance decisions with real-world data
 </Info>
+
+
+## Installing RAG Library
+
+Upsonic framework have an extra package group for RAG based cases. You can install via:
+
+```bash
+pip install 'upsonic[rag]'
+```
 
 ## Creating an Knowledge Base
 
@@ -52,16 +59,15 @@ task1 = Task(
 
   context=[resume_list] # Adding Knowledge Base to the task
 )
-
 ```
 
 ## Enabling RAG
 
 When dealing with a large volume of sources, having the agent directly process all sources in raw format both weakens its focus and may hit context limits. In such cases, using RAG (Retrieval-Augmented Generation), which is a mechanism that retrieves only relevant content, is highly beneficial. To implement RAG within Upsonic, simply specifying the rag_model is sufficient. This ensures that the most relevant data is retrieved for the prompt during each agent execution or direct LLM call.
 
-**Supported Embedding Models:
-- openai/text-embedding-3-small
+\*\*Supported Embedding Models:
 
+- openai/text-embedding-3-small
 
 ```python
 from upsonic import KnowledgeBase
@@ -73,38 +79,25 @@ resume_list = KnowledgeBase(
 )
 ```
 
-
-
 ## Supported Formats
 
-<CardGroup cols={2}>
+<CardGroup cols="2">
   <Card title="Supported Files" icon="files">
-    * \- PDF
-
-    * \- PowerPoint
-
-    * \- Word
-
-    * \- Excel
-
-    * \- Images
-
-    * \- Audio
-
-    * \- HTML
-
-    * \- CSV
-
-    * \- JSON
-
-    * \- XML
-
-    * \- ZIP
+    - - PDF
+    - - PowerPoint
+    - - Word
+    - - Excel
+    - - Images
+    - - Audio
+    - - HTML
+    - - CSV
+    - - JSON
+    - - XML
+    - - ZIP
   </Card>
-
   <Card title="Supported Variables" icon="code">
-    * \- STRING
+    - - STRING
   </Card>
 </CardGroup>
 
-##
+## 
