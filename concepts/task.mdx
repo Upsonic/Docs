@@ -12,7 +12,6 @@ The Upsonic framework uses Tasks as its core component. Tasks can be executed by
 The task-centric approach advantages:
 
 1. It removes the restriction of binding agents to single tasks, allowing them to handle multiple tasks efficiently.
-
 2. It improves programmability by enabling task dependencies like websites, company data, and competitor information to be defined programmatically instead of being embedded in individual agents. This approach eliminates the need for separate agents for repetitive operations like competitor analysis, creating a more scalable and maintainable system.
 
 ## Creating a Task
@@ -29,13 +28,14 @@ task1 = Task("Do an in-depth analysis of US history")
 
 Tasks within the framework can range from basic to complex, depending on your specific requirements. The framework is designed with simplicity in mind, requiring only one mandatory parameter: the description. All other parameters are optional, providing flexibility in task configuration.
 
-| Attribute                    | Parameters        | Type                                               | Description                                     |
-| ---------------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------- |
-| Description                  | `description`     | `str`                                              | A clear and concise statement of what the task. |
-| Images                       | `images`          | `List[str]`                                        | Put your images to your task                    |
-| Response Format *(Optional)* | `response_format` | `Optional[List[Union(BaseModal, ObjectResponse)]]` | Describe the response you expect.               |
-| Tools *(Optional)*           | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The tools needed to complete the task.          |
-| Context *(Optional)*         | `context`         | `Optional[List[Union(Task, KnowledgeBase, str)]]`  | Context that helps accomplish the task          |
+| Attribute                      | Parameters        | Type                                               | Description                                     |
+| ------------------------------ | ----------------- | -------------------------------------------------- | ----------------------------------------------- |
+| Description                    | `description`     | `str`                                              | A clear and concise statement of what the task. |
+| Images                         | `images`          | `List[str]`                                        | Put your images to your task                    |
+| Response Format _(Optional)_   | `response_format` | `Optional[List[Union(BaseModal, ObjectResponse)]]` | Describe the response you expect.               |
+| Response Language _(Optional)_ | `response_lang`   | `Optional[str]`                                    | Define the output language for your tasks.      |
+| Tools _(Optional)_             | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The tools needed to complete the task.          |
+| Context _(Optional)_           | `context`         | `Optional[List[Union(Task, KnowledgeBase, str)]]`  | Context that helps accomplish the task          |
 
 ## Adding Tools to a Task
 
@@ -47,20 +47,19 @@ Integrating a tool into your task is straightforward: simply create a list conta
 
 <Steps>
   <Step title="Function Tools">
-    Let's define a class called MyTools that includes a function named is\_page\_available. This function will perform a simple URL validation check, returning True if the specified URL is accessible, making it useful for verifying web resources.
+    Let's define a class called MyTools that includes a function named is_page_available. This function will perform a simple URL validation check, returning True if the specified URL is accessible, making it useful for verifying web resources.
 
     ```python
     import requests
-
+    
     class MyTools:
       def is_page_available(url: str) -> bool:
           return requests.get(url).status_code == 200
-
+    
     ```
   </Step>
-
   <Step title="MCP Tools">
-    This example demonstrates integration with the HackerNews MCP Server, which provides several functions including get\_stories, get\_story\_info, search\_stories, and get\_user\_info. The MCP framework simplifies the process of connecting our agents to external services, as illustrated by this HackerNews integration.
+    This example demonstrates integration with the HackerNews MCP Server, which provides several functions including get_stories, get_story_info, search_stories, and get_user_info. The MCP framework simplifies the process of connecting our agents to external services, as illustrated by this HackerNews integration.
 
     ```python
     class HackerNewsMCP:
@@ -68,7 +67,6 @@ Integrating a tool into your task is straightforward: simply create a list conta
         args = ["mcp-hn"]
     ```
   </Step>
-
   <Step title="Put to Task">
     Once you've configured your custom tools, they can be directly incorporated into the Task object. The agent will then automatically utilize these tools as needed during task execution.
 
@@ -110,13 +108,12 @@ You can see the supported files and options of the <u>Knowledge Base System</u> 
 
     ```python
     from upsonic import KnowledgeBase
-
+    
     firm_knowledge_base = KnowledgeBase(
       files=["february_technical_tasks.pdf", "https://upsonic.ai"]
     )
     ```
   </Step>
-
   <Step title="Add as Context to Task">
     ```python
     task = Task(
@@ -138,7 +135,6 @@ task = Task(
   "Extract the names in the paper",
   images=["paper.png"] # Add your image paths
 )
-
 ```
 
 ## Giving string as Context
@@ -158,7 +154,6 @@ task = Task(
   "Find resources in the city",
   context=[city] # Adding city string as context
 )
-
 ```
 
 When you need to create task for different cities, you can use this method:
@@ -170,11 +165,10 @@ When you need to create task for different cities, you can use this method:
     base_description = "Find resources in the city"
     ```
   </Step>
-
   <Step title="Creating a for loop">
     ```python
     tasks = []
-
+    
     for city in cities:
       city_task = Task(
         base_description, # Setting description from base_description
@@ -209,6 +203,19 @@ task = Task(
 )
 ```
 
+## Response Language
+
+Tasks internally handle their reasoning and logic in English. Therefore, tasks inherently perform better in English. However, if a different language is required for the output, you can directly utilize the `response_lang` parameter within the Upsonic framework.
+
+This parameter integrates a one-to-one translation system that converts the output into your desired language.
+
+```python
+task = Task(
+  "Create a plan to visit cities in Canada", 
+  response_lang="Deutsch" # Specifying language of response
+)
+```
+
 ## Running Task on Direct LLM Call
 
 After task definition, you have the flexibility to choose between two runtime options: Agent execution or direct LLM calls. While Agents provide powerful capabilities for complex tasks, they may not always be the most efficient choice. For simple tasks without potential sub-steps, utilizing an Agent can result in unnecessary time and cost overhead.
@@ -226,7 +233,7 @@ Direct.print_do(task1) # Direct and fast way to complete task
 <Tip>
   Direct LLM Calls Support **<u>Tools</u>**
 
-  Don't sweat it—Direct LLM Calls takes care of all your tools. They'll work like agents, no sweat!
+  Don't sweat it—Direct LLM Calls takes care of all your tools. They'll work like agents, no sweat\!
 </Tip>
 
 ## Running Task on Agent
@@ -243,7 +250,7 @@ You can view the details of agent creation and customization here.
 
     ```python
     from upsonic import Agent
-
+    
     agent = Agent(
         "Product Manager",
         company_url="https://upsonic.ai",
@@ -251,21 +258,19 @@ You can view the details of agent creation and customization here.
     )
     ```
   </Step>
-
   <Step title="Creating Task">
     ```python
     task = Task("Make a deep analyze to history of chips")
     ```
   </Step>
-
   <Step title="Running Task with Agent">
-    We've got a function called "agent" in the client that we'll use to give product\_manager\_agent and task1.
+    We've got a function called "agent" in the client that we'll use to give product_manager_agent and task1.
 
     ```python
     agent.print_do(task)
     ```
 
-    &#x20;
+     
   </Step>
 </Steps>
 
@@ -293,29 +298,29 @@ print(response)
 ```
 
 <Tip>
-  Hey, just a heads-up: if you set a response\_format, the task response will be an object of your class.
+  Hey, just a heads-up: if you set a response_format, the task response will be an object of your class.
 
   ```python
   from upsonic import ObjectResponse
-
+  
   class TravelResponse(ObjectResponse):
     cities: str
-
+  
   task = Task(
     "Generate a plan to visit cities in Canada", 
     reponse_format=TravelResponse # Specift the response format
   )
-
+  
   ## Run the task
-
+  
   # Direct.do(task)
   # agent.do(task)
-
+  
   ## After Run the task
-
-
+  
+  
   result = task.response
-
+  
   print("Cities")
   for i in result.cities:
     print(i)
