@@ -1,37 +1,55 @@
 ---
-title: 'MCP Tools'
-description: 'An open protocol that enables seamless integration between LLM applications and external data sources and tools.'
-icon: plug
+title: "MCP Tools"
+description: "An open protocol that enables seamless integration between LLM applications and external data sources and tools."
+icon: "plug"
 ---
 
 ## What is Model Context Protocol (MCP) ?
 
-The Model Context Protocol (MCP) is an open protocol that enables seamless integration between LLM applications and external data sources and tools. 
+The Model Context Protocol (MCP) is an open protocol that enables seamless integration between LLM applications and external data sources and tools.
 
 While using Upsonic, you can directly use tools developed with MCP (MCP Servers). This way, you can create various agents and handle your tasks using both official tools made by different companies daily and community-developed tools, providing access to an extensive tool ecosystem.
 
-
 ## Server Lists
+
 There are certain MCP Server lists created to view various MCP servers and learn how to use them. Some of these are:
 
 - https://glama.ai/mcp/servers
 - https://www.mcp.run/
 - https://smithery.ai/
 
-
 ## Server Types
 
+- **SSE Server (Remote)**: You can use your remote MCP server with SSE standard
 - **NPX Based**: You need to install node.js to use this kind of tools.
 - **UVX**: They are python based tools you dont need to install anything.
 - **Docker**: If you have an docker installation you can easily run these tools with a great isolation.
 
+## Connecting an Example MCP Server (Remote - SSE)
 
-## Connecting an Example MCP Server
+Upsonic Supports SSE MCP servers. You can easily connect your agents with your hosted MCP servers.
+
+Let's see in an example:
+
+```python
+
+class Fetch:
+    url = "https://" # SSE URL
+
+class Duckduck:
+    url = "https://" # SSE URL
+
+task = Task(
+	"Use the tool to get the latest news in Europe", 
+	tools=[Fetch, Duckduck]
+)
+```
+
+## Connecting an Example MCP Server (Local)
 
 Upsonic uses a structure that involves class creation for connecting to MCP servers. This structure allows you to easily create multiple integrations and use them whenever needed.
 
 In this example, we will integrate the HackerNews MCP:
-
 
 ```python
 # Hackernews MCP Server
