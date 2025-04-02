@@ -42,6 +42,14 @@ The supported LLMs are:
   * ollama/llama3.3
   * ollama/qwen2.5
 
+* **OpenRouter**
+  * openrouter/anthropic/claude-3.5-sonnet
+  * openrouter/meta-llama/llama-3-70b
+  * openrouter/google/gemini-pro
+  * * See the note below for more information about OpenRouter's gateway functionality
+
+> **Note:** OpenRouter acts as a gateway to access various LLM models from different providers. You can use any model available on OpenRouter by following the pattern `openrouter/{provider}/{model-name}`. This allows you to access models that might not be directly supported through their native APIs.
+
 ## Setting up .env
 
 To use these LLMs, an example .env variable file is as follows. You can adjust the variables according to the LLM you want to use and fill in only the ones required. This .env file must be located in your working directory.
@@ -68,6 +76,9 @@ AZURE_OPENAI_API_KEY="***"
 
 # Google Gemini
 GOOGLE_GLA_API_KEY="***"
+
+# OpenRouter
+OPENROUTER_API_KEY="***"
 ```
 
 ## Using an specific model in Agent
