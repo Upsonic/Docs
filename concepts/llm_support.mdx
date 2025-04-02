@@ -11,33 +11,42 @@ The Upsonic framework can use .env variable files or environment variables for L
 The supported LLMs are:
 
 * **OpenAI**
-
   * openai/gpt-4o
-
+  * openai/gpt-4.5-preview
   * openai/o3-mini
+  * openai/gpt-4o-mini
 
 * **Azure**
-
   * azure/gpt-4o
+  * azure/gpt-4o-mini
 
 * **Anthropic**
-
   * claude/claude-3-5-sonnet
+  * claude/claude-3-7-sonnet
 
 * **AWS Bedrock**
-
   * bedrock/claude-3-5-sonnet
 
 * **DeepSeek**
-
   * deepseek/deepseek-chat
+
+* **Google Gemini**
+  * gemini/gemini-2.0-flash
+  * gemini/gemini-1.5-pro
+  * gemini/gemini-1.5-flash
+
+* **Ollama**
+  * ollama/llama3.2
+  * ollama/llama3.1-70b
+  * ollama/llama3.1
+  * ollama/llama3.3
+  * ollama/qwen2.5
 
 ## Setting up .env
 
 To use these LLMs, an example .env variable file is as follows. You can adjust the variables according to the LLM you want to use and fill in only the ones required. This .env file must be located in your working directory.
 
 ```
-
 # OpenAI
 OPENAI_API_KEY="sk-***"
 
@@ -57,6 +66,8 @@ AZURE_OPENAI_ENDPOINT="https://**.com/"
 AZURE_OPENAI_API_VERSION="****-**-**"
 AZURE_OPENAI_API_KEY="***"
 
+# Google Gemini
+GOOGLE_GLA_API_KEY="***"
 ```
 
 ## Using an specific model in Agent
@@ -68,8 +79,16 @@ from upsonic import Agent
 
 product_manager_agent = Agent(
     "Product Manager",
-
     model="openai/gpt-4o" # Specify the model
 )
+```
 
+## Using an specific model in Direct
+
+As like Agent you can specify model directly with `model` parameter.
+
+```python
+from upsonic import Direct
+
+direct = Direct(model="openai/gpt-4o")
 ```
