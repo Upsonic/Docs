@@ -1,7 +1,7 @@
 ---
-title: Introduction
+title: "Introduction"
 description: "Build AI agent teams that work handle your tasks and beyond."
-icon: handshake
+icon: "handshake"
 ---
 
 # What is Upsonic?
@@ -12,54 +12,62 @@ Upsonic offers a cutting-edge enterprise-ready framework where you can orchestra
 
 It provides more reliable agents, scalability, and a task-oriented structure that you need while completing real-world cases.
 
+```bash
+pip install upsonic
+```
+
+```python
+from upsonic import Task, Agent
+
+task = Task("Who developed you?")
+
+agent = Agent("Coder")
+
+agent.print_do(task)
+```
+
 ## How Upsonic Works
 
 ![](/images/how.png)
 
-| Component              | Description                                                        | Key Features                                                                                                         |
-| ---------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| Tasks                  | The job we want to complete                                        | - Have clear objectives <br />- Use specific tools<br />- Feed into larger process<br />- Produce actionable results |
-| Agents                 | LLMs that uses tools to complete tasks                                           | - Actions over tools <br />- Self-reflection <br />- Memory <br />- Context Compression                              |
-| Secure Runtime         | Isolated Envinronment to Run Agents                                | - On-prem <br />- Cloud <br />- Custominization                                                                      |
-| Model Context Protocol | A tool standard for LLM's. Supported by Companies and Communities. | - Wide range tool support                                                                                            |
+| Component              | Description                                                        | Key Features                                                                                             |
+| ---------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Tasks                  | The job we want to complete                                        | - Have clear objectives   - Use specific tools  - Feed into larger process  - Produce actionable results |
+| Agents                 | LLMs that uses tools to complete tasks                             | - Actions over tools   - Self-reflection   - Memory   - Context Compression                              |
+| Secure Runtime         | Isolated Envinronment to Run Agents                                | - On-prem   - Cloud   - Custominization                                                                  |
+| Model Context Protocol | A tool standard for LLM's. Supported by Companies and Communities. | - Wide range tool support                                                                                |
 
 ## Key Features
 
-<CardGroup cols={2}>
+<CardGroup cols="2">
   <Card title="Tasks" icon="bullseye">
     Easily complete the tasks you will accomplish and run them in various ways to get results. Focus on the tasks, not the process.
   </Card>
-
   <Card title="Automatic Characterization" icon="user-tie">
     Share your company's URL and objective, then input a job title for the agent. The Upsonic framework will generate a persona and assign tasks accordingly.
   </Card>
-
   <Card title="MCP Support" icon="plug">
     Directly integrate with a comprehensive tool pool developed by the community and companies. Achieve stability with official tools.
   </Card>
-
   <Card title="Scalable" icon="server">
     The most critical components are internally positioned on the server-side, allowing you to deploy the server via Docker and perform a lightweight integration with your application on the client-side in a stateless manner.
   </Card>
-
   <Card title="Direct LLM Call" icon="angles-right">
     If the task you want to have done is simple and doesn’t require sub-tasks, you don’t need to spend time with agents. You can directly make an LLM call and get the results instantly
   </Card>
-
   <Card title="Object as Response" icon="object-ungroup">
     When working with LLMs, to get more refined results from them, the responses should be programmatic. In this regard, you can define how you want the response by specifying it as class and receiving it as an object.
   </Card>
 </CardGroup>
 
-##
+## 
 
 ## Next Steps
 
-<CardGroup cols={2}>
+<CardGroup cols="2">
   <Card title="Installation Guide" icon="wrench" href="/installation">
     Follow our installation guide to install Upsonic to your envinronment.
   </Card>
-
   <Card title="Build Your First Agent" icon="rocket" href="/quickstart">
     Follow our quickstart guide to create your first Upsonic agent and get hands-on experience.
   </Card>
