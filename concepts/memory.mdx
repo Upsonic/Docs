@@ -15,6 +15,7 @@ When you activate Memory, it saves the conversation history in the current direc
 To activate Memory, it is sufficient to set the memory parameter in the AgentConfiguration class to True and specify an agent ID. This way, the agent will persistently save the history and gain the opportunity to view events from a broader perspective.
 
 ```python
+from upsonic import Agent
 
 agent_id = "product_manager_agent" # Setting an agent id
 
@@ -24,5 +25,4 @@ product_manager_agent = Agent(
     agent_id_=agent_id, # Setting agent id
     memory=True, # Enabling the memory
 )
-
 ```

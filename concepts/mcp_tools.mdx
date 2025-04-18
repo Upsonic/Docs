@@ -32,6 +32,7 @@ Upsonic Supports SSE MCP servers. You can easily connect your agents with your h
 Let's see in an example:
 
 ```python
+from upsonic import Task
 
 class Fetch:
     url = "https://" # SSE URL
@@ -52,6 +53,8 @@ Upsonic uses a structure that involves class creation for connecting to MCP serv
 In this example, we will integrate the HackerNews MCP:
 
 ```python
+from upsonic import Task
+
 # Hackernews MCP Server
 class HackerNewsMCP:
     command = "uvx"
@@ -66,6 +69,8 @@ task = Task(
 and GitHub MCP:
 
 ```python
+from upsonic import Task
+
 # GitHub MCP Server - Requires Node.JS
 class GitHubMCP:
     command = "npx"

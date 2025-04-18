@@ -1,7 +1,7 @@
 ---
-title: 'Parallel Task Execution'
-description: 'Learn how to execute tasks sequentially and in parallel with Upsonic'
-icon: 'arrow-down-up-across-line'
+title: "Parallel Task Execution"
+description: "Learn how to execute tasks sequentially and in parallel with Upsonic"
+icon: "arrow-down-up-across-line"
 ---
 
 ## Overview
@@ -60,7 +60,7 @@ agent.print_do_async(task3)
 ```
 
 <Note>
-The `print_do_async` method returns immediately, allowing your code to continue execution while tasks are processed in the background.
+  The `print_do_async` method returns immediately, allowing your code to continue execution while tasks are processed in the background.
 </Note>
 
 This execution model is particularly useful for user interfaces and web applications where you need to maintain responsiveness while processing tasks in a defined order. It's also valuable for long-running operations that shouldn't block the main application flow.
@@ -90,7 +90,7 @@ agent.parallel_print_do_async(tasks)
 ```
 
 <Warning>
-When using asynchronous methods, make sure your application handles the continuation of execution appropriately, as it won't wait for tasks to complete.
+  When using asynchronous methods, make sure your application handles the continuation of execution appropriately, as it won't wait for tasks to complete.
 </Warning>
 
 This approach provides maximum performance and responsiveness, making it ideal for applications that need to handle multiple independent operations without affecting the user experience. Common use cases include background data syncing, concurrent API calls to different services, or processing large batches of items with no interdependencies.

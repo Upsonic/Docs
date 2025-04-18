@@ -71,6 +71,8 @@ Integrating a tool into your task is straightforward: simply create a list conta
     Once you've configured your custom tools, they can be directly incorporated into the Task object. The agent will then automatically utilize these tools as needed during task execution.
 
     ```python
+    from upsonic import Task
+    
     task = Task(
       "Summarize the latest hackernews stories of today", 
       tools=[Search, MyTools] # Specify the tools list
@@ -84,6 +86,8 @@ Integrating a tool into your task is straightforward: simply create a list conta
 The framework supports the combination of multiple tasks to handle complex operations, particularly useful in scenarios requiring deep analysis followed by report generation. While individual tasks may be complex, the true power lies in their interconnection. By creating task chains and linking them through shared context, you can build sophisticated workflows that seamlessly pass information between tasks.
 
 ```python
+from upsonic import Task
+
 task = Task("Do an in-depth analysis of the history of chips")
 
 task2 = Task(
@@ -116,6 +120,8 @@ You can see the supported files and options of the <u>Knowledge Base System</u> 
   </Step>
   <Step title="Add as Context to Task">
     ```python
+    from upsonic import Task
+    
     task = Task(
       "Create this month's overall technical report.",
       context=[firm_knowledge_base] # Adding firm_knowledge_base to task
@@ -148,6 +154,8 @@ In the context system we also support **str as context**. This provide an capabi
 </Tip>
 
 ```python
+from upsonic import Task
+
 city = "New Yorg"
 
 task = Task(
@@ -167,6 +175,8 @@ When you need to create task for different cities, you can use this method:
   </Step>
   <Step title="Creating a for loop">
     ```python
+    from upsonic import Task
+    
     tasks = []
     
     for city in cities:
@@ -197,6 +207,8 @@ class TravelResponse(ObjectResponse):
 ```
 
 ```python
+from upsonic import Task
+
 task = Task(
   "Create a plan to visit cities in Canada", 
   reponse_format=TravelResponse # Specify the response format
@@ -210,6 +222,8 @@ Tasks internally handle their reasoning and logic in English. Therefore, tasks i
 This parameter integrates a one-to-one translation system that converts the output into your desired language.
 
 ```python
+from upsonic import Task
+
 task = Task(
   "Create a plan to visit cities in Canada", 
   response_lang="Deutsch" # Specifying language of response
@@ -223,7 +237,7 @@ After task definition, you have the flexibility to choose between two runtime op
 Direct LLM calls are particularly advantageous for straightforward operations that don't require sub-task generation or characterization. This runtime selection can be strategically implemented within your Agent application logic, allowing you to optimize performance and resource utilization based on task complexity.
 
 ```python
-from upsonic import Direct
+from upsonic import Direct, Task
 
 task = Task("Describe planet Earth")
 
@@ -260,6 +274,8 @@ You can view the details of agent creation and customization here.
   </Step>
   <Step title="Creating Task">
     ```python
+    from upsonic import Task
+    
     task = Task("Make a deep analyze to history of chips")
     ```
   </Step>
@@ -281,14 +297,12 @@ To maintain a controlled and organized infrastructure, all results are stored wi
 When you run the task, the results are stored in the Task.response. You can get it directly.
 
 ```python
+from upsonic import Task, Agent
+
 task = Task("Make a deep analyze to history of chips")
 
-## Run the task
-
-# Direct.do(task)
-# agent.do(task)
-
-## After Run the task
+agent = Agent("Product Manager")
+agent.do(task)
 
 result = task.response
 
@@ -300,6 +314,7 @@ print(response)
 
   ```python
   from upsonic import ObjectResponse
+  from upsonic import Task, Agent
   
   class TravelResponse(ObjectResponse):
     cities: str
@@ -309,13 +324,8 @@ print(response)
     reponse_format=TravelResponse # Specift the response format
   )
   
-  ## Run the task
-  
-  # Direct.do(task)
-  # agent.do(task)
-  
-  ## After Run the task
-  
+  agent = Agent("Product Manager")
+  agent.do(task)
   
   result = task.response
   

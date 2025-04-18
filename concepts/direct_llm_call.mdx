@@ -1,16 +1,15 @@
 ---
-title: 'Direct LLM Call'
-description: 'Dont wait for reasoning for basic jobs.'
-icon: angles-right
+title: "Direct LLM Call"
+description: "Dont wait for reasoning for basic jobs."
+icon: "angles-right"
 ---
 
 ## What is Direct LLM Call
 
 As the capacity of LLMs increases, the scope of what they can accomplish in a single request also expands significantly. Previously, LLMs were limited to making just a few tool calls, but now they can engage in deep thinking and perform hundreds of tool calls. In the Upsonic framework, we assess this situation as follows:
 
-* Agents are LLMs that are specifically characterized and focused on a particular domain.
-
-* Should use agents when they need to know the organization's objective, goals, and rules.
+- Agents are LLMs that are specifically characterized and focused on a particular domain.
+- Should use agents when they need to know the organization's objective, goals, and rules.
 
 However, apart from these two cases, there are many other cases that can be handled by an LLM. For this reason, we added a feature called Direct LLM Call.
 
@@ -24,9 +23,8 @@ from upsonic import Task, Direct
 task = Task("Create History paper of LLMs")
 
 
-Direct.print_do(task)
-# or Direct.do(task)
-
+direct = Direct()
+direct.print_do(task)
 ```
 
 ## Changing LLM Model
@@ -34,5 +32,7 @@ Direct.print_do(task)
 You can set the `model` as you want via model parameter of  `do` and `print_do` commands.
 
 ```python
-Direct.print_do(task, model="azure/gpt-4o")
+direct = Direct(model="azure/gpt-4o")
+
+direct.print_do(task)
 ```

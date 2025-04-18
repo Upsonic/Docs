@@ -1,7 +1,7 @@
 ---
-title: 'Agent'
-description: 'Generate agents that belongs to your company.'
-icon: user-ninja
+title: "Agent"
+description: "Generate agents that belongs to your company."
+icon: "user-ninja"
 ---
 
 ## Overview
@@ -15,7 +15,7 @@ Agent provide a reusable architecture for better efficiency and flexibility. For
 The AgentConfiguration class serves as a fundamental component in ensuring optimal task execution within the system. Given its critical role, developers should allocate sufficient time to properly configure and fine-tune this class. Additionally, it is essential to conduct comprehensive testing across various configuration scenarios to validate performance and behavior under different operational conditions.
 
 ```python
-from upsonic import Agent, Task
+from upsonic import Agent
 
 agent = Agent(
     "Product Manager",
@@ -30,6 +30,8 @@ agent = Agent(
 To specify which LLM the agent will use, it's sufficient to directly use the model parameter. You can check the LLM support section to see all supported LLMs.
 
 ```python
+from upsonic import Agent
+
 agent = Agent(  
     "Product Manager",
     
@@ -41,18 +43,18 @@ agent = Agent(
 
 Agents are equipped with supplementary features designed to enhance their performance and increase success rates during task execution. These configurable capabilities can be dynamically adjusted throughout the task lifecycle, allowing for real-time optimization of the agent's processing capacity. By fine-tuning these features, users can significantly improve the probability of successful task completion while meeting specific operational requirements.
 
-| Attribute                       | Parameters          | Type      | Description                                                 |
-| ------------------------------- | ------------------- | --------- | ----------------------------------------------------------- |
-| job\_title                      | `job_title`         | `str`     | The job title of Agent.                                     |
-| company\_url *(Optional)*       | `company_url`       | `str`     | The url of your company                                     |
-| company\_objective *(Optional)* | `company_objective` | `str`     | The objective of your company                               |
-| system\_prompt *(Optional)*     | `system_prompt`     | `str`     | Overwrite the characterization.                             |
-| Name *(Optional)*               | `name`              | `str`     | The name of the human that represent from Agent             |
-| Contact *(Optional)*            | `contact`           | `str`     | The contact info of the human that represent from Agent     |
-| Memory *(Optional)*             | `memory`            | `boolean` | The persistent memory by the agent id (Default: False)      |
-| Reflection *(Optional)*         | `reflection`        | `boolean` | Reflection mode for agent. (Default: False)                 |
-| Compress Context *(Optional)*   | `compress_context`  | `boolean` | Compress the context for LLM context lenght (Default: True) |
-| model *(Optional)*              | model               | str       | The llm model for Agent (Default: openai/gpt-4o)            |
+| Attribute                      | Parameters          | Type      | Description                                                 |
+| ------------------------------ | ------------------- | --------- | ----------------------------------------------------------- |
+| job_title                      | `job_title`         | `str`     | The job title of Agent.                                     |
+| company_url _(Optional)_       | `company_url`       | `str`     | The url of your company                                     |
+| company_objective _(Optional)_ | `company_objective` | `str`     | The objective of your company                               |
+| system_prompt _(Optional)_     | `system_prompt`     | `str`     | Overwrite the characterization.                             |
+| Name _(Optional)_              | `name`              | `str`     | The name of the human that represent from Agent             |
+| Contact _(Optional)_           | `contact`           | `str`     | The contact info of the human that represent from Agent     |
+| Memory _(Optional)_            | `memory`            | `boolean` | The persistent memory by the agent id (Default: False)      |
+| Reflection _(Optional)_        | `reflection`        | `boolean` | Reflection mode for agent. (Default: False)                 |
+| Compress Context _(Optional)_  | `compress_context`  | `boolean` | Compress the context for LLM context lenght (Default: True) |
+| model _(Optional)_             | model               | str       | The llm model for Agent (Default: openai/gpt-4o)            |
 
 ## Act like an Human
 
@@ -63,23 +65,23 @@ During task execution, LLM-based agents may intentionally leave specific fields 
     In this demonstration, we will configure an agent to function as Upsonic's marketing manager, showcasing the framework's role-specific capabilities. Subsequently, we will demonstrate practical implementation by assigning an email composition task to this specialized agent.
 
     ```python Agent
-
-
+    from upsonic import Agent, Task
+    
     # Generating Task and Agent
     task = Task(description="Write an outreach mail", tools=[Search])
-
+    
     agent = Agent(
         "Marketing Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
     )
-
-
+    
+    
     # Run and see the result
     agent.do(task)
-
+    
     result = task.response
-
+    
     print(result)
     ```
 
@@ -87,27 +89,27 @@ During task execution, LLM-based agents may intentionally leave specific fields 
 
     ```markdown Result
     My name is [Your Name], and I’m a [Your Position] at [Your Company]. I wanted to reach out to introduce [Company Name], a trusted partner in delivering innovative, reliable, and customer-focused technology solutions tailored to your business needs.  
-
+    
     ****** MAIL Body
-
+    
     Thank you for considering this opportunity. I genuinely look forward to the possibility of working together and supporting your organization in achieving success.  
-
+    
     Warm regards,  
     [Your Full Name]  
     [Your Job Title]  
     [Your Company Name]  
     [Your Contact Information]  
-
+    
     ```
   </Step>
-
   <Step title="With Human Acting">
     By inputting personal identifiers, including name and contact details, we can enhance the agent's functionality to generate complete, uninterrupted content. This configuration eliminates the need for manual field completion, enabling the agent to produce fully automated outputs without placeholder spaces.
 
     ```python New Agent
-
+    from upsonic import Agent, Task
+    
     task = Task(description="Write an outreach mail", tools=[Search])
-
+    
     agent = Agent(
         "Marketing Manager",
         company_url="https://upsonic.ai",
@@ -116,23 +118,23 @@ During task execution, LLM-based agents may intentionally leave specific fields 
         name="Onur ULUSOY",       # Now we have name and contact
         contact="onur@upsonic.co"
     )
-
+    
     # Run and see the result
     agent.do(task)
-
+    
     result = task.response
-
+    
     print(result)
     ```
 
     ```markdown New Result
-
+    
     My name is Onur Ulusoy, and I am the Marketing Manager at Upsonic.ai. At Upsonic.ai, we are dedicated to helping businesses like yours harness the power of cutting-edge AI technology to address pain points, streamline operations, and achieve sustainable growth.  
-
+    
     ****** MAIL Body
-
+    
     Thank you for taking the time to consider Upsonic.ai. I’m confident we can help you unlock your organization’s true potential. Looking forward to hearing from you soon!  
-
+    
     Best regards,  
     Onur Ulusoy  
     Marketing Manager | Upsonic.ai  
@@ -146,6 +148,7 @@ During task execution, LLM-based agents may intentionally leave specific fields 
 Memory management plays a crucial role in maintaining contextual continuity across distributed tasks and timeframes for agent operations. The framework implements a disk-based persistence mechanism that associates memory storage with unique agent identifiers (IDs). To enable persistent memory functionality, developers must explicitly define and consistently maintain agent IDs across all agent definitions within their implementation.
 
 ```python
+from upsonic import Agent
 
 agent_id = "product_manager_agent" # Setting an agent id
 
@@ -162,6 +165,8 @@ agent = Agent(
 During task execution, agents may occasionally generate inaccurate results or misinterpret task objectives, which can significantly impact system stability and output quality, particularly when critical sub-tasks are involved. To address this challenge, the framework implements a sophisticated reflection feature that enables continuous self-monitoring and quality assurance.
 
 ```python
+from upsonic import Agent
+
 agent = Agent(  
     "Marketing Manager",
     
@@ -174,6 +179,8 @@ agent = Agent(
 One of the main limitations of LLMs is the Context Length Limit, which affects how much data the model can process at once when generating outputs. This directly impacts how well-referenced and accurate the results will be. The Upsonic framework handles this limitation by automatically summarizing resources when they exceed the context limit. When your input data is too large, the system compresses it while keeping the important information, allowing the LLM to continue functioning normally. This removes the need to manually calculate and manage context limits, letting you focus on your actual work.
 
 ```python
+from upsonic import Agent
+
 agent = Agent(  
     "Marketing Manager",
     
