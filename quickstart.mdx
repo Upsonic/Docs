@@ -75,15 +75,15 @@ Upsonic framework, support to start and connect any MCP server for your purposes
 At this step you need to use  `@client.mcp()` decorator to an class with **command**, **args** and **env.**
 
 ```python
-# Hackernews MCP Server
-class HackerNewsMCP:
+# Fetch MCP Server
+class FetchMCP:
     command = "uvx"
-    args = ["mcp-hn"]
+    args = ["mcp-server-fetch"]
     # env = {"": ""}
   
 
 task1 = Task(
   "Research latest news in Anthropic and OpenAI", 
-  tools=[HackerNewsMCP]
+  tools=[FetchMCP]
 )
 ```
