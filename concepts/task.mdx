@@ -19,9 +19,13 @@ The task-centric approach advantages:
 Tasks can be imported into your project and created with custom identifiers like 'task1', ‘task2’ or any descriptive name you choose.
 
 ```python
-from upsonic import Task
+from upsonic import Task, Agent
 
-task1 = Task("Do an in-depth analysis of US history")
+agent = Agent("Historian")
+
+task = Task("Do an in-depth analysis of US history")
+
+agent.print_do(task)
 ```
 
 ## Task Attributes
@@ -70,7 +74,9 @@ Integrating a tool into your task is straightforward: simply create a list conta
     Once you've configured your custom tools, they can be directly incorporated into the Task object. The agent will then automatically utilize these tools as needed during task execution.
 
     ```python
-    from upsonic import Task
+    from upsonic import Task, Agent
+    
+    agent = Agent("News Agent")
     
     from upsonic.tools import Search
     
@@ -92,6 +98,9 @@ Integrating a tool into your task is straightforward: simply create a list conta
       "Summarize the latest hackernews stories of today", 
       tools=[Search, MyTools_custom, FetchMCP] # Specify the tools list
     )
+    
+    
+    agent.print_do(task)
     ```
   </Step>
 </Steps>
@@ -101,7 +110,9 @@ Integrating a tool into your task is straightforward: simply create a list conta
 The framework supports the combination of multiple tasks to handle complex operations, particularly useful in scenarios requiring deep analysis followed by report generation. While individual tasks may be complex, the true power lies in their interconnection. By creating task chains and linking them through shared context, you can build sophisticated workflows that seamlessly pass information between tasks.
 
 ```python
-from upsonic import Task
+from upsonic import Task, Agent
+
+agent = Agent("Entrepreneur")
 
 task = Task("Do an in-depth analysis of the history of chips")
 
@@ -109,6 +120,9 @@ task2 = Task(
   "Prepare a draft report on Europe's position", 
   context=[task1] # Add task1 in a list as task context
 )}
+
+agent.print_do(task)
+agent.print_do(task2)
 ```
 
 <Info>
@@ -135,7 +149,9 @@ You can see the supported files and options of the <u>Knowledge Base System</u> 
   </Step>
   <Step title="Add as Context to Task">
     ```python
-    from upsonic import Task
+    from upsonic import Task, Agent
+    
+    agent = Agent("Entrepreneur")
     
     from upsonic import KnowledgeBase
     
@@ -147,6 +163,9 @@ You can see the supported files and options of the <u>Knowledge Base System</u> 
       "Create this month's overall technical report.",
       context=[firm_knowledge_base] # Adding firm_knowledge_base to task
     )
+    
+    
+    agent.print_do(task)
     ```
   </Step>
 </Steps>
@@ -156,12 +175,16 @@ You can see the supported files and options of the <u>Knowledge Base System</u> 
 LLMs are particularly successful in reading images. Therefore, within the task you assign to the agent, you can enable it to read text from images, understand yellow highlights, interpret graphs, and perform any analysis by including images. For this, the image path needs to be specified using the images parameter.
 
 ```python
-from upsonic import Task
+from upsonic import Task, Agent
+
+agent = Agent("OCR Agent")
 
 task = Task(
   "Extract the names in the paper",
   images=["paper.png"] # Add your image paths
 )
+
+agent.print_do(task)
 ```
 
 ## Giving string as Context
