@@ -52,19 +52,18 @@ Integrating a tool into your task is straightforward: simply create a list conta
     ```python
     import requests
     
-    class MyTools:
+    class MyTools_custom:
       def is_page_available(url: str) -> bool:
           return requests.get(url).status_code == 200
-    
     ```
   </Step>
   <Step title="MCP Tools">
     This example demonstrates integration with the HackerNews MCP Server, which provides several functions including get_stories, get_story_info, search_stories, and get_user_info. The MCP framework simplifies the process of connecting our agents to external services, as illustrated by this HackerNews integration.
 
     ```python
-    class HackerNewsMCP:
+    class FetchMCP:
         command = "uvx"
-        args = ["mcp-hn"]
+        args = ["mcp-server-fetch"]
     ```
   </Step>
   <Step title="Put to Task">
@@ -73,9 +72,25 @@ Integrating a tool into your task is straightforward: simply create a list conta
     ```python
     from upsonic import Task
     
+    from upsonic.tools import Search
+    
+    
+    import requests
+    class MyTools_custom:
+      def is_page_available(url: str) -> bool:
+          return requests.get(url).status_code == 200
+    
+    
+    class FetchMCP:
+        command = "uvx"
+        args = ["mcp-server-fetch"]
+    
+    
+    
+    
     task = Task(
       "Summarize the latest hackernews stories of today", 
-      tools=[Search, MyTools] # Specify the tools list
+      tools=[Search, MyTools_custom, FetchMCP] # Specify the tools list
     )
     ```
   </Step>
@@ -121,6 +136,12 @@ You can see the supported files and options of the <u>Knowledge Base System</u> 
   <Step title="Add as Context to Task">
     ```python
     from upsonic import Task
+    
+    from upsonic import KnowledgeBase
+    
+    firm_knowledge_base = KnowledgeBase(
+      sources=["february_technical_tasks.pdf", "https://upsonic.ai"]
+    )
     
     task = Task(
       "Create this month's overall technical report.",
@@ -176,6 +197,9 @@ When you need to create task for different cities, you can use this method:
   <Step title="Creating a for loop">
     ```python
     from upsonic import Task
+    
+    cities = ["New Yorg", "San Fransisco", "San Jose"]
+    base_description = "Find resources in the city"
     
     tasks = []
     

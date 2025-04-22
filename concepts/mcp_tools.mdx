@@ -55,14 +55,14 @@ In this example, we will integrate the HackerNews MCP:
 ```python
 from upsonic import Task
 
-# Hackernews MCP Server
-class HackerNewsMCP:
+# Fetch MCP Server
+class FetchMCP:
     command = "uvx"
-    args = ["mcp-hn"]
+    args = ["mcp-server-fetch"]
 
 task = Task(
   "Get the latest tecnical news",
-  tools=[HackerNewsMCP]
+  tools=[FetchMCP]
 )
 ```
 
