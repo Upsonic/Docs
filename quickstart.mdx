@@ -6,15 +6,15 @@ icon: "rocket"
 
 ## Build your first Upsonic Agent
 
-Let's create a simple agent that expert on our company and roled as Product Manager.
+Let’s create a simple agent that is an expert on our company and serves as Product Manager.
 
 Before we proceed, make sure you have `Upsonic` installed.
-If you haven't installed them yet, you can do so by following the [installation guide](/installation).
+If you haven't installed it yet, you can do so by following the [installation guide](/installation).
 
-Follow the steps below to get your sonics\! 🦔
+Follow the steps below to configure your sonics\! 🦔
 
 <Steps>
-  <Step title="Providing OpenAI Api Key">
+  <Step title="Providing OpenAI API Key">
     Upsonic supports multiple LLMs. In this example, we will use OpenAI's GPT-4 model, for which we need to set environment variables.
 
     <CodeGroup>
@@ -39,7 +39,7 @@ Follow the steps below to get your sonics\! 🦔
     </CodeGroup>
   </Step>
   <Step title="Generate your First Task">
-    The task-centric structure important to create an programatic design in Agent systems. In Upsonic you can generate an task oriented structure with task **description**, **tools**, **context**, **knowledge bases** and etc. In this example we will give `Search` tools to our task. The agent will use the `Search` tool at the run time.
+    The task-centric structure is important to create a programmatic design in agent systems. With Upsonic, you can generate a task-oriented structure with task ** descriptions**, **tools**, **context**, **knowledge bases**, etc. In this example, we’ll assign the `Search` tool to our task, which the agent will use at runtime.
 
     ```python
     from upsonic import Task, Agent
@@ -52,10 +52,10 @@ Follow the steps below to get your sonics\! 🦔
     ```
   </Step>
   <Step title="Generate an Expert Agent of Our Company">
-    Upsonic have an **automatic characterization** mechanism. Its important to create agents that belongs on your purpose. In this example we will generate an Product Manager.
+    Upsonic **automatic role-configuration** system allows you to create agents tailored to your needs. In this example we'll generate a Product Manager agent.
 
     ```python
-    agent = Agent("Researcher Agent")
+    agent = Agent("Product Manager")
     ```
   </Step>
   <Step title="Running the Task on Agent">
@@ -68,14 +68,14 @@ Follow the steps below to get your sonics\! 🦔
 
 ## Connect Any MCP
 
-Upsonic framework, support to start and connect any MCP server for your purposes. Model Context Protocol servers are varously and maintain by companies and community. Upsonic support all MCP servers.
+The Upsonic framework supports starting and connecting to any MCP (Model Context Protocol) server for your needs. MCP servers vary in configuration and are maintained by both companies and the community. Upsonic is compatible with all MCP server implementations.
 
-- [List of mcp servers](https://glama.ai/mcp/servers?attributes=)
+- [List of MCP Servers](https://glama.ai/mcp/servers?attributes=)
 
-At this step you need to use  `@client.mcp()` decorator to an class with **command**, **args** and **env.**
+At this step you need to use  `@client.mcp()` decorator on a class, providing the **command**, **args** and **env.**
 
 ```python
-# Fetch MCP Server
+@client.mcp()
 class FetchMCP:
     command = "uvx"
     args = ["mcp-server-fetch"]
