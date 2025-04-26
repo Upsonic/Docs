@@ -1,0 +1,52 @@
+---
+title: "Team"
+description: "Generate an agent team for your tasks."
+icon: "users"
+---
+
+## Overview
+
+LLMs excel at characterization. That’s why we use agents and continually refine their system prompts. This also creates new opportunities for agent teams: since our tasks are split among specialized agents, we must manage the process ourselves—assigning each task to the right agent and enabling effective collaboration.
+
+In Upsonic, we have a `Team` class for this purpose. It automatically performs these operations.
+
+## Creating an Team
+
+The `Team` class is a backend component that incorporates multiple automated systems. It facilitates matching and executing the right tasks with the appropriate agents and enables active collaboration.
+
+```python
+from upsonic import Agent, Team
+
+coder_agent = Agent("Coder")
+marketing_agent = Agent("Marketig Manager")
+
+team = Team(
+	agents=[coder_agent, marketing_agent]
+)
+```
+
+## Running Tasks
+
+After instantiating the `Team` class, you can easily run tasks on it—just as you would with the `Agent` and `Direct` classes—by using the `do` and `print_do` functions.
+
+```python
+from upsonic import Agent, Team, Task
+
+coder_agent = Agent("Coder")
+marketing_agent = Agent("Marketig Manager")
+
+
+team = Team(
+	agents=[coder_agent, marketing_agent]
+)
+
+task = Task("Write an example python hello world code")
+task2 = Task("What is the best strategy to design our go to market")
+
+
+
+result = team.print_do(task, task2)
+
+print("Summerized result")
+print(result)
+```
