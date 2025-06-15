@@ -18,7 +18,7 @@ The AgentConfiguration class serves as a fundamental component in ensuring optim
 from upsonic import Agent
 
 agent = Agent(
-    "Product Manager",
+    name="Product Manager",
 
     company_url="https://upsonic.ai",
     company_objective="Developing an AI Agent Framework",
@@ -33,7 +33,7 @@ To specify which LLM the agent will use, it's sufficient to directly use the mod
 from upsonic import Agent
 
 agent = Agent(  
-    "Product Manager",
+    name="Product Manager",
     
     model="openai/gpt-4o"
 )
@@ -71,7 +71,7 @@ During task execution, LLM-based agents may intentionally leave specific fields 
     task = Task(description="Write an outreach mail", tools=[Search])
     
     agent = Agent(
-        "Marketing Manager",
+        name="Marketing Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
     )
@@ -111,7 +111,7 @@ During task execution, LLM-based agents may intentionally leave specific fields 
     task = Task(description="Write an outreach mail", tools=[Search])
     
     agent = Agent(
-        "Marketing Manager",
+        name="Marketing Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
      
@@ -153,7 +153,7 @@ from upsonic import Agent
 agent_id = "product_manager_agent" # Setting an agent id
 
 agent = Agent(
-    "Marketing Manager",
+    name="Marketing Manager",
 
     agent_id_=agent_id, # Setting agent id
     memory=True, # Enabling the memory
@@ -168,7 +168,7 @@ During task execution, agents may occasionally generate inaccurate results or mi
 from upsonic import Agent
 
 agent = Agent(  
-    "Marketing Manager",
+    name="Marketing Manager",
     
     reflection=True, # Enabling the reflection
 )
@@ -182,7 +182,7 @@ One of the main limitations of LLMs is the Context Length Limit, which affects h
 from upsonic import Agent
 
 agent = Agent(  
-    "Marketing Manager",
+    name="Marketing Manager",
     
     compress_context=True, # Enabling the compress_context
 )
