@@ -8,7 +8,7 @@ icon: "3"
 
 It is crucial for agents' outputs to be usable. A generated text may not always be useful. Sometimes, we may want to perform various analyses and request the analysis of different points.
 
-In such cases, using ObjectResponse greatly simplifies your work and allows you to directly obtain objects instead of getting a whole text.
+In such cases, using Object Response greatly simplifies your work and allows you to directly obtain objects instead of getting a whole text.
 
 ## Agent with Object Response
 
@@ -18,12 +18,12 @@ This agent will do the same thing as the agent above, fetching OpenAI developmen
 from upsonic import Agent, Task
 from upsonic.client.tools import Search
 
-from upsonic import ObjectResponse # Importing Object Response
+from pydantic import BaseModel # Importing Object Response
 
-class ANew(ObjectResponse):
+class ANew(BaseModel):
   title: str
   content: str
-class News(ObjectResponse):
+class News(BaseModel):
   news: lists[ANew] # We want to get a list of ANew objects
 
 task = Task(
