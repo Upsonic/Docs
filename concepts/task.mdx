@@ -21,7 +21,7 @@ Tasks can be imported into your project and created with custom identifiers like
 ```python
 from upsonic import Task, Agent
 
-agent = Agent("Historian")
+agent = Agent(name="Historian")
 
 task = Task("Do an in-depth analysis of US history")
 
@@ -51,14 +51,13 @@ Integrating a tool into your task is straightforward: simply create a list conta
 
 <Steps>
   <Step title="Function Tools">
-    Let's define a class called MyTools that includes a function named is_page_available. This function will perform a simple URL validation check, returning True if the specified URL is accessible, making it useful for verifying web resources.
+    Let's define a function named is_page_available. This function will perform a simple URL validation check, returning True if the specified URL is accessible, making it useful for verifying web resources.
 
     ```python
     import requests
     
-    class MyTools_custom:
-      def is_page_available(url: str) -> bool:
-          return requests.get(url).status_code == 200
+    def is_page_available(url: str) -> bool:
+        return requests.get(url).status_code == 200
     ```
   </Step>
   <Step title="MCP Tools">
@@ -76,15 +75,15 @@ Integrating a tool into your task is straightforward: simply create a list conta
     ```python
     from upsonic import Task, Agent
     
-    agent = Agent("News Agent")
+    agent = Agent(name="News Agent")
     
     from upsonic.tools import Search
     
     
     import requests
-    class MyTools_custom:
-      def is_page_available(url: str) -> bool:
-          return requests.get(url).status_code == 200
+    
+    def is_page_available(url: str) -> bool:
+        return requests.get(url).status_code == 200
     
     
     class FetchMCP:
@@ -112,7 +111,7 @@ The framework supports the combination of multiple tasks to handle complex opera
 ```python
 from upsonic import Task, Agent
 
-agent = Agent("Entrepreneur")
+agent = Agent(name="Entrepreneur")
 
 task = Task("Do an in-depth analysis of the history of chips")
 
@@ -151,7 +150,7 @@ You can see the supported files and options of the <u>Knowledge Base System</u> 
     ```python
     from upsonic import Task, Agent
     
-    agent = Agent("Entrepreneur")
+    agent = Agent(name="Entrepreneur")
     
     from upsonic import KnowledgeBase
     
@@ -177,7 +176,7 @@ LLMs are particularly successful in reading images. Therefore, within the task y
 ```python
 from upsonic import Task, Agent
 
-agent = Agent("OCR Agent")
+agent = Agent(name="OCR Agent")
 
 task = Task(
   "Extract the names in the paper",
@@ -313,7 +312,7 @@ You can view the details of agent creation and customization here.
     from upsonic import Agent
     
     agent = Agent(
-        "Product Manager",
+        name="Product Manager",
         company_url="https://upsonic.ai",
         company_objective="To build AI Agent framework that helps people get things done",
     )
@@ -348,7 +347,7 @@ from upsonic import Task, Agent
 
 task = Task("Make a deep analyze to history of chips")
 
-agent = Agent("Product Manager")
+agent = Agent(name="Product Manager")
 agent.do(task)
 
 result = task.response
@@ -371,7 +370,7 @@ print(response)
     reponse_format=TravelResponse # Specift the response format
   )
   
-  agent = Agent("Product Manager")
+  agent = Agent(name="Product Manager")
   agent.do(task)
   
   result = task.response
