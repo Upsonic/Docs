@@ -17,52 +17,55 @@ from upsonic import Agent, Task
 
 task = Task("Do an in-depth analysis of US history")
 
-agent = Agent("Historian")
+agent = Agent(name="Historian")
 
 agent.print_do(task)
-
 ```
 
-To run the agent, install dependencies and export your OPENAI\_API\_KEY.
+To run the agent, install dependencies and export your OPENAI_API_KEY.
 
 <Steps>
   <Step title="Setup your virtual environment">
     <CodeGroup>
-      ```bash Mac
-      python3 -m venv .venv
-      source .venv/bin/activate
 
-      ```
+    ```bash Mac
+    python3 -m venv .venv
+    source .venv/bin/activate
+    
+    ```
 
-      ```bash Windows
-      python3 -m venv aienv
-      aienv/scripts/activate
+    
+    ```bash Windows
+    python3 -m venv aienv
+    aienv/scripts/activate
+    
+    ```
 
-      ```
     </CodeGroup>
   </Step>
-
   <Step title="Install dependencies">
     <CodeGroup>
-      ```bash Mac
-      pip install -U upsonic
-      ```
 
-      ```bash Windows
-      pip install -U upsonic
-      ```
+    ```bash Mac
+    pip install -U upsonic
+    ```
+
+    
+    ```bash Windows
+    pip install -U upsonic
+    ```
+
     </CodeGroup>
-
   </Step>
-
   <Step title="Put your OpenAI key">
     <CodeGroup>
-      ```bash .env
-      OPENAI_API_KEY=sk-***
-      ```
+
+    ```bash .env
+    OPENAI_API_KEY=sk-***
+    ```
+
     </CodeGroup>
   </Step>
-
   <Step title="Run the agent to do the task">
     ```bash
     python basic_agent.py

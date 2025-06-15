@@ -8,7 +8,7 @@ icon: "2"
 
 In this example, we will observe how to easily complete a Task that requires the use of tools with Upsonic agents.
 
-Tools are truly the best method for connecting agents to the real world. 
+Tools are truly the best method for connecting agents to the real world.
 
 ## Agent with tools
 
@@ -23,53 +23,55 @@ task = Task(
   tools=[Search] # Adding Search tool to the Task
 )
 
-agent = Agent("Reporter")
+agent = Agent(name="Reporter")
 
 agent.print_do(task)
-
 ```
 
-
-To run the agent, install dependencies and export your OPENAI\_API\_KEY.
+To run the agent, install dependencies and export your OPENAI_API_KEY.
 
 <Steps>
   <Step title="Setup your virtual environment">
     <CodeGroup>
-      ```bash Mac
-      python3 -m venv .venv
-      source .venv/bin/activate
 
-      ```
+    ```bash Mac
+    python3 -m venv .venv
+    source .venv/bin/activate
+    
+    ```
 
-      ```bash Windows
-      python3 -m venv aienv
-      aienv/scripts/activate
+    
+    ```bash Windows
+    python3 -m venv aienv
+    aienv/scripts/activate
+    
+    ```
 
-      ```
     </CodeGroup>
   </Step>
-
   <Step title="Install dependencies">
     <CodeGroup>
-      ```bash Mac
-      pip install -U upsonic
-      ```
 
-      ```bash Windows
-      pip install -U upsonic
-      ```
+    ```bash Mac
+    pip install -U upsonic
+    ```
+
+    
+    ```bash Windows
+    pip install -U upsonic
+    ```
+
     </CodeGroup>
-
   </Step>
-
   <Step title="Put your OpenAI key">
     <CodeGroup>
-      ```bash .env
-      OPENAI_API_KEY=sk-***
-      ```
+
+    ```bash .env
+    OPENAI_API_KEY=sk-***
+    ```
+
     </CodeGroup>
   </Step>
-
   <Step title="Run the agent to do the task">
     ```bash
     python agent_with_tools.py
