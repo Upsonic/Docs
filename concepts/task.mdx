@@ -237,19 +237,17 @@ When you need to create task for different cities, you can use this method:
 
 ## Response Format
 
-The Upsonic framework leverages Pydantic BaseModel compatibility for defining expected results, enabling programmatic handling of agent responses. By specifying a response format, the system returns structured objects rather than raw text, allowing for seamless integration and logic implementation within your application.
+The Upsonic framework uses Pydantic BaseModel compatibility for defining expected results, enabling programmatic handling of agent responses. By specifying a response format, the system returns structured objects rather than raw text, allowing for seamless integration and logic implementation within your application.
 
 For instance, when requesting a list of cities, the system returns a structured list of strings containing city names. This approach emphasizes value-oriented development by abstracting away the implementation details, allowing developers to focus on utilizing the data rather than managing its format and parsing.
 
-<Note>
-  You can use Pydantic's BaseModel instead of ObjectResponse. We created this wrapper to make it easier to understand.
-</Note>
+
 
 ```python
-from upsonic import ObjectResponse
+from pydantic import BaseModel
 
-class TravelResponse(ObjectResponse):
-  cities: str
+class TravelResponse(BaseModel):
+  cities: list[str]
 ```
 
 ```python
@@ -359,11 +357,11 @@ print(response)
   Hey, just a heads-up: if you set a response_format, the task response will be an object of your class.
 
   ```python
-  from upsonic import ObjectResponse
+  from pydantic import BaseModel
   from upsonic import Task, Agent
   
-  class TravelResponse(ObjectResponse):
-    cities: str
+  class TravelResponse(BaseModel):
+    cities: list[str]
   
   task = Task(
     "Generate a plan to visit cities in Canada", 

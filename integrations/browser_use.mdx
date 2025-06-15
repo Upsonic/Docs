@@ -31,26 +31,34 @@ If you need the agent you're designing to navigate a website or take actions on 
 ## Example
 
 ```python
-from upsonic import Task, Agent, ObjectResponse
-
-from upsonic.client.tools import BrowserUse # Importing Computer Use
+from upsonic import Task, Agent
 
 
-class Product(ObjectResponse):
+
+from pydantic import BaseModel
+
+class Product(BaseModel):
     name: str
     price: float
-class ProductList(ObjectResponse):
+class ProductList(BaseModel):
     products: list[Product]
 
 
+
+class BrowserUse:
+    command = "npx"
+    args = ["@playwright/mcp@latest"]
+
+
+
 task = Task(
-  "Go and get the latest suggested phones in amazon.com", 
+  "Go and get the latest suggested phones and their prices in google.com", 
   tools=[BrowserUse], # Enabling Computer Use
   response_format=ProductList
 )
 
 
-agent = Agent("Browser Use Agent")
+agent = Agent()
 
 agent.print_do(task)
 
