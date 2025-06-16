@@ -15,54 +15,54 @@ Within the Upsonic framework, we have a Canvas feature specifically designed to 
 A Canvas is created with a specific name and can be assigned to a Task or class as a tool. This enables Agents or Direct operations to easily perform text edits.
 
 ```python
-from upsonic.tools import Canvas
+from upsonic import Canvas
 
-my_mail_canvas = Canvas("Mail to Joe") # Creating an canvas with an uniqe name
+my_travel_guide_canvas = Canvas("Travel Guide") # Creating an canvas with an uniqe name
 ```
 
-## Putting Canvas to Task
+## Putting Canvas to Agent
 
-Canvas objects are immediately ready to be used as tools. You can add them directly as elements within the `tools` parameter of a Task, configuring your task to utilize this Canvas.
-
-```python
-from upsonic import Task
-
-task = Task(
-	"Write an mail to joe about our projects, Use Canvas",
-	tools=[my_mail_canvas] # Adding canvas as tool
-)
-```
-
-## Running Over an Agent
-
-You can execute tasks equipped with the Canvas tool through an Agent.
+You can add them directly as elements within the `canvas` parameter of a Agent, configuring your task to utilize this Canvas.
 
 ```python
 from upsonic import Agent
+from upsonic import Canvas
 
-agent = Agent("Mail Writer")
+my_travel_guide_canvas = Canvas("Travel Guide") # Creating an canvas with an uniqe name
 
-agent.print_do(task)
+agent = Agent(
+	name="My Travel Agent",
+	canvas=my_travel_guide_canvas # Adding canvas
+)
 ```
 
-## Running Over an Direct
-
-You can execute tasks equipped with the Canvas tool through Direct.
+## Running the canvas
+Once your tasks are executed by the agent, the canvas retains all modifications in a consistent state. This enables you to query or display the final version of the text after all edits have been applied. By decoupling text state from the agent logic, you gain better control over the output, making it easier to debug, review, or pass the final content into downstream systems like editors, emails, or publishing pipelines.
 
 ```python
-from upsonic import Direct
+from upsonic import Task, Agent, Canvas
 
-direct = Direct()
 
-direct.print_do(task)
+# My Agent with Canvas
+my_travel_guide_canvas = Canvas("Travel Guide") # Creating an canvas with an uniqe name
+agent = Agent(
+	name="My Travel Agent",
+	canvas=my_travel_guide_canvas # Adding canvas
+)
+
+
+# My Tasks
+task = Task("Generate a plan to visit cities in Canad")
+task2 = Task("Edit the canvas first section with Hi guys")
+
+# Completing my Tasks
+agent.do(task)
+agent.do(task2)
+
+
+# Getting canvas final state
+print(my_travel_guide_canvas.get_current_state_of_canvas())
+
 ```
 
-## Getting Current Canvas State
 
-You can retrieve the final state of canvases executed via Agent or Direct by using the `get_current_state_of_canvas` function.
-
-```python
-result = my_mail_canvas.get_current_state_of_canvas()
-
-print(result)
-```
