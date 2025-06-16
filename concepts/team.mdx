@@ -10,42 +10,92 @@ LLMs excel at characterization. That’s why we use agents and continually refin
 
 In Upsonic, we have a `Team` class for this purpose. It automatically performs these operations.
 
-## Creating an Team
+## Creating an Team, Agents and Tasks
 
 The `Team` class is a backend component that incorporates multiple automated systems. It facilitates matching and executing the right tasks with the appropriate agents and enables active collaboration.
 
 ```python
-from upsonic import Agent, Team
+from upsonic import Agent, Task, Team
 
-coder_agent = Agent("Coder")
-marketing_agent = Agent("Marketig Manager")
+# My Agents
+travel_agent = Agent(name="My Travel Agent")
+history_agent = Agent(name="My History Agent")
 
+# My Tasks
+task = Task("Generate a plan to visit cities in Canada")
+task2 = Task("Write historical information about the cities")
+
+# My team 
 team = Team(
-	agents=[coder_agent, marketing_agent]
+	agents=[travel_agent, history_agent], # Adding Agents
+	tasks=[task, task2] # Adding Tasks
 )
 ```
 
-## Running Tasks
+## Getting Final Answer
 
 After instantiating the `Team` class, you can easily run tasks on it—just as you would with the `Agent` and `Direct` classes—by using the `do` and `print_do` functions.
 
 ```python
-from upsonic import Agent, Team, Task
+from upsonic import Agent, Task, Team
 
-coder_agent = Agent("Coder")
-marketing_agent = Agent("Marketig Manager")
+# My Agents
+travel_agent = Agent(name="My Travel Agent")
+history_agent = Agent(name="My History Agent")
 
+# My Tasks
+task = Task("Generate a plan to visit cities in Canada")
+task2 = Task("Write historical information about the cities")
 
+# My team 
 team = Team(
-	agents=[coder_agent, marketing_agent]
+	agents=[travel_agent, history_agent], # Adding Agents
+	tasks=[task, task2] # Adding Tasks
 )
 
-task = Task("Write an example python hello world code")
-task2 = Task("What is the best strategy to design our go to market")
+
+
+# Run the task and get the answer
+result = team.complete() 
+
+print("Summerized result")
+print(result)
+```
+
+## Adding Response Format to The Team
+
+Teams are well but sometimes we need some specific answers from them. To do that you can use `response format` params and a `BaseModel`.
+
+```python
+from upsonic import Agent, Task, Team
+from pydantic import BaseModel
+
+# My Agents
+travel_agent = Agent(name="My Travel Agent")
+history_agent = Agent(name="My History Agent")
+
+# My Tasks
+task = Task("Generate a plan to visit cities in Canada")
+task2 = Task("Write historical information about the cities")
+
+# Response Format
+class City(BaseModel):
+	name: str
+	history: str
+class TravelGuide(BaseModel):
+	cities: list[City]
+
+# My team 
+team = Team(
+	agents=[travel_agent, history_agent], # Adding Agents
+	tasks=[task, task2], # Adding Tasks,
+	response_format=TravelGuide # Adding Response Format
+)
 
 
 
-result = team.print_do(task, task2)
+# Run the task and get the answer
+result = team.complete() 
 
 print("Summerized result")
 print(result)
