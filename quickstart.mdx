@@ -98,15 +98,24 @@ Upsonic framework, support to start and connect any MCP server for your purposes
 At this step you need to use  `class`  with **command**, **args** and **env.**
 
 ```python
+from upsonic import Task, Agent
+
+
 # Fetch MCP Server
 class FetchMCP:
     command = "uvx"
     args = ["mcp-server-fetch"]
-    # env = {"": ""}
-  
 
-task1 = Task(
+
+# Creating Task
+task = Task(
   "Research latest news in Anthropic and OpenAI", 
-  tools=[FetchMCP]
+  tools=[FetchMCP] # Using MCP Server
 )
+
+# Creating Agent
+agent = Agent(name="Researcher Agent")
+
+# Running the task
+agent.print_do(task)
 ```
