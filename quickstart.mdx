@@ -43,8 +43,9 @@ Follow the steps below to get your sonics\! 🦔
 
     ```python
     from upsonic import Task, Agent
-    from upsonic.client.tools import Search
+    from upsonic.tools import Search
     
+    # Creating Task
     task = Task(
       "Research latest news in Anthropic and OpenAI", 
       tools=[Search]
@@ -55,11 +56,33 @@ Follow the steps below to get your sonics\! 🦔
     Upsonic have an **automatic characterization** mechanism. Its important to create agents that belongs on your purpose. In this example we will generate an Product Manager.
 
     ```python
+    from upsonic import Task, Agent
+    from upsonic.tools import Search
+    
+    # Creating Task
+    task = Task(
+      "Research latest news in Anthropic and OpenAI", 
+      tools=[Search]
+    )
+    
+    # Creating Agent
     agent = Agent(name="Researcher Agent")
     ```
   </Step>
   <Step title="Running the Task on Agent">
     ```python
+    from upsonic import Task, Agent
+    from upsonic.tools import Search
+    
+    # Creating Task
+    task = Task(
+      "Research latest news in Anthropic and OpenAI", 
+      tools=[Search]
+    )
+    
+    # Creating Agent
+    agent = Agent(name="Researcher Agent")
+    
     # Running the task
     agent.print_do(task)
     ```
@@ -72,7 +95,7 @@ Upsonic framework, support to start and connect any MCP server for your purposes
 
 - [List of mcp servers](https://glama.ai/mcp/servers?attributes=)
 
-At this step you need to use  `@client.mcp()` decorator to an class with **command**, **args** and **env.**
+At this step you need to use  `class`  with **command**, **args** and **env.**
 
 ```python
 # Fetch MCP Server
