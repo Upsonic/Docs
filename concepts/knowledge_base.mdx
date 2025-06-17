@@ -27,30 +27,30 @@ While both groups have their own benefits, especially in cases requiring RAG (Re
 To create a knowledge base, it's sufficient to directly import the KnowledgeBase class. Then, we will create an object belonging to this class and add it to the context list within the Task. KnowledgeBase works compatibly with every place where context can be used.
 
 ```python
+from upsonic import Task, Agent
 from upsonic import KnowledgeBase
 
+# Creating Knowledge Base
 resume_list = KnowledgeBase(
   sources=["resume1.pdf", "resume2.pdf"]
 )
+
+# Creating Task
+task = Task(
+  "Summerize the Resumes", 
+  context=[resume_list] # Adding Knowledge Base to the task
+)
+
+# Creating Agent
+agent = Agent(name="Head of Development")
+
+# Running the task
+agent.print_do(task)
 ```
 
 <Tip>
   For file-Based Knowledge Sources, make sure to place your files in a current work directory. Also, you can use full path.
 </Tip>
-
-## Put a Knowledge Base  into to Task
-
-You can easily add the KnowledgeBase object you created to any task's context list. The Agent or LLM will evaluate these contexts while performing operations.
-
-```python
-from upsonic import Task
-
-task1 = Task(
-  "Summerize the resumes",
-
-  context=[resume_list] # Adding Knowledge Base to the task
-)
-```
 
 ## Enabling RAG
 
@@ -86,7 +86,8 @@ resume_list = KnowledgeBase(
 
 <CardGroup cols="2">
   <Card title="Supported Files" icon="files">
-    - - PDF
+    - - URL
+      - PDF
     - - PowerPoint
     - - Word
     - - Excel

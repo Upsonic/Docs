@@ -178,31 +178,24 @@ You can see the supported files and options of the <u>Knowledge Base System</u> 
     In this example, we'll use a PDF and a web link to make a knowledge base.
 
     ```python
-    from upsonic import KnowledgeBase
-    
-    firm_knowledge_base = KnowledgeBase(
-      sources=["february_technical_tasks.pdf", "https://upsonic.ai"]
-    )
-    ```
-  </Step>
-  <Step title="Add as Context to Task">
-    ```python
     from upsonic import Task, Agent
-    
-    agent = Agent(name="Entrepreneur")
-    
     from upsonic import KnowledgeBase
     
-    firm_knowledge_base = KnowledgeBase(
-      sources=["february_technical_tasks.pdf", "https://upsonic.ai"]
+    # Creating Knowledge Base
+    resume_list = KnowledgeBase(
+      sources=["resume1.pdf", "resume2.pdf"]
     )
     
+    # Creating Task
     task = Task(
-      "Create this month's overall technical report.",
-      context=[firm_knowledge_base] # Adding firm_knowledge_base to task
+      "Summerize the Resumes", 
+      context=[resume_list] # Adding Knowledge Base to the task
     )
     
+    # Creating Agent
+    agent = Agent(name="Head of Development")
     
+    # Running the task
     agent.print_do(task)
     ```
   </Step>
@@ -215,13 +208,16 @@ LLMs are particularly successful in reading images. Therefore, within the task y
 ```python
 from upsonic import Task, Agent
 
-agent = Agent(name="OCR Agent")
-
+# Creating Task
 task = Task(
   "Extract the names in the paper",
   images=["paper.png"] # Add your image paths
 )
 
+# Creating Agent
+agent = Agent(name="OCR Agent")
+
+# Running the task
 agent.print_do(task)
 ```
 
