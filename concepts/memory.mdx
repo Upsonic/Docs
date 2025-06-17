@@ -12,17 +12,35 @@ When you activate Memory, it saves the conversation history in the current direc
 
 ## Enabling Memory
 
-To activate Memory, it is sufficient to set the memory parameter in the AgentConfiguration class to True and specify an agent ID. This way, the agent will persistently save the history and gain the opportunity to view events from a broader perspective.
+To activate Memory, it is sufficient to set the memory parameter in the AgentConfiguration class to True and specify an agent name. This way, the agent will persistently save the history and gain the opportunity to view events from a broader perspective.
 
 ```python
 from upsonic import Agent
 
-agent_id = "product_manager_agent" # Setting an agent id
-
-product_manager_agent = Agent(
-    name="Marketing Manager",
-
-    agent_id_=agent_id, # Setting agent id
-    memory=True, # Enabling the memory
+agent = Agent(
+    name="Coder", 
+    memory=True # Enable memory
 )
+```
+
+## Memory Example
+
+For testing memory and how it works lets create a small test. Lets say "Who developed you?" to Agent and then we will create another task and we will ask "What i asked you before?".
+
+```python
+from upsonic import Task, Agent
+
+agent = Agent(
+    name="Coder", 
+    memory=True # Enable memory
+)
+
+
+
+task = Task("Who developed you")
+task2 = Task("What i asked you before?") # This task will now the history of the previous task
+
+
+agent.print_do(task)
+agent.print_do(task2)
 ```
