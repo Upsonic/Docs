@@ -34,8 +34,7 @@ from upsonic import Agent
 
 agent = Agent(  
     name="Product Manager",
-    
-    model="openai/gpt-4o"
+    model="openai/gpt-4o" # Set the llm model
 )
 ```
 
@@ -56,93 +55,6 @@ Agents are equipped with supplementary features designed to enhance their perfor
 | Compress Context _(Optional)_  | `compress_context`  | `boolean` | Compress the context for LLM context lenght (Default: True) |
 | model _(Optional)_             | model               | str       | The llm model for Agent (Default: openai/gpt-4o)            |
 
-## Act like an Human
-
-During task execution, LLM-based agents may intentionally leave specific fields incomplete, requiring human input due to inherent LLM operational constraints. However, when provided with personal identifiers such as names and contact details, the system can generate fully personalized content. For example, in email composition tasks, the agent can authentically replicate a given user's and include appropriate signature information, creating more natural and contextually appropriate communications.
-
-<Steps>
-  <Step title="Without Human Acting">
-    In this demonstration, we will configure an agent to function as Upsonic's marketing manager, showcasing the framework's role-specific capabilities. Subsequently, we will demonstrate practical implementation by assigning an email composition task to this specialized agent.
-
-    ```python Agent
-    from upsonic import Agent, Task
-    
-    # Generating Task and Agent
-    task = Task(description="Write an outreach mail", tools=[Search])
-    
-    agent = Agent(
-        name="Marketing Manager",
-        company_url="https://upsonic.ai",
-        company_objective="To build AI Agent framework that helps people get things done",
-    )
-    
-    
-    # Run and see the result
-    agent.do(task)
-    
-    result = task.response
-    
-    print(result)
-    ```
-
-    In the output section, you will observe that the agent strategically leaves certain fields incomplete. This design needs human intervention and customization of critical content elements before finalization.
-
-    ```markdown Result
-    My name is [Your Name], and I’m a [Your Position] at [Your Company]. I wanted to reach out to introduce [Company Name], a trusted partner in delivering innovative, reliable, and customer-focused technology solutions tailored to your business needs.  
-    
-    ****** MAIL Body
-    
-    Thank you for considering this opportunity. I genuinely look forward to the possibility of working together and supporting your organization in achieving success.  
-    
-    Warm regards,  
-    [Your Full Name]  
-    [Your Job Title]  
-    [Your Company Name]  
-    [Your Contact Information]  
-    
-    ```
-  </Step>
-  <Step title="With Human Acting">
-    By inputting personal identifiers, including name and contact details, we can enhance the agent's functionality to generate complete, uninterrupted content. This configuration eliminates the need for manual field completion, enabling the agent to produce fully automated outputs without placeholder spaces.
-
-    ```python New Agent
-    from upsonic import Agent, Task
-    
-    task = Task(description="Write an outreach mail", tools=[Search])
-    
-    agent = Agent(
-        name="Marketing Manager",
-        company_url="https://upsonic.ai",
-        company_objective="To build AI Agent framework that helps people get things done",
-     
-        name="Onur ULUSOY",       # Now we have name and contact
-        contact="onur@upsonic.co"
-    )
-    
-    # Run and see the result
-    agent.do(task)
-    
-    result = task.response
-    
-    print(result)
-    ```
-
-    ```markdown New Result
-    
-    My name is Onur Ulusoy, and I am the Marketing Manager at Upsonic.ai. At Upsonic.ai, we are dedicated to helping businesses like yours harness the power of cutting-edge AI technology to address pain points, streamline operations, and achieve sustainable growth.  
-    
-    ****** MAIL Body
-    
-    Thank you for taking the time to consider Upsonic.ai. I’m confident we can help you unlock your organization’s true potential. Looking forward to hearing from you soon!  
-    
-    Best regards,  
-    Onur Ulusoy  
-    Marketing Manager | Upsonic.ai  
-    onur@upsonic.co  
-    ```
-  </Step>
-</Steps>
-
 ## Memory
 
 Memory management plays a crucial role in maintaining contextual continuity across distributed tasks and timeframes for agent operations. The framework implements a disk-based persistence mechanism that associates memory storage with unique agent identifiers (IDs). To enable persistent memory functionality, developers must explicitly define and consistently maintain agent IDs across all agent definitions within their implementation.
@@ -150,12 +62,9 @@ Memory management plays a crucial role in maintaining contextual continuity acro
 ```python
 from upsonic import Agent
 
-agent_id = "product_manager_agent" # Setting an agent id
 
 agent = Agent(
     name="Marketing Manager",
-
-    agent_id_=agent_id, # Setting agent id
     memory=True, # Enabling the memory
 )
 ```
@@ -169,7 +78,6 @@ from upsonic import Agent
 
 agent = Agent(  
     name="Marketing Manager",
-    
     reflection=True, # Enabling the reflection
 )
 ```
@@ -183,7 +91,6 @@ from upsonic import Agent
 
 agent = Agent(  
     name="Marketing Manager",
-    
     compress_context=True, # Enabling the compress_context
 )
 ```
