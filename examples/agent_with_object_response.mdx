@@ -16,7 +16,7 @@ This agent will do the same thing as the agent above, fetching OpenAI developmen
 
 ```python agent_with_object_response.py
 from upsonic import Agent, Task
-from upsonic.client.tools import Search
+from upsonic.tools import Search
 
 from pydantic import BaseModel # Importing Object Response
 
@@ -24,7 +24,7 @@ class ANew(BaseModel):
   title: str
   content: str
 class News(BaseModel):
-  news: lists[ANew] # We want to get a list of ANew objects
+  news: list[ANew] # We want to get a list of ANew objects
 
 task = Task(
   "Find the latest OpenAI developments on the internet.", 
