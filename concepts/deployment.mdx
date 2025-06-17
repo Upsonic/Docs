@@ -51,13 +51,13 @@ This guide will walk you through:
     ```python main.py
     from fastapi import FastAPI
     from upsonic import Agent, Task
-    from upsonic.client.tools import Search
+    from upsonic.tools import Search
 
     app = FastAPI()
 
     # Create an agent with a specific role
     agent = Agent(
-        "Customer Support",
+        name="Customer Support",
         company_url="https://your-company.com",
         company_objective="To provide excellent customer service and support",
     )
@@ -142,7 +142,7 @@ This guide will walk you through:
     ```python main.py
     from fastapi import FastAPI
     from upsonic import Agent, Task
-    from upsonic.client.tools import Search
+    from upsonic.tools import Search
     from pydantic import BaseModel
     from typing import List
 
@@ -157,7 +157,7 @@ This guide will walk you through:
 
     # Create an agent with a specific role
     agent = Agent(
-        "Travel Advisor",
+        name="Travel Advisor",
         company_url="https://your-travel-company.com",
         company_objective="To provide personalized travel recommendations and advice",
     )
