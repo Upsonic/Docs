@@ -35,6 +35,15 @@ You can configure a graph with several options:
 Task nodes are the building blocks of a graph. Each node contains a Task object and connects to other nodes to form a workflow.
 
 ```python
+from upsonic import Agent, Task
+from upsonic import Graph
+
+# Create a default agent for the graph
+agent = Agent(name="Test Agent")
+
+# Create a graph with the agent as default
+graph = Graph(default_agent=agent)
+
 # Create tasks
 task1 = Task("Analyze market trends")
 task2 = Task("Generate product recommendations")
@@ -47,6 +56,10 @@ graph.add(task1 >> task2 >> task3)
 graph.add(task1)
 graph.add(task2)
 graph.add(task3)
+
+# Run the graph
+graph.run()
+print(graph.get_output())
 ```
 
 > **Note**: Tasks in a graph work exactly the same as regular Tasks in Upsonic. You can provide prompts, tools, and context just as you would with standalone tasks.
@@ -77,26 +90,6 @@ graph.add(question1 >> question2 >> question3)
 graph.run()
 print(graph.get_output())
 ```
-
-## Running a Graph
-
-Once you've created a graph and added tasks, you can run the graph to execute all tasks in the proper order.
-
-```python
-# Run the graph with default settings
-result = graph.run()
-
-# Run with verbose output to see detailed information
-result = graph.run(verbose=True)
-
-# Get the final output (result of the last task)
-final_output = graph.get_output()
-
-# Get output of a specific task by description
-specific_output = graph.get_task_output("Analyze market trends")
-```
-
-When tasks are executed, outputs from each task are stored in the graph's state and can be accessed by subsequent tasks. This allows for complex workflows where later tasks build upon the results of earlier ones.
 
 ## Creating Decision Nodes
 
@@ -129,6 +122,10 @@ decision = DecisionFunc("Has mountains?", has_mountains)
 
 # Add tasks with conditional branching to the graph
 graph.add(country_task >> geography_task >> decision.if_true(mountain_task).if_false(culture_task))
+
+# Running Graph
+graph.run()
+print(graph.get_output())
 ```
 
 In this example, after getting information about a country's geography, the decision function checks if the word "mountain" appears in the output. If it does, the graph will execute the mountain task; otherwise, it will execute the culture task.
@@ -156,13 +153,17 @@ decision = DecisionLLM("Has the biggest trains?")
 
 # Add tasks with conditional branching to the graph
 graph.add(country_task >> geography_task >> decision.if_true(mountain_task).if_false(culture_task))
+
+# Running Graph
+graph.run()
+print(graph.get_output())
 ```
 
 In this example, the LLM will analyze the output from the geography task and determine whether the country has "the biggest trains" based on the content. The decision will then direct the flow to either the mountain task or the culture task.
 
 Decision nodes provide powerful flexibility in creating dynamic workflows that can adapt based on the content and context of previous task outputs.
 
-## Running a Graph
+## Running a Graph - Detailed
 
 Once you've created a graph and added tasks, you can run the graph to execute all tasks in the proper order.
 
