@@ -232,43 +232,25 @@ In the context system we also support **str as context**. This provide an capabi
 </Tip>
 
 ```python
-from upsonic import Task
+from upsonic import Task, Agent
 
+# String as Context
 city = "New Yorg"
 
+
+# Creating Task
 task = Task(
   "Find resources in the city",
   context=[city] # Adding city string as context
 )
+
+# Creating Agent
+agent = Agent(name="City Guide")
+
+# Running the task
+agent.print_do(task)
 ```
 
-When you need to create task for different cities, you can use this method:
-
-<Steps>
-  <Step title="City List and Base Description">
-    ```python
-    cities = ["New York", "San Francisco", "San Jose"]
-    base_description = "Find resources in the city"
-    ```
-  </Step>
-  <Step title="Creating a for loop">
-    ```python
-    from upsonic import Task
-    
-    cities = ["New York", "San Francisco", "San Jose"]
-    base_description = "Find resources in the city"
-    
-    tasks = []
-    
-    for city in cities:
-      city_task = Task(
-        base_description, # Setting description from base_description
-        context=[city] # Setting city string as context
-      )
-      tasks.append(city_task)
-    ```
-  </Step>
-</Steps>
 
 ## Response Format
 
@@ -276,20 +258,29 @@ The Upsonic framework uses Pydantic BaseModel compatibility for defining expecte
 
 For instance, when requesting a list of cities, the system returns a structured list of strings containing city names. This approach emphasizes value-oriented development by abstracting away the implementation details, allowing developers to focus on utilizing the data rather than managing its format and parsing.
 
+
 ```python
+from upsonic import Task, Agent
 from pydantic import BaseModel
 
+
+# Response format for Task
 class TravelResponse(BaseModel):
   cities: list[str]
-```
 
-```python
-from upsonic import Task
 
+# Creating Task
 task = Task(
   "Create a plan to visit cities in Canada", 
   response_format=TravelResponse # Specify the response format
 )
+
+
+# Creating Agent
+agent = Agent(name="City Guide")
+
+# Running the task
+agent.print_do(task)
 ```
 
 ## Response Language
@@ -314,11 +305,18 @@ After task definition, you have the flexibility to choose between two runtime op
 Direct LLM calls are particularly advantageous for straightforward operations that don't require sub-task generation or characterization. This runtime selection can be strategically implemented within your Agent application logic, allowing you to optimize performance and resource utilization based on task complexity.
 
 ```python
-from upsonic import Direct, Task
+from upsonic import Task, Direct
 
+# Creating Task
 task = Task("Describe planet Earth")
 
-Direct.print_do(task1) # Direct and fast way to complete task
+
+# Creating Direct
+direct = Direct()
+
+
+# Running the task
+Direct.print_do(task) # Direct and fast way to complete task
 ```
 
 <Tip>
