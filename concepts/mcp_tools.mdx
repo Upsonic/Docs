@@ -32,18 +32,29 @@ Upsonic Supports SSE MCP servers. You can easily connect your agents with your h
 Let's see in an example:
 
 ```python
-from upsonic import Task
+from upsonic import Task, Agent
 
+
+# MCP SSE Tools
 class Fetch:
     url = "https://" # SSE URL
 
 class Duckduck:
     url = "https://" # SSE URL
 
+
+# Creating Task
 task = Task(
 	"Use the tool to get the latest news in Europe", 
 	tools=[Fetch, Duckduck]
 )
+
+
+# Creating Agent
+agent = Agent(name="News")
+
+# Running the task
+agent.print_do(task)
 ```
 
 ## Connecting an Example MCP Server (Local)
@@ -53,25 +64,34 @@ Upsonic uses a structure that involves class creation for connecting to MCP serv
 In this example, we will integrate the HackerNews MCP:
 
 ```python
-from upsonic import Task
+from upsonic import Task, Agent
 
-# Fetch MCP Server
+# MCP Tools
 class FetchMCP:
     command = "uvx"
     args = ["mcp-server-fetch"]
 
+
+# Creating Task
 task = Task(
-  "Get the latest tecnical news",
-  tools=[FetchMCP]
+	"Get the latest tecnical news", 
+	tools=[Fetch, Duckduck]
 )
+
+
+# Creating Agent
+agent = Agent(name="News")
+
+# Running the task
+agent.print_do(task)
 ```
 
 and GitHub MCP:
 
 ```python
-from upsonic import Task
+from upsonic import Task, Agent
 
-# GitHub MCP Server - Requires Node.JS
+# MCP Tools
 class GitHubMCP:
     command = "npx"
     args = ["-y", "@modelcontextprotocol/server-github"]
@@ -79,8 +99,16 @@ class GitHubMCP:
       "GITHUB_PERSONAL_ACCESS_TOKEN": "<YOUR_TOKEN>"
     }
 
+# Creating Task
 task = Task(
   "Check the repositories",
   tools=[GitHubMCP]
 )
+
+
+# Creating Agent
+agent = Agent(name="Coder")
+
+# Running the task
+agent.print_do(task)
 ```
