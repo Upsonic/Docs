@@ -298,70 +298,7 @@ task = Task(
 )
 ```
 
-## Running Task on Direct LLM Call
 
-After task definition, you have the flexibility to choose between two runtime options: Agent execution or direct LLM calls. While Agents provide powerful capabilities for complex tasks, they may not always be the most efficient choice. For simple tasks without potential sub-steps, utilizing an Agent can result in unnecessary time and cost overhead.
-
-Direct LLM calls are particularly advantageous for straightforward operations that don't require sub-task generation or characterization. This runtime selection can be strategically implemented within your Agent application logic, allowing you to optimize performance and resource utilization based on task complexity.
-
-```python
-from upsonic import Task, Direct
-
-# Creating Task
-task = Task("Describe planet Earth")
-
-
-# Creating Direct
-direct = Direct()
-
-
-# Running the task
-Direct.print_do(task) # Direct and fast way to complete task
-```
-
-<Tip>
-  Direct LLM Calls Support **<u>Tools</u>**
-
-  Don't sweat it—Direct LLM Calls takes care of all your tools. They'll work like agents, no sweat\!
-</Tip>
-
-## Running Task on Agent
-
-Tasks can be executed through characterized LLM agents, a key feature that enables specialized, task-focused LLM implementations tailored to your company's needs. The agent mechanism is governed by "AgentConfiguration" objects, which serve as the foundation for defining and customizing agent characteristics and behaviors.
-
-This characterization system allows for precise control over how agents process and respond to tasks, ensuring alignment with specific business requirements and objectives. Through these configurations, you can create purpose-built agents that maintain consistency and relevance in their operations while adhering to your organization's specific requirements.
-
-You can view the details of agent creation and customization here.
-
-<Steps>
-  <Step title="Creating Agent">
-    To create an agent, we're going to import the "AgentConfiguration" and make a basic customization.
-
-    ```python
-    from upsonic import Agent
-    
-    agent = Agent(
-        name="Product Manager",
-        company_url="https://upsonic.ai",
-        company_objective="To build AI Agent framework that helps people get things done",
-    )
-    ```
-  </Step>
-  <Step title="Creating Task">
-    ```python
-    from upsonic import Task
-    
-    task = Task("Make a deep analyze to history of chips")
-    ```
-  </Step>
-  <Step title="Running Task with Agent">
-    We've got a function called "agent" in the client that we'll use to give product_manager_agent and task1.
-
-    ```python
-    agent.print_do(task)
-    ```
-  </Step>
-</Steps>
 
 ## Accessing to Task Results
 
@@ -374,34 +311,49 @@ When you run the task, the results are stored in the Task.response. You can get 
 ```python
 from upsonic import Task, Agent
 
+# Creating Task
 task = Task("Make a deep analyze to history of chips")
 
+# Creating Agent
 agent = Agent(name="Product Manager")
-agent.do(task)
 
-result = task.response
 
-print(response)
+# Running and Accessing to result - Exactly Same
+ 
+result1 = agent.do(task) # 1.Way
+
+result2 = task.response # 2.Way
+
 ```
 
 <Tip>
   Hey, just a heads-up: if you set a response_format, the task response will be an object of your class.
 
   ```python
-  from pydantic import BaseModel
   from upsonic import Task, Agent
+  from pydantic import BaseModel
   
+  # Response format for Task
   class TravelResponse(BaseModel):
     cities: list[str]
   
+  
+  # Creating Task
   task = Task(
-    "Generate a plan to visit cities in Canada", 
-    response_format=TravelResponse # Specift the response format
+    "Create a plan to visit cities in Canada", 
+    response_format=TravelResponse # Specify the response format
   )
   
-  agent = Agent(name="Product Manager")
-  agent.do(task)
   
+  # Creating Agent
+  agent = Agent(name="City Guide")
+
+  
+  # Running the task
+  agent.print_do(task)
+
+  
+  # Geting the results as object
   result = task.response
   
   print("Cities")
