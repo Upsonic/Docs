@@ -54,51 +54,86 @@ Integrating a tool into your task is straightforward: simply create a list conta
     Let's define a function named is_page_available. This function will perform a simple URL validation check, returning True if the specified URL is accessible, making it useful for verifying web resources.
 
     ```python
-    import requests
+    from upsonic import Task, Agent
+    from upsonic.tools import Search
     
+    
+    # My Function Tool
+    import requests
     def is_page_available(url: str) -> bool:
         return requests.get(url).status_code == 200
+    
+    
+    # Creating Task
+    task = Task(
+      "Check upsonic.ai is available", 
+      tools=[is_page_available] # Putting Function Tool to the task
+    )
+    
+    # Creating Agent
+    agent = Agent(name="Coder")
+    
+    # Running the task
+    agent.print_do(task)
     ```
   </Step>
   <Step title="MCP Tools">
     This example demonstrates integration with the HackerNews MCP Server, which provides several functions including get_stories, get_story_info, search_stories, and get_user_info. The MCP framework simplifies the process of connecting our agents to external services, as illustrated by this HackerNews integration.
 
     ```python
+    from upsonic import Task, Agent
+    from upsonic.tools import Search
+    
+    
+    # My MCP Tools
     class FetchMCP:
         command = "uvx"
         args = ["mcp-server-fetch"]
+    
+    
+    # Creating Task
+    task = Task(
+      "What upsonic.ai is?", 
+      tools=[FetchMCP] # Putting MCP Tool to the task
+    )
+    
+    # Creating Agent
+    agent = Agent(name="Coder")
+    
+    # Running the task
+    agent.print_do(task)
     ```
   </Step>
-  <Step title="Put to Task">
+  <Step title="Together - Function + MCP Tools">
     Once you've configured your custom tools, they can be directly incorporated into the Task object. The agent will then automatically utilize these tools as needed during task execution.
 
     ```python
     from upsonic import Task, Agent
-    
-    agent = Agent(name="News Agent")
-    
     from upsonic.tools import Search
     
     
+    # My Function Tool
     import requests
-    
     def is_page_available(url: str) -> bool:
         return requests.get(url).status_code == 200
     
     
+    # My MCP Tools
     class FetchMCP:
         command = "uvx"
         args = ["mcp-server-fetch"]
     
     
-    
-    
+    # Creating Task
     task = Task(
-      "Summarize the latest hackernews stories of today", 
-      tools=[Search, MyTools_custom, FetchMCP] # Specify the tools list
+      "What upsonic.ai is?", 
+      tools=[is_page_available, FetchMCP] # Putting multiple tools
     )
     
+    # Creating Agent
+    agent = Agent(name="Coder")
     
+    # Running the task
     agent.print_do(task)
     ```
   </Step>
@@ -111,15 +146,19 @@ The framework supports the combination of multiple tasks to handle complex opera
 ```python
 from upsonic import Task, Agent
 
+# Creating Agent
 agent = Agent(name="Entrepreneur")
 
+# Creating Task 1
 task = Task("Do an in-depth analysis of the history of chips")
 
+# Creating Task 2
 task2 = Task(
   "Prepare a draft report on Europe's position", 
-  context=[task] # Add task1 in a list as task context
+  context=[task] # Add Task 1 in a list as task context
 )
 
+# Running the task
 agent.print_do(task)
 agent.print_do(task2)
 ```
@@ -240,8 +279,6 @@ When you need to create task for different cities, you can use this method:
 The Upsonic framework uses Pydantic BaseModel compatibility for defining expected results, enabling programmatic handling of agent responses. By specifying a response format, the system returns structured objects rather than raw text, allowing for seamless integration and logic implementation within your application.
 
 For instance, when requesting a list of cities, the system returns a structured list of strings containing city names. This approach emphasizes value-oriented development by abstracting away the implementation details, allowing developers to focus on utilizing the data rather than managing its format and parsing.
-
-
 
 ```python
 from pydantic import BaseModel
