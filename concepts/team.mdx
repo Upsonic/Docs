@@ -6,7 +6,7 @@ icon: "users"
 
 ## Overview
 
-LLMs excel at characterization. That’s why we use agents and continually refine their system prompts. This also creates new opportunities for agent teams: since our tasks are split among specialized agents, we must manage the process ourselves—assigning each task to the right agent and enabling effective collaboration.
+LLMs excel at characterization. That's why we use agents and continually refine their system prompts. This also creates new opportunities for agent teams: since our tasks are split among specialized agents, we must manage the process ourselves—assigning each task to the right agent and enabling effective collaboration.
 
 In Upsonic, we have a `Team` class for this purpose. It automatically performs these operations.
 
@@ -93,6 +93,40 @@ team = Team(
 )
 
 
+
+# Run the task and get the answer
+result = team.complete() 
+
+print("Summerized result")
+print(result)
+```
+
+## Automatic Task Assignment
+
+By default, the Team class uses automatic task assignment. This means that the system intelligently analyzes each task and selects the most appropriate agent from your team to handle it. You don't need to do anything special to enable this feature—it's the default behavior that works automatically when you create tasks without specifying an agent.
+
+The automatic assignment process considers the task description, context, and available agents to make the best match, ensuring optimal task distribution across your team.
+
+## Manual Task Assignment
+
+Sometimes you want to have direct control over which agent handles which task. You can achieve this by specifying the `agent` parameter when creating your tasks. When a task has a predefined agent, the team will skip the automatic assignment process and use your specified agent directly.
+
+```python
+from upsonic import Agent, Task, Team
+
+# My Agents
+travel_agent = Agent(name="My Travel Agent")
+history_agent = Agent(name="My History Agent")
+
+# My Tasks with manual agent assignment
+task = Task("Generate a plan to visit cities in Canada", agent=travel_agent)
+task2 = Task("Write historical information about the cities", agent=history_agent)
+
+# My team 
+team = Team(
+	agents=[travel_agent, history_agent], # Adding Agents
+	tasks=[task, task2] # Adding Tasks with predefined agents
+)
 
 # Run the task and get the answer
 result = team.complete() 
