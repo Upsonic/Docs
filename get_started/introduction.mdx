@@ -9,7 +9,7 @@ sidebarTitle: "Introduction"
 import { Container, Title} from '/snippets/home/utility.mdx';
 import { ProductTiles } from '/snippets/home/product-tiles.mdx';
 import { appCategories } from '/snippets/home/data.mdx';
-import { ProductCard } from '/snippets/home/product-cards.mdx';
+import { GuideCard } from '/snippets/home/guide-cards.mdx';
 
 <div className="px-5 divide-y divide-gray-100 dark:divide-white/10">
   <Container>
@@ -62,59 +62,77 @@ import { ProductCard } from '/snippets/home/product-cards.mdx';
     </div>
     <div className="dark:hidden block">
     <CardGroup cols={3}>
-        <ProductCard
-        title="AI Model Deployment Guide"
-        description="Effortless AI Model Deployment: Launch GPT-4 & Custom Models"
-        href="https://youtu.be/EPdHV_Ex0XY"
+        <GuideCard
+        title="Creating an Agent"
+        description="Learn how to create and configure AI agents with the Upsonic framework"
+        href="/concepts/agent"
         img="https://mintlify-assets.b-cdn.net/aspen-ai.svg"
-        model="GPT-01"
-        type="Model API"
+        model="Agent"
+        type="Guide"
         />
-        <ProductCard
-          title="Conversational AI Demo"
-          description="Enable users to integrate advanced chatbots into their applications"
-          href="https://youtu.be/vqKhGq3kshg"
+        <GuideCard
+          title="Adding Tools to an Agent"
+          description="Connect your agent with real-world tools and information sources"
+          href="/concepts/tools"
           img="https://mintlify-assets.b-cdn.net/aspen-chat.svg"
-          model="Neural Engine"
-          type="Model API"
+          model="Tools"
+          type="Guide"
         />
-          <ProductCard
-          title="Reinforcement Learning Platform"
-          description="A comprehensive AI training environment for reinforcement learning"
-          href="https://youtu.be/NM-dutlwRFc"
+          <GuideCard
+          title="Adding MCP Tools to an Agent"
+          description="Integrate Model Context Protocol tools with your agents"
+          href="/concepts/mcp_tools"
           img="https://mintlify-assets.b-cdn.net/aspen-connect.svg"
-          model="AI"
-          type="Model API"
+          model="MCP"
+          type="Guide"
         />
     </CardGroup>
     </div>
     <div className="dark:block hidden">
     <CardGroup cols={3}>
-        <ProductCard
-        title="AI Model Deployment Guide"
-        description="Effortless AI Model Deployment: Launch GPT-4 & Custom Models"
-        href="https://youtu.be/EPdHV_Ex0XY"
+        <GuideCard
+        title="Creating an Agent"
+        description="Learn how to create and configure AI agents with the Upsonic framework"
+        href="/concepts/agent"
         img="https://mintlify-assets.b-cdn.net/aspen-dark-ai.svg"
-        model="GPT-01"
-        type="Model API"
+        model="Agent"
+        type="Guide"
         />
-        <ProductCard
-          title="Conversational AI Demo"
-          description="Enable users to integrate advanced chatbots into their applications"
-          href="https://youtu.be/vqKhGq3kshg"
+        <GuideCard
+          title="Adding Tools to an Agent"
+          description="Connect your agent with real-world tools and information sources"
+          href="/concepts/tools"
           img="https://mintlify-assets.b-cdn.net/aspen-dark-chat.svg"
-          model="Neural Engine"
-          type="Model API"
+          model="Tools"
+          type="Guide"
         />
-          <ProductCard
-          title="Reinforcement Learning Platform"
-          description="A comprehensive AI training environment for reinforcement learning"
-          href="https://youtu.be/NM-dutlwRFc"
+          <GuideCard
+          title="Adding MCP Tools to an Agent"
+          description="Integrate Model Context Protocol tools with your agents"
+          href="/concepts/mcp_tools"
           img="https://mintlify-assets.b-cdn.net/aspen-dark-connect.svg"
-          model="AI"
-          type="Model API"
+          model="MCP"
+          type="Guide"
         />
     </CardGroup>
+    </div>
+    <div className="flex justify-center mt-8">
+      <a href="/concepts">
+        <button
+          type="button"
+          className="px-6 flex items-center font-medium text-sm rounded-full py-3 shadow-sm text-white dark:text-gray-900 bg-primary-dark dark:bg-primary-light hover:opacity-[0.9] hover:bg-primary justify-center"
+        >
+          View All Guides
+          <svg
+            className="size-4 ml-2 bg-white dark:bg-gray-900"
+            style={{
+              maskImage: 'url("https://mintlify.b-cdn.net/solid/arrow-right-long.svg")',
+              maskRepeat: 'no-repeat',
+              maskPosition: 'center center'
+            }}
+          />
+        </button>
+      </a>
     </div>
     <ul class="not-prose pb-[1px] h-1 min-w-full mt-3 overflow-auto" />
   </Container>
