@@ -4,44 +4,27 @@ title: "Upsonic Documentation"
 sidebarTitle: "Introduction"
 ---
 
+Python framework for developing agents with, memory, knowledge base, multi agents and AI Safety Engine.
+
+```shellscript
+pip install upsonic
+```
+
+```python
+from upsonic import Task, Agent
+
+task = Task("Who developed you?")
+
+agent = Agent(name="Coder")
+
+agent.print_do(task)
+```
 
 
-import { Container, Title} from '/snippets/home/utility.mdx';
-import { ProductTiles } from '/snippets/home/product-tiles.mdx';
-import { appCategories } from '/snippets/home/data.mdx';
 
-<div className="px-5 divide-y divide-gray-100 dark:divide-white/10">
-  <Container>
     <div className="w-full flex flex-col">
       <div className="flex flex-col items-start justify-center w-full max-w-4xl text-left">
-        <div
-          className="text-gray-900 dark:text-gray-200 text-4xl tracking-tight"
-        >
-          Upsonic Documentation
-        </div>
-        <p
-          className="text-md text-gray-600 dark:text-gray-400 text-left mt-3 mb-4"
-        >
-          Python framework for developing agents with, memory, knowledge base, multi agents and AI Safety Engine.
-        </p>
-        <div className="w-full">
-          <div className="max-w-4xl mx-auto">
-            ```shellscript
-            pip install upsonic
-            ```
-          </div>
-          <div className="max-w-4xl mx-auto">
-            ```python
-            from upsonic import Task, Agent
 
-            task = Task("Who developed you?")
-
-            agent = Agent(name="Coder")
-
-            agent.print_do(task)
-            ```
-          </div>
-        </div>
 
         <div className="flex flex-row gap-4">
           <a href="/get-started/quickstart">
@@ -64,42 +47,7 @@ import { appCategories } from '/snippets/home/data.mdx';
       </div>
     </div>
 
-  </Container>
-
-   <Container>
-    <div className="flex flex-col w-full mb-8">
-      <div className="flex items-center justify-between w-full">
-        <Title>
-          Build Safe AI Agents with our Guides
-        </Title>
-      </div>
-      <p
-        className="text-[#5B616E] dark:text-gray-300 text-md mb-1 mt-3"
-      >
-        See our guides to jumpstart your AI agent within minutes.
-      </p>
-    </div>
-    <Columns cols={2}>
-      <Card title="Creating an Agent" icon="1" href="/concepts/agent">
-        Learn how to create and configure AI agents with the Upsonic framework
-      </Card>
-      <Card title="Adding Tools to an Agent" icon="2" href="/concepts/tools">
-        Connect your agent with real-world tools and information sources
-      </Card>
-      <Card title="Adding MCP Tools to an Agent" icon="3" href="/concepts/mcp_tools">
-        Integrate Model Context Protocol tools with your agents
-      </Card>
-      <Card title="Using Memory in your Agent" icon="4" href="/concepts/memory">
-        Implement memory capabilities to make your agents more context-aware
-      </Card>
-      <Card title="Creating a Team of the Agents" icon="5" href="/concepts/team">
-        Build multi-agent systems for complex problem solving
-      </Card>
-    </Columns>
-
-    <ul class="not-prose pb-[1px] h-1 min-w-full mt-3 overflow-auto" />
-  </Container>
-  
 
 
-</div>
+## Why Upsonic
+
