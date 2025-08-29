@@ -9,7 +9,6 @@ sidebarTitle: "Introduction"
 import { Container, Title} from '/snippets/home/utility.mdx';
 import { ProductTiles } from '/snippets/home/product-tiles.mdx';
 import { appCategories } from '/snippets/home/data.mdx';
-import { GuideCard } from '/snippets/home/guide-cards.mdx';
 
 <div className="px-5 divide-y divide-gray-100 dark:divide-white/10">
   <Container>
@@ -79,90 +78,23 @@ import { GuideCard } from '/snippets/home/guide-cards.mdx';
         See our guides to jumpstart your AI agent within minutes.
       </p>
     </div>
-    <div className="dark:hidden block">
-    <CardGroup cols={3}>
-        <GuideCard
-        title="1. Creating an Agent"
-        description="Learn how to create and configure AI agents with the Upsonic framework"
-        href="/concepts/agent"
-        img="https://mintlify-assets.b-cdn.net/aspen-ai.svg"
-        model="Agent"
-        type="Beginner"
-        />
-        <GuideCard
-          title="2. Adding Tools to an Agent"
-          description="Connect your agent with real-world tools and information sources"
-          href="/concepts/tools"
-          img="https://mintlify-assets.b-cdn.net/aspen-chat.svg"
-
-        />
-          <GuideCard
-          title="3. Adding MCP Tools to an Agent"
-          description="Integrate Model Context Protocol tools with your agents"
-          href="/concepts/mcp_tools"
-          img="https://mintlify-assets.b-cdn.net/aspen-connect.svg"
-
-        />
-        <GuideCard
-          title="4. Using Memory in your Agent"
-          description="Implement memory capabilities to make your agents more context-aware"
-          href="/concepts/memory"
-          img="https://mintlify-assets.b-cdn.net/aspen-ai.svg"
-
-        />
-        <GuideCard
-          title="5. Creating a Team of the Agents"
-          description="Build multi-agent systems for complex problem solving"
-          href="/concepts/team"
-          img="https://mintlify-assets.b-cdn.net/aspen-chat.svg"
-
-        />
-    </CardGroup>
-    </div>
-    <div className="dark:block hidden">
-    <CardGroup cols={3}>
-        <GuideCard
-        title="1. Creating an Agent"
-        description="Learn how to create and configure AI agents with the Upsonic framework"
-        href="/concepts/agent"
-        img="https://mintlify-assets.b-cdn.net/aspen-dark-ai.svg"
-        model="Agent"
-        type="Guide"
-        />
-        <GuideCard
-          title="2. Adding Tools to an Agent"
-          description="Connect your agent with real-world tools and information sources"
-          href="/concepts/tools"
-          img="https://mintlify-assets.b-cdn.net/aspen-dark-chat.svg"
-          model="Tools"
-          type="Guide"
-        />
-          <GuideCard
-          title="3. Adding MCP Tools to an Agent"
-          description="Integrate Model Context Protocol tools with your agents"
-          href="/concepts/mcp_tools"
-          img="https://mintlify-assets.b-cdn.net/aspen-dark-connect.svg"
-          model="MCP"
-          type="Guide"
-        />
-        <GuideCard
-          title="4. Using Memory in your Agent"
-          description="Implement memory capabilities to make your agents more context-aware"
-          href="/concepts/memory"
-          img="https://mintlify-assets.b-cdn.net/aspen-dark-ai.svg"
-          model="Memory"
-          type="Guide"
-        />
-        <GuideCard
-          title="5. Creating a Team of the Agents"
-          description="Build multi-agent systems for complex problem solving"
-          href="/concepts/team"
-          img="https://mintlify-assets.b-cdn.net/aspen-dark-chat.svg"
-          model="Team"
-          type="Guide"
-        />
-    </CardGroup>
-    </div>
+    <Columns cols={2}>
+      <Card title="1. Creating an Agent" icon="panel-left-close" href="/concepts/agent">
+        Learn how to create and configure AI agents with the Upsonic framework
+      </Card>
+      <Card title="2. Adding Tools to an Agent" icon="panel-right-close" href="/concepts/tools">
+        Connect your agent with real-world tools and information sources
+      </Card>
+      <Card title="3. Adding MCP Tools to an Agent" icon="panel-left-close" href="/concepts/mcp_tools">
+        Integrate Model Context Protocol tools with your agents
+      </Card>
+      <Card title="4. Using Memory in your Agent" icon="panel-right-close" href="/concepts/memory">
+        Implement memory capabilities to make your agents more context-aware
+      </Card>
+      <Card title="5. Creating a Team of the Agents" icon="panel-left-close" href="/concepts/team">
+        Build multi-agent systems for complex problem solving
+      </Card>
+    </Columns>
 
     <ul class="not-prose pb-[1px] h-1 min-w-full mt-3 overflow-auto" />
   </Container>
