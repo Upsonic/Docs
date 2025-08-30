@@ -81,7 +81,7 @@ goal="Write documentation"
 
 ### Defining Instructions
 Instructions guide your agent to act correctly and efficiently during its tasks. When writing instructions:
-- Include **specific details** relevant to the agent's responsibilities.
+- Include **specific details** relevant to the agent's responsibilities. 
 - Highlight the **important points** the agent should always consider while performing tasks.
 - Use clear, actionable language to avoid ambiguity.
 
@@ -112,8 +112,6 @@ At Upsonic, we strive for simplicity and safety. With this in mind, we offer an 
 
 # Imports
 from upsonic import Agent
-from upsonic.tools import WebSearch
-from upsonic.tools import WebRead
 
 
 # Agent Creation
@@ -122,10 +120,11 @@ merchant_analyzer = Agent(
     role="Analyzing the merchant websites.",
     goal="Getting the right result on their websites and giving as the user requested format",
     instructions="""
-    Use your WebSearch tools to make google searches. 
-    Use your WebRead tool to read the website.
-    """,
-    tools=[WebSearch, WebRead] 
+    Identify and analyze the product's category and brand.
+    If the product belongs to a series, pay special attention to series details and related products.
+    Summarize product trends in clear bullet points for easy review.
+    Prioritize up-to-date information and highlight any unusual patterns or outliers.
+    """
 )
 
 ```
