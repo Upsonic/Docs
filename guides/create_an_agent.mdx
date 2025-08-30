@@ -23,6 +23,43 @@ They are programs that are capable of creating intelligent outputs for any given
 - **Storage:** We provide integrations to local and cloud storage options for storing memories and knowledge bases.
 
 
+
+
+
+
+## Core Principles For Agents
+
+When you creating an an AI Agent, ensure that you define these elements as well:
+- **Role:** You need to give an role defination to your agent that match with the task of the agent as well.
+- **Goal:** Agents needs some goals to focus on the thing that they are doing right now. 
+- **Instructions:** You need to give some explainations for your agents to keep them that making the right think in right time.
+
+
+
+### Defining Roles
+The role will explain agent like you are the expert for that. But there is some points to defining a good role:
+- Be Specific: Dont write Operation Specialist, write: Onboarding Specialist
+- Add Domain information: Add the domain information for make your agent more aware (e.g., "Onboarding Specialist in fintech industry")
+- Roles should be real worlds professions: Your agents knows the real worlds professions. So please try to choose them.
+
+Good Role:
+````
+role="Onboarding Specialist in fintech industry"
+role="CFO in fintech industry and market is EU"
+role="Head Of Development in Health Tech"
+```
+
+
+Bad Role:
+````
+role="Operation Specialist"
+role="Finance Expert"
+role="Developer"
+```
+
+
+
+
 ## Let's create an Agent that analyzes Merchant Websites
 
 At Upsonic, we strive for simplicity and safety. With this in mind, we offer an `Agent` class that allows us to configure our Agent for specific purposes. In this example, we will create an agent that identifies merchant websites and analyzes their product offerings.
@@ -52,6 +89,10 @@ merchant_analyzer = Agent(
 )
 
 ```
+
+
+
+
 
 
 
