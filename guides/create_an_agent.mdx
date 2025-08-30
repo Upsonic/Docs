@@ -23,4 +23,36 @@ They are programs that are capable of creating intelligent outputs for any given
 - **Storage:** We provide integrations to local and cloud storage options for storing memories and knowledge bases.
 
 
+## Let's create an Agent that analyzes Merchant Websites
+
+At Upsonic, we strive for simplicity and safety. With this in mind, we offer an `Agent` class that allows us to configure our Agent for specific purposes. In this example, we will create an agent that identifies merchant websites and analyzes their product offerings.
+
+```python
+# Upsonic Docs: Create an Agent
+# https://docs.upsonic.ai/guides/create_an_agent
+
+
+
+# Imports
+from upsonic import Agent
+from upsonic.tools import WebSearch
+from upsonic.tools import WebRead
+
+
+# Agent Creation
+merchant_analyzer = Agent(
+    name="Merchant Analyzer V1",
+    role="Analyzing the merchant websites.",
+    goal="Getting the right result on their websites and giving as the user requested format",
+    instructions="""
+    Use your WebSearch tools to make google searches. 
+    Use your WebRead tool to read the website.
+    """,
+    tools=[WebSearch, WebRead] 
+)
+
+```
+
+
+
 
