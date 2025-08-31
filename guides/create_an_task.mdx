@@ -1,0 +1,109 @@
+---
+title: "Create an Task"
+sidebarTitle: "Create an Task"
+---
+
+
+## What is the Task?
+Agents are just like the humans. As humans we are creating some virtual steps for our tasks. Like first i will search for the websites, then i will read the content then i will categorize them. For the agents task we have the some structure. The key points for the tasks are:
+
+- **Tasks are the parts of the main job:** You need to create the steps to archive your main task over Task system.
+- **They increase the accruacy:** With the small jobs agents are more focusing on what to do right now and their accuracy increases.
+- **You can manage the Tools and Context:**: With this focusing setting the tools for the tasks the overall token usage and accuracy increases. Agents only get the required context at the right time.
+
+
+
+## Core Principles For Tasks
+
+When you are creating a Task, ensure that you define these elements as well:
+- **description:** Each task should have a clear, actionable description that matches its purpose.
+- **context management:** Tasks often depend on the results or context of previous tasks. Make sure to specify context when needed.
+- **Be specific:** Provide specific instructions for what the task should accomplish and how.
+
+### Defining Description
+Descriptions should be simple and actionable. Keep them short to increase accuracy. There is an tradeoff between the task number and cost. If you want to get more accurate results you need to open more tasks and split your tasks. 
+
+**Good Descriptions**
+```
+description="Check their website for the following points: 'Terms and Sales', 'About Us', 'SSL Licence' "
+description="Go to website and extract their Terms of Sales link"
+description="Explain the changes between today and yesterday financial operations"
+descirption="Write an feedback for the coding standards of this code"
+```
+
+**Bad Descriptions**
+```
+description="Analyze their website for the missing things"
+description="Make the financial analyze"
+description="Review the pull request"
+```
+
+
+## Let'S Create task for Analyzing the Merchant Websites
+
+In Upsonic we have a Task class and they are the core parts of anything that you do actually. When you create an task you can use that task in an Direct LLM Call, Agent and Multi-Agent teams. In this example we will add the task to our merchant Website analyzer.
+
+
+
+```python
+# Upsonic Docs: Create an Agent
+# https://docs.upsonic.ai/guides/create_an_agent
+
+
+
+# Imports
+from upsonic import Agent
+from upsonic import Task
+from upsonic import WebSearch, WebRead
+
+
+# Agent Creation
+merchant_analyzer_agent = Agent(
+    name="Merchant Analyzer V1",
+    role="Analyzing the merchant websites.",
+    goal="Getting the right result on their websites and giving as the user requested format",
+    instructions="""
+    Identify and analyze the product's category and brand.
+    If the product belongs to a series, pay special attention to series details and related products.
+    Summarize product trends in clear bullet points for easy review.
+    Prioritize up-to-date information and highlight any unusual patterns or outliers.
+    """
+)
+
+
+# The Company We Want to Analyze
+company_name = "Toscrape.com Books"
+
+
+# Task Creation
+task1 = Task(
+    description=f"Find the website of the {company_name}"
+    tools=[WebSearch, WebRead]    
+)
+
+task2 = Task(
+    description="Extract the categories in the website", 
+    context=[task1],
+    tools=[WebRead]
+)
+
+task3 = Task(
+    description="Extract the products that they are sellin in their websites by the categories", 
+    context=[task1, task2],
+    tools=[WebRead]
+)
+
+
+# Run the tasks
+merchant_analyzer_agent.print_do(task1)
+merchant_analyzer_agent.print_do(task2)
+merchant_analyzer_agent.print_do(task3)
+
+final_result = task3.response
+
+print("Final Result")
+print(final_result)
+
+```
+
+
