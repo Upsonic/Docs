@@ -2,3 +2,315 @@
 title: "Using Memory in your Agent"
 sidebarTitle: "Using Memory in your Agent"
 ---
+
+# Using Memory in your Agent
+
+## What is Memory?
+
+Memory in Upsonic is a sophisticated system that allows your AI agents to remember and learn from previous interactions. Just like humans, agents need memory to provide personalized, contextual responses and maintain continuity across conversations. The Memory system provides three main types of memory capabilities:
+
+* **Full Session Memory:** Stores complete conversation history for context-aware responses
+* **Summary Memory:** Maintains evolving summaries of conversations for long-term understanding
+* **User Analysis Memory:** Builds persistent user profiles based on interaction patterns
+
+## Core Principles For Memory
+
+When implementing Memory in your agents, ensure you understand these key concepts:
+
+* **Storage Providers:** Choose the right storage backend (in-memory, JSON, PostgreSQL, MongoDB, Redis, SQLite) for your use case
+* **Memory Types:** Enable only the memory types you need to balance performance and functionality
+* **Session Management:** Properly manage session IDs and user IDs for memory persistence
+* **Context Injection:** Memory automatically injects relevant context into your agent's prompts
+
+### Memory Configuration Options
+
+The Memory system offers flexible configuration to suit different requirements:
+
+**Memory Types:**
+- `full_session_memory`: Stores complete chat history
+- `summary_memory`: Maintains conversation summaries
+- `user_analysis_memory`: Builds user profiles
+
+**Storage Options:**
+- `InMemoryStorage`: Fast, ephemeral storage for development
+- `JSONStorage`: File-based storage for simple applications
+- `PostgresStorage`: Production-grade relational database storage
+- `MongoStorage`: Scalable NoSQL storage
+- `RedisStorage`: High-performance in-memory storage
+- `SqliteStorage`: Lightweight local database storage
+
+## Let's Create an Agent with Memory Capabilities
+
+In this example, we'll create an agent that remembers user preferences and maintains conversation context across multiple interactions.
+
+```python
+# Upsonic Docs: Using Memory in your Agent
+# https://docs.upsonic.ai/guides/using_memory_in_your_agent
+
+# Imports
+from upsonic import Agent
+from upsonic import Task
+from upsonic.storage import InMemoryStorage, Memory
+
+# Create a storage provider
+storage = InMemoryStorage(max_sessions=100, max_profiles=50)
+
+# Create a Memory instance with all memory types enabled
+memory = Memory(
+    storage=storage,
+    session_id="user_session_123",
+    user_id="user_456",
+    full_session_memory=True,      # Remember complete conversations
+    summary_memory=True,           # Maintain conversation summaries
+    user_analysis_memory=True,     # Build user profiles
+    dynamic_user_profile=True,     # Automatically adapt profile schema
+    num_last_messages=10,          # Limit context to last 10 messages
+    debug=True                     # Enable debug logging
+)
+
+# Create an Agent with Memory
+personal_assistant = Agent(
+    name="Personal Assistant",
+    role="Personal AI Assistant with Memory",
+    goal="Provide personalized assistance by remembering user preferences and conversation history",
+    instructions="""
+    Always reference previous conversations when relevant.
+    Adapt your responses based on the user's profile and preferences.
+    Use the conversation summary to provide context-aware assistance.
+    """,
+    memory=memory
+)
+
+# Example tasks that demonstrate memory capabilities
+task1 = Task(
+    description="I prefer to be called 'Alex' and I'm interested in machine learning",
+)
+
+task2 = Task(
+    description="What did we discuss in our previous conversation?",
+)
+
+task3 = Task(
+    description="Based on what you know about me, suggest a learning path for AI",
+)
+
+# Execute tasks to build memory
+print("=== Task 1: Building User Profile ===")
+result1 = personal_assistant.do(task1)
+print(f"Response: {result1}")
+
+print("\n=== Task 2: Testing Memory Recall ===")
+result2 = personal_assistant.do(task2)
+print(f"Response: {result2}")
+
+print("\n=== Task 3: Using Memory for Personalization ===")
+result3 = personal_assistant.do(task3)
+print(f"Response: {result3}")
+
+# Check memory statistics
+print(f"\n=== Memory Statistics ===")
+print(f"Session ID: {memory.session_id}")
+print(f"User ID: {memory.user_id}")
+print(f"Full Session Memory: {memory.full_session_memory_enabled}")
+print(f"Summary Memory: {memory.summary_memory_enabled}")
+print(f"User Analysis Memory: {memory.user_analysis_memory_enabled}")
+```
+
+## Advanced Memory Configuration
+
+### Using Different Storage Providers
+
+```python
+# PostgreSQL Storage for Production
+from upsonic.storage import PostgresStorage
+
+postgres_storage = PostgresStorage(
+    sessions_table_name="agent_sessions",
+    profiles_table_name="user_profiles",
+    db_url="postgresql://user:pass@localhost:5432/upsonic_db",
+    schema="public"
+)
+
+# Redis Storage for High Performance
+from upsonic.storage import RedisStorage
+
+redis_storage = RedisStorage(
+    prefix="upsonic",
+    host="localhost",
+    port=6379,
+    expire=86400  # 24 hours TTL
+)
+
+# JSON Storage for Simple Applications
+from upsonic.storage import JSONStorage
+
+json_storage = JSONStorage(
+    directory_path="./data/memory",
+    pretty_print=True
+)
+```
+
+### Custom User Profile Schemas
+
+```python
+from pydantic import BaseModel, Field
+from upsonic.storage import Memory
+
+class CustomUserProfile(BaseModel):
+    expertise_level: str = Field(description="User's expertise level in the domain")
+    preferred_language: str = Field(description="User's preferred programming language")
+    learning_goals: list[str] = Field(description="User's learning objectives")
+    communication_style: str = Field(description="User's preferred communication style")
+
+# Create Memory with custom profile schema
+memory_with_custom_schema = Memory(
+    storage=storage,
+    session_id="session_789",
+    user_id="user_101",
+    user_analysis_memory=True,
+    user_profile_schema=CustomUserProfile,
+    dynamic_user_profile=False  # Use our custom schema
+)
+```
+
+### Memory with Model Provider
+
+```python
+from upsonic.models.factory import ModelFactory
+
+# Get a model provider for memory operations
+model_provider = ModelFactory.create("gpt-4o")
+
+memory_with_model = Memory(
+    storage=storage,
+    session_id="session_456",
+    user_id="user_789",
+    summary_memory=True,
+    user_analysis_memory=True,
+    model_provider=model_provider,  # For generating summaries and analyzing traits
+    debug=True
+)
+```
+
+## Memory Best Practices
+
+### 1. Choose the Right Storage Provider
+
+- **Development/Testing:** Use `InMemoryStorage` for fast iteration
+- **Simple Applications:** Use `JSONStorage` for file-based persistence
+- **Production Web Apps:** Use `PostgresStorage` or `MongoStorage` for scalability
+- **High-Performance:** Use `RedisStorage` for caching and speed
+
+### 2. Configure Memory Types Appropriately
+
+- **Full Session Memory:** Enable for chatbots and support agents
+- **Summary Memory:** Use for long conversations to maintain context
+- **User Analysis Memory:** Essential for personalized experiences
+
+### 3. Manage Session Lifecycles
+
+```python
+# Create unique session IDs for different conversation contexts
+import uuid
+
+session_id = f"chat_session_{uuid.uuid4()}"
+user_id = f"user_{uuid.uuid4()}"
+
+memory = Memory(
+    storage=storage,
+    session_id=session_id,
+    user_id=user_id,
+    full_session_memory=True
+)
+```
+
+### 4. Monitor Memory Usage
+
+```python
+# Check memory statistics
+print(f"Memory Configuration:")
+print(f"- Full Session Memory: {memory.full_session_memory_enabled}")
+print(f"- Summary Memory: {memory.summary_memory_enabled}")
+print(f"- User Analysis Memory: {memory.user_analysis_memory_enabled}")
+print(f"- Max Messages: {memory.num_last_messages}")
+print(f"- Feed Tool Results: {memory.feed_tool_call_results}")
+```
+
+## Memory in Multi-Agent Teams
+
+Memory can be shared across multiple agents in a team:
+
+```python
+from upsonic import Team
+
+# Create a shared memory instance
+shared_memory = Memory(
+    storage=storage,
+    session_id="team_session_123",
+    user_id="user_456",
+    full_session_memory=True,
+    summary_memory=True,
+    model_provider=model_provider  # Required for summary generation
+)
+
+# Create agents with shared memory
+research_agent = Agent(
+    name="Research Agent",
+    role="Research Specialist",
+    memory=shared_memory
+)
+
+writing_agent = Agent(
+    name="Writing Agent", 
+    role="Content Writer",
+    memory=shared_memory
+)
+
+# Create a team with shared memory
+research_team = Team(
+    agents=[research_agent, writing_agent],
+    memory=shared_memory,
+    tasks=[task1, task2]
+)
+```
+
+## Troubleshooting Memory Issues
+
+### Common Problems and Solutions
+
+1. **Memory Not Persisting:**
+   - Ensure storage provider is properly connected
+   - Check that session_id and user_id are set
+   - Verify memory types are enabled
+
+2. **Context Not Being Injected:**
+   - Check that `context_formatted` is being set
+   - Verify memory manager is properly integrated
+   - Ensure storage operations are successful
+
+3. **Performance Issues:**
+   - Limit `num_last_messages` for large conversations
+   - Use appropriate storage provider for your scale
+   - Consider disabling unused memory types
+
+### Debug Mode
+
+Enable debug mode to troubleshoot memory issues:
+
+```python
+memory = Memory(
+    storage=storage,
+    session_id="debug_session",
+    user_id="debug_user",
+    full_session_memory=True,
+    debug=True  # Enable detailed logging
+)
+```
+
+## Conclusion
+
+Memory is a powerful feature that transforms your agents from simple responders to intelligent, context-aware assistants. By properly configuring memory types, choosing appropriate storage providers, and following best practices, you can create agents that provide personalized, continuous experiences across multiple interactions.
+
+Remember that memory comes with trade-offs - more memory means better context but potentially higher costs and slower responses. Choose the right balance for your specific use case.
+
+Create an AgentPreviousUsing Memory in your AgentNext
