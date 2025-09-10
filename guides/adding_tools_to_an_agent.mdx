@@ -2,42 +2,48 @@
 title: "Adding Custom Tools to an Agent"
 sidebarTitle: "Adding Custom Tools to an Agent"
 ---
+
 # Create Custom Tools
 
 ## What are Custom Tools?
 
 Custom tools are functions that extend your AI agent's capabilities beyond the built-in functionality. They allow agents to interact with external systems, perform specialized operations, and execute complex workflows. **What do they do?**
-* Execute specific business logic or API calls
-* Interact with databases, file systems, or external services
-* Perform data processing, calculations, or transformations
-* Enable human-in-the-loop workflows with confirmation and input requirements
-* Provide caching and performance optimization capabilities
+
+- Execute specific business logic or API calls
+- Interact with databases, file systems, or external services
+- Perform data processing, calculations, or transformations
+- Enable human-in-the-loop workflows with confirmation and input requirements
+- Provide caching and performance optimization capabilities
 
 **What are the parts of a custom tool?**
-* **Function Definition:** The core logic that performs the actual work
-* **Type Hints:** Required parameter and return type annotations for the LLM to understand usage
-* **Documentation:** Clear docstrings explaining the tool's purpose and parameters
-* **Configuration:** Optional behavioral settings like confirmation requirements, caching, or external execution
-* **Error Handling:** Robust error management for production reliability
+
+- **Function Definition:** The core logic that performs the actual work
+- **Type Hints:** Required parameter and return type annotations for the LLM to understand usage
+- **Documentation:** Clear docstrings explaining the tool's purpose and parameters
+- **Configuration:** Optional behavioral settings like confirmation requirements, caching, or external execution
+- **Error Handling:** Robust error management for production reliability
 
 ## Core Principles For Custom Tools
 
 When creating custom tools, ensure you define these elements:
-* **Clear Purpose:** Each tool should have a single, well-defined responsibility
-* **Type Safety:** All parameters and return values must have explicit type hints
-* **Documentation:** Comprehensive docstrings that explain usage and expected behavior
-* **Error Handling:** Graceful failure handling with meaningful error messages
-* **Configuration:** Appropriate behavioral settings for your use case
+
+- **Clear Purpose:** Each tool should have a single, well-defined responsibility
+- **Type Safety:** All parameters and return values must have explicit type hints
+- **Documentation:** Comprehensive docstrings that explain usage and expected behavior
+- **Error Handling:** Graceful failure handling with meaningful error messages
+- **Configuration:** Appropriate behavioral settings for your use case
 
 ### Defining Tool Functions
 
 The function definition is the foundation of your custom tool. Follow these guidelines:
-* **Single Responsibility:** Each tool should do one thing well
-* **Type Annotations:** Every parameter and return value must have type hints
-* **Clear Naming:** Use descriptive function names that indicate the tool's purpose
-* **Documentation:** Write comprehensive docstrings that explain parameters, behavior, and return values
+
+- **Single Responsibility:** Each tool should do one thing well
+- **Type Annotations:** Every parameter and return value must have type hints
+- **Clear Naming:** Use descriptive function names that indicate the tool's purpose
+- **Documentation:** Write comprehensive docstrings that explain parameters, behavior, and return values
 
 **Good Tool Definition:**
+
 ```python
 @tool
 async def analyze_website_content(url: str, analysis_type: str = "general") -> Dict[str, Any]:
@@ -60,55 +66,80 @@ async def analyze_website_content(url: str, analysis_type: str = "general") -> D
 ```
 
 **Bad Tool Definition:**
+
 ```python
+@tool
 def analyze(url, type):
     # Missing type hints, docstring, and error handling
     pass
 ```
 
-### Configuring Tool Behavior
+## Tool Best Practices
 
-The `@tool` decorator allows you to configure how your tool behaves during execution. These settings control user interaction, caching, and execution flow.
+### 1. Error Handling
 
-**Basic Configuration:**
+Always implement proper error handling in your tools:
+
 ```python
 @tool
-def simple_tool(param: str) -> str:
-    """A simple tool with default configuration."""
-    return f"Processed: {param}"
+async def robust_tool(param: str) -> Dict[str, Any]:
+    """A tool with comprehensive error handling."""
+    try:
+        # Tool logic here
+        result = await perform_operation(param)
+        return {"status": "success", "data": result}
+    except ValueError as e:
+        return {"status": "error", "error": f"Invalid parameter: {e}"}
+    except Exception as e:
+        return {"status": "error", "error": f"Unexpected error: {e}"}
 ```
 
-**Advanced Configuration:**
+### 2. Input Validation
+
+Validate inputs before processing:
+
 ```python
-@tool(
-    requires_confirmation=True,
-    cache_results=True,
-    cache_ttl=3600,
-    show_result=True
-)
-def advanced_tool(param: str) -> str:
-    """A tool with advanced behavioral configuration."""
-    return f"Advanced processing: {param}"
+@tool
+async def validated_tool(url: str, timeout: int = 30) -> str:
+    """A tool with input validation."""
+    if not url.startswith(('http://', 'https://')):
+        raise ValueError("URL must start with http:// or https://")
+    
+    if timeout <= 0 or timeout > 300:
+        raise ValueError("Timeout must be between 1 and 300 seconds")
+    
+    # Tool logic here
+    return "Validated and processed"
 ```
 
-### Tool Configuration Options
+### 3. Clear Documentation
 
-The `@tool` decorator supports various configuration parameters:
+Always provide comprehensive docstrings:
 
-* **`requires_confirmation`:** If `True`, the agent will pause and require user confirmation before executing the tool
-* **`requires_user_input`:** If `True`, the agent will prompt the user for input for specified fields
-* **`user_input_fields`:** List of argument names that require user input when `requires_user_input` is `True`
-* **`external_execution`:** If `True`, signals that the tool's execution is handled by an external process
-* **`show_result`:** If `True`, the tool's output is shown directly to the user and not sent back to the LLM
-* **`stop_after_tool_call`:** If `True`, the agent's run terminates immediately after this tool call
-* **`tool_hooks`:** An object containing custom functions to run before and/or after the tool's main logic is executed.
-* **`cache_results`:** If `True`, the result is cached based on the tool's arguments
-* **`cache_ttl`:** Time-to-live for cache entries in seconds (None means no expiration)
-* **`cache_dir`:** The directory to store cache files.
+```python
+@tool
+async def well_documented_tool(param: str, option: bool = True) -> Dict[str, Any]:
+    """
+    Clear description of what the tool does.
+    
+    Args:
+        param: Description of the parameter and its expected format
+        option: Description of the optional parameter and its default behavior
+        
+    Returns:
+        Description of the return value structure and expected keys
+        
+    Raises:
+        ValueError: When param is invalid
+        ConnectionError: When external service is unavailable
+    """
+    # Tool implementation
+    pass
+```
 
 ## Let's Create Custom Tools for a Website Analysis Agent
 
-In this example, we'll create a comprehensive set of tools for analyzing merchant websites, demonstrating various configuration options and best practices.
+In this example, we'll create basic tools and show how to add user confirmation for sensitive operations.
 
 ```python
 # Upsonic Docs: Create Custom Tools
@@ -117,10 +148,9 @@ In this example, we'll create a comprehensive set of tools for analyzing merchan
 # Imports
 from upsonic import Agent, Task
 from upsonic.tools import tool
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 import requests
 from bs4 import BeautifulSoup
-import json
 import time
 
 # Tool 1: Basic Website Content Fetcher
@@ -158,17 +188,35 @@ async def fetch_website_content(url: str) -> Dict[str, Any]:
             "response_time": time.time() - start_time
         }
 
-# Tool 2: SEO Analysis Tool with User Confirmation
-@tool(requires_confirmation=True, cache_results=True, cache_ttl=7200)
+# Tool 2: SEO Analysis Tool with Human-in-the-Loop via Hooks
+from upsonic.tools.tool import ToolHooks
+
+def before_analysis_hook(html_content: str):
+    """Hook that runs before SEO analysis to get user confirmation."""
+    print(f"🔍 About to start SEO analysis on content ({len(html_content)} characters)")
+    
+    # Ask user for confirmation
+    user_input = input("Do you want to proceed with SEO analysis? (y/n): ").lower().strip()
+    
+    if user_input != 'y':
+        raise Exception("Not allowed, rejected by user")
+    
+    print("📊 User approved. Starting SEO analysis...")
+
+def after_analysis_hook(result):
+    """Hook that runs after SEO analysis - currently not used."""
+    pass
+
+@tool(tool_hooks=ToolHooks(before=before_analysis_hook, after=after_analysis_hook))
 async def analyze_seo_metrics(html_content: str) -> Dict[str, Any]:
     """
-    Analyzes HTML content for SEO metrics and provides optimization recommendations.
+    Analyzes HTML content for SEO metrics with human-in-the-loop hooks.
     
     Args:
         html_content: The HTML content to analyze
         
     Returns:
-        Dictionary containing SEO metrics and recommendations
+        Dictionary containing enhanced SEO metrics, recommendations, and priority actions
     """
     soup = BeautifulSoup(html_content, 'html.parser')
     
@@ -176,14 +224,13 @@ async def analyze_seo_metrics(html_content: str) -> Dict[str, Any]:
     title = soup.find('title')
     meta_description = soup.find('meta', attrs={'name': 'description'})
     h1_tags = soup.find_all('h1')
-    h2_tags = soup.find_all('h2')
     
     seo_score = 0
     recommendations = []
     
     # Analyze title
     if title and title.text.strip():
-        seo_score += 20
+        seo_score += 30
         if len(title.text) > 60:
             recommendations.append("Title is too long (should be under 60 characters)")
     else:
@@ -191,153 +238,39 @@ async def analyze_seo_metrics(html_content: str) -> Dict[str, Any]:
     
     # Analyze meta description
     if meta_description and meta_description.get('content'):
-        seo_score += 20
-        if len(meta_description['content']) > 160:
-            recommendations.append("Meta description is too long (should be under 160 characters)")
+        seo_score += 30
     else:
         recommendations.append("Missing meta description")
     
-    # Analyze heading structure
+    # Analyze H1 tags
     if h1_tags:
-        seo_score += 20
+        seo_score += 40
         if len(h1_tags) > 1:
             recommendations.append("Multiple H1 tags found (should have only one)")
     else:
         recommendations.append("Missing H1 tag")
-    
-    if h2_tags:
-        seo_score += 20
-    else:
-        recommendations.append("No H2 tags found (good for content structure)")
-    
-    # Analyze content length
-    text_content = soup.get_text()
-    if len(text_content) > 300:
-        seo_score += 20
-    else:
-        recommendations.append("Content is too short (aim for at least 300 words)")
     
     return {
         "seo_score": seo_score,
         "title": title.text.strip() if title else None,
         "meta_description": meta_description.get('content') if meta_description else None,
         "h1_count": len(h1_tags),
-        "h2_count": len(h2_tags),
-        "content_length": len(text_content),
         "recommendations": recommendations
     }
-
-# Tool 3: Performance Analysis with User Input
-@tool(requires_user_input=True, user_input_fields=["performance_threshold"])
-async def analyze_website_performance(url: str, performance_threshold: float = 2.0) -> Dict[str, Any]:
-    """
-    Analyzes website performance and compares it against user-defined thresholds.
-    
-    Args:
-        url: The website URL to analyze
-        performance_threshold: Maximum acceptable response time in seconds
-        
-    Returns:
-        Dictionary containing performance metrics and analysis
-    """
-    start_time = time.time()
-    
-    try:
-        response = requests.get(url, timeout=30)
-        response_time = time.time() - start_time
-        
-        # Analyze response size
-        content_size = len(response.content) / 1024  # KB
-        
-        # Determine performance grade
-        if response_time <= performance_threshold:
-            grade = "A"
-        elif response_time <= performance_threshold * 1.5:
-            grade = "B"
-        elif response_time <= performance_threshold * 2:
-            grade = "C"
-        else:
-            grade = "F"
-        
-        return {
-            "url": url,
-            "response_time": response_time,
-            "content_size_kb": content_size,
-            "performance_threshold": performance_threshold,
-            "grade": grade,
-            "status": "success"
-        }
-        
-    except requests.RequestException as e:
-        return {
-            "url": url,
-            "status": "error",
-            "error": str(e)
-        }
-
-# Tool 4: External Execution Tool
-@tool(external_execution=True)
-async def generate_website_report(analysis_data: Dict[str, Any]) -> str:
-    """
-    Generates a comprehensive website analysis report.
-    This tool requires external execution to generate the final report.
-    
-    Args:
-        analysis_data: Dictionary containing all analysis results
-        
-    Returns:
-        Generated report as a string
-    """
-    # This tool will be paused for external execution
-    # The actual report generation happens outside the agent
-    pass
-
-# Tool 5: Cached Data Retrieval Tool
-@tool(cache_results=True, cache_ttl=86400, show_result=True)
-async def get_website_analytics(domain: str) -> Dict[str, Any]:
-    """
-    Retrieves website analytics data with caching for performance.
-    
-    Args:
-        domain: The domain to get analytics for
-        
-    Returns:
-        Dictionary containing analytics data
-    """
-    # Simulate API call to analytics service
-    # Results are cached for 24 hours
-    analytics_data = {
-        "domain": domain,
-        "monthly_visitors": 50000,
-        "bounce_rate": 0.45,
-        "avg_session_duration": 180,
-        "top_pages": ["/", "/products", "/about"],
-        "last_updated": time.time()
-    }
-    
-    return analytics_data
 
 # Agent Creation with Custom Tools
 website_analyzer_agent = Agent(
     name="Website Analysis Expert",
     role="Website Performance and SEO Specialist",
-    goal="Provide comprehensive website analysis with actionable insights for optimization",
-    instructions="""
-    Always use the appropriate tools for the requested analysis type.
-    Provide clear, actionable recommendations based on analysis results.
-    Consider both technical and business impact when making recommendations.
-    """
+    goal="Provide comprehensive website analysis with actionable insights for optimization"
 )
 
 # Example Task Using Custom Tools
 analysis_task = Task(
-    description="Analyze the website 'example.com' for SEO optimization and performance issues",
+    description="Analyze the website 'example.com' for SEO optimization",
     tools=[
         fetch_website_content,
-        analyze_seo_metrics,
-        analyze_website_performance,
-        generate_website_report,
-        get_website_analytics
+        analyze_seo_metrics
     ]
 )
 
@@ -346,146 +279,13 @@ result = website_analyzer_agent.do(analysis_task)
 print("Analysis Complete:", result)
 ```
 
-## Tool Best Practices
+**Need more advanced features?** The `@tool` decorator supports many powerful configuration options including:
 
-### 1. Error Handling
-Always implement proper error handling in your tools:
-```python
-@tool
-async def robust_tool(param: str) -> Dict[str, Any]:
-    """A tool with comprehensive error handling."""
-    try:
-        # Tool logic here
-        result = await perform_operation(param)
-        return {"status": "success", "data": result}
-    except ValueError as e:
-        return {"status": "error", "error": f"Invalid parameter: {e}"}
-    except Exception as e:
-        return {"status": "error", "error": f"Unexpected error: {e}"}
-```
+- **User Confirmation:** Require manual approval before executing sensitive tools
+- **User Input Collection:** Prompt users for specific values during execution
+- **External Execution:** Pause tool execution for external processes
+- **Result Caching:** Cache expensive operations with TTL control
+- **Result Display:** Show tool outputs directly to users
+- **Execution Control:** Stop agent execution after specific tools
 
-### 2. Input Validation
-Validate inputs before processing:
-```python
-@tool
-async def validated_tool(url: str, timeout: int = 30) -> str:
-    """A tool with input validation."""
-    if not url.startswith(('http://', 'https://')):
-        raise ValueError("URL must start with http:// or https://")
-    
-    if timeout <= 0 or timeout > 300:
-        raise ValueError("Timeout must be between 1 and 300 seconds")
-    
-    # Tool logic here
-    return "Validated and processed"
-```
-
-### 3. Caching Strategy
-Use caching appropriately for expensive operations:
-```python
-@tool(cache_results=True, cache_ttl=3600)
-async def expensive_operation(data: str) -> str:
-    """A tool that benefits from caching."""
-    # This result will be cached for 1 hour
-    return perform_expensive_computation(data)
-```
-
-### 4. User Interaction
-Implement user interaction when needed:
-```python
-@tool(requires_confirmation=True, requires_user_input=True, user_input_fields=["approval_code"])
-async def sensitive_operation(account_id: str, approval_code: str) -> str:
-    """A tool requiring user confirmation and input."""
-    # User will be prompted for confirmation and approval code
-    return f"Operation completed for account {account_id}"
-```
-
-## Advanced Tool Patterns
-
-### Tool Composition
-Create complex workflows by combining multiple tools:
-```python
-@tool
-async def comprehensive_analysis(url: str) -> Dict[str, Any]:
-    """Performs a comprehensive website analysis using multiple tools."""
-    # Fetch content
-    content_result = await fetch_website_content(url)
-    if content_result["status"] != "success":
-        return content_result
-    
-    # Analyze SEO
-    seo_result = await analyze_seo_metrics(content_result["content"])
-    
-    # Analyze performance
-    perf_result = await analyze_website_performance(url)
-    
-    # Combine results
-    return {
-        "url": url,
-        "content_analysis": content_result,
-        "seo_analysis": seo_result,
-        "performance_analysis": perf_result,
-        "overall_score": (seo_result["seo_score"] + (100 - perf_result["grade_score"])) / 2
-    }
-```
-
-### Conditional Tool Execution
-Use tools conditionally based on previous results:
-```python
-@tool
-async def smart_analysis(url: str, analysis_type: str = "auto") -> Dict[str, Any]:
-    """Intelligently chooses analysis tools based on the URL and type."""
-    if analysis_type == "auto":
-        # Determine analysis type based on URL
-        if "ecommerce" in url.lower():
-            analysis_type = "ecommerce"
-        elif "blog" in url.lower():
-            analysis_type = "content"
-        else:
-            analysis_type = "general"
-    
-    # Execute appropriate analysis
-    if analysis_type == "ecommerce":
-        return await ecommerce_analysis(url)
-    elif analysis_type == "content":
-        return await content_analysis(url)
-    else:
-        return await general_analysis(url)
-```
-
-## Testing Your Custom Tools
-
-Always test your tools thoroughly before deploying them:
-
-```python
-# Test your tools
-async def test_tools():
-    # Test basic functionality
-    content_result = await fetch_website_content("https://example.com")
-    print("Content fetch result:", content_result)
-    
-    # Test error handling
-    error_result = await fetch_website_content("invalid-url")
-    print("Error handling result:", error_result)
-    
-    # Test configuration
-    seo_result = await analyze_seo_metrics("<html><title>Test</title></html>")
-    print("SEO analysis result:", seo_result)
-
-# Run tests
-import asyncio
-asyncio.run(test_tools())
-```
-
-## Conclusion
-
-Custom tools are the foundation of extending your AI agent's capabilities. By following these principles and patterns, you can create robust, maintainable tools that enhance your agent's functionality while maintaining code quality and reliability.
-
-Remember to:
-- Always include type hints and comprehensive documentation
-- Implement proper error handling and validation
-- Use appropriate configuration options for your use case
-- Test thoroughly before deployment
-- Consider performance implications and use caching when appropriate
-
-For more information about tool concepts and advanced usage, refer to the [Tools section](https://docs.upsonic.ai/concepts/tools) in the Upsonic documentation.
+For detailed examples and advanced patterns, see our comprehensive [Tools Documentation](https://docs.upsonic.ai/concepts/tools).
