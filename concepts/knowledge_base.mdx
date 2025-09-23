@@ -3,104 +3,643 @@ title: "Knowledge Base"
 description: "Give the all required informations to LLM"
 ---
 
-## What is Knowledge Base?
+# KnowledgeBase Documentation
 
-The Knowledge Base feature in the Upsonic framework serves as a critical component that supplies essential task-related data to the LLM during its analysis and processing operations. By providing relevant information to either task-performing agents or direct LLM calls, this feature significantly enhances the probability of successful task completion.
+Detailed guide on creating and managing knowledge bases within the Upsonic framework for Retrieval-Augmented Generation (RAG).
 
-A notable advantage of the Knowledge Base feature is its seamless integration with context compression, optimizing the handling of large datasets. The framework implements this functionality through two distinct types of knowledge bases 
+## Overview
 
-- The one that directly provides the data that needs to be kept and analyzed alongside each prompt.
-- Knowledge bases that exist as tools that the LLM can search when needed.
+In the Upsonic framework, a `KnowledgeBase` is a sophisticated orchestrator that manages the entire lifecycle of documents for RAG pipelines. It handles document ingestion, processing, vector storage, and retrieval operations. The KnowledgeBase integrates seamlessly with embedding providers, vector databases, loaders, and text splitters to provide intelligent knowledge retrieval capabilities.
 
-While both groups have their own benefits, especially in cases requiring RAG (Retrieval-Augmented Generation), and when dealing with large or unstructured data, the LLM (Large Language Model) will return more successful results since it determines the search query by itself.
+## KnowledgeBase Attributes
 
-<Info>
-  Key benefits of using Knowledge:
+The KnowledgeBase class provides comprehensive configuration options to customize knowledge processing and retrieval behavior.
 
-  - Enhance agents for domain-specific situations
-  - Enhance decisions with real-world data
-</Info>
+### Core Attributes
 
-## Creating an Knowledge Base
+| Attribute              | Type                                            | Description                                                         |
+| ---------------------- | ----------------------------------------------- | ------------------------------------------------------------------- |
+| **sources**            | Union[str, Path, List[Union[str, Path]]]        | Source identifiers (file paths, directory paths, or string content) |
+| **embedding_provider** | EmbeddingProvider                               | Provider for creating vector embeddings from text                   |
+| **vectordb**           | BaseVectorDBProvider                            | Vector database for storing and searching embeddings                |
+| **splitters**          | Optional[Union[BaseChunker, List[BaseChunker]]] | Text chunking strategies for processing documents                   |
+| **loaders**            | Optional[Union[BaseLoader, List[BaseLoader]]]   | Document loaders for different file types                           |
 
-To create a knowledge base, it's sufficient to directly import the KnowledgeBase class. Then, we will create an object belonging to this class and add it to the context list within the Task. KnowledgeBase works compatibly with every place where context can be used.
+### Advanced Configuration
+
+| Attribute              | Type                     | Description                                                   |
+| ---------------------- | ------------------------ | ------------------------------------------------------------- |
+| **name**               | Optional[str]            | Human-readable name for the knowledge base                    |
+| **use_case**           | str                      | Intended use case for chunking optimization ("rag_retrieval") |
+| **quality_preference** | str                      | Speed vs quality preference ("fast", "balanced", "quality")   |
+| **loader_config**      | Optional[Dict[str, Any]] | Configuration options specifically for loaders                |
+| **splitter_config**    | Optional[Dict[str, Any]] | Configuration options specifically for splitters              |
+
+## Creating a KnowledgeBase
+
+KnowledgeBase instances are created directly in code using the constructor. Each knowledge base can be customized with specific embedding providers, vector databases, loaders, and splitters to meet your exact requirements.
+
+### Basic KnowledgeBase Creation
 
 ```python
-from upsonic import Task, Agent
-from upsonic import KnowledgeBase
+import os
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding
+from upsonic.vectordb import QdrantProvider
+from upsonic.vectordb.config import Config, CoreConfig, ProviderName, Mode
 
-# Creating Knowledge Base
-resume_list = KnowledgeBase(
-  sources=["resume1.pdf", "resume2.pdf"]
+
+# Create embedding provider
+embedding_provider = OpenAIEmbedding()
+
+# Create vector database configuration
+config = Config(
+    core=CoreConfig(
+        provider_name=ProviderName.QDRANT,
+        mode=Mode.IN_MEMORY,
+        collection_name="my_knowledge_base",
+        vector_size=1536,  # OpenAI embedding size
+        recreate_if_exists=True
+    )
+)
+vectordb = QdrantProvider(config)
+
+# Create knowledge base with string content
+knowledge_base = KnowledgeBase(
+    sources=["This is important information about artificial intelligence and machine learning."],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    name="AI Knowledge Base"
 )
 
-# Creating Task
+# Use in a task
+agent = Agent(name="AI Assistant")
 task = Task(
-  "Summerize the Resumes", 
-  context=[resume_list] # Adding Knowledge Base to the task
+    description="What do you know about artificial intelligence?",
+    context=[knowledge_base]
 )
 
-# Creating Agent
-agent = Agent(name="Head of Development")
-
-# Running the task
-agent.print_do(task)
+result = agent.print_do(task)
 ```
 
-<Tip>
-  For file-Based Knowledge Sources, make sure to place your files in a current work directory. Also, you can use full path.
-</Tip>
-
-## Enabling RAG
-
-When dealing with a large volume of sources, having the agent directly process all sources in raw format both weakens its focus and may hit context limits. In such cases, using RAG (Retrieval-Augmented Generation), which is a mechanism that retrieves only relevant content, is highly beneficial. To implement RAG within Upsonic, simply specifying the rag_model is sufficient. This ensures that the most relevant data is retrieved for the prompt during each agent execution or direct LLM call.
-
-\*\*Supported Embedding Models:
-
-- openai/text-embedding-3-small
-
-### Installing RAG Library
-
-Upsonic framework have an extra package group for RAG based cases. You can install via:
-
-```bash
-pip install 'upsonic[rag]'
-```
-
-<Warning>
-  RAG Is only supported in **3.13 \< Python \>3.10**
-</Warning>
+### KnowledgeBase with File Sources
 
 ```python
-from upsonic import KnowledgeBase
+from pathlib import Path
 
-resume_list = KnowledgeBase(
-  sources=["resume1.pdf", "resume2.pdf"],
-
-  rag_model="openai/text-embedding-3-small" # Specifying Model to enable rag
+# Create knowledge base with file sources
+knowledge_base = KnowledgeBase(
+    sources=["document1.txt", "document2.pdf", "document3.md"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    name="Document Collection"
 )
+
+# Task with file-based knowledge
+task = Task(
+    description="Summarize the key points from the uploaded documents",
+    context=[knowledge_base]
+)
+
+result = agent.print_do(task)
 ```
 
-## Supported Formats
+### KnowledgeBase with Directory Sources
 
-<CardGroup cols="2">
-  <Card title="Supported Files" icon="files">
-    - - URL
-      - PDF
-    - - PowerPoint
-    - - Word
-    - - Excel
-    - - Images
-    - - Audio
-    - - HTML
-    - - CSV
-    - - JSON
-    - - XML
-    - - ZIP
-  </Card>
-  <Card title="Supported Variables" icon="code">
-    - - STRING
-  </Card>
-</CardGroup>
+```python
+# Create knowledge base from entire directory
+knowledge_base = KnowledgeBase(
+    sources=["/path/to/documents/"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    name="Document Archive"
+)
 
-## 
+# Task with directory-based knowledge
+task = Task(
+    description="What topics are covered in this document collection?",
+    context=[knowledge_base]
+)
+
+result = agent.print_do(task)
+```
+
+## Advanced KnowledgeBase Configuration
+
+### Custom Loaders and Splitters
+
+```python
+from upsonic.loaders.text import TextLoader
+from upsonic.loaders.config import TextLoaderConfig
+from upsonic.text_splitter.recursive import RecursiveChunker, RecursiveChunkingConfig
+
+# Configure custom text loader
+loader_config = TextLoaderConfig(
+    strip_whitespace=True,
+    min_chunk_length=50,
+    skip_empty_content=True
+)
+loader = TextLoader(loader_config)
+
+# Configure custom text splitter
+splitter_config = RecursiveChunkingConfig(
+    chunk_size=500,
+    chunk_overlap=100,
+    separators=["\n\n", "\n", ". ", "? ", "! ", " ", ""]
+)
+splitter = RecursiveChunker(splitter_config)
+
+# Create knowledge base with custom components
+knowledge_base = KnowledgeBase(
+    sources=["large_document.txt"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[splitter],
+    name="Custom Processing KB"
+)
+
+task = Task(
+    description="Extract key insights from this document",
+    context=[knowledge_base]
+)
+
+result = agent.print_do(task)
+```
+
+### Quality and Performance Optimization
+
+```python
+# Create knowledge base with quality optimization
+knowledge_base = KnowledgeBase(
+    sources=["technical_documents/"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    use_case="rag_retrieval",
+    quality_preference="quality",  # Options: "fast", "balanced", "quality"
+    name="High Quality Knowledge Base"
+)
+
+task = Task(
+    description="Provide detailed technical explanations",
+    context=[knowledge_base]
+)
+
+result = agent.print_do(task)
+```
+
+## Multiple KnowledgeBase Integration
+
+### Using Multiple Knowledge Sources
+
+```python
+# Create specialized knowledge bases
+tech_knowledge = KnowledgeBase(
+    sources=["Python is a programming language. JavaScript is used for web development."],
+    embedding_provider=embedding_provider,
+    vectordb=QdrantProvider(Config(
+        core=CoreConfig(
+            provider_name=ProviderName.QDRANT,
+            mode=Mode.IN_MEMORY,
+            collection_name="tech_kb",
+            vector_size=1536,
+            recreate_if_exists=True
+        )
+    )),
+    name="Technology Knowledge"
+)
+
+science_knowledge = KnowledgeBase(
+    sources=["Physics studies matter and energy. Chemistry focuses on molecular interactions."],
+    embedding_provider=embedding_provider,
+    vectordb=QdrantProvider(Config(
+        core=CoreConfig(
+            provider_name=ProviderName.QDRANT,
+            mode=Mode.IN_MEMORY,
+            collection_name="science_kb",
+            vector_size=1536,
+            recreate_if_exists=True
+        )
+    )),
+    name="Science Knowledge"
+)
+
+# Task with multiple knowledge bases
+task = Task(
+    description="Compare programming concepts with scientific principles",
+    context=[tech_knowledge, science_knowledge]
+)
+
+result = agent.print_do(task)
+```
+
+### Domain-Specific Knowledge Bases
+
+```python
+# Create domain-specific knowledge bases
+legal_kb = KnowledgeBase(
+    sources=["legal_documents/"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    name="Legal Knowledge"
+)
+
+medical_kb = KnowledgeBase(
+    sources=["medical_research/"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    name="Medical Knowledge"
+)
+
+# Task requiring cross-domain knowledge
+task = Task(
+    description="Analyze the legal and medical implications of this case",
+    context=[legal_kb, medical_kb]
+)
+
+result = agent.print_do(task)
+```
+
+## Vector Database Configuration
+
+### In-Memory Configuration
+
+```python
+# In-memory vector database (for testing/development)
+config = Config(
+    core=CoreConfig(
+        provider_name=ProviderName.QDRANT,
+        mode=Mode.IN_MEMORY,
+        collection_name="temp_collection",
+        vector_size=1536,
+        recreate_if_exists=True
+    )
+)
+vectordb = QdrantProvider(config)
+```
+
+### Persistent Local Configuration
+
+```python
+# Local persistent vector database
+config = Config(
+    core=CoreConfig(
+        provider_name=ProviderName.QDRANT,
+        mode=Mode.EMBEDDED,
+        db_path="./vector_storage",
+        collection_name="persistent_collection",
+        vector_size=1536,
+        recreate_if_exists=False
+    )
+)
+vectordb = QdrantProvider(config)
+```
+
+### Cloud Configuration
+
+```python
+# Cloud vector database
+config = Config(
+    core=CoreConfig(
+        provider_name=ProviderName.QDRANT,
+        mode=Mode.CLOUD,
+        host="your-cluster-url.qdrant.tech",
+        api_key=SecretStr("your-api-key"),
+        collection_name="production_collection",
+        vector_size=1536,
+        recreate_if_exists=False
+    )
+)
+vectordb = QdrantProvider(config)
+```
+
+## Embedding Provider Configuration
+
+### OpenAI Embeddings
+
+```python
+from upsonic.embeddings import OpenAIEmbedding
+
+# Basic OpenAI embedding provider
+embedding_provider = OpenAIEmbedding()
+
+# With custom model
+embedding_provider = OpenAIEmbedding(model_name="text-embedding-3-large")
+```
+
+### Alternative Embedding Providers
+
+```python
+from upsonic.embeddings import FastEmbedProvider, HuggingFaceEmbedding
+
+# FastEmbed provider (local, fast)
+embedding_provider = FastEmbedProvider()
+
+# HuggingFace provider
+embedding_provider = HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
+```
+
+## Text Splitter Configuration
+
+### Recursive Text Splitter
+
+```python
+from upsonic.text_splitter.recursive import RecursiveChunker, RecursiveChunkingConfig
+
+# Basic recursive splitter
+splitter_config = RecursiveChunkingConfig(
+    chunk_size=1000,
+    chunk_overlap=200
+)
+splitter = RecursiveChunker(splitter_config)
+
+# Language-specific splitter
+from upsonic.text_splitter.recursive import Language
+
+python_splitter = RecursiveChunker.from_language(Language.PYTHON)
+markdown_splitter = RecursiveChunker.from_language(Language.MARKDOWN)
+```
+
+### Character-based Splitter
+
+```python
+from upsonic.text_splitter.character import CharacterChunker, CharacterChunkingConfig
+
+splitter_config = CharacterChunkingConfig(
+    chunk_size=800,
+    chunk_overlap=100,
+    separator="\n\n"
+)
+splitter = CharacterChunker(splitter_config)
+```
+
+## Document Loader Configuration
+
+### Text Loader
+
+```python
+from upsonic.loaders.text import TextLoader
+from upsonic.loaders.config import TextLoaderConfig
+
+loader_config = TextLoaderConfig(
+    encoding="utf-8",
+    strip_whitespace=True,
+    min_chunk_length=10,
+    skip_empty_content=True
+)
+loader = TextLoader(loader_config)
+```
+
+### PDF Loader
+
+```python
+from upsonic.loaders.pdf import PDFLoader
+from upsonic.loaders.config import PdfLoaderConfig
+
+loader_config = PdfLoaderConfig(
+    extraction_mode="hybrid",  # "text_only", "ocr_only", "hybrid"
+    start_page=1,
+    end_page=None,
+    clean_page_numbers=True
+)
+loader = PDFLoader(loader_config)
+```
+
+### CSV Loader
+
+```python
+from upsonic.loaders.csv import CSVLoader
+from upsonic.loaders.config import CSVLoaderConfig
+
+loader_config = CSVLoaderConfig(
+    content_synthesis_mode="concatenated",  # "concatenated", "json"
+    has_header=True,
+    delimiter=",",
+    include_columns=["title", "content", "summary"]
+)
+loader = CSVLoader(loader_config)
+```
+
+## Practical Examples
+
+### Research Paper Analysis
+
+```python
+# Create knowledge base for research papers
+research_kb = KnowledgeBase(
+    sources=["research_papers/"],
+    embedding_provider=OpenAIEmbedding(),
+    vectordb=QdrantProvider(Config(
+        core=CoreConfig(
+            provider_name=ProviderName.QDRANT,
+            mode=Mode.EMBEDDED,
+            db_path="./research_vectors",
+            collection_name="research_papers",
+            vector_size=1536
+        )
+    )),
+    use_case="rag_retrieval",
+    quality_preference="quality",
+    name="Research Database"
+)
+
+# Query the knowledge base
+task = Task(
+    description="What are the latest trends in machine learning research?",
+    context=[research_kb]
+)
+
+result = agent.print_do(task)
+```
+
+### Customer Support Knowledge Base
+
+```python
+# Create customer support knowledge base
+support_kb = KnowledgeBase(
+    sources=["faq.txt", "user_manual.pdf", "troubleshooting_guide.md"],
+    embedding_provider=OpenAIEmbedding(),
+    vectordb=QdrantProvider(Config(
+        core=CoreConfig(
+            provider_name=ProviderName.QDRANT,
+            mode=Mode.IN_MEMORY,
+            collection_name="support_docs",
+            vector_size=1536,
+            recreate_if_exists=True
+        )
+    )),
+    name="Support Knowledge Base"
+)
+
+# Customer query
+task = Task(
+    description="How do I reset my password?",
+    context=[support_kb]
+)
+
+result = agent.print_do(task)
+```
+
+### Code Documentation Assistant
+
+```python
+from upsonic.text_splitter.recursive import Language
+
+# Create knowledge base for code documentation
+code_kb = KnowledgeBase(
+    sources=["src/", "docs/", "README.md"],
+    embedding_provider=OpenAIEmbedding(),
+    vectordb=QdrantProvider(Config(
+        core=CoreConfig(
+            provider_name=ProviderName.QDRANT,
+            mode=Mode.EMBEDDED,
+            db_path="./code_vectors",
+            collection_name="codebase",
+            vector_size=1536
+        )
+    )),
+    splitters=[RecursiveChunker.from_language(Language.PYTHON)],
+    name="Codebase Knowledge"
+)
+
+# Code-related query
+task = Task(
+    description="How does the authentication system work in this codebase?",
+    context=[code_kb]
+)
+
+result = agent.print_do(task)
+```
+
+### Multiple Source Knowledge Integration
+
+```python
+# Create comprehensive knowledge base with multiple sources
+comprehensive_kb = KnowledgeBase(
+    sources=[
+        "documents/reports/",
+        "Database contains customer information and transaction records.",
+        "manuals/technical_specs.pdf",
+        "training_data/examples.csv"
+    ],
+    embedding_provider=OpenAIEmbedding(),
+    vectordb=QdrantProvider(Config(
+        core=CoreConfig(
+            provider_name=ProviderName.QDRANT,
+            mode=Mode.LOCAL,
+            host="localhost",
+            port=6333,
+            collection_name="comprehensive_kb",
+            vector_size=1536
+        )
+    )),
+    use_case="rag_retrieval",
+    quality_preference="balanced",
+    name="Comprehensive Knowledge Base"
+)
+
+# Complex query requiring multiple sources
+task = Task(
+    description="Provide a comprehensive analysis of customer behavior patterns based on available data",
+    context=[comprehensive_kb]
+)
+
+result = agent.print_do(task)
+```
+
+## Best Practices
+
+### Performance Optimization
+
+1. **Choose appropriate chunk sizes**: Smaller chunks (200-500 tokens) for precise retrieval, larger chunks (1000+ tokens) for context.
+2. **Use quality preferences**: Set `quality_preference="fast"` for development, `"quality"` for production.
+3. **Optimize vector database configuration**: Use persistent storage for production, in-memory for testing.
+
+### Content Organization
+
+1. **Organize sources logically**: Group related documents together for better retrieval.
+2. **Use descriptive names**: Give your knowledge bases meaningful names for easier management.
+3. **Consider multiple knowledge bases**: Separate domain-specific knowledge for better organization.
+
+### Configuration Management
+
+1. **Reuse configurations**: Create configuration templates for consistent setups.
+2. **Environment-specific settings**: Use different configurations for development, testing, and production.
+3. **Monitor performance**: Track embedding costs and retrieval quality.
+
+## Complete Example
+
+```python
+import os
+from pathlib import Path
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding
+from upsonic.vectordb import QdrantProvider
+from upsonic.vectordb.config import Config, CoreConfig, ProviderName, Mode
+from upsonic.text_splitter.recursive import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.loaders.text import TextLoader
+from upsonic.loaders.config import TextLoaderConfig
+
+
+# Create embedding provider
+embedding_provider = OpenAIEmbedding()
+
+# Create vector database configuration
+config = Config(
+    core=CoreConfig(
+        provider_name=ProviderName.QDRANT,
+        mode=Mode.EMBEDDED,
+        db_path="./knowledge_vectors",
+        collection_name="company_knowledge",
+        vector_size=1536,
+        recreate_if_exists=False
+    )
+)
+vectordb = QdrantProvider(config)
+
+# Create custom components
+loader_config = TextLoaderConfig(
+    strip_whitespace=True,
+    min_chunk_length=50
+)
+loader = TextLoader(loader_config)
+
+splitter_config = RecursiveChunkingConfig(
+    chunk_size=1000,
+    chunk_overlap=200,
+    separators=["\n\n", "\n", ". ", "? ", "! ", " ", ""]
+)
+splitter = RecursiveChunker(splitter_config)
+
+# Create knowledge base
+knowledge_base = KnowledgeBase(
+    sources=["company_docs/", "policies.txt", "Our company values innovation and customer satisfaction."],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[splitter],
+    use_case="rag_retrieval",
+    quality_preference="balanced",
+    name="Company Knowledge Base"
+)
+
+# Create agent and task
+agent = Agent(name="Company Assistant")
+task = Task(
+    description="What are our company's core values and how do they influence our policies?",
+    context=[knowledge_base]
+)
+
+# Execute task
+result = agent.print_do(task)
+
+print("=== KNOWLEDGE BASE SUMMARY ===")
+print(f"Knowledge Base: {knowledge_base.name}")
+print(f"Knowledge ID: {knowledge_base.knowledge_id}")
+print(f"Sources: {len(knowledge_base.sources)}")
+print(f"Loaders: {len(knowledge_base.loaders)}")
+print(f"Splitters: {len(knowledge_base.splitters)}")
+
+print("\n=== TASK RESULT ===")
+print(result)
+```
