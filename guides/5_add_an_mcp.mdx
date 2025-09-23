@@ -2,3 +2,209 @@
 title: "5.Add an MCP"
 sidebarTitle: "5. Add an MCP"
 ---
+
+
+## What is an MCP?
+
+The Model Context Protocol (MCP) is an open protocol that enables seamless integration between Large Language Model (LLM) applications and external data sources and tools. By utilizing MCP, you can enhance your AI agents' capabilities by connecting them to a wide range of tools developed by both companies and the community. This integration allows your agents to perform tasks that require external data access or specialized processing beyond their built-in functionalities.
+
+**What do MCPs do?**
+* Execute specific business logic or API calls
+* Interact with databases, file systems, or external services
+* Perform data processing, calculations, or transformations
+* Enable human-in-the-loop workflows with confirmation and input requirements
+* Provide caching and performance optimization capabilities
+
+**What are the parts of an MCP?**
+* **Server Definition:** The MCP server class that specifies connection details
+* **Command Configuration:** The command and arguments to run the MCP server
+* **Tool Integration:** Automatic integration with Upsonic's tool processing system
+* **Error Handling:** Robust error management for production reliability
+
+## Core Principles For MCPs
+
+When integrating MCP tools into your AI agents, ensure you define these elements:
+
+* **Clear Purpose:** Each MCP should have a single, well-defined responsibility
+* **Proper Configuration:** All connection details must be correctly specified
+* **Error Handling:** Graceful failure handling with meaningful error messages
+* **Security:** Verify the security and reliability of the MCP tool, especially if it involves handling sensitive data
+
+### Defining MCP Server Classes
+
+The MCP server class definition is the foundation of your MCP integration. Follow these guidelines:
+
+* **Single Responsibility:** Each MCP should do one thing well
+* **Clear Configuration:** Use descriptive class names and proper command/argument setup
+* **Documentation:** Write comprehensive docstrings that explain the MCP's purpose and usage
+
+**Good MCP Definition:**
+
+```python
+class DatabaseMCP:
+    """
+    MCP server for SQLite database operations.
+    Provides tools for creating tables, inserting data, and querying databases.
+    """
+    command = "uvx"
+    args = ["mcp-server-sqlite", "--db-path", "/path/to/database.db"]
+```
+
+**Bad MCP Definition:**
+
+```python
+class MCP:
+    # Missing documentation and unclear purpose
+    command = "uvx"
+    args = ["some-server"]
+```
+
+## MCP Best Practices
+
+### Security Considerations
+
+Validate and secure your MCP configurations:
+
+```python
+class SecureMCP:
+    """
+    MCP server with security considerations.
+    """
+    command = "uvx"
+    args = ["mcp-server-sqlite", "--db-path", "/secure/path/database.db"]
+    env = {"SECURE_MODE": "true"}  # Environment variables for security
+```
+
+### Clear Documentation
+
+Always provide comprehensive documentation:
+
+```python
+class WellDocumentedMCP:
+    """
+    Clear description of what the MCP does.
+    
+    This MCP provides filesystem operations including:
+    - Reading files
+    - Writing files
+    - Directory listing
+    - File permissions management
+    
+    Security Note: Only operates within the specified directory.
+    """
+    command = "uvx"
+    args = ["mcp-server-filesystem", "/allowed/directory"]
+```
+
+## Let's Create MCP Tools for a Database Management Agent
+
+In this example, we'll create a comprehensive database management system using MCP tools and show how to combine them with regular Upsonic tools.
+
+```python
+# Upsonic Docs: Add an MCP
+# https://docs.upsonic.ai/guides/5_add_an_mcp
+
+# Imports
+import os
+import tempfile
+from upsonic import Agent, Task
+from upsonic.tools import WebSearch, WebRead
+from pydantic import BaseModel
+
+# Set your OpenAI API key
+os.environ["OPENAI_API_KEY"] = "api_key"
+
+# MCP 1: SQLite Database Operations
+class DatabaseMCP:
+    """
+    MCP server for SQLite database operations.
+    Provides comprehensive database management capabilities.
+    """
+    command = "uvx"
+    args = ["mcp-server-sqlite", "--db-path", "/tmp/library.db"]
+
+# Response Format for Structured Output
+class DatabaseReport(BaseModel):
+    tables_created: int
+    records_inserted: int
+    sample_data: str
+    summary: str
+
+# Agent Creation with MCP Tools
+database_agent = Agent(
+    name="Database Management Expert",
+    role="Database operations and data management specialist",
+    goal="Provide comprehensive database management with structured reporting"
+)
+
+# Example 1: Basic Database Operations
+basic_task = Task(
+    description="Create a comprehensive library management database. Create a 'books' table with columns: id (integer primary key), title (text), author (text), isbn (text), published_year (integer), and available (boolean). Insert 5 sample books with different authors and years. Then create a 'borrowers' table with columns: id (integer primary key), name (text), email (text), and phone (text). Insert 3 sample borrowers. Finally, show all books and all borrowers in separate queries.",
+    tools=[DatabaseMCP]
+)
+
+# Execute the basic database operations
+result = database_agent.do(basic_task)
+print("Basic Database Operations Result:")
+print(result)
+
+# Example 2: Structured Output with MCP
+structured_task = Task(
+    description="Create a 'products' table with id, name, price, and category columns. Insert 5 sample products with different categories. Then provide a structured report including the number of tables created, records inserted, sample data, and a summary of the operations.",
+    tools=[DatabaseMCP],
+    response_format=DatabaseReport
+)
+
+# Execute with structured output
+structured_result = database_agent.do(structured_task)
+print("\nStructured Database Report:")
+print(f"Tables Created: {structured_result.tables_created}")
+print(f"Records Inserted: {structured_result.records_inserted}")
+print(f"Summary: {structured_result.summary}")
+
+# Example 3: Combined MCP and Regular Tools
+research_agent = Agent(
+    name="Research and Database Agent",
+    role="Combined research and data management specialist",
+    goal="Research topics and store findings in a structured database"
+)
+
+combined_task = Task(
+    description="Research the top 3 programming languages in 2024. Create a 'languages' table with columns: id, name, popularity_rank, description, and use_cases. Insert the research findings into the database. Then query the database to show all languages sorted by popularity rank.",
+    tools=[WebSearch, WebRead, DatabaseMCP]
+)
+
+# Execute the combined workflow
+combined_result = research_agent.do(combined_task)
+print("\nCombined Research and Database Result:")
+print(combined_result)
+
+# Example 4: Multiple MCP Workflow
+workflow_agent = Agent(
+    name="Multi-MCP Workflow Agent",
+    role="Multi-tool specialist",
+    goal="Use multiple MCP tools to accomplish complex tasks"
+)
+
+workflow_task = Task(
+    description="Create a 'companies' table with id, name, industry, and revenue columns. Research 3 tech companies and insert their information into the database. Then create a 'employees' table and insert sample employee data for these companies. Finally, provide a comprehensive report of all data.",
+    tools=[WebSearch, WebRead, DatabaseMCP]
+)
+
+# Execute the workflow
+workflow_result = workflow_agent.do(workflow_task)
+print("\nMulti-MCP Workflow Result:")
+print(workflow_result)
+```
+
+**Need more advanced features?** The MCP integration supports many powerful configuration options including:
+
+* **Environment Variables:** Pass environment variables to MCP servers for configuration
+* **Custom Arguments:** Specify custom command-line arguments for MCP servers
+* **Error Handling:** Robust error management for MCP server failures
+* **Tool Combination:** Seamlessly combine MCP tools with regular Upsonic tools
+* **Structured Output:** Use Pydantic models for structured MCP responses
+* **Workflow Integration:** Create complex workflows using multiple MCP tools
+
+For detailed examples and advanced patterns, see our comprehensive MCP Concept Documentation.
+
