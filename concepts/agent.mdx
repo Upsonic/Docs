@@ -4,93 +4,700 @@ description: "Generate agents that belongs to your company."
 
 ---
 
-## Overview
 
-The Upsonic framework's Agent system optimizes tasks by creating a simulated corporate environment where agents operate with defined roles and responsibilities. By using job title parameters, the system sets decision-making frameworks and performance objectives for each agent to streamline workflows.
 
-Agent provide a reusable architecture for better efficiency and flexibility. For example, when analyzing servers, a software engineer agent can be dynamically assigned to relevant tasks. This approach promotes code reuse and optimizes system performance through smart agent allocation.
+The `Agent` class is the core agent implementation in Upsonic, providing a powerful and flexible interface for creating AI agents with advanced capabilities including memory management, safety policies, reliability layers, and sophisticated tool integration.
+
+## Table of Contents
+
+1. [Creating an Agent](#creating-an-agent)
+2. [Agent Attributes](#agent-attributes)
+3. [Adding a Memory](#adding-a-memory)
+4. [Adding Reflection](#adding-reflection)
+5. [Adding Reasoning](#adding-reasoning)
+
+---
 
 ## Creating an Agent
 
-The AgentConfiguration class serves as a fundamental component in ensuring optimal task execution within the system. Given its critical role, developers should allocate sufficient time to properly configure and fine-tune this class. Additionally, it is essential to conduct comprehensive testing across various configuration scenarios to validate performance and behavior under different operational conditions.
+The `Agent` can be created with minimal configuration or with extensive customization to suit your specific needs. The agent provides a robust foundation for AI-powered applications with built-in support for various advanced features.
+
+### Basic Agent Creation
+
+The simplest way to create an agent is with default settings:
 
 ```python
 from upsonic import Agent
+
+# Create agent with default settings
+agent = Agent()
+```
+
+**Warning**: When creating an agent without specifying a model, it defaults to `"openai/gpt-4o"`. Make sure you have the appropriate API key set in your environment.
+
+### Agent with Custom Configuration
+
+For more control over your agent's behavior, you can specify various parameters:
+
+```python
+from upsonic import Agent
+
+# Create agent with custom settings for financial analysis
+agent = Agent(
+    name="FinancialAnalyst",
+    model="openai/gpt-4o-mini",
+    debug=True,
+    retry=3,
+    mode="raise"
+)
+```
+
+### Agent with Company Information
+
+You can provide company context to help the agent understand your organization:
+
+```python
+agent = Agent(
+    name="BankingAgent",
+    company_url="https://fintechbank.com",
+    company_objective="To provide secure, innovative financial services",
+    company_description="A leading digital bank specializing in AI-powered financial solutions and personalized banking experiences"
+)
+```
+
+---
+
+## Agent Attributes
+
+The `Agent` exposes numerous attributes that control its behavior and capabilities. Understanding these attributes is crucial for effective agent configuration.
+
+### Core Identity Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | `str \| None` | `None` | Human-readable name for the agent |
+| `agent_id_` | `str \| None` | `None` | Unique identifier for the agent instance |
+| `model_provider` | `BaseModelProvider \| None` | `OpenAI("gpt-4o")` | The underlying LLM provider |
+
+**Example:**
+```python
+agent = Agent(
+    name="CreditRiskAnalyst",
+    agent_id_="risk_analyst_001"
+)
+print(f"Agent: {agent.name}, ID: {agent.agent_id}")
+```
+
+### Model and Performance Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `model` | `Union[str, BaseModelProvider]` | `"openai/gpt-4o"` | Model specification (string or provider instance) |
+| `retry` | `int` | `1` | Number of retry attempts for failed calls |
+| `mode` | `RetryMode` | `"raise"` | Retry behavior: "raise" or "return_false" |
+| `debug` | `bool` | `False` | Enable debug mode for detailed logging |
+
+**Example:**
+```python
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    retry=5,
+    mode="raise",
+    debug=True
+)
+```
+
+### Company Context Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `company_url` | `str \| None` | `None` | Company website URL |
+| `company_objective` | `str \| None` | `None` | Company's main objective |
+| `company_description` | `str \| None` | `None` | Detailed company description |
+
+**Example:**
+```python
+agent = Agent(
+    company_url="https://securebank.com",
+    company_objective="Revolutionizing digital banking with AI",
+    company_description="Leading provider of AI-powered financial services for retail and commercial clients"
+)
+```
+
+### Role and Professional Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `role` | `str \| None` | `None` | Professional role of the agent |
+| `goal` | `str \| None` | `None` | Primary goal or objective |
+| `instructions` | `str \| None` | `None` | Specific instructions for behavior |
+| `education` | `str \| None` | `None` | Educational background |
+| `work_experience` | `str \| None` | `None` | Professional experience |
+
+**Example:**
+```python
+agent = Agent(
+    role="Senior Financial Risk Analyst",
+    goal="To provide accurate risk assessments and regulatory compliance analysis",
+    instructions="Always follow banking regulations and provide detailed risk documentation",
+    education="Finance and Risk Management Degree",
+    work_experience="8 years in banking and financial risk analysis"
+)
+```
+
+### System and Context Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `system_prompt` | `str \| None` | `None` | Custom system prompt for the agent |
+| `reflection` | `str \| None` | `None` | Reflection capabilities configuration |
+| `compress_context` | `bool` | `False` | Enable context compression |
+
+**Example:**
+```python
+agent = Agent(
+    system_prompt="You are a financial AI assistant specialized in banking operations and regulatory compliance. Always provide accurate, well-documented financial analysis and ensure compliance with banking regulations.",
+    compress_context=True
+)
+```
+
+### Tool and Execution Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `show_tool_calls` | `bool` | `True` | Display tool call information |
+| `tool_call_limit` | `int` | `5` | Maximum number of tool calls per execution |
+| `tool_call_count` | `int` | `0` | Current tool call count (read-only) |
+| `enable_thinking_tool` | `bool` | `False` | Enable thinking/reasoning capabilities |
+| `enable_reasoning_tool` | `bool` | `False` | Enable advanced reasoning (requires thinking) |
+
+**Example:**
+```python
+agent = Agent(
+    show_tool_calls=True,
+    tool_call_limit=10,
+    enable_thinking_tool=True,
+    enable_reasoning_tool=True
+)
+```
+
+**Warning**: `enable_reasoning_tool` requires `enable_thinking_tool` to be `True`. Setting reasoning without thinking will raise a `ValueError`.
+
+### Memory and Storage Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `memory` | `Memory \| None` | `None` | Memory management system |
+| `feed_tool_call_results` | `bool` | `False` | Include tool results in memory |
+
+**Example:**
+```python
+from upsonic import Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
+
+storage = SqliteStorage("sessions", "profiles", "agent_memory.db")
+memory = Memory(
+    storage=storage,
+    session_id="my_session",
+    full_session_memory=True,
+    summary_memory=True
+)
 
 agent = Agent(
-    name="Product Manager",
-
-    company_url="https://upsonic.ai",
-    company_objective="Developing an AI Agent Framework",
+    memory=memory,
+    feed_tool_call_results=True
 )
 ```
 
-## Changing LLM Model
+### Safety and Reliability Attributes
 
-To specify which LLM the agent will use, it's sufficient to directly use the model parameter. You can check the LLM support section to see all supported LLMs.
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `user_policy` | `Policy \| None` | `None` | Safety policy for user input validation |
+| `agent_policy` | `Policy \| None` | `None` | Safety policy for agent output validation |
+| `reliability_layer` | `Any \| None` | `None` | Reliability and validation layer |
 
+**Example:**
 ```python
-from upsonic import Agent
-
-agent = Agent(  
-    name="Product Manager",
-    model="openai/gpt-4o" # Set the llm model
-)
-```
-
-## Agent Attributest
-
-Agents are equipped with supplementary features designed to enhance their performance and increase success rates during task execution. These configurable capabilities can be dynamically adjusted throughout the task lifecycle, allowing for real-time optimization of the agent's processing capacity. By fine-tuning these features, users can significantly improve the probability of successful task completion while meeting specific operational requirements.
-
-| Attribute                      | Parameters          | Type      | Description                                                 |
-| ------------------------------ | ------------------- | --------- | ----------------------------------------------------------- |
-| job_title                      | `job_title`         | `str`     | The job title of Agent.                                     |
-| company_url _(Optional)_       | `company_url`       | `str`     | The url of your company                                     |
-| company_objective _(Optional)_ | `company_objective` | `str`     | The objective of your company                               |
-| system_prompt _(Optional)_     | `system_prompt`     | `str`     | Overwrite the characterization.                             |
-| Name _(Optional)_              | `name`              | `str`     | The name of the human that represent from Agent             |
-| Contact _(Optional)_           | `contact`           | `str`     | The contact info of the human that represent from Agent     |
-| Memory _(Optional)_            | `memory`            | `boolean` | The persistent memory by the agent id (Default: False)      |
-| Reflection _(Optional)_        | `reflection`        | `boolean` | Reflection mode for agent. (Default: False)                 |
-| Compress Context _(Optional)_  | `compress_context`  | `boolean` | Compress the context for LLM context lenght (Default: True) |
-| model _(Optional)_             | model               | str       | The llm model for Agent (Default: openai/gpt-4o)            |
-
-## Memory
-
-Memory management plays a crucial role in maintaining contextual continuity across distributed tasks and timeframes for agent operations. The framework implements a disk-based persistence mechanism that associates memory storage with unique agent identifiers (IDs). To enable persistent memory functionality, developers must explicitly define and consistently maintain agent IDs across all agent definitions within their implementation.
-
-```python
-from upsonic import Agent
-
+from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
+from upsonic.safety_engine.policies.phone_policies import AnonymizePhoneNumbersPolicy
 
 agent = Agent(
-    name="Marketing Manager",
-    memory=True, # Enabling the memory
+    user_policy=CryptoBlockPolicy,
+    agent_policy=AnonymizePhoneNumbersPolicy
 )
 ```
 
-## Reflection
+### Canvas and External Integration Attributes
 
-During task execution, agents may occasionally generate inaccurate results or misinterpret task objectives, which can significantly impact system stability and output quality, particularly when critical sub-tasks are involved. To address this challenge, the framework implements a sophisticated reflection feature that enables continuous self-monitoring and quality assurance.
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `canvas` | `Canvas \| None` | `None` | Canvas for persistent text storage |
+
+**Example:**
+```python
+from upsonic.canvas.canvas import Canvas
+
+canvas = Canvas("my_canvas")
+agent = Agent(canvas=canvas)
+```
+
+---
+
+## Adding a Memory
+
+Memory capabilities allow your agent to maintain context across conversations, learn from interactions, and provide personalized responses. The memory system supports multiple storage backends and various memory types.
+
+### Memory System Overview
+
+The memory system in Upsonic provides three main types of memory:
+
+1. **Full Session Memory**: Stores complete conversation history
+2. **Summary Memory**: Maintains condensed summaries of conversations
+3. **User Analysis Memory**: Builds user profiles and preferences
+
+### Setting Up Memory with SQLite
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic.models.providers import OpenAI
 
-agent = Agent(  
-    name="Marketing Manager",
-    reflection=True, # Enabling the reflection
+# Create storage backend
+storage = SqliteStorage(
+    sessions_table_name="sessions",
+    profiles_table_name="profiles", 
+    db_file="agent_memory.db"
+)
+
+# Create memory system
+memory = Memory(
+    storage=storage,
+    session_id="user_session_001",
+    user_id="user_123",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    model_provider=OpenAI(model_name="gpt-4o-mini"),
+    debug=True
+)
+
+# Create agent with memory for customer relationship management
+agent = Agent(
+    name="CustomerServiceAgent",
+    memory=memory,
+    feed_tool_call_results=True
 )
 ```
 
-## Compress Context
+### Memory Configuration Options
 
-One of the main limitations of LLMs is the Context Length Limit, which affects how much data the model can process at once when generating outputs. This directly impacts how well-referenced and accurate the results will be. The Upsonic framework handles this limitation by automatically summarizing resources when they exceed the context limit. When your input data is too large, the system compresses it while keeping the important information, allowing the LLM to continue functioning normally. This removes the need to manually calculate and manage context limits, letting you focus on your actual work.
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `storage` | `Storage` | Required | Storage backend (SQLite, PostgreSQL, MongoDB, etc.) |
+| `session_id` | `str \| None` | `None` | Unique session identifier |
+| `user_id` | `str \| None` | `None` | User identifier for profile building |
+| `full_session_memory` | `bool` | `False` | Enable complete conversation storage |
+| `summary_memory` | `bool` | `False` | Enable conversation summarization |
+| `user_analysis_memory` | `bool` | `False` | Enable user profile analysis |
+| `num_last_messages` | `int \| None` | `None` | Limit conversation history to last N messages |
+| `user_memory_mode` | `Literal['update', 'replace']` | `'update'` | How to update user profiles |
+
+**Example with Custom Memory Settings:**
+```python
+memory = Memory(
+    storage=storage,
+    session_id="conversation_001",
+    user_id="user_456",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    num_last_messages=10,  # Keep only last 10 conversation turns
+    user_memory_mode='update',  # Update existing profile data
+    model_provider=OpenAI(model_name="gpt-4o-mini")
+)
+```
+
+### Using Memory in Task Execution
+
+When memory is enabled, the agent automatically:
+
+1. **Retrieves relevant context** from previous conversations
+2. **Updates user profiles** based on interactions
+3. **Maintains conversation summaries** for long-term context
+4. **Feeds tool call results** into memory (if enabled)
 
 ```python
-from upsonic import Agent
+from upsonic import Task
 
-agent = Agent(  
-    name="Marketing Manager",
-    compress_context=True, # Enabling the compress_context
+# Create a task - memory will be automatically used for customer context
+task = Task(description="What were the customer's previous concerns about their mortgage application?")
+
+# Execute with memory context
+result = agent.print_do(task)
+```
+
+### Memory Management Methods
+
+The agent provides methods to manage memory:
+
+```python
+# Get cache statistics
+cache_stats = agent.get_cache_stats()
+print(f"Cache hits: {cache_stats['cache_hits']}")
+print(f"Cache misses: {cache_stats['cache_misses']}")
+print(f"Hit rate: {cache_stats['hit_rate']}")
+
+# Clear agent's cache
+agent.clear_cache()
+```
+
+---
+
+## Adding Reflection
+
+Reflection capabilities enable the agent to think through problems step-by-step, analyze its own reasoning, and provide more thoughtful responses. This is particularly useful for complex problem-solving tasks.
+
+### Enabling Reflection
+
+Reflection is controlled by the `enable_thinking_tool` parameter:
+
+```python
+from upsonic import Agent, Task
+
+# Create agent with thinking capabilities for financial analysis
+agent = Agent(
+    name="FinancialAnalyst",
+    enable_thinking_tool=True,
+    debug=True
+)
+
+# Create a task that benefits from reflection
+task = Task(
+    description="Analyze this step by step: A customer wants to invest $10,000 with a 5% annual return. Calculate the compound interest over 10 years and provide investment recommendations.",
+    enable_thinking_tool=True
+)
+
+# Execute with reflection
+result = agent.print_do(task)
+```
+
+### How Reflection Works
+
+When reflection is enabled, the agent:
+
+1. **Analyzes the problem** before attempting to solve it
+2. **Breaks down complex tasks** into manageable steps
+3. **Evaluates its own reasoning** and adjusts if needed
+4. **Provides detailed explanations** of its thought process
+
+**Example Output with Reflection:**
+```
+The agent will show its thinking process:
+- Financial problem analysis
+- Step-by-step calculation methodology
+- Risk assessment evaluation
+- Investment recommendation with justification
+```
+
+### Reflection Configuration
+
+You can control reflection at both the agent and task level:
+
+```python
+# Agent-level reflection (applies to all tasks)
+agent = Agent(enable_thinking_tool=True)
+
+# Task-level reflection (overrides agent setting)
+task = Task(
+    description="Complex loan risk assessment with multiple variables",
+    enable_thinking_tool=True  # Force reflection for this task
+)
+
+# Task-level reflection (disable for specific task)
+task = Task(
+    description="Simple account balance inquiry",
+    enable_thinking_tool=False  # Disable reflection for this task
 )
 ```
+
+### Reflection Use Cases
+
+Reflection is particularly valuable for:
+
+- **Financial calculations and modeling**
+- **Risk assessment and compliance analysis**
+- **Multi-step loan processing workflows**
+- **Regulatory compliance verification**
+- **Investment strategy planning**
+
+**Example:**
+```python
+task = Task(
+    description="""
+    You need to plan a digital banking transformation project with the following requirements:
+    1. Implement mobile banking application
+    2. Integrate with 3 payment processing APIs
+    3. Implement multi-factor authentication and fraud detection
+    4. Deploy to secure cloud infrastructure with compliance monitoring
+    
+    Create a detailed project plan with timelines, dependencies, and regulatory compliance checkpoints.
+    """,
+    enable_thinking_tool=True
+)
+```
+
+---
+
+## Adding Reasoning
+
+Reasoning capabilities build upon reflection to provide even more sophisticated problem-solving abilities. Reasoning enables the agent to use advanced logical analysis and structured thinking approaches.
+
+### Enabling Reasoning
+
+Reasoning requires both `enable_thinking_tool` and `enable_reasoning_tool` to be `True`:
+
+```python
+from upsonic import Agent, Task
+
+# Create agent with reasoning capabilities for financial analysis
+agent = Agent(
+    name="RiskAssessmentAgent",
+    enable_thinking_tool=True,      # Required for reasoning
+    enable_reasoning_tool=True,     # Enables advanced reasoning
+    debug=True
+)
+
+# Create a complex reasoning task
+task = Task(
+    description="""
+    Analyze the following banking scenario and provide a comprehensive risk assessment:
+    
+    A regional bank has $1B in assets across 3 business lines. Commercial lending has 40% of assets,
+    retail banking has 35%, and wealth management has 25%. The bank wants to implement
+    new risk management policies that affect each business line differently. Commercial lending
+    will see a 20% reduction in default risk, retail banking will see a 15% reduction, and wealth
+    management will see a 10% reduction. Calculate the overall risk impact and provide
+    recommendations for implementation and regulatory compliance.
+    """,
+    enable_thinking_tool=True,
+    enable_reasoning_tool=True
+)
+
+# Execute with advanced reasoning
+result = agent.print_do(task)
+```
+
+**Warning**: `enable_reasoning_tool` cannot be `True` if `enable_thinking_tool` is `False`. This will raise a `ValueError`.
+
+### Reasoning vs. Reflection
+
+| Feature | Reflection (`enable_thinking_tool`) | Reasoning (`enable_reasoning_tool`) |
+|---------|-------------------------------------|-------------------------------------|
+| **Purpose** | Basic step-by-step financial analysis | Advanced risk and compliance analysis |
+| **Complexity** | Simple to moderate financial problems | Complex, multi-faceted banking scenarios |
+| **Output** | Clear financial explanations | Structured analysis with regulatory recommendations |
+| **Use Cases** | Interest calculations, basic risk assessment | Strategic banking planning, complex compliance analysis |
+
+### Reasoning Configuration
+
+Reasoning can be configured at multiple levels:
+
+```python
+# Agent-level reasoning (applies to all tasks)
+agent = Agent(
+    enable_thinking_tool=True,
+    enable_reasoning_tool=True
+)
+
+# Task-level reasoning (overrides agent settings)
+task = Task(
+    description="Complex credit risk analysis with multiple variables",
+    enable_thinking_tool=True,
+    enable_reasoning_tool=True
+)
+
+# Mixed configuration (reasoning disabled for specific task)
+task = Task(
+    description="Simple account balance inquiry",
+    enable_thinking_tool=True,   # Keep thinking
+    enable_reasoning_tool=False  # Disable reasoning
+)
+```
+
+### Advanced Reasoning Use Cases
+
+Reasoning is ideal for:
+
+- **Strategic banking and fintech analysis**
+- **Complex financial data interpretation**
+- **Multi-variable risk assessment**
+- **Regulatory compliance and risk mitigation**
+- **Portfolio optimization and investment strategies**
+
+**Example:**
+```python
+task = Task(
+    description="""
+    You are a financial risk analyst. Analyze the following banking market data and provide
+    strategic recommendations:
+    
+    Banking Market Data:
+    - Current digital banking market size: $50B
+    - Growth rate: 15% annually
+    - Competitor analysis: 3 major digital banks
+    - Customer segments: Retail (60%), Commercial (40%)
+    - Technology trends: AI/ML adoption increasing 25% yearly in fintech
+    
+    Provide:
+    1. Market opportunity assessment for digital banking
+    2. Competitive positioning strategy for fintech services
+    3. Technology investment recommendations for AI/ML
+    4. Risk analysis and regulatory compliance mitigation
+    """,
+    enable_thinking_tool=True,
+    enable_reasoning_tool=True
+)
+```
+
+### Reasoning Output Structure
+
+When reasoning is enabled, the agent provides:
+
+1. **Financial Problem Decomposition**: Breaking complex banking scenarios into components
+2. **Risk Analysis**: Step-by-step risk assessment and logical reasoning
+3. **Regulatory Evidence Evaluation**: Assessing compliance requirements and financial data
+4. **Financial Synthesis**: Combining insights into coherent banking recommendations
+5. **Actionable Recommendations**: Specific next steps for implementation and compliance
+
+### Performance Considerations
+
+**Warning**: Reasoning capabilities consume more tokens and processing time than basic reflection. Monitor your usage and costs when using reasoning for production applications.
+
+```python
+# Monitor performance with debug mode
+agent = Agent(
+    enable_thinking_tool=True,
+    enable_reasoning_tool=True,
+    debug=True  # Shows detailed execution metrics
+)
+```
+
+---
+
+## Complete Example: Advanced Agent Configuration
+
+Here's a comprehensive example showing how to create a fully-featured agent with all capabilities:
+
+```python
+import os
+from upsonic import Agent, Task, Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic.models.providers import OpenAI
+from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
+from upsonic.safety_engine.policies.phone_policies import AnonymizePhoneNumbersPolicy
+from upsonic.reliability_layer.reliability_layer import ReliabilityProcessor
+
+# Set API key
+os.environ["OPENAI_API_KEY"] = "your-api-key-here"
+
+# Create storage and memory
+storage = SqliteStorage("sessions", "profiles", "advanced_agent.db")
+memory = Memory(
+    storage=storage,
+    session_id="advanced_session",
+    user_id="user_001",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    model_provider=OpenAI(model_name="gpt-4o-mini")
+)
+
+# Create reliability layer
+reliability_layer = ReliabilityProcessor(confidence_threshold=0.8)
+
+# Create fully-featured banking agent
+agent = Agent(
+    # Identity
+    name="BankingRiskAnalyst",
+    agent_id_="banking_analyst_001",
+    
+    # Model and performance
+    model="openai/gpt-4o-mini",
+    retry=3,
+    mode="raise",
+    debug=True,
+    
+    # Company context
+    company_url="https://securebank.com",
+    company_objective="Providing secure, AI-powered financial services",
+    company_description="Leading digital bank with advanced risk management",
+    
+    # Professional context
+    role="Senior Financial Risk Analyst",
+    goal="To provide accurate risk assessments and regulatory compliance analysis",
+    instructions="Always follow banking regulations and provide detailed risk documentation",
+    education="Finance and Risk Management PhD",
+    work_experience="10 years in banking and financial risk analysis",
+    
+    # System configuration
+    system_prompt="You are an expert financial AI assistant with advanced risk assessment and regulatory compliance capabilities.",
+    
+    # Memory and storage
+    memory=memory,
+    feed_tool_call_results=True,
+    
+    # Safety and reliability
+    user_policy=CryptoBlockPolicy,
+    agent_policy=AnonymizePhoneNumbersPolicy,
+    reliability_layer=reliability_layer,
+    
+    # Tool configuration
+    show_tool_calls=True,
+    tool_call_limit=10,
+    enable_thinking_tool=True,
+    enable_reasoning_tool=True
+)
+
+# Create and execute a complex banking task
+task = Task(
+    description="""
+    Analyze the following banking scenario and provide strategic risk management recommendations:
+    
+    A regional bank has $100M in capital and needs to decide between:
+    1. Expanding digital banking services to new markets
+    2. Developing AI-powered fraud detection systems
+    3. Acquiring a smaller fintech startup
+    
+    Consider regulatory requirements, market conditions, competition, and risk exposure.
+    """,
+    enable_thinking_tool=True,
+    enable_reasoning_tool=True,
+    enable_cache=True,
+    cache_method="vector_search",
+    cache_threshold=0.8
+)
+
+# Execute the task
+result = agent.print_do(task)
+
+# Check memory and cache statistics
+print(f"Cache stats: {agent.get_cache_stats()}")
+```
+
+This comprehensive configuration demonstrates how to leverage all the major features of the Agent for sophisticated banking and fintech applications.
+
+---
+
+## Best Practices
+
+1. **Start Simple**: Begin with basic configuration and add features as needed for your banking use case
+2. **Monitor Performance**: Use debug mode to understand token usage and costs in financial applications
+3. **Memory Management**: Choose appropriate memory settings for customer relationship management and compliance tracking
+4. **Safety First**: Always implement appropriate safety policies for financial data and regulatory compliance
+5. **Error Handling**: Configure retry settings based on your reliability requirements for critical banking operations
+6. **Resource Management**: Be mindful of token consumption with reasoning capabilities in risk assessment scenarios
+7. **Regulatory Compliance**: Ensure all AI outputs meet banking regulations and compliance requirements
+8. **Data Security**: Implement proper data encryption and access controls for sensitive financial information
+
+The Agent provides a powerful foundation for building sophisticated banking and fintech applications with enterprise-grade features, regulatory compliance, and advanced risk management capabilities.
