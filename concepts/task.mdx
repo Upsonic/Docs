@@ -1,363 +1,530 @@
 ---
 title: "Task-Centric Structure"
-description: "Design your tasks in a crystal clear format."
+description: "Detailed guide on managing and creating tasks within the Upsonic framework."
 
 sidebarTitle: "Task"
 ---
 
+
 ## Overview
 
-The Upsonic framework uses Tasks as its core component. Tasks can be executed by agents or direct LLM calls and can be customized with various parameters, tools, and context. The framework automatically generates the necessary steps within tasks.
+In the Upsonic framework, a `Task` is a specific assignment completed by an `Agent`. Tasks provide all necessary details for execution, such as a description, tools, response format, caching options, and more, facilitating a wide range of action complexities. Tasks within Upsonic can be collaborative, requiring multiple agents to work together through context sharing and task dependencies.
 
-The task-centric approach advantages:
-
-1. It removes the restriction of binding agents to single tasks, allowing them to handle multiple tasks efficiently.
-2. It improves programmability by enabling task dependencies like websites, company data, and competitor information to be defined programmatically instead of being embedded in individual agents. This approach eliminates the need for separate agents for repetitive operations like competitor analysis, creating a more scalable and maintainable system.
-
-## Creating a Task
-
-Tasks can be imported into your project and created with custom identifiers like 'task1', ‘task2’ or any descriptive name you choose.
-
-```python
-from upsonic import Task, Agent
-
-agent = Agent(name="Historian")
-
-task = Task("Do an in-depth analysis of US history")
-
-agent.print_do(task)
-```
+Tasks are executed by agents in a single-threaded manner, with each task processed sequentially. The execution flow includes task validation, context processing, tool processing, agent execution, response processing, and caching.
 
 ## Task Attributes
 
-Tasks within the framework can range from basic to complex, depending on your specific requirements. The framework is designed with simplicity in mind, requiring only one mandatory parameter: the description. All other parameters are optional, providing flexibility in task configuration.
+The Task class provides comprehensive configuration options to customize task behavior and execution.
 
-| Attribute                      | Parameters        | Type                                               | Description                                     |
-| ------------------------------ | ----------------- | -------------------------------------------------- | ----------------------------------------------- |
-| Description                    | `description`     | `str`                                              | A clear and concise statement of what the task. |
-| Images                         | `images`          | `List[str]`                                        | Put your images to your task                    |
-| Response Format _(Optional)_   | `response_format` | `Optional[List[Union(BaseModal, ObjectResponse)]]` | Describe the response you expect.               |
-| Response Language _(Optional)_ | `response_lang`   | `Optional[str]`                                    | Define the output language for your tasks.      |
-| Tools _(Optional)_             | `tools`           | `Optional[List[Union(MCP, Function)]]`             | The tools needed to complete the task.          |
-| Context _(Optional)_           | `context`         | `Optional[List[Union(Task, KnowledgeBase, str)]]`  | Context that helps accomplish the task          |
+### Core Attributes
 
-## Adding Tools to a Task
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| **description** | str | A clear, concise statement of what the task entails |
+| **tools** | List[Any] | The tools/resources the agent can use for this task |
+| **response_format** | Union[Type[BaseModel], type[str], None] | The expected output format (string, Pydantic model, or None) |
+| **context** | Any | Other tasks whose outputs will be used as context for this task |
+| **attachments** | Optional[List[str]] | File paths to attach to the task (images, documents, etc.) |
 
-Tools play a crucial role in agent functionality by bridging the gap between LLMs and real-world applications such as APIs, services, and search engines.
+### Advanced Configuration
 
-The framework supports two distinct types of tool implementation. The first option allows you to utilize Python functions directly as tools within Upsonic agents. The second approach leverages the Model Context Protocol (MCP), a standardized protocol for LLM tools that supports multiple platforms including Python, Node.js, and Docker. MCP tools are continuously developed and maintained by both companies and the community, with detailed information available in the ["Tools"](/tools) section.
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| **enable_thinking_tool** | Optional[bool] | Whether to enable the thinking tool for complex reasoning |
+| **enable_reasoning_tool** | Optional[bool] | Whether to enable the reasoning tool for multi-step analysis |
+| **guardrail** | Optional[Callable] | Function to validate task output before proceeding |
+| **guardrail_retries** | Optional[int] | Maximum number of retries when guardrail validation fails |
+| **enable_cache** | bool | Whether to enable caching for this task |
+| **cache_method** | Literal["vector_search", "llm_call"] | Method to use for caching |
+| **cache_threshold** | float | Similarity threshold for cache hits (0.0-1.0) |
+| **cache_duration_minutes** | int | How long to cache results in minutes |
 
-Integrating a tool into your task is straightforward: simply create a list containing the desired tool's class name and assign it to the "tools" parameter in the Task object.
+## Creating a Task
 
-<Steps>
-  <Step title="Function Tools">
-    Let's define a function named is_page_available. This function will perform a simple URL validation check, returning True if the specified URL is accessible, making it useful for verifying web resources.
+Tasks in Upsonic are created directly in code using the `Task` class constructor. Each task can be customized with specific tools, response formats, caching options, and validation rules to meet your exact requirements.
 
-    ```python
-    from upsonic import Task, Agent
-    from upsonic.tools import Search
-    
-    
-    # My Function Tool
-    import requests
-    def is_page_available(url: str) -> bool:
-        return requests.get(url).status_code == 200
-    
-    
-    # Creating Task
-    task = Task(
-      "Check upsonic.ai is available", 
-      tools=[is_page_available] # Putting Function Tool to the task
-    )
-    
-    # Creating Agent
-    agent = Agent(name="Coder")
-    
-    # Running the task
-    agent.print_do(task)
-    ```
-  </Step>
-  <Step title="MCP Tools">
-    This example demonstrates integration with the HackerNews MCP Server, which provides several functions including get_stories, get_story_info, search_stories, and get_user_info. The MCP framework simplifies the process of connecting our agents to external services, as illustrated by this HackerNews integration.
-
-    ```python
-    from upsonic import Task, Agent
-    from upsonic.tools import Search
-    
-    
-    # My MCP Tools
-    class FetchMCP:
-        command = "uvx"
-        args = ["mcp-server-fetch"]
-    
-    
-    # Creating Task
-    task = Task(
-      "What upsonic.ai is?", 
-      tools=[FetchMCP] # Putting MCP Tool to the task
-    )
-    
-    # Creating Agent
-    agent = Agent(name="Coder")
-    
-    # Running the task
-    agent.print_do(task)
-    ```
-  </Step>
-  <Step title="Together - Function + MCP Tools">
-    Once you've configured your custom tools, they can be directly incorporated into the Task object. The agent will then automatically utilize these tools as needed during task execution.
-
-    ```python
-    from upsonic import Task, Agent
-    from upsonic.tools import Search
-    
-    
-    # My Function Tool
-    import requests
-    def is_page_available(url: str) -> bool:
-        return requests.get(url).status_code == 200
-    
-    
-    # My MCP Tools
-    class FetchMCP:
-        command = "uvx"
-        args = ["mcp-server-fetch"]
-    
-    
-    # Creating Task
-    task = Task(
-      "What upsonic.ai is?", 
-      tools=[is_page_available, FetchMCP] # Putting multiple tools
-    )
-    
-    # Creating Agent
-    agent = Agent(name="Coder")
-    
-    # Running the task
-    agent.print_do(task)
-    ```
-  </Step>
-</Steps>
-
-## Putting Task to Another Task as Context
-
-The framework supports the combination of multiple tasks to handle complex operations, particularly useful in scenarios requiring deep analysis followed by report generation. While individual tasks may be complex, the true power lies in their interconnection. By creating task chains and linking them through shared context, you can build sophisticated workflows that seamlessly pass information between tasks.
-
-```python
-from upsonic import Task, Agent
-
-# Creating Agent
-agent = Agent(name="Entrepreneur")
-
-# Creating Task 1
-task = Task("Do an in-depth analysis of the history of chips")
-
-# Creating Task 2
-task2 = Task(
-  "Prepare a draft report on Europe's position", 
-  context=[task] # Add Task 1 in a list as task context
-)
-
-# Running the task
-agent.print_do(task)
-agent.print_do(task2)
-```
-
-<Info>
-  The Upsonic framework explains the context to the LLM for your purposes. You don't have to worry about sharing multiple contexts.
-</Info>
-
-## Giving Knowledge Base as Context
-
-The framework incorporates a robust KnowledgeBase feature designed to extend LLM models beyond their inherent knowledge limitations. While LLM models are constrained by their training data boundaries, real-world applications frequently demand access to external information sources such as PDFs, documents, and spreadsheets. Through seamless integration with the Context system, the KnowledgeBase feature enables you to efficiently incorporate these external data sources into your tasks, enhancing the model's capability to process and utilize supplementary information.
-
-You can see the supported files and options of the <u>Knowledge Base System</u> [**from here**](/knowledge_base).
-
-<Steps>
-  <Step title="Define a KnowledgeBase">
-    In this example, we'll use a PDF and a web link to make a knowledge base.
-
-    ```python
-    from upsonic import Task, Agent
-    from upsonic import KnowledgeBase
-    
-    # Creating Knowledge Base
-    resume_list = KnowledgeBase(
-      sources=["resume1.pdf", "resume2.pdf"]
-    )
-    
-    # Creating Task
-    task = Task(
-      "Summerize the Resumes", 
-      context=[resume_list] # Adding Knowledge Base to the task
-    )
-    
-    # Creating Agent
-    agent = Agent(name="Head of Development")
-    
-    # Running the task
-    agent.print_do(task)
-    ```
-  </Step>
-</Steps>
-
-## Giving Images to Task
-
-LLMs are particularly successful in reading images. Therefore, within the task you assign to the agent, you can enable it to read text from images, understand yellow highlights, interpret graphs, and perform any analysis by including images. For this, the image path needs to be specified using the images parameter.
-
-```python
-from upsonic import Task, Agent
-
-# Creating Task
-task = Task(
-  "Extract the names in the paper",
-  images=["paper.png"] # Add your image paths
-)
-
-# Creating Agent
-agent = Agent(name="OCR Agent")
-
-# Running the task
-agent.print_do(task)
-```
-
-## Giving string as Context
-
-Tasks represent specific objectives that need to be accomplished within the system. These tasks often contain variable elements such as URLs, names, individuals, or topics. Traditionally, all these components would need to be incorporated directly into the prompt, resulting in a non-programmatic approach. This conventional method relies heavily on f-strings or format operations, which significantly limits prompt management capabilities and constrains it within the main execution flow.
-
-In the context system we also support **str as context**. This provide an capability to put your variables to outside of the prompt.
-
-<Tip>
-  Use this when you need to separate your prompt and variable, like in a city list. You don't need to use it if your prompt doesn't have variables.
-</Tip>
-
-```python
-from upsonic import Task, Agent
-
-# String as Context
-city = "New Yorg"
-
-
-# Creating Task
-task = Task(
-  "Find resources in the city",
-  context=[city] # Adding city string as context
-)
-
-# Creating Agent
-agent = Agent(name="City Guide")
-
-# Running the task
-agent.print_do(task)
-```
-
-
-## Response Format
-
-The Upsonic framework uses Pydantic BaseModel compatibility for defining expected results, enabling programmatic handling of agent responses. By specifying a response format, the system returns structured objects rather than raw text, allowing for seamless integration and logic implementation within your application.
-
-For instance, when requesting a list of cities, the system returns a structured list of strings containing city names. This approach emphasizes value-oriented development by abstracting away the implementation details, allowing developers to focus on utilizing the data rather than managing its format and parsing.
-
-
-```python
-from upsonic import Task, Agent
-from pydantic import BaseModel
-
-
-# Response format for Task
-class TravelResponse(BaseModel):
-  cities: list[str]
-
-
-# Creating Task
-task = Task(
-  "Create a plan to visit cities in Canada", 
-  response_format=TravelResponse # Specify the response format
-)
-
-
-# Creating Agent
-agent = Agent(name="City Guide")
-
-# Running the task
-agent.print_do(task)
-```
-
-## Response Language
-
-Tasks internally handle their reasoning and logic in English. Therefore, tasks inherently perform better in English. However, if a different language is required for the output, you can directly utilize the `response_lang` parameter within the Upsonic framework.
-
-This parameter integrates a one-to-one translation system that converts the output into your desired language.
+### Basic Task Creation
 
 ```python
 from upsonic import Task
 
+# Simple task with just a description
+task = Task(description="What is the capital of France?")
+```
+
+### Task with Tools
+
+```python
+from upsonic import Task
+from upsonic.tools import tool
+
+# Create a simple tool
+@tool
+def calculator(operation: str, a: float, b: float) -> str:
+    """Perform basic mathematical operations."""
+    if operation == "add":
+        return f"Result: {a + b}"
+    elif operation == "multiply":
+        return f"Result: {a * b}"
+    return "Invalid operation"
+
+# Create task with tools
 task = Task(
-  "Create a plan to visit cities in Canada", 
-  response_lang="Deutsch" # Specifying language of response
+    description="Calculate 10 + 5 using the calculator tool",
+    tools=[calculator]
 )
 ```
 
-
-
-## Accessing to Task Results
-
-Tasks can be executed through two distinct runners: direct LLM calls or agents. These runners serve as execution mechanisms for task processing and result generation, offering flexibility in implementation. The system supports both parallel processing and multi-client operations, enhancing scalability and performance.
-
-To maintain a controlled and organized infrastructure, all results are stored within the Task object itself. This architectural decision provides a centralized approach to result management, enabling better monitoring, access, and control over task outcomes. Such design creates a robust and manageable infrastructure that can be effectively tailored to your specific requirements.
-
-When you run the task, the results are stored in the Task.response. You can get it directly.
+### Task with Response Format
 
 ```python
-from upsonic import Task, Agent
+from pydantic import BaseModel
 
-# Creating Task
-task = Task("Make a deep analyze to history of chips")
+class AnalysisResult(BaseModel):
+    summary: str
+    confidence: float
+    recommendations: list[str]
 
-# Creating Agent
-agent = Agent(name="Product Manager")
-
-
-# Running and Accessing to result - Exactly Same
- 
-result1 = agent.do(task) # 1.Way
-
-result2 = task.response # 2.Way
-
+# Task with structured response
+task = Task(
+    description="Analyze the provided data and provide structured results",
+    response_format=AnalysisResult
+)
 ```
 
-<Tip>
-  Hey, just a heads-up: if you set a response_format, the task response will be an object of your class.
+## Adding Tools to a Task
 
-  ```python
-  from upsonic import Task, Agent
-  from pydantic import BaseModel
-  
-  # Response format for Task
-  class TravelResponse(BaseModel):
-    cities: list[str]
-  
-  
-  # Creating Task
-  task = Task(
-    "Create a plan to visit cities in Canada", 
-    response_format=TravelResponse # Specify the response format
-  )
-  
-  
-  # Creating Agent
-  agent = Agent(name="City Guide")
+Tasks can be equipped with various tools to extend their capabilities. Tools are added through the `tools` parameter and can include custom functions, built-in tools, or tool collections.
 
-  
-  # Running the task
-  agent.print_do(task)
+### Single Tool
 
-  
-  # Geting the results as object
-  result = task.response
-  
-  print("Cities")
-  for i in result.cities:
-    print(i)
-  ```
-</Tip>
+```python
+from upsonic.tools import tool
+
+@tool
+def web_search(query: str) -> str:
+    """Search the web for information."""
+    return f"Search results for: {query}"
+
+task = Task(
+    description="Search for information about AI",
+    tools=[web_search]
+)
+```
+
+### Multiple Tools
+
+```python
+from upsonic.tools import tool
+
+@tool
+def web_search(query: str) -> str:
+    """Search the web for information."""
+    return f"Search results for: {query}"
+
+@tool
+def data_processor(data: str) -> str:
+    """Process and analyze data."""
+    return f"Processed: {data}"
+
+# Task with multiple tools
+task = Task(
+    description="Search for information about AI and process the results",
+    tools=[web_search, data_processor]
+)
+```
+
+### Tool Collections
+
+```python
+from upsonic.tools import YFinanceTools
+
+# Create a tool collection
+finance_tools = YFinanceTools(
+    stock_price=True,
+    company_info=True,
+    analyst_recommendations=True
+)
+
+# Task with tool collection
+task = Task(
+    description="Get stock information for AAPL",
+    tools=finance_tools.functions()
+)
+```
+
+### Tool Configuration
+
+```python
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True, cache_results=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires confirmation."""
+    return f"Processed sensitive data: {data}"
+
+task = Task(
+    description="Process sensitive information",
+    tools=[sensitive_operation]
+)
+```
+
+## Adding Tasks to Other Tasks in Context
+
+In Upsonic, you can use the output of one task as context for another task through the `context` parameter. This enables task chaining and complex workflows.
+
+### Basic Task Chaining
+
+```python
+# First task
+task1 = Task(description="What is 2 + 2?")
+result1 = agent.do(task1)
+
+# Second task using context from first task
+task2 = Task(
+    description="Based on the previous result, what is that number multiplied by 3?",
+    context=[task1]
+)
+result2 = agent.do(task2)
+```
+
+### Multiple Context Sources
+
+```python
+# Task with multiple context sources
+task3 = Task(
+    description="Summarize all the previous mathematical results",
+    context=[task1, task2, "Additional context: These were all math problems"]
+)
+result3 = agent.do(task3)
+```
+
+### Complex Workflow Example
+
+```python
+# Task 1: Data collection
+task1 = Task(
+    description="Collect data from market research sources",
+    tools=[data_collector],
+    enable_cache=True
+)
+
+# Task 2: Data analysis
+task2 = Task(
+    description="Analyze the collected market data",
+    tools=[data_analyzer],
+    context=[task1],
+    enable_thinking_tool=True
+)
+
+# Task 3: Report generation
+task3 = Task(
+    description="Generate a comprehensive market report",
+    context=[task1, task2],
+    response_format=ReportResult
+)
+```
+
+## Putting Knowledge Base to Task
+
+Knowledge bases can be added to tasks to provide RAG (Retrieval-Augmented Generation) capabilities, allowing the agent to access and use external knowledge sources.
+
+### Basic Knowledge Base Integration
+
+```python
+from upsonic import KnowledgeBase
+from upsonic.embeddings import OpenAIEmbeddingProvider
+from upsonic.vectordb import ChromaVectorDB
+
+# Create knowledge base
+embedding_provider = OpenAIEmbeddingProvider()
+vectordb = ChromaVectorDB()
+
+knowledge_base = KnowledgeBase(
+    sources=["document1.pdf", "document2.txt"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb
+)
+
+# Task with knowledge base context
+task = Task(
+    description="Answer questions about the uploaded documents",
+    context=[knowledge_base]
+)
+```
+
+### Multiple Knowledge Bases
+
+```python
+# Create multiple knowledge bases
+kb1 = KnowledgeBase(
+    sources=["technical_docs/"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    name="Technical Documentation"
+)
+
+kb2 = KnowledgeBase(
+    sources=["company_policies.pdf"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    name="Company Policies"
+)
+
+# Task with multiple knowledge bases
+task = Task(
+    description="Find information about both technical procedures and company policies",
+    context=[kb1, kb2]
+)
+```
+
+### Knowledge Base with Direct Content
+
+```python
+# Knowledge base with direct string content
+knowledge_base = KnowledgeBase(
+    sources=["This is important information about our product features and capabilities."],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb
+)
+
+task = Task(
+    description="What are the key features mentioned in the product information?",
+    context=[knowledge_base]
+)
+```
+
+## Putting Images to Tasks
+
+Tasks can include image attachments for processing. The framework automatically handles image loading and provides them to the model for analysis.
+
+### Single Image Attachment
+
+```python
+# Task with single image
+task = Task(
+    description="Describe what you see in the attached image",
+    attachments=["image.png"]
+)
+```
+
+### Multiple Image Attachments
+
+```python
+# Task with multiple images
+task = Task(
+    description="Compare the two attached images and identify similarities and differences",
+    attachments=["image1.jpg", "image2.jpg"]
+)
+```
+
+### Images with Other Context
+
+```python
+# Task with images and other context
+task = Task(
+    description="Analyze the attached chart and provide insights based on the market data",
+    attachments=["chart.png"],
+    context=[market_data_task]
+)
+```
+
+### Supported Image Formats
+
+The framework supports various image formats including:
+- PNG (.png)
+- JPEG (.jpg, .jpeg)
+- GIF (.gif)
+- BMP (.bmp)
+- TIFF (.tiff)
+
+```python
+# Example with different image formats
+task = Task(
+    description="Analyze all the attached images",
+    attachments=["photo.jpg", "diagram.png", "chart.tiff"]
+)
+```
+
+## Response Format
+
+Tasks support various response formats to structure the output according to your needs. You can specify the expected format using the `response_format` parameter.
+
+### String Response (Default)
+
+```python
+# Default string response
+task = Task(
+    description="Provide a simple text response",
+    response_format=str
+)
+```
+
+### Pydantic Model Response
+
+```python
+from pydantic import BaseModel
+
+class AnalysisResult(BaseModel):
+    summary: str
+    confidence: float
+    recommendations: list[str]
+    key_metrics: dict[str, float]
+
+# Task with structured response
+task = Task(
+    description="Analyze the provided data and provide structured results",
+    response_format=AnalysisResult
+)
+```
+
+### Complex Nested Models
+
+```python
+from pydantic import BaseModel
+from typing import List, Optional
+
+class Metric(BaseModel):
+    name: str
+    value: float
+    unit: str
+
+class Recommendation(BaseModel):
+    title: str
+    description: str
+    priority: str
+    estimated_impact: float
+
+class DetailedAnalysis(BaseModel):
+    summary: str
+    confidence: float
+    metrics: List[Metric]
+    recommendations: List[Recommendation]
+    risk_factors: Optional[List[str]] = None
+
+# Task with complex structured response
+task = Task(
+    description="Perform comprehensive analysis with detailed metrics and recommendations",
+    response_format=DetailedAnalysis
+)
+```
+
+## Accessing Task Results
+
+After task execution, you can access various aspects of the task results and metadata through the task object properties and methods.
+
+### Basic Result Access
+
+```python
+# Execute task
+task = Task(description="What is the capital of France?")
+result = agent.do(task)
+
+# Access the response
+print(f"Task result: {result}")
+print(f"Task response: {task.response}")
+```
+
+### Task Metadata
+
+```python
+# Access task metadata
+print(f"Task ID: {task.task_id}")
+print(f"Price ID: {task.price_id}")
+print(f"Duration: {task.duration}")
+print(f"Start time: {task.start_time}")
+print(f"End time: {task.end_time}")
+```
+
+### Cost Information
+
+```python
+# Access cost information
+total_cost = task.total_cost
+input_tokens = task.total_input_token
+output_tokens = task.total_output_token
+
+print(f"Total cost: ${total_cost}")
+print(f"Input tokens: {input_tokens}")
+print(f"Output tokens: {output_tokens}")
+```
+
+### Tool Call History
+
+```python
+# Access tool call history
+tool_calls = task.tool_calls
+for i, tool_call in enumerate(tool_calls):
+    print(f"Tool call {i+1}:")
+    print(f"  Tool: {tool_call.get('tool_name')}")
+    print(f"  Parameters: {tool_call.get('params')}")
+    print(f"  Result: {tool_call.get('tool_result')}")
+```
+
+### Cache Information
+
+```python
+# Access cache statistics
+cache_stats = task.get_cache_stats()
+print(f"Cache hit: {cache_stats.get('cache_hit')}")
+print(f"Cache method: {cache_stats.get('cache_method')}")
+print(f"Cache threshold: {cache_stats.get('cache_threshold')}")
+```
+
+### Task State Information
+
+```python
+# Check task state
+print(f"Task is paused: {task.is_paused}")
+print(f"Tools awaiting execution: {len(task.tools_awaiting_external_execution)}")
+
+# For paused tasks, access external tool calls
+if task.is_paused:
+    for tool_call in task.tools_awaiting_external_execution:
+        print(f"Tool: {tool_call.tool_name}")
+        print(f"Arguments: {tool_call.tool_args}")
+        print(f"Result: {tool_call.result}")
+```
+
+### Complete Example
+
+```python
+from upsonic import Agent, Task
+from pydantic import BaseModel
+
+class ReportResult(BaseModel):
+    title: str
+    summary: str
+    key_points: list[str]
+    confidence: float
+
+# Create and execute task
+agent = Agent(name="Analysis Agent")
+task = Task(
+    description="Generate a market analysis report",
+    response_format=ReportResult,
+    enable_cache=True
+)
+
+result = agent.do(task)
+
+# Access all available information
+print("=== TASK EXECUTION SUMMARY ===")
+print(f"Task ID: {task.get_task_id()}")
+print(f"Duration: {task.duration:.2f} seconds")
+print(f"Cost: ${task.total_cost}")
+print(f"Tokens: {task.total_input_token} in, {task.total_output_token} out")
+print(f"Tool calls made: {len(task.tool_calls)}")
+print(f"Cache hit: {task._cache_hit}")
+
+print("\n=== TASK RESULT ===")
+print(f"Result: {result}")
+print(f"Response type: {type(task.response)}")
+
+print("\n=== CACHE STATISTICS ===")
+cache_stats = task.get_cache_stats()
+for key, value in cache_stats.items():
+    print(f"{key}: {value}")
+```
+
+This comprehensive documentation covers all aspects of working with Tasks in the Upsonic framework, from basic creation to advanced features like caching, knowledge base integration, and result access.
