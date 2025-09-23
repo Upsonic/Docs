@@ -2,3 +2,198 @@
 title: "7.Creating a Team of Agents"
 sidebarTitle: "7. Creating a Team of Agents"
 ---
+
+## What is a Team of Agents?
+
+A Team of Agents is a powerful multi-agent system that orchestrates multiple AI agents to work together on complex tasks. Teams can operate in different modes to handle various workflow patterns, from sequential processing to coordinated delegation. **What do they do?**
+
+- **Sequential Mode:** Agents work in sequence, each building on the previous agent's results
+- **Coordinate Mode:** A leader agent delegates tasks to specialized team members
+- **Route Mode:** An intelligent router selects the best agent for the entire task
+- **Collaborative Workflows:** Agents can consult with each other using the `ask_other_team_members` feature
+- **Memory Integration:** Teams maintain shared memory across all operations
+- **Tool Orchestration:** Each agent can have specialized tools while sharing common resources
+
+**What are the parts of a Team?**
+
+- **Agents:** Individual AI agents with specific roles, goals, and capabilities
+- **Tasks:** Work units that define what needs to be accomplished
+- **Modes:** Operational patterns (sequential, coordinate, route) that determine how agents collaborate
+- **Memory:** Shared memory system for maintaining context across the team
+- **Tools:** Specialized functions that extend agent capabilities
+- **Response Formats:** Structured output formats for consistent results
+
+## Core Principles For Teams
+
+When creating a Team of Agents, ensure you define these elements:
+
+- **Clear Agent Roles:** Each agent should have a distinct role and expertise area
+- **Task Decomposition:** Break complex tasks into manageable, sequential steps
+- **Mode Selection:** Choose the appropriate operational mode for your workflow
+- **Memory Management:** Configure shared memory for context persistence
+- **Tool Assignment:** Assign relevant tools to agents based on their expertise
+- **Error Handling:** Implement robust error handling for multi-agent operations
+
+### Defining Team Structure
+
+The team structure determines how agents collaborate and share information:
+
+- **Agent Specialization:** Each agent should excel in a specific domain
+- **Task Dependencies:** Define how tasks relate to each other and share context
+- **Mode Configuration:** Select the right mode for your use case
+- **Memory Integration:** Configure shared memory for persistent context
+
+**Good Team Structure:**
+
+```python
+# Specialized agents with clear roles
+research_agent = Agent(
+    name="Research Specialist",
+    role="Market Research and Data Collection",
+    goal="Gather comprehensive market data and insights"
+)
+
+analysis_agent = Agent(
+    name="Analysis Expert", 
+    role="Financial Analysis and Risk Assessment",
+    goal="Analyze data and provide investment recommendations"
+)
+
+reporting_agent = Agent(
+    name="Report Writer",
+    role="Report Generation and Documentation", 
+    goal="Create comprehensive reports from analysis results"
+)
+```
+
+**Bad Team Structure:**
+
+```python
+# Generic agents without clear specialization
+agent1 = Agent(name="Agent 1", role="Helper")
+agent2 = Agent(name="Agent 2", role="Helper") 
+agent3 = Agent(name="Agent 3", role="Helper")
+```
+
+## Team Operational Modes
+
+### 1. Sequential Mode
+
+Agents work in sequence, with each agent building on the previous agent's results:
+
+```python
+team = Team(
+    agents=[research_agent, analysis_agent, reporting_agent],
+    tasks=[task1, task2, task3],
+    mode="sequential"
+)
+```
+
+### 2. Coordinate Mode
+
+A leader agent delegates tasks to specialized team members:
+
+```python
+team = Team(
+    agents=[research_agent, analysis_agent, reporting_agent],
+    tasks=[comprehensive_task],
+    model_provider=model_provider,
+    mode="coordinate",
+    response_format=MarketReport
+)
+```
+
+### 3. Route Mode
+
+An intelligent router selects the best agent for the entire task:
+
+```python
+team = Team(
+    agents=[research_agent, analysis_agent, reporting_agent],
+    tasks=[task],
+    model_provider=model_provider,
+    mode="route",
+    response_format=MarketReport
+)
+```
+
+## Let's Create a Team of Agents for Financial Analysis
+
+In this example, we'll create a comprehensive financial analysis team that demonstrates all three operational modes and advanced features.
+
+```python
+# Upsonic Docs: Creating a Team of Agents
+# https://docs.upsonic.ai/guides/7_creating_a_team_of_agents
+
+# Imports
+from upsonic import Agent, Task, Team
+from pydantic import BaseModel
+from typing import List
+
+
+class SavingsAdvice(BaseModel):
+    summary: str
+    tips: List[str]
+
+
+class InvestmentSuggestion(BaseModel):
+    summary: str
+    safe_options: List[str]
+
+
+# Agents
+savings_agent = Agent(
+    name="Virtual Savings Advisor",
+    role="Analyzes user spending habits",
+    goal="Provide weekly saving recommendations",
+    instructions="Analyze spending categories and suggest actionable, safe ways to save money.",
+    model="openai/gpt-4o-mini"
+)
+
+investment_agent = Agent(
+    name="Investment Suggestion Agent",
+    role="Generates safe investment suggestions",
+    goal="Provide low-risk investment options based on savings advice",
+    instructions="Take the savings advice and suggest secure investment vehicles like ETFs, government bonds, or savings accounts.",
+    model="openai/gpt-4o-mini"
+)
+
+# Tasks
+saving_task = Task(
+    description="User has spent 500 EUR on dining and 300 EUR on entertainment this week. Provide saving tips.",
+    response_format=SavingsAdvice
+)
+
+
+investment_task = Task(
+    description="Based on the savings tips, suggest safe investment options.",
+    response_format=InvestmentSuggestion
+)
+
+
+# Team
+advice_team = Team(
+    agents=[savings_agent, investment_agent],
+    tasks=[saving_task, investment_task],
+    response_format=InvestmentSuggestion,
+    mode="sequential"
+)
+
+
+# Run
+structured_result = advice_team.do()
+print("Structured Result:", structured_result)
+
+print("\n=== Safe Fintech Advice Workflow Complete ===")
+```
+
+**Need more advanced features?** The Team class supports many powerful configuration options including:
+
+- **Memory Integration:** Persistent memory across team operations
+- **Tool Sharing:** Agents can access tools from other team members
+- **Custom Response Formats:** Structured output using Pydantic models
+- **Error Handling:** Graceful failure handling with fallback options
+- **Performance Monitoring:** Real-time cost and performance tracking
+- **Async Operations:** Full async support for high-performance workflows
+
+For detailed examples and advanced patterns, see our comprehensive Team Documentation.
