@@ -1,0 +1,82 @@
+# Creating a Task
+
+Tasks in Upsonic are created directly in code using the `Task` class constructor. Each task can be customized with specific tools, response formats, caching options, and validation rules to meet your exact requirements.
+
+## Basic Task Creation
+
+```python
+from upsonic import Task
+
+# Simple task with just a description
+task = Task(description="What is the capital of France?")
+```
+
+## Task with Tools
+
+```python
+from upsonic import Task
+from upsonic.tools import tool
+
+# Create a simple tool
+@tool
+def calculator(operation: str, a: float, b: float) -> str:
+    """Perform basic mathematical operations."""
+    if operation == "add":
+        return f"Result: {a + b}"
+    elif operation == "multiply":
+        return f"Result: {a * b}"
+    return "Invalid operation"
+
+# Create task with tools
+task = Task(
+    description="Calculate 10 + 5 using the calculator tool",
+    tools=[calculator]
+)
+```
+
+## Task with Response Format
+
+```python
+from pydantic import BaseModel
+
+class AnalysisResult(BaseModel):
+    summary: str
+    confidence: float
+    recommendations: list[str]
+
+# Task with structured response
+task = Task(
+    description="Analyze the provided data and provide structured results",
+    response_format=AnalysisResult
+)
+```
+
+## Task with Advanced Configuration
+
+```python
+def validate_output(result):
+    """Custom guardrail function."""
+    if isinstance(result, str) and len(result) > 10:
+        return True
+    return False
+
+# Task with advanced features
+task = Task(
+    description="Generate a comprehensive report",
+    enable_cache=True,
+    cache_method="vector_search",
+    cache_threshold=0.8,
+    cache_duration_minutes=120,
+    guardrail=validate_output,
+    guardrail_retries=3,
+    enable_thinking_tool=True
+)
+```
+
+## Best Practices
+
+- **Start Simple**: Begin with basic tasks and gradually add complexity
+- **Clear Descriptions**: Write descriptive task descriptions that clearly state the objective
+- **Tool Selection**: Choose appropriate tools for the task requirements
+- **Error Handling**: Use guardrails for tasks that require specific output validation
+- **Caching Strategy**: Enable caching for tasks that might be repeated with similar inputs

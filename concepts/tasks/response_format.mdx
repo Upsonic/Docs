@@ -1,0 +1,92 @@
+# Response Format
+
+Tasks support various response formats to structure the output according to your needs. You can specify the expected format using the `response_format` parameter.
+
+## String Response (Default)
+
+```python
+# Default string response
+task = Task(
+    description="Provide a simple text response",
+    response_format=str
+)
+```
+
+## Pydantic Model Response
+
+```python
+from pydantic import BaseModel
+
+class AnalysisResult(BaseModel):
+    summary: str
+    confidence: float
+    recommendations: list[str]
+    key_metrics: dict[str, float]
+
+# Task with structured response
+task = Task(
+    description="Analyze the provided data and provide structured results",
+    response_format=AnalysisResult
+)
+```
+
+## Complex Nested Models
+
+```python
+from pydantic import BaseModel
+from typing import List, Optional
+
+class Metric(BaseModel):
+    name: str
+    value: float
+    unit: str
+
+class Recommendation(BaseModel):
+    title: str
+    description: str
+    priority: str
+    estimated_impact: float
+
+class DetailedAnalysis(BaseModel):
+    summary: str
+    confidence: float
+    metrics: List[Metric]
+    recommendations: List[Recommendation]
+    risk_factors: Optional[List[str]] = None
+
+# Task with complex structured response
+task = Task(
+    description="Perform comprehensive analysis with detailed metrics and recommendations",
+    response_format=DetailedAnalysis
+)
+```
+
+## Response Format Types
+
+| Type | Description | Use Case |
+|------|-------------|----------|
+| **str** | Simple text response | Basic questions, summaries |
+| **BaseModel** | Structured Pydantic model | Complex data, analysis results |
+| **None** | No format constraint | Flexible responses |
+
+## Dynamic Response Format
+
+```python
+# Response format can be set dynamically
+def create_analysis_task(analysis_type: str):
+    if analysis_type == "simple":
+        return Task(description="Simple analysis", response_format=str)
+    elif analysis_type == "detailed":
+        return Task(description="Detailed analysis", response_format=AnalysisResult)
+    else:
+        return Task(description="Flexible analysis", response_format=None)
+```
+
+## Best Practices
+
+- **Structured Data**: Use Pydantic models for complex, structured responses
+- **Field Validation**: Leverage Pydantic's built-in validation for data integrity
+- **Optional Fields**: Use Optional types for fields that might not always be present
+- **Nested Models**: Break down complex responses into smaller, reusable models
+- **Type Hints**: Always provide clear type hints for better IDE support and validation
+- **Default Values**: Set appropriate default values for optional fields

@@ -1,0 +1,95 @@
+# Adding Tools to a Task
+
+Tasks can be equipped with various tools to extend their capabilities. Tools are added through the `tools` parameter and can include custom functions, built-in tools, or tool collections.
+
+## Single Tool
+
+```python
+from upsonic.tools import tool
+
+@tool
+def web_search(query: str) -> str:
+    """Search the web for information."""
+    return f"Search results for: {query}"
+
+task = Task(
+    description="Search for information about AI",
+    tools=[web_search]
+)
+```
+
+## Multiple Tools
+
+```python
+from upsonic.tools import tool
+
+@tool
+def web_search(query: str) -> str:
+    """Search the web for information."""
+    return f"Search results for: {query}"
+
+@tool
+def data_processor(data: str) -> str:
+    """Process and analyze data."""
+    return f"Processed: {data}"
+
+# Task with multiple tools
+task = Task(
+    description="Search for information about AI and process the results",
+    tools=[web_search, data_processor]
+)
+```
+
+## Tool Collections
+
+```python
+from upsonic.tools import YFinanceTools
+
+# Create a tool collection
+finance_tools = YFinanceTools(
+    stock_price=True,
+    company_info=True,
+    analyst_recommendations=True
+)
+
+# Task with tool collection
+task = Task(
+    description="Get stock information for AAPL",
+    tools=finance_tools.functions()
+)
+```
+
+## Tool Configuration
+
+```python
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True, cache_results=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires confirmation."""
+    return f"Processed sensitive data: {data}"
+
+task = Task(
+    description="Process sensitive information",
+    tools=[sensitive_operation]
+)
+```
+
+## Available Tool Configurations
+
+| Configuration | Type | Description |
+|---------------|------|-------------|
+| **requires_confirmation** | bool | Pause for user confirmation before execution |
+| **requires_user_input** | bool | Prompt user for input during execution |
+| **user_input_fields** | List[str] | Fields to prompt user for when requires_user_input is True |
+| **external_execution** | bool | Handle execution externally (advanced use-cases) |
+| **show_result** | bool | Display result directly to user without LLM processing |
+| **stop_after_tool_call** | bool | Terminate agent after this tool call |
+
+## Best Practices
+
+- **Tool Validation**: All tools must have type hints and docstrings
+- **Single Responsibility**: Each tool should have a clear, focused purpose
+- **Error Handling**: Implement proper error handling within tool functions
+- **Configuration**: Use tool configurations appropriately for security and user experience
+- **Documentation**: Write clear docstrings that explain the tool's purpose to the LLM

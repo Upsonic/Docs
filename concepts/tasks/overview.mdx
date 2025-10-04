@@ -1,0 +1,36 @@
+---
+title: Tasks
+sidebarTitle: Overview
+description: Let's analyze how Upsonic Tasks works
+hideToc: true
+---
+
+# Task-Centric Structure
+
+Detailed guide on managing and creating tasks within the Upsonic framework.
+
+## Overview
+
+In the Upsonic framework, a `Task` is a specific assignment completed by an `Agent`. Tasks provide all necessary details for execution, such as a description, tools, response format, caching options, and more, facilitating a wide range of action complexities. Tasks within Upsonic can be collaborative, requiring multiple agents to work together through context sharing and task dependencies. Tasks are executed by agents in a single-threaded manner, with each task processed sequentially. The execution flow includes task validation, context processing, tool processing, agent execution, response processing, and caching.
+
+## Basic Task Creation
+
+Tasks in Upsonic are created directly in code using the `Task` class constructor. Each task can be customized with specific tools, response formats, caching options, and validation rules to meet your exact requirements.
+
+```python
+from upsonic import Task
+
+# Simple task with just a description
+task = Task(description="What is the capital of France?")
+```
+
+## Navigation
+
+- [Task Attributes](/concepts/task/attributes) - Core and advanced configuration options
+- [Creating a Task](/concepts/task/creating) - Detailed task creation examples
+- [Adding Tools to a Task](/concepts/task/tools) - Tool integration and configuration
+- [Adding Tasks to Other Tasks as Context](/concepts/task/context) - Task chaining and workflows
+- [Putting Knowledge Base to Task](/concepts/task/knowledge-base) - RAG integration
+- [Putting Images to Tasks](/concepts/task/images) - Image processing capabilities
+- [Response Format](/concepts/task/response-format) - Output formatting options
+- [Accessing Task Results](/concepts/task/results) - Result retrieval and metadata

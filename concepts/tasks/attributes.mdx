@@ -1,0 +1,98 @@
+# Task Attributes
+
+The Task class provides comprehensive configuration options to customize task behavior and execution.
+
+## Core Attributes
+
+| Attribute            | Type                                          | Description                                                     |
+| -------------------- | --------------------------------------------- | --------------------------------------------------------------- |
+| **description**      | str                                           | A clear, concise statement of what the task entails             |
+| **tools**            | List\[Any\]                                   | The tools/resources the agent can use for this task             |
+| **response_format**  | Union\[Type\[BaseModel\], type\[str\], None\] | The expected output format (string, Pydantic model, or None)    |
+| **context**          | Any                                           | Other tasks whose outputs will be used as context for this task |
+| **attachments**      | Optional\[List\[str\]\]                       | File paths to attach to the task (images, documents, etc.)      |
+
+## Advanced Configuration
+
+| Attribute                    | Type                                     | Description                                                  |
+| ---------------------------- | ---------------------------------------- | ------------------------------------------------------------ |
+| **enable_thinking_tool**     | Optional\[bool\]                         | Whether to enable the thinking tool for complex reasoning    |
+| **enable_reasoning_tool**    | Optional\[bool\]                         | Whether to enable the reasoning tool for multi-step analysis |
+| **guardrail**                | Optional\[Callable\]                     | Function to validate task output before proceeding           |
+| **guardrail_retries**        | Optional\[int\]                          | Maximum number of retries when guardrail validation fails    |
+| **enable_cache**             | bool                                     | Whether to enable caching for this task                      |
+| **cache_method**             | Literal\["vector_search", "llm_call"\]   | Method to use for caching                                    |
+| **cache_threshold**          | float                                    | Similarity threshold for cache hits (0.0-1.0)                |
+| **cache_duration_minutes**   | int                                      | How long to cache results in minutes                         |
+
+## Complete Example
+
+Here's a comprehensive example that demonstrates how to use various task attributes together:
+
+```python
+from upsonic import Task
+from upsonic.tools import tool
+from pydantic import BaseModel
+from typing import List, Optional
+
+# Define a structured response format
+class MarketAnalysis(BaseModel):
+    summary: str
+    confidence: float
+    key_metrics: dict[str, float]
+    recommendations: List[str]
+    risk_factors: Optional[List[str]] = None
+
+# Create a custom tool
+@tool(requires_confirmation=True, cache_results=True)
+def get_market_data(symbol: str) -> str:
+    """Fetch current market data for a given symbol."""
+    # Simulated market data retrieval
+    return f"Market data for {symbol}: Price $150.25, Volume 1.2M"
+
+# Define a guardrail function
+def validate_analysis(result) -> bool:
+    """Validate that the analysis result meets quality standards."""
+    if isinstance(result, MarketAnalysis):
+        return result.confidence >= 0.7 and len(result.recommendations) > 0
+    return False
+
+# Create a comprehensive task with multiple attributes
+task = Task(
+    # Core attributes
+    description="Analyze the current market conditions for AAPL and provide investment recommendations",
+    tools=[get_market_data],
+    response_format=MarketAnalysis,
+    context=["Focus on Q4 performance trends", "Consider recent earnings reports"],
+    attachments=["market_chart.png"],
+    
+    # Advanced configuration
+    enable_thinking_tool=True,
+    enable_reasoning_tool=True,
+    guardrail=validate_analysis,
+    guardrail_retries=3,
+    
+    # Caching configuration
+    enable_cache=True,
+    cache_method="vector_search",
+    cache_threshold=0.8,
+    cache_duration_minutes=60
+)
+
+# Execute the task
+result = agent.do(task)
+
+# Access task results and metadata
+print(f"Analysis completed in {task.duration:.2f} seconds")
+print(f"Total cost: ${task.total_cost}")
+print(f"Cache hit: {task._cache_hit}")
+print(f"Tool calls made: {len(task.tool_calls)}")
+```
+
+## Best Practices
+
+- **Description**: Be specific and clear about what the task should accomplish
+- **Tools**: Only include tools that are relevant to the task to avoid confusion
+- **Response Format**: Use structured formats (Pydantic models) for complex data
+- **Caching**: Enable caching for expensive operations that might be repeated
+- **Guardrails**: Implement validation functions for critical tasks to ensure output quality

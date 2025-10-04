@@ -1,0 +1,84 @@
+# Adding Tasks to Other Tasks as Context
+
+In Upsonic, you can use the output of one task as context for another task through the `context` parameter. This enables task chaining and complex workflows.
+
+## Basic Task Chaining
+
+```python
+# First task
+task1 = Task(description="What is 2 + 2?")
+result1 = agent.do(task1)
+
+# Second task using context from first task
+task2 = Task(
+    description="Based on the previous result, what is that number multiplied by 3?",
+    context=[task1]
+)
+result2 = agent.do(task2)
+```
+
+## Multiple Context Sources
+
+```python
+# Task with multiple context sources
+task3 = Task(
+    description="Summarize all the previous mathematical results",
+    context=[task1, task2, "Additional context: These were all math problems"]
+)
+result3 = agent.do(task3)
+```
+
+## Complex Workflow Example
+
+```python
+# Task 1: Data collection
+task1 = Task(
+    description="Collect data from market research sources",
+    tools=[data_collector],
+    enable_cache=True
+)
+
+# Task 2: Data analysis
+task2 = Task(
+    description="Analyze the collected market data",
+    tools=[data_analyzer],
+    context=[task1],
+    enable_thinking_tool=True
+)
+
+# Task 3: Report generation
+task3 = Task(
+    description="Generate a comprehensive market report",
+    context=[task1, task2],
+    response_format=ReportResult
+)
+```
+
+## Context Types
+
+Tasks can use various types of context:
+
+- **Other Tasks**: Previous task results for chaining
+- **Strings**: Direct text context
+- **Knowledge Bases**: RAG-enabled knowledge sources
+- **Mixed**: Combination of different context types
+
+```python
+# Mixed context example
+task = Task(
+    description="Analyze the data and provide insights",
+    context=[
+        data_collection_task,  # Previous task
+        "Focus on Q4 performance",  # String context
+        knowledge_base  # Knowledge base context
+    ]
+)
+```
+
+## Best Practices
+
+- **Logical Flow**: Design task chains with clear logical progression
+- **Context Relevance**: Only include context that's relevant to the current task
+- **Performance**: Consider caching for expensive context processing
+- **Error Handling**: Handle cases where context tasks might fail
+- **Documentation**: Clearly document the expected context flow in your workflows

@@ -1,0 +1,141 @@
+# Accessing Task Results
+
+After task execution, you can access various aspects of the task results and metadata through the task object properties and methods.
+
+## Basic Result Access
+
+```python
+# Execute task
+task = Task(description="What is the capital of France?")
+result = agent.do(task)
+
+# Access the response
+print(f"Task result: {result}")
+print(f"Task response: {task.response}")
+```
+
+## Task Metadata
+
+```python
+# Access task metadata
+print(f"Task ID: {task.task_id}")
+print(f"Price ID: {task.price_id}")
+print(f"Duration: {task.duration}")
+print(f"Start time: {task.start_time}")
+print(f"End time: {task.end_time}")
+```
+
+## Cost Information
+
+```python
+# Access cost information
+total_cost = task.total_cost
+input_tokens = task.total_input_token
+output_tokens = task.total_output_token
+
+print(f"Total cost: ${total_cost}")
+print(f"Input tokens: {input_tokens}")
+print(f"Output tokens: {output_tokens}")
+```
+
+## Tool Call History
+
+```python
+# Access tool call history
+tool_calls = task.tool_calls
+for i, tool_call in enumerate(tool_calls):
+    print(f"Tool call {i+1}:")
+    print(f"  Tool: {tool_call.get('tool_name')}")
+    print(f"  Parameters: {tool_call.get('params')}")
+    print(f"  Result: {tool_call.get('tool_result')}")
+```
+
+## Cache Information
+
+```python
+# Access cache statistics
+cache_stats = task.get_cache_stats()
+print(f"Cache hit: {cache_stats.get('cache_hit')}")
+print(f"Cache method: {cache_stats.get('cache_method')}")
+print(f"Cache threshold: {cache_stats.get('cache_threshold')}")
+```
+
+## Task State Information
+
+```python
+# Check task state
+print(f"Task is paused: {task.is_paused}")
+print(f"Tools awaiting execution: {len(task.tools_awaiting_external_execution)}")
+
+# For paused tasks, access external tool calls
+if task.is_paused:
+    for tool_call in task.tools_awaiting_external_execution:
+        print(f"Tool: {tool_call.tool_name}")
+        print(f"Arguments: {tool_call.tool_args}")
+        print(f"Result: {tool_call.result}")
+```
+
+## Complete Example
+
+```python
+from upsonic import Agent, Task
+from pydantic import BaseModel
+
+class ReportResult(BaseModel):
+    title: str
+    summary: str
+    key_points: list[str]
+    confidence: float
+
+# Create and execute task
+agent = Agent(name="Analysis Agent")
+task = Task(
+    description="Generate a market analysis report",
+    response_format=ReportResult,
+    enable_cache=True
+)
+
+result = agent.do(task)
+
+# Access all available information
+print("=== TASK EXECUTION SUMMARY ===")
+print(f"Task ID: {task.get_task_id()}")
+print(f"Duration: {task.duration:.2f} seconds")
+print(f"Cost: ${task.total_cost}")
+print(f"Tokens: {task.total_input_token} in, {task.total_output_token} out")
+print(f"Tool calls made: {len(task.tool_calls)}")
+print(f"Cache hit: {task._cache_hit}")
+
+print("\n=== TASK RESULT ===")
+print(f"Result: {result}")
+print(f"Response type: {type(task.response)}")
+
+print("\n=== CACHE STATISTICS ===")
+cache_stats = task.get_cache_stats()
+for key, value in cache_stats.items():
+    print(f"{key}: {value}")
+```
+
+## Available Properties and Methods
+
+| Property/Method | Type | Description |
+|-----------------|------|-------------|
+| **response** | Any | The task's response output |
+| **task_id** | str | Unique task identifier |
+| **price_id** | str | Price tracking identifier |
+| **duration** | float | Task execution duration in seconds |
+| **total_cost** | float | Estimated cost in USD |
+| **total_input_token** | int | Number of input tokens used |
+| **total_output_token** | int | Number of output tokens generated |
+| **tool_calls** | List[Dict] | History of tool calls made |
+| **get_cache_stats()** | Dict | Cache statistics and configuration |
+| **get_task_id()** | str | Formatted task ID for display |
+
+## Best Practices
+
+- **Result Validation**: Always check if results are None before processing
+- **Error Handling**: Handle cases where metadata might not be available
+- **Cost Monitoring**: Track costs for budget management
+- **Performance Analysis**: Use duration metrics for optimization
+- **Tool Debugging**: Review tool call history for debugging complex workflows
+- **Cache Optimization**: Monitor cache hit rates to optimize caching strategies

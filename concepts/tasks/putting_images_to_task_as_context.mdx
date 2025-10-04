@@ -1,0 +1,80 @@
+# Putting Images to Tasks
+
+Tasks can include image attachments for processing. The framework automatically handles image loading and provides them to the model for analysis.
+
+## Single Image Attachment
+
+```python
+# Task with single image
+task = Task(
+    description="Describe what you see in the attached image",
+    attachments=["image.png"]
+)
+```
+
+## Multiple Image Attachments
+
+```python
+# Task with multiple images
+task = Task(
+    description="Compare the two attached images and identify similarities and differences",
+    attachments=["image1.jpg", "image2.jpg"]
+)
+```
+
+## Images with Other Context
+
+```python
+# Task with images and other context
+task = Task(
+    description="Analyze the attached chart and provide insights based on the market data",
+    attachments=["chart.png"],
+    context=[market_data_task]
+)
+```
+
+## Supported Image Formats
+
+The framework supports various image formats including:
+
+- PNG (.png)
+- JPEG (.jpg, .jpeg)
+- GIF (.gif)
+- BMP (.bmp)
+- TIFF (.tiff)
+
+```python
+# Example with different image formats
+task = Task(
+    description="Analyze all the attached images",
+    attachments=["photo.jpg", "diagram.png", "chart.tiff"]
+)
+```
+
+## Image Processing with Tools
+
+```python
+from upsonic.tools import tool
+
+@tool
+def image_analyzer(image_path: str) -> str:
+    """Analyze image content and return description."""
+    # Your image analysis logic here
+    return f"Analysis of {image_path}"
+
+# Task combining image attachments with image analysis tools
+task = Task(
+    description="Analyze the attached images using the image analyzer tool",
+    attachments=["image1.jpg", "image2.png"],
+    tools=[image_analyzer]
+)
+```
+
+## Best Practices
+
+- **File Paths**: Use absolute or relative paths that are accessible to your application
+- **Image Size**: Consider image file sizes for performance optimization
+- **Format Selection**: Choose appropriate formats based on your analysis needs
+- **Error Handling**: Handle cases where image files might not be accessible
+- **Context Integration**: Combine images with relevant text context for better analysis
+- **Tool Integration**: Use specialized image analysis tools when available

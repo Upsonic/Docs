@@ -1,0 +1,115 @@
+# Putting Knowledge Base to Task
+
+Knowledge bases can be added to tasks to provide RAG (Retrieval-Augmented Generation) capabilities, allowing the agent to access and use external knowledge sources.
+
+## Basic Knowledge Base Integration
+
+```python
+from upsonic import KnowledgeBase
+from upsonic.embeddings import OpenAIEmbeddingProvider
+from upsonic.vectordb import ChromaVectorDB
+
+# Create knowledge base
+embedding_provider = OpenAIEmbeddingProvider()
+vectordb = ChromaVectorDB()
+
+knowledge_base = KnowledgeBase(
+    sources=["document1.pdf", "document2.txt"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb
+)
+
+# Task with knowledge base context
+task = Task(
+    description="Answer questions about the uploaded documents",
+    context=[knowledge_base]
+)
+```
+
+## Multiple Knowledge Bases
+
+```python
+# Create multiple knowledge bases
+kb1 = KnowledgeBase(
+    sources=["technical_docs/"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    name="Technical Documentation"
+)
+
+kb2 = KnowledgeBase(
+    sources=["company_policies.pdf"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    name="Company Policies"
+)
+
+# Task with multiple knowledge bases
+task = Task(
+    description="Find information about both technical procedures and company policies",
+    context=[kb1, kb2]
+)
+```
+
+## Knowledge Base with Direct Content
+
+```python
+# Knowledge base with direct string content
+knowledge_base = KnowledgeBase(
+    sources=["This is important information about our product features and capabilities."],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb
+)
+
+task = Task(
+    description="What are the key features mentioned in the product information?",
+    context=[knowledge_base]
+)
+```
+
+## Knowledge Base Configuration
+
+```python
+# Advanced knowledge base configuration
+knowledge_base = KnowledgeBase(
+    sources=["data/"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb,
+    name="Custom Knowledge Base",
+    use_case="rag_retrieval",
+    quality_preference="balanced",
+    loader_config={"skip_empty_content": True},
+    splitter_config={"chunk_overlap": 200}
+)
+```
+
+## Supported Sources
+
+Knowledge bases support various source types:
+
+- **File Paths**: Individual files (PDF, TXT, DOCX, etc.)
+- **Directories**: Recursive directory scanning
+- **Direct Content**: String content passed directly
+- **Mixed Sources**: Combination of files and content
+
+```python
+# Mixed sources example
+knowledge_base = KnowledgeBase(
+    sources=[
+        "documents/",  # Directory
+        "important.pdf",  # Single file
+        "Key insight: Our product is revolutionary"  # Direct content
+    ],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb
+)
+```
+
+## Best Practices
+
+- **Source Organization**: Organize your sources logically for better retrieval
+- **Embedding Provider**: Choose appropriate embedding providers for your use case
+- **Vector Database**: Select vector databases that match your scale requirements
+- **Chunking Strategy**: Configure chunking parameters based on your content type
+- **Quality vs Speed**: Balance quality_preference based on your performance needs
+- **Naming**: Use descriptive names for knowledge bases to avoid confusion
