@@ -307,10 +307,22 @@ memory = Memory(
 )
 ```
 
-## Conclusion
+## Need more advanced features?
 
-Memory is a powerful feature that transforms your agents from simple responders to intelligent, context-aware assistants. By properly configuring memory types, choosing appropriate storage providers, and following best practices, you can create agents that provide personalized, continuous experiences across multiple interactions.
+The Memory system offers several advanced configurations to enhance your agent's capabilities:
 
-Remember that memory comes with trade-offs - more memory means better context but potentially higher costs and slower responses. Choose the right balance for your specific use case.
+- **Custom Storage Providers**: Integrate with various storage backends such as PostgreSQL, MongoDB, Redis, or SQLite to suit your scalability and performance needs.
 
-Create an AgentPreviousUsing Memory in your AgentNext
+- **Selective Memory Types**: Enable or disable specific memory types (full session, summary, user analysis) to optimize resource usage and functionality.
+
+- **Dynamic User Profiles**: Utilize dynamic user profiles that adapt schema based on interaction patterns, allowing for personalized user experiences.
+
+- **Context Management**: Configure the number of last messages to retain in context, balancing between context richness and performance.
+
+- **Memory Modes**: Choose between 'update' and 'replace' modes for user profile management to control how new information is integrated with existing data.
+
+- **Tool Call Integration**: Configure whether tool call results are included in memory storage for comprehensive conversation tracking.
+
+- **Debugging Tools**: Activate debug mode to monitor memory operations, aiding in development and troubleshooting.
+
+For detailed examples and advanced patterns, see our comprehensive [Memory Concept Documentation](https://docs.upsonic.ai/concepts/memory).
