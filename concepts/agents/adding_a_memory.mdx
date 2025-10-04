@@ -1,0 +1,220 @@
+# Adding a Memory
+
+The Memory system in Upsonic provides comprehensive, configurable memory management for AI agents, enabling them to maintain context across conversations, build user profiles, and store session summaries.
+
+## Memory System Overview
+
+The `Memory` class serves as a centralized module for managing different types of memory and respects the specific data formats and logic established in the original application design for handling chat history.
+
+### Key Features
+
+- **Session Memory**: Full conversation history storage and retrieval
+- **Summary Memory**: Automatic conversation summarization
+- **User Analysis Memory**: Dynamic user profile building and trait analysis
+- **Flexible Storage**: Support for various storage backends (SQLite, etc.)
+- **Context Injection**: Automatic injection of relevant memory into system prompts
+
+## Setting Up Memory with SQLite
+
+Here's how to set up memory with SQLite storage:
+
+```python
+from upsonic import Agent, Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic.models.providers import OpenAI
+
+# Create storage backend
+storage = SqliteStorage("sessions", "profiles", "agent_memory.db")
+
+# Create memory system
+memory = Memory(
+    storage=storage,
+    session_id="banking_session_001",
+    user_id="user_001",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    model_provider=OpenAI(model_name="gpt-4o-mini")
+)
+
+# Create agent with memory
+agent = Agent(
+    name="BankingAssistant",
+    memory=memory,
+    feed_tool_call_results=True
+)
+```
+
+## Memory Configuration Options
+
+### Basic Memory Setup
+
+```python
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_001"
+)
+```
+
+### Full Memory Configuration
+
+```python
+memory = Memory(
+    storage=storage,
+    session_id="advanced_session",
+    user_id="user_001",
+    full_session_memory=True,        # Store complete conversation history
+    summary_memory=True,             # Generate conversation summaries
+    user_analysis_memory=True,       # Build user profiles and traits
+    user_profile_schema=None,        # Custom user profile schema
+    dynamic_user_profile=False,      # Use dynamic profile generation
+    num_last_messages=None,          # Limit conversation history
+    model_provider=model_provider,   # LLM for analysis tasks
+    debug=False,                     # Enable debug logging
+    feed_tool_call_results=False,    # Include tool results in memory
+    user_memory_mode='update'        # 'update' or 'replace' user profiles
+)
+```
+
+### Memory Types Explained
+
+#### Full Session Memory
+Stores complete conversation history for context retrieval:
+
+```python
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=True
+)
+```
+
+#### Summary Memory
+Automatically generates and maintains conversation summaries:
+
+```python
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    summary_memory=True,
+    model_provider=OpenAI(model_name="gpt-4o-mini")
+)
+```
+
+#### User Analysis Memory
+Builds and maintains user profiles based on interactions:
+
+```python
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_001",
+    user_analysis_memory=True,
+    model_provider=OpenAI(model_name="gpt-4o-mini")
+)
+```
+
+## Using Memory in Task Execution
+
+Once configured, memory automatically integrates with your agent:
+
+```python
+from upsonic import Task
+
+# Create a task - memory will automatically be used
+task = Task(
+    description="Analyze the user's investment portfolio and provide recommendations based on their risk tolerance and previous conversations."
+)
+
+# Execute with memory context
+result = agent.print_do(task)
+```
+
+The memory system will:
+1. Inject relevant user profile information into the system prompt
+2. Include conversation summaries for context
+3. Provide full conversation history if needed
+4. Update user profiles based on the interaction
+
+## Memory Management Methods
+
+### Accessing Memory Data
+
+```python
+# Access user profile
+user_profile = await agent.memory.storage.read_async("user_001", UserProfile)
+
+# Access session data
+session_data = await agent.memory.storage.read_async("session_001", InteractionSession)
+```
+
+### Memory Configuration in Agent
+
+```python
+agent = Agent(
+    name="FinancialAdvisor",
+    memory=memory,
+    feed_tool_call_results=True,  # Include tool results in memory
+    debug=True                    # Enable memory debug logging
+)
+```
+
+## Advanced Memory Features
+
+### Custom User Profile Schema
+
+```python
+from pydantic import BaseModel, Field
+
+class CustomUserTraits(BaseModel):
+    risk_tolerance: str = Field(description="User's risk tolerance level")
+    investment_goals: str = Field(description="User's investment objectives")
+    preferred_assets: list = Field(description="User's preferred asset classes")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_001",
+    user_analysis_memory=True,
+    user_profile_schema=CustomUserTraits,
+    model_provider=model_provider
+)
+```
+
+### Dynamic User Profile Generation
+
+```python
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_001",
+    user_analysis_memory=True,
+    dynamic_user_profile=True,  # Automatically generate profile schema
+    model_provider=model_provider
+)
+```
+
+### Memory with Limited History
+
+```python
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=True,
+    num_last_messages=10  # Keep only last 10 conversation turns
+)
+```
+
+## Best Practices
+
+1. **Choose Appropriate Memory Types**: Enable only the memory types you need to optimize performance
+2. **Set Session IDs**: Always provide meaningful session IDs for proper memory isolation
+3. **User ID Management**: Use consistent user IDs for proper profile building
+4. **Model Provider**: Provide a model provider for summary and analysis features
+5. **Storage Backend**: Choose appropriate storage backend based on your deployment needs
+6. **Memory Limits**: Use `num_last_messages` to prevent memory from growing too large
+7. **Debug Mode**: Enable debug mode during development to understand memory behavior
+8. **Tool Results**: Consider whether to include tool call results in memory based on your use case
+
+The Memory system provides a robust foundation for building conversational AI applications that can maintain context, learn from interactions, and provide personalized experiences.

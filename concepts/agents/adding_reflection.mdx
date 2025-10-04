@@ -1,0 +1,192 @@
+# Adding Reflection
+
+Reflection capabilities enable your agent to think through problems step-by-step, providing more structured and thoughtful responses. This feature is essential for complex financial analysis, risk assessment, and multi-step problem solving.
+
+## Enabling Reflection
+
+To enable reflection capabilities, set `enable_thinking_tool=True` when creating your agent:
+
+```python
+from upsonic import Agent
+
+# Enable reflection for financial analysis
+agent = Agent(
+    name="FinancialAnalyst",
+    enable_thinking_tool=True,
+    debug=True
+)
+```
+
+## How Reflection Works
+
+When reflection is enabled, the agent follows a structured "blueprint" approach:
+
+1. **Strategic Planning**: The agent creates a complete, sequential plan of tool calls
+2. **Automated Execution**: An orchestrator executes the plan step-by-step
+3. **Final Synthesis**: The agent synthesizes results into a comprehensive answer
+
+### Reflection vs. Basic Mode
+
+| Feature | Basic Mode | Reflection Mode |
+|---------|------------|-----------------|
+| **Planning** | Ad-hoc tool calls | Structured blueprint creation |
+| **Execution** | Direct tool execution | Orchestrated step-by-step execution |
+| **Analysis** | Immediate responses | Thoughtful synthesis of results |
+| **Use Cases** | Simple queries | Complex multi-step analysis |
+
+## Reflection Configuration
+
+### Agent-Level Reflection
+
+```python
+# Enable reflection for all tasks
+agent = Agent(
+    name="RiskAnalyst",
+    enable_thinking_tool=True
+)
+```
+
+### Task-Level Reflection
+
+```python
+from upsonic import Task
+
+# Override agent settings for specific task
+task = Task(
+    description="Analyze market volatility and provide investment recommendations",
+    enable_thinking_tool=True  # Enable reflection for this specific task
+)
+
+result = agent.print_do(task)
+```
+
+### Mixed Configuration
+
+```python
+# Agent with reflection enabled
+agent = Agent(
+    name="BankingAgent",
+    enable_thinking_tool=True
+)
+
+# Simple task without reflection
+simple_task = Task(
+    description="What is the current interest rate?",
+    enable_thinking_tool=False  # Disable reflection for simple queries
+)
+
+# Complex task with reflection
+complex_task = Task(
+    description="Analyze portfolio risk and recommend rebalancing strategy",
+    enable_thinking_tool=True  # Keep reflection for complex analysis
+)
+```
+
+## Reflection Use Cases
+
+Reflection is ideal for:
+
+- **Financial Analysis**: Multi-step investment analysis and risk assessment
+- **Regulatory Compliance**: Complex compliance checking and documentation
+- **Portfolio Management**: Comprehensive portfolio analysis and recommendations
+- **Risk Assessment**: Detailed risk evaluation across multiple factors
+- **Strategic Planning**: Long-term financial planning and strategy development
+
+### Example: Financial Risk Analysis
+
+```python
+from upsonic import Agent, Task
+
+# Create agent with reflection capabilities
+agent = Agent(
+    name="RiskAssessmentAgent",
+    enable_thinking_tool=True,
+    debug=True
+)
+
+# Create a complex financial analysis task
+task = Task(
+    description="""
+    Analyze the following investment scenario and provide comprehensive risk assessment:
+    
+    A client has $500K to invest across:
+    1. 40% in technology stocks (high volatility)
+    2. 30% in government bonds (low risk)
+    3. 20% in real estate REITs (medium risk)
+    4. 10% in cryptocurrency (very high volatility)
+    
+    Consider market conditions, diversification benefits, and provide specific recommendations
+    for risk mitigation and portfolio optimization.
+    """,
+    enable_thinking_tool=True
+)
+
+# Execute with reflection
+result = agent.print_do(task)
+```
+
+### Example: Banking Compliance Analysis
+
+```python
+task = Task(
+    description="""
+    Review the following banking transaction for compliance:
+    
+    Transaction: $50,000 wire transfer from Business Account A to Personal Account B
+    Customer: High-net-worth individual with $2M+ in assets
+    Purpose: Real estate investment
+    Timing: End of quarter
+    
+    Analyze for:
+    1. AML (Anti-Money Laundering) compliance
+    2. KYC (Know Your Customer) requirements
+    3. Regulatory reporting obligations
+    4. Risk assessment and documentation needs
+    """,
+    enable_thinking_tool=True
+)
+
+result = agent.print_do(task)
+```
+
+## Reflection Output Structure
+
+When reflection is enabled, the agent provides:
+
+1. **Strategic Analysis**: Detailed reasoning about the problem
+2. **Execution Plan**: Step-by-step tool call sequence
+3. **Risk Assessment**: Identification of potential issues
+4. **Final Synthesis**: Comprehensive answer based on all gathered information
+
+### Example Reflection Flow
+
+```
+1. Agent analyzes the request and creates a plan
+2. Orchestrator executes: get_market_data → analyze_risk → check_compliance
+3. Agent synthesizes results into final recommendation
+```
+
+## Performance Considerations
+
+**Important**: Reflection capabilities consume more tokens and processing time than basic mode. Monitor your usage and costs when using reflection for production applications.
+
+```python
+# Monitor performance with debug mode
+agent = Agent(
+    name="FinancialAnalyst",
+    enable_thinking_tool=True,
+    debug=True  # Shows detailed execution metrics
+)
+```
+
+## Best Practices
+
+1. **Use for Complex Tasks**: Enable reflection for multi-step financial analysis
+2. **Disable for Simple Queries**: Use basic mode for straightforward questions
+3. **Monitor Costs**: Track token usage with reflection enabled
+4. **Debug Mode**: Use debug mode during development to understand the process
+5. **Task-Specific Control**: Override agent settings for specific tasks when needed
+6. **Clear Instructions**: Provide detailed, specific instructions for better planning
+7. **Tool Availability**: Ensure all required tools are available for the planned sequence
+
+Reflection provides a powerful way to handle complex financial scenarios that require structured thinking and comprehensive analysis, making it essential for sophisticated banking and fintec

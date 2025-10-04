@@ -1,0 +1,191 @@
+# Agent Attributes
+
+The `Agent` exposes numerous attributes that control its behavior and capabilities. Understanding these attributes is crucial for effective agent configuration.
+
+## Core Identity Attributes
+
+| Attribute       | Type                      | Default          | Description                              |
+| --------------- | ------------------------- | ---------------- | ---------------------------------------- |
+| name            | str \| None               | None             | Human-readable name for the agent        |
+| agent\_id\_     | str \| None               | None             | Unique identifier for the agent instance |
+| model\_provider | BaseModelProvider \| None | OpenAI("gpt-4o") | The underlying LLM provider              |
+
+**Example:**
+
+```python
+agent = Agent(
+    name="CreditRiskAnalyst",
+    agent_id_="risk_analyst_001"
+)
+print(f"Agent: {agent.name}, ID: {agent.agent_id}")
+```
+
+## Model and Performance Attributes
+
+| Attribute | Type                            | Default         | Description                                       |
+| --------- | ------------------------------- | --------------- | ------------------------------------------------- |
+| model     | Union\[str, BaseModelProvider\] | "openai/gpt-4o" | Model specification (string or provider instance) |
+| retry     | int                             | 1               | Number of retry attempts for failed calls         |
+| mode      | RetryMode                       | "raise"         | Retry behavior: "raise" or "return\_false"        |
+| debug     | bool                            | False           | Enable debug mode for detailed logging            |
+
+**Example:**
+
+```python
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    retry=5,
+    mode="raise",
+    debug=True
+)
+```
+
+## Company Context Attributes
+
+| Attribute            | Type        | Default | Description                  |
+| -------------------- | ----------- | ------- | ---------------------------- |
+| company\_url         | str \| None | None    | Company website URL          |
+| company\_objective   | str \| None | None    | Company's main objective     |
+| company\_description | str \| None | None    | Detailed company description |
+
+**Example:**
+
+```python
+agent = Agent(
+    company_url="https://securebank.com",
+    company_objective="Revolutionizing digital banking with AI",
+    company_description="Leading provider of AI-powered financial services for retail and commercial clients"
+)
+```
+
+## Role and Professional Attributes
+
+| Attribute        | Type        | Default | Description                        |
+| ---------------- | ----------- | ------- | ---------------------------------- |
+| role             | str \| None | None    | Professional role of the agent     |
+| goal             | str \| None | None    | Primary goal or objective          |
+| instructions     | str \| None | None    | Specific instructions for behavior |
+| education        | str \| None | None    | Educational background             |
+| work\_experience | str \| None | None    | Professional experience            |
+
+**Example:**
+
+```python
+agent = Agent(
+    role="Senior Financial Risk Analyst",
+    goal="To provide accurate risk assessments and regulatory compliance analysis",
+    instructions="Always follow banking regulations and provide detailed risk documentation",
+    education="Finance and Risk Management Degree",
+    work_experience="8 years in banking and financial risk analysis"
+)
+```
+
+## System and Context Attributes
+
+| Attribute         | Type        | Default | Description                           |
+| ----------------- | ----------- | ------- | ------------------------------------- |
+| system\_prompt    | str \| None | None    | Custom system prompt for the agent    |
+| reflection        | str \| None | None    | Reflection capabilities configuration |
+| compress\_context | bool        | False   | Enable context compression            |
+
+**Example:**
+
+```python
+agent = Agent(
+    system_prompt="You are a financial AI assistant specialized in banking operations and regulatory compliance. Always provide accurate, well-documented financial analysis and ensure compliance with banking regulations.",
+    compress_context=True
+)
+```
+
+## Tool and Execution Attributes
+
+| Attribute               | Type | Default | Description                                   |
+| ----------------------- | ---- | ------- | --------------------------------------------- |
+| show\_tool\_calls       | bool | True    | Display tool call information                 |
+| tool\_call\_limit       | int  | 5       | Maximum number of tool calls per execution    |
+| tool\_call\_count       | int  | 0       | Current tool call count (read-only)           |
+| enable\_thinking\_tool  | bool | False   | Enable thinking/reasoning capabilities        |
+| enable\_reasoning\_tool | bool | False   | Enable advanced reasoning (requires thinking) |
+
+**Example:**
+
+```python
+agent = Agent(
+    show_tool_calls=True,
+    tool_call_limit=10,
+    enable_thinking_tool=True,
+    enable_reasoning_tool=True
+)
+```
+
+**Warning**: `enable_reasoning_tool` requires `enable_thinking_tool` to be `True`. Setting reasoning without thinking will raise a `ValueError`.
+
+## Memory and Storage Attributes
+
+| Attribute                 | Type           | Default | Description                    |
+| ------------------------- | -------------- | ------- | ------------------------------ |
+| memory                    | Memory \| None | None    | Memory management system       |
+| feed\_tool\_call\_results | bool           | False   | Include tool results in memory |
+
+**Example:**
+
+```python
+from upsonic import Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
+
+storage = SqliteStorage("sessions", "profiles", "agent_memory.db")
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_001",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True
+)
+
+agent = Agent(
+    memory=memory,
+    feed_tool_call_results=True
+)
+```
+
+## Safety and Reliability Attributes
+
+| Attribute           | Type                    | Default | Description                           |
+| ------------------- | ----------------------- | ------- | ------------------------------------- |
+| user\_policy        | Policy \| None          | None    | Policy for user input validation      |
+| agent\_policy       | Policy \| None          | None    | Policy for agent output validation    |
+| reliability\_layer  | ReliabilityProcessor    | None    | Advanced content validation system    |
+
+**Example:**
+
+```python
+from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
+from upsonic.safety_engine.policies.phone_policies import AnonymizePhoneNumbersPolicy
+from upsonic.reliability_layer.reliability_layer import ReliabilityProcessor
+
+reliability_layer = ReliabilityProcessor(confidence_threshold=0.8)
+
+agent = Agent(
+    user_policy=CryptoBlockPolicy,
+    agent_policy=AnonymizePhoneNumbersPolicy,
+    reliability_layer=reliability_layer
+)
+```
+
+## Canvas and External Integration Attributes
+
+| Attribute | Type           | Default | Description                    |
+| --------- | -------------- | ------- | ------------------------------ |
+| canvas    | Canvas \| None | None    | Canvas for persistent editing  |
+
+**Example:**
+
+```python
+from upsonic.canvas.canvas import Canvas
+
+canvas = Canvas("financial_analysis_canvas")
+agent = Agent(
+    canvas=canvas
+)
+```

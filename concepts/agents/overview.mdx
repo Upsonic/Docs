@@ -1,0 +1,48 @@
+---
+title: Agents
+sidebarTitle: Overview
+description: Let's analyze how Upsonic Aegnts works
+hideToc: true
+---
+
+
+# Agent
+
+Generate agents that belongs to your company.
+
+The `Agent` class is the core agent implementation in Upsonic, providing a powerful and flexible interface for creating AI agents with advanced capabilities including memory management, safety policies, reliability layers, and sophisticated tool integration.
+
+## Overview
+
+The `Agent` can be created with minimal configuration or with extensive customization to suit your specific needs. The agent provides a robust foundation for AI-powered applications with built-in support for various advanced features.
+
+### Key Features
+
+- **Memory Management**: Built-in support for session memory, user profiles, and conversation history
+- **Safety Policies**: Configurable user and agent policies for content filtering and validation
+- **Reliability Layer**: Advanced hallucination prevention and content validation
+- **Tool Integration**: Sophisticated tool processing with behavioral wrappers
+- **Thinking & Reasoning**: Optional advanced reasoning capabilities for complex tasks
+- **Caching**: Built-in caching system for improved performance
+- **Canvas Integration**: Support for persistent text editing and collaboration
+
+## Basic Example
+
+The simplest way to create an agent is with default settings:
+
+```python
+from upsonic import Agent
+
+# Create agent with default settings
+agent = Agent()
+```
+
+**Warning**: When creating an agent without specifying a model, it defaults to `"openai/gpt-4o"`. Make sure you have the appropriate API key set in your environment.
+
+## Navigation
+
+- [Creating an Agent](/creating-an-agent) - Learn how to create agents with different configurations
+- [Agent Attributes](/agent-attributes) - Comprehensive guide to all agent configuration options
+- [Adding a Memory](/adding-a-memory) - Set up memory management for your agents
+- [Adding Reflection](/adding-reflection) - Enable thinking capabilities for your agents
+- [Adding Reasoning](/adding-reasoning) - Enable advanced reasoning for complex tasks
