@@ -1,0 +1,758 @@
+# Embeddings
+
+Transform text into vector representations for semantic search and RAG pipelines
+
+## Overview
+
+In the Upsonic framework, **Embeddings** are the foundation for converting text into numerical vector representations that capture semantic meaning. The framework provides a unified interface across multiple embedding providers, enabling seamless switching between local and cloud-based models while maintaining consistent behavior and advanced features like caching, batching, and automatic retry mechanisms.
+
+## Embedding Providers
+
+Upsonic supports multiple embedding providers with a consistent API:
+
+| Provider | Type | Best For | Pricing |
+|----------|------|----------|---------|
+| **OpenAI** | Cloud API | Production deployments, high quality | $0.02-$0.13 per 1M tokens |
+| **Azure OpenAI** | Cloud API | Enterprise, compliance requirements | Variable by region |
+| **AWS Bedrock** | Cloud API | AWS infrastructure, multi-model | $0.0001-$0.0007 per 1K tokens |
+| **Google Gemini** | Cloud API | Multilingual, code embeddings | $0.15 per 1M tokens |
+| **HuggingFace** | Local/API | Custom models, flexibility | Free (local) or variable (API) |
+| **FastEmbed** | Local | Fast inference, no API costs | Free |
+| **Ollama** | Local | Privacy, offline operation | Free |
+
+## Base Configuration
+
+All embedding providers share common configuration options:
+
+| Attribute | Type | Description | Default |
+|-----------|------|-------------|---------|
+| **model_name** | str | Model identifier | Provider-specific |
+| **batch_size** | int | Batch size for processing | 100 |
+| **max_retries** | int | Maximum retry attempts | 3 |
+| **retry_delay** | float | Initial retry delay (seconds) | 1.0 |
+| **timeout** | float | Request timeout (seconds) | 30.0 |
+| **normalize_embeddings** | bool | Normalize to unit length | True |
+| **show_progress** | bool | Display progress during batch ops | True |
+| **cache_embeddings** | bool | Enable embedding caching | False |
+| **enable_retry_with_backoff** | bool | Exponential backoff on retries | True |
+| **enable_adaptive_batching** | bool | Dynamic batch size adjustment | True |
+| **enable_compression** | bool | Enable dimensionality reduction | False |
+
+## OpenAI Embeddings
+
+### Basic Usage
+
+```python
+from upsonic.embeddings import OpenAIEmbedding
+
+# Initialize provider
+embedding = OpenAIEmbedding(
+    model_name="text-embedding-3-small",
+    api_key="your-api-key"  # or set OPENAI_API_KEY env var
+)
+
+# Embed documents
+from upsonic.schemas.data_models import Chunk
+
+chunks = [
+    Chunk(text_content="Artificial intelligence is transforming technology."),
+    Chunk(text_content="Machine learning enables computers to learn from data.")
+]
+
+embeddings = await embedding.embed_documents(chunks)
+
+# Embed a query
+query_embedding = await embedding.embed_query("What is AI?")
+```
+
+### Advanced Configuration
+
+```python
+from upsonic.embeddings import OpenAIEmbeddingConfig, OpenAIEmbedding
+
+config = OpenAIEmbeddingConfig(
+    model_name="text-embedding-3-large",
+    batch_size=50,
+    enable_rate_limiting=True,
+    requests_per_minute=3000,
+    tokens_per_minute=1000000,
+    parallel_requests=5,
+    cache_embeddings=True,
+    normalize_embeddings=True
+)
+
+embedding = OpenAIEmbedding(config=config)
+```
+
+### Model Options
+
+```python
+# Small model (fastest, most cost-effective)
+embedding = OpenAIEmbedding(model_name="text-embedding-3-small")  # 1536 dims
+
+# Large model (highest quality)
+embedding = OpenAIEmbedding(model_name="text-embedding-3-large")  # 3072 dims
+
+# Legacy model
+embedding = OpenAIEmbedding(model_name="text-embedding-ada-002")  # 1536 dims
+```
+
+## Azure OpenAI Embeddings
+
+### Basic Usage
+
+```python
+from upsonic.embeddings import AzureOpenAIEmbedding
+
+embedding = AzureOpenAIEmbedding(
+    azure_endpoint="https://your-resource.openai.azure.com/",
+    deployment_name="your-deployment-name",
+    api_key="your-api-key",
+    api_version="2024-02-01"
+)
+```
+
+### Managed Identity Authentication
+
+```python
+from upsonic.embeddings import create_azure_embedding_with_managed_identity
+
+# Use Azure Managed Identity (no API key needed)
+embedding = create_azure_embedding_with_managed_identity(
+    azure_endpoint="https://your-resource.openai.azure.com/",
+    deployment_name="your-deployment-name",
+    client_id="your-client-id"  # Optional
+)
+```
+
+### Enterprise Features
+
+```python
+config = AzureOpenAIEmbeddingConfig(
+    azure_endpoint="https://your-resource.openai.azure.com/",
+    deployment_name="embedding-deployment",
+    enable_content_filtering=True,
+    data_residency_region="eastus",
+    use_managed_identity=True,
+    tenant_id="your-tenant-id"
+)
+
+embedding = AzureOpenAIEmbedding(config=config)
+
+# Get compliance information
+compliance = embedding.get_compliance_info()
+```
+
+## AWS Bedrock Embeddings
+
+### Basic Usage
+
+```python
+from upsonic.embeddings import BedrockEmbedding
+
+# Titan embeddings
+embedding = BedrockEmbedding(
+    model_name="amazon.titan-embed-text-v2",
+    region_name="us-east-1"
+)
+
+# Cohere embeddings
+embedding = BedrockEmbedding(
+    model_name="cohere.embed-multilingual-v3",
+    region_name="us-east-1"
+)
+```
+
+### AWS Credentials
+
+```python
+# Method 1: Explicit credentials
+embedding = BedrockEmbedding(
+    model_name="amazon.titan-embed-text-v1",
+    aws_access_key_id="your-access-key",
+    aws_secret_access_key="your-secret-key",
+    region_name="us-east-1"
+)
+
+# Method 2: AWS profile
+embedding = BedrockEmbedding(
+    model_name="amazon.titan-embed-text-v1",
+    profile_name="your-profile",
+    region_name="us-east-1"
+)
+
+# Method 3: IAM roles (recommended)
+embedding = BedrockEmbedding(
+    model_name="amazon.titan-embed-text-v1",
+    region_name="us-east-1"
+)
+```
+
+### Model Options
+
+```python
+from upsonic.embeddings import create_titan_embedding, create_cohere_embedding
+
+# Titan v1 (1536 dims)
+embedding = create_titan_embedding(region_name="us-east-1", model_version="v1")
+
+# Titan v2 (1024 dims, optimized)
+embedding = create_titan_embedding(region_name="us-east-1", model_version="v2")
+
+# Cohere English (1024 dims)
+embedding = create_cohere_embedding(language="english", region_name="us-east-1")
+
+# Cohere Multilingual (1024 dims)
+embedding = create_cohere_embedding(language="multilingual", region_name="us-east-1")
+```
+
+## Google Gemini Embeddings
+
+### Basic Usage
+
+```python
+from upsonic.embeddings import GeminiEmbedding
+
+# Using API key
+embedding = GeminiEmbedding(
+    model_name="gemini-embedding-001",
+    api_key="your-api-key",
+    task_type="RETRIEVAL_DOCUMENT"
+)
+```
+
+### Task-Specific Embeddings
+
+```python
+from upsonic.embeddings import (
+    create_gemini_document_embedding,
+    create_gemini_query_embedding,
+    create_gemini_semantic_embedding
+)
+
+# Document embeddings
+doc_embedding = create_gemini_document_embedding(api_key="your-api-key")
+
+# Query embeddings
+query_embedding = create_gemini_query_embedding(api_key="your-api-key")
+
+# Semantic similarity
+semantic_embedding = create_gemini_semantic_embedding(api_key="your-api-key")
+```
+
+### Vertex AI Integration
+
+```python
+from upsonic.embeddings import create_gemini_vertex_embedding
+
+# Using Vertex AI
+embedding = create_gemini_vertex_embedding(
+    project_id="your-gcp-project",
+    location="us-central1",
+    model_name="gemini-embedding-001"
+)
+```
+
+### Advanced Configuration
+
+```python
+config = GeminiEmbeddingConfig(
+    model_name="gemini-embedding-001",
+    api_key="your-api-key",
+    task_type="RETRIEVAL_DOCUMENT",
+    output_dimensionality=768,  # 128-3072 (Matryoshka)
+    enable_batch_processing=True,
+    enable_caching=True,
+    cache_ttl_seconds=3600,
+    requests_per_minute=60
+)
+
+embedding = GeminiEmbedding(config=config)
+```
+
+## HuggingFace Embeddings
+
+### Local Model Execution
+
+```python
+from upsonic.embeddings import HuggingFaceEmbedding
+
+# Sentence Transformers
+embedding = HuggingFaceEmbedding(
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    device="cuda",  # or "cpu", "mps"
+    torch_dtype="float32"
+)
+
+# MPNet (high quality)
+from upsonic.embeddings import create_mpnet_embedding
+embedding = create_mpnet_embedding(device="cuda")
+
+# MiniLM (fast and efficient)
+from upsonic.embeddings import create_minilm_embedding
+embedding = create_minilm_embedding(device="cpu")
+```
+
+### Quantization for Efficiency
+
+```python
+config = HuggingFaceEmbeddingConfig(
+    model_name="sentence-transformers/all-mpnet-base-v2",
+    enable_quantization=True,
+    quantization_bits=8,  # 4, 8, or 16
+    enable_gradient_checkpointing=True,
+    pooling_strategy="mean",
+    normalize_embeddings=True
+)
+
+embedding = HuggingFaceEmbedding(config=config)
+```
+
+### HuggingFace API
+
+```python
+from upsonic.embeddings import create_huggingface_api_embedding
+
+# Use HuggingFace Inference API
+embedding = create_huggingface_api_embedding(
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    hf_token="your-hf-token"
+)
+```
+
+## FastEmbed (Qdrant)
+
+### Basic Usage
+
+```python
+from upsonic.embeddings import FastEmbedProvider
+
+# Default: BGE-small (fast and efficient)
+embedding = FastEmbedProvider(
+    model_name="BAAI/bge-small-en-v1.5"
+)
+
+# BGE-large (high quality)
+from upsonic.embeddings import create_bge_large_embedding
+embedding = create_bge_large_embedding()
+
+# E5 (multilingual)
+from upsonic.embeddings import create_e5_embedding
+embedding = create_e5_embedding()
+```
+
+### GPU Acceleration
+
+```python
+from upsonic.embeddings import create_gpu_accelerated_embedding
+
+embedding = create_gpu_accelerated_embedding(
+    model_name="BAAI/bge-large-en-v1.5",
+    enable_gpu=True,
+    providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+)
+```
+
+### Sparse Embeddings
+
+```python
+from upsonic.embeddings import create_sparse_embedding
+
+# Sparse embeddings for efficiency
+embedding = create_sparse_embedding(
+    model_name="prithivida/Splade_PP_en_v1",
+    enable_sparse_embeddings=True
+)
+```
+
+### Advanced Configuration
+
+```python
+config = FastEmbedConfig(
+    model_name="BAAI/bge-small-en-v1.5",
+    cache_dir="/path/to/cache",
+    threads=4,
+    enable_gpu=True,
+    enable_parallel_processing=True,
+    doc_embed_type="passage",
+    model_warmup=True
+)
+
+embedding = FastEmbedProvider(config=config)
+```
+
+## Ollama Embeddings
+
+### Basic Usage
+
+```python
+from upsonic.embeddings import OllamaEmbedding
+
+# Nomic Embed Text (default)
+embedding = OllamaEmbedding(
+    model_name="nomic-embed-text",
+    base_url="http://localhost:11434"
+)
+
+# Automatic model pulling
+embedding = OllamaEmbedding(
+    model_name="mxbai-embed-large",
+    auto_pull_model=True,
+    enable_model_preload=True
+)
+```
+
+### Popular Models
+
+```python
+from upsonic.embeddings import (
+    create_nomic_embedding,
+    create_mxbai_embedding,
+    create_arctic_embedding
+)
+
+# Nomic Embed Text (768 dims)
+embedding = create_nomic_embedding(base_url="http://localhost:11434")
+
+# MXBAI Large (1024 dims)
+embedding = create_mxbai_embedding(base_url="http://localhost:11434")
+
+# Snowflake Arctic (1024 dims)
+embedding = create_arctic_embedding(base_url="http://localhost:11434")
+```
+
+### Custom Server Configuration
+
+```python
+config = OllamaEmbeddingConfig(
+    model_name="nomic-embed-text",
+    base_url="http://your-server:11434",
+    auto_pull_model=True,
+    keep_alive="5m",
+    request_timeout=120.0,
+    connection_timeout=10.0,
+    num_ctx=2048  # Context window size
+)
+
+embedding = OllamaEmbedding(config=config)
+```
+
+## Embedding Modes
+
+Different providers support specific embedding modes for optimization:
+
+```python
+from upsonic.embeddings import EmbeddingMode
+
+# Document mode (for indexing)
+embeddings = await embedding.embed_texts(
+    texts=["Document text"],
+    mode=EmbeddingMode.DOCUMENT
+)
+
+# Query mode (for search)
+embeddings = await embedding.embed_texts(
+    texts=["Search query"],
+    mode=EmbeddingMode.QUERY
+)
+
+# Symmetric mode (general purpose)
+embeddings = await embedding.embed_texts(
+    texts=["Any text"],
+    mode=EmbeddingMode.SYMMETRIC
+)
+
+# Clustering mode
+embeddings = await embedding.embed_texts(
+    texts=["Text for clustering"],
+    mode=EmbeddingMode.CLUSTERING
+)
+```
+
+## Advanced Features
+
+### Caching
+
+```python
+# Enable caching for repeated embeddings
+config = OpenAIEmbeddingConfig(
+    model_name="text-embedding-3-small",
+    cache_embeddings=True
+)
+
+embedding = OpenAIEmbedding(config=config)
+
+# Check cache statistics
+cache_info = embedding.get_cache_info()
+print(f"Cache size: {cache_info['size']} embeddings")
+
+# Clear cache when needed
+embedding.clear_cache()
+```
+
+### Progress Tracking
+
+```python
+# Batch process with progress display
+texts = ["Text 1", "Text 2", "Text 3", ...]  # Large list
+
+embeddings = await embedding.embed_texts(
+    texts=texts,
+    show_progress=True
+)
+```
+
+### Error Handling and Retries
+
+```python
+# Configure retry behavior
+config = OpenAIEmbeddingConfig(
+    model_name="text-embedding-3-small",
+    max_retries=5,
+    retry_delay=2.0,
+    enable_retry_with_backoff=True,
+    enable_adaptive_batching=True,
+    timeout=60.0
+)
+
+embedding = OpenAIEmbedding(config=config)
+```
+
+### Validation and Testing
+
+```python
+# Validate provider connection
+is_valid = await embedding.validate_connection()
+if is_valid:
+    print("Embedding provider is ready")
+
+# Get model information
+model_info = embedding.get_model_info()
+print(f"Model: {model_info['model_name']}")
+print(f"Dimensions: {model_info['dimensions']}")
+
+# Get metrics
+metrics = embedding.get_metrics()
+print(f"Total chunks processed: {metrics.total_chunks}")
+print(f"Average time per chunk: {metrics.avg_time_per_chunk}ms")
+```
+
+### Cost Estimation
+
+```python
+# Estimate embedding costs
+cost_info = embedding.estimate_cost(
+    num_texts=10000,
+    avg_text_length=200
+)
+
+print(f"Estimated cost: ${cost_info['estimated_cost']:.4f}")
+print(f"Estimated tokens: {cost_info['estimated_tokens']}")
+print(f"Price per million: ${cost_info['price_per_million_tokens']}")
+```
+
+## Integration with Knowledge Base
+
+```python
+from upsonic import KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding
+from upsonic.vectordb import QdrantProvider
+from upsonic.vectordb.config import Config, CoreConfig, ProviderName, Mode
+
+# Create embedding provider
+embedding = OpenAIEmbedding(
+    model_name="text-embedding-3-small"
+)
+
+# Create vector database
+vectordb = QdrantProvider(Config(
+    core=CoreConfig(
+        provider_name=ProviderName.QDRANT,
+        mode=Mode.IN_MEMORY,
+        collection_name="my_collection",
+        vector_size=1536
+    )
+))
+
+# Create knowledge base with embeddings
+knowledge_base = KnowledgeBase(
+    sources=["documents/"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Use in agent task
+from upsonic import Agent, Task
+
+agent = Agent(name="Assistant")
+task = Task(
+    description="Answer questions about the documents",
+    context=[knowledge_base]
+)
+
+result = agent.do(task)
+```
+
+## Best Practices
+
+### Provider Selection
+
+1. **Production (Cloud)**: OpenAI for quality, Azure OpenAI for enterprise
+2. **Privacy**: Ollama or FastEmbed for local execution
+3. **Cost-Effective**: FastEmbed for no API costs, text-embedding-3-small for cloud
+4. **Multilingual**: Gemini or Cohere multilingual models
+5. **Custom Models**: HuggingFace for flexibility
+
+### Performance Optimization
+
+```python
+# Optimize batch size based on model and hardware
+config = OpenAIEmbeddingConfig(
+    model_name="text-embedding-3-small",
+    batch_size=100,  # Larger batches for API providers
+    parallel_requests=5,
+    enable_adaptive_batching=True
+)
+
+# For local models, adjust based on memory
+config = FastEmbedConfig(
+    model_name="BAAI/bge-small-en-v1.5",
+    batch_size=32,  # Smaller batches for local
+    enable_parallel_processing=True,
+    threads=4
+)
+```
+
+### Rate Limiting
+
+```python
+# Configure rate limits for API providers
+config = OpenAIEmbeddingConfig(
+    model_name="text-embedding-3-small",
+    enable_rate_limiting=True,
+    requests_per_minute=3000,
+    tokens_per_minute=1000000
+)
+
+# Azure has different limits
+config = AzureOpenAIEmbeddingConfig(
+    deployment_name="your-deployment",
+    requests_per_minute=240,
+    tokens_per_minute=240000
+)
+```
+
+### Resource Cleanup
+
+```python
+# Always close embedding providers when done
+try:
+    embeddings = await embedding.embed_texts(texts)
+finally:
+    await embedding.close()
+
+# Or use context manager pattern
+async with embedding:
+    embeddings = await embedding.embed_texts(texts)
+```
+
+## Factory Functions
+
+Quick creation functions for common configurations:
+
+```python
+from upsonic.embeddings import (
+    create_openai_embedding,
+    create_azure_openai_embedding,
+    create_bedrock_embedding,
+    create_gemini_embedding,
+    create_fastembed_provider,
+    create_ollama_embedding,
+    create_best_available_embedding
+)
+
+# OpenAI
+embedding = create_openai_embedding(model_name="text-embedding-3-small")
+
+# Auto-detect best available provider
+embedding = create_best_available_embedding()
+
+# List available providers
+from upsonic.embeddings import list_available_providers
+providers = list_available_providers()
+```
+
+## Complete Example
+
+```python
+import asyncio
+from upsonic.embeddings import OpenAIEmbedding, EmbeddingMode
+from upsonic.schemas.data_models import Chunk
+
+async def main():
+    # Initialize embedding provider
+    embedding = OpenAIEmbedding(
+        model_name="text-embedding-3-small",
+        cache_embeddings=True,
+        normalize_embeddings=True,
+        show_progress=True
+    )
+    
+    try:
+        # Validate connection
+        if not await embedding.validate_connection():
+            raise Exception("Failed to connect to embedding provider")
+        
+        # Create chunks
+        documents = [
+            "Artificial intelligence is transforming industries.",
+            "Machine learning enables predictive analytics.",
+            "Deep learning powers modern AI applications."
+        ]
+        
+        chunks = [Chunk(text_content=doc) for doc in documents]
+        
+        # Generate embeddings
+        doc_embeddings = await embedding.embed_documents(chunks)
+        print(f"Generated {len(doc_embeddings)} document embeddings")
+        
+        # Embed query
+        query = "What is AI?"
+        query_embedding = await embedding.embed_query(query)
+        print(f"Query embedding dimensions: {len(query_embedding)}")
+        
+        # Get metrics
+        metrics = embedding.get_metrics()
+        print(f"Total processing time: {metrics.embedding_time_ms:.2f}ms")
+        print(f"Average time per chunk: {metrics.avg_time_per_chunk:.2f}ms")
+        
+        # Get cost estimate
+        cost_info = embedding.estimate_cost(
+            num_texts=1000,
+            avg_text_length=200
+        )
+        print(f"Estimated cost for 1000 texts: ${cost_info['estimated_cost']:.4f}")
+        
+    finally:
+        # Clean up
+        await embedding.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Model Comparison
+
+| Provider | Model | Dimensions | Context Length | Speed | Cost | Best For |
+|----------|-------|------------|----------------|-------|------|----------|
+| OpenAI | text-embedding-3-small | 1536 | 8191 tokens | Fast | $ | Production |
+| OpenAI | text-embedding-3-large | 3072 | 8191 tokens | Medium | $$$ | Quality |
+| Azure OpenAI | text-embedding-ada-002 | 1536 | 8191 tokens | Fast | $ | Enterprise |
+| Bedrock | amazon.titan-embed-text-v2 | 1024 | 8192 tokens | Fast | $ | AWS |
+| Gemini | gemini-embedding-001 | 768-3072 | 2048 tokens | Fast | $ | Multilingual |
+| HuggingFace | all-MiniLM-L6-v2 | 384 | 256 tokens | Very Fast | Free | Local |
+| HuggingFace | all-mpnet-base-v2 | 768 | 384 tokens | Fast | Free | Quality |
+| FastEmbed | BAAI/bge-small-en-v1.5 | 384 | 512 tokens | Very Fast | Free | Efficiency |
+| FastEmbed | BAAI/bge-large-en-v1.5 | 1024 | 512 tokens | Fast | Free | Quality |
+| Ollama | nomic-embed-text | 768 | 8192 tokens | Fast | Free | Privacy |
+
