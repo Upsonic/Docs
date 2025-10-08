@@ -1,120 +1,248 @@
----
-title: "Quickstart"
-description: "Build your first AI agent with Upsonic In under 2 Minute"
----
+# Quickstart
 
-## Build your first Upsonic Agent
+Build your first AI agent with Upsonic in under 2 minutes! 🦔
 
-Let's create a simple agent that expert on our company and roled as Product Manager.
+## 1. Installation
 
-Before we proceed, make sure you have `Upsonic` installed.
-If you haven't installed them yet, you can do so by following the [installation guide](/installation).
+```bash
+pip install upsonic
+```
 
-Follow the steps below to get your sonics\! 🦔
-
-<Steps>
-  <Step title="Providing OpenAI Api Key">
-    Upsonic supports multiple LLMs. In this example, we will use OpenAI's GPT-4 model, for which we need to set environment variables.
-
-    <CodeGroup>
-
-    ```python Python
-    import os
-    
-    os.environ["OPENAI_API_KEY"] = "sk-***"
-    ```
-
-    
-    ```bash Mac
-    export OPENAI_API_KEY=sk-***
-    
-    ```
-
-    
-    ```powershell Windows
-    setx OPENAI_API_KEY sk-***
-    ```
-
-    </CodeGroup>
-  </Step>
-  <Step title="Generate your First Task">
-    The task-centric structure important to create an programatic design in Agent systems. In Upsonic you can generate an task oriented structure with task **description**, **tools**, **context**, **knowledge bases** and etc. In this example we will give `Search` tools to our task. The agent will use the `Search` tool at the run time.
-
-    ```python
-    from upsonic import Task, Agent
-    from upsonic.tools import Search
-    
-    # Creating Task
-    task = Task(
-      "Research latest news in Anthropic and OpenAI", 
-      tools=[Search]
-    )
-    ```
-  </Step>
-  <Step title="Generate an Expert Agent of Our Company">
-    Upsonic have an **automatic characterization** mechanism. Its important to create agents that belongs on your purpose. In this example we will generate an Product Manager.
-
-    ```python
-    from upsonic import Task, Agent
-    from upsonic.tools import Search
-    
-    # Creating Task
-    task = Task(
-      "Research latest news in Anthropic and OpenAI", 
-      tools=[Search]
-    )
-    
-    # Creating Agent
-    agent = Agent(name="Researcher Agent")
-    ```
-  </Step>
-  <Step title="Running the Task on Agent">
-    ```python
-    from upsonic import Task, Agent
-    from upsonic.tools import Search
-    
-    # Creating Task
-    task = Task(
-      "Research latest news in Anthropic and OpenAI", 
-      tools=[Search]
-    )
-    
-    # Creating Agent
-    agent = Agent(name="Researcher Agent")
-    
-    # Running the task
-    agent.print_do(task)
-    ```
-  </Step>
-</Steps>
-
-## Connect Any MCP
-
-Upsonic framework, support to start and connect any MCP server for your purposes. Model Context Protocol servers are varously and maintain by companies and community. Upsonic support all MCP servers.
-
-- [List of mcp servers](https://glama.ai/mcp/servers?attributes=)
-
-At this step you need to use  `class`  with **command**, **args** and **env.**
+## 2. Basic Agent Usage
 
 ```python
-from upsonic import Task, Agent
+from upsonic.tasks.tasks import Task
+from upsonic.agent.agent import Agent
 
+# Create a task
+task = Task(
+    description="Research latest news in AI and summarize the key points",
+    tools=[]  # We'll add tools next
+)
 
-# Fetch MCP Server
+# Create an agent
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Research Assistant"
+)
+
+# Execute the task
+result = agent.print_do(task)
+```
+
+## 3. Adding Tools
+
+### Built-in Tools (Provider-Native)
+```python
+from upsonic.tools.builtin_tools import WebSearchTool, CodeExecutionTool
+
+# Web search (works with Anthropic, OpenAI, Google, Groq)
+web_search = WebSearchTool(
+    search_context_size='high',
+    max_uses=5
+)
+
+# Code execution (works with Anthropic, OpenAI, Google)
+code_execution = CodeExecutionTool()
+
+task = Task(
+    description="Search for Python best practices and write a sample function",
+    tools=[web_search, code_execution]
+)
+```
+
+### Common Tools (Third-Party)
+```python
+from upsonic.tools.common_tools import tavily_search_tool, duckduckgo_search_tool
+
+# Tavily search (requires API key)
+tavily_search = tavily_search_tool(api_key="your-tavily-key")
+
+# DuckDuckGo search (free)
+ddg_search = duckduckgo_search_tool()
+
+task = Task(
+    description="Get current stock price for AAPL and search for recent news",
+    tools=[tavily_search, ddg_search]
+)
+```
+
+### Custom Tools
+```python
+from upsonic.tools import tool
+
+@tool
+def calculate_tip(bill_amount: float, tip_percentage: float = 15.0) -> str:
+    """Calculate tip amount and total bill.
+    
+    Args:
+        bill_amount: The total bill amount
+        tip_percentage: Tip percentage (default 15%)
+    
+    Returns:
+        Formatted string with tip and total
+    """
+    tip = bill_amount * (tip_percentage / 100)
+    total = bill_amount + tip
+    return f"Tip: ${tip:.2f}, Total: ${total:.2f}"
+
+@tool(requires_confirmation=True, cache_results=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email (requires confirmation).
+    
+    Args:
+        to: Recipient email address
+        subject: Email subject
+        body: Email body content
+    
+    Returns:
+        Confirmation message
+    """
+    # Your email sending logic here
+    return f"Email sent to {to}"
+
+task = Task(
+    description="Calculate tip for a $50 bill and send a thank you email",
+    tools=[calculate_tip, send_email]
+)
+```
+
+## 4. Advanced Agent Configuration
+
+```python
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Advanced Assistant",
+    
+    # Agent personality
+    role="Senior Software Engineer",
+    goal="Help developers write better code",
+    instructions="Always provide code examples and best practices",
+    
+    # Advanced features
+    enable_thinking_tool=True,      # Multi-step planning
+    enable_reasoning_tool=True,     # Self-reflection
+    tool_call_limit=10,            # Max tool calls per task
+    show_tool_calls=True,          # Display tool execution
+    
+    # Memory and context
+    memory=memory_instance,        # Conversation history
+    compression_strategy="simple", # Context compression
+    
+    # Safety and reliability
+    user_policy=safety_policy,     # Input validation
+    agent_policy=output_policy,    # Output filtering
+    retry=3,                       # Retry attempts
+)
+```
+
+## 5. Tool Configuration Options
+
+```python
+@tool(
+    requires_user_input=True,      # Prompt for additional input
+    user_input_fields=['api_key'], # Fields to collect
+    show_result=True,              # Display result to user
+    stop_after_tool_call=True,     # Stop agent after this tool
+    sequential=True,               # No parallel execution
+    cache_results=True,            # Cache results
+    cache_ttl=3600,               # Cache for 1 hour
+    max_retries=3,                # Retry on failure
+    timeout=30.0                  # 30 second timeout
+)
+def advanced_tool(param: str) -> str:
+    """An advanced tool with full configuration."""
+    return f"Processed: {param}"
+```
+
+## 6. MCP (Model Context Protocol) Integration
+
+```python
+# Connect to any MCP server
 class FetchMCP:
     command = "uvx"
     args = ["mcp-server-fetch"]
 
+class GitHubMCP:
+    url = "https://github.com/modelcontextprotocol/servers"
+    # Additional MCP configuration
 
-# Creating Task
 task = Task(
-  "Research latest news in Anthropic and OpenAI", 
-  tools=[FetchMCP] # Using MCP Server
+    description="Fetch data from GitHub and process it",
+    tools=[FetchMCP, GitHubMCP]
+)
+```
+
+## 7. Complete Example
+
+```python
+from upsonic.tasks.tasks import Task
+from upsonic.agent.agent import Agent
+from upsonic.tools import tool
+from upsonic.tools.builtin_tools import WebSearchTool
+from upsonic.tools.common_tools import YFinanceTools
+
+
+# Custom tool
+@tool(cache_results=True)
+def analyze_sentiment(text: str) -> str:
+    """Analyze sentiment of given text."""
+    positive_words = ['good', 'great', 'excellent', 'amazing']
+    negative_words = ['bad', 'terrible', 'awful', 'horrible']
+    
+    text_lower = text.lower()
+    positive_count = sum(1 for word in positive_words if word in text_lower)
+    negative_count = sum(1 for word in negative_words if word in text_lower)
+    
+    if positive_count > negative_count:
+        return "Positive sentiment"
+    elif negative_count > positive_count:
+        return "Negative sentiment"
+    else:
+        return "Neutral sentiment"
+
+# Create tools
+web_search = WebSearchTool()
+finance_tools = YFinanceTools(stock_price=True, company_news=True)
+finance_tools.enable_all_tools()
+
+# Create task
+task = Task(
+    description="Get current AAPL stock price, search for recent news, and analyze sentiment",
+    tools=[finance_tools, web_search, analyze_sentiment]
 )
 
-# Creating Agent
-agent = Agent(name="Researcher Agent")
+# Create agent
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Financial Analyst",
+    role="Senior Financial Analyst",
+    enable_thinking_tool=True,
+    tool_call_limit=8
+)
 
-# Running the task
-agent.print_do(task)
+# Execute
+result = agent.print_do(task)
 ```
+
+## 8. Key Features
+
+- **Multi-Model Support**: OpenAI, Anthropic, Google, Groq, and more
+- **Advanced Tool System**: Built-in, custom, and MCP tools
+- **Intelligent Planning**: Multi-step reasoning and orchestration
+- **Memory Management**: Conversation history and context
+- **Safety Policies**: Input/output validation and filtering
+- **Caching**: Built-in result caching for efficiency
+- **Streaming**: Real-time response streaming
+- **External Execution**: Defer tools for external processing
+
+## 9. Next Steps
+
+- Explore [Tool Configuration](link-to-tool-docs) for advanced tool behavior
+- Learn about [Memory Management](link-to-memory-docs) for conversation history
+- Discover [Safety Policies](link-to-safety-docs) for content filtering
+- Check out [MCP Integration](link-to-mcp-docs) for external tool connections
+
+---
+
+**Ready to build amazing AI agents?** Start with the basic example above and gradually add more sophisticated tools and configurations as you explore the framework!
