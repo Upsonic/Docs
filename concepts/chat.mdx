@@ -1,0 +1,578 @@
+# Chat
+
+Build conversational AI experiences with stateful session management
+
+## Overview
+
+In the Upsonic framework, `Chat` is a comprehensive conversational interface that provides stateful session management for AI agents. It handles the complete lifecycle of chat interactions, including message history, memory integration, cost tracking, and both streaming and non-streaming interfaces.
+
+The Chat class serves as a high-level orchestrator that manages:
+- Session lifecycle and state management
+- Memory integration and conversation persistence
+- Cost and token tracking across sessions
+- Both blocking and streaming response modes
+- Error handling and retry mechanisms
+- Concurrent invocation control
+
+## Chat Attributes
+
+The Chat class provides comprehensive configuration options to customize conversational behavior and session management.
+
+### Core Attributes
+
+| Attribute               | Type                                                  | Description                                                         |
+| ----------------------- | ----------------------------------------------------- | ------------------------------------------------------------------- |
+| **session_id**          | str                                                   | Unique identifier for this chat session                             |
+| **user_id**             | str                                                   | Unique identifier for the user                                      |
+| **agent**               | Agent                                                 | The Agent instance to handle conversations                          |
+| **storage**             | Optional[Storage]                                     | Storage backend for persistence (defaults to InMemoryStorage)       |
+
+### Memory Configuration
+
+| Attribute               | Type                         | Description                                                    |
+| ----------------------- | ---------------------------- | -------------------------------------------------------------- |
+| **full_session_memory** | bool                         | Enable full conversation history storage (default: True)        |
+| **summary_memory**      | bool                         | Enable conversation summarization (default: False)             |
+| **user_analysis_memory**| bool                         | Enable user profile analysis (default: False)                 |
+| **user_profile_schema** | Optional[Type[BaseModel]]    | Custom user profile schema                                      |
+| **dynamic_user_profile**| bool                         | Enable dynamic profile schema generation (default: False)       |
+| **num_last_messages**   | Optional[int]                | Limit conversation history to last N messages                   |
+| **feed_tool_call_results**| bool                        | Include tool calls in memory (default: False)                   |
+| **user_memory_mode**    | Literal['update', 'replace'] | How to update user profiles (default: 'update')                |
+
+### Advanced Configuration
+
+| Attribute               | Type                         | Description                                                    |
+| ----------------------- | ---------------------------- | -------------------------------------------------------------- |
+| **debug**               | bool                         | Enable debug logging (default: False)                          |
+| **max_concurrent_invocations** | int                    | Maximum concurrent invoke calls (default: 1)                  |
+| **retry_attempts**      | int                          | Number of retry attempts for failed calls (default: 3)        |
+| **retry_delay**         | float                        | Delay between retry attempts in seconds (default: 1.0)         |
+
+## Creating a Chat Session
+
+Chat sessions are created directly in code using the constructor. Each chat session can be customized with specific memory settings, storage backends, and session management options.
+
+### Basic Chat Creation
+
+```python
+from upsonic import Chat, Agent
+
+# Create agent
+agent = Agent("openai/gpt-4o")
+
+# Create basic chat session
+chat = Chat(
+    session_id="user123_session1",
+    user_id="user123",
+    agent=agent
+)
+
+# Send a message
+response = await chat.invoke("Hello, how are you?")
+print(response)
+
+# Access chat history
+print(chat.all_messages)
+print(f"Total cost: ${chat.total_cost}")
+```
+
+### Chat with Custom Memory Settings
+
+```python
+from upsonic.storage.providers import SqliteStorage
+
+# Create storage backend
+storage = SqliteStorage(
+    sessions_table_name="sessions",
+    profiles_table_name="profiles",
+    db_file="chat.db"
+)
+
+# Create chat with advanced memory settings
+chat = Chat(
+    session_id="session1",
+    user_id="user1", 
+    agent=agent,
+    storage=storage,
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    user_memory_mode='update'
+)
+```
+
+### Chat with Debug and Retry Configuration
+
+```python
+# Create chat with custom retry and debug settings
+chat = Chat(
+    session_id="debug_session",
+    user_id="user1",
+    agent=agent,
+    debug=True,
+    max_concurrent_invocations=2,
+    retry_attempts=5,
+    retry_delay=2.0
+)
+```
+
+## Advanced Chat Configuration
+
+### Custom Storage Backends
+
+```python
+from upsonic.storage.providers import SqliteStorage, PostgresStorage
+
+# SQLite storage for development and small-scale applications
+sqlite_storage = SqliteStorage(
+    sessions_table_name="sessions",
+    profiles_table_name="profiles", 
+    db_file="chat_sessions.db"  # Optional: None for in-memory DB
+)
+
+chat = Chat(
+    session_id="sqlite_session",
+    user_id="user1",
+    agent=agent,
+    storage=sqlite_storage
+)
+
+# PostgreSQL storage for production and large-scale applications
+postgres_storage = PostgresStorage(
+    sessions_table_name="sessions",
+    profiles_table_name="profiles",
+    db_url="postgresql://user:password@localhost:5432/chat_db",
+    schema="public"  # Optional: defaults to "public"
+)
+
+chat = Chat(
+    session_id="postgres_session",
+    user_id="user1",
+    agent=agent,
+    storage=postgres_storage
+)
+```
+
+### Memory Management Strategies
+
+```python
+# Full conversation memory with summarization
+chat = Chat(
+    session_id="summarized_session",
+    user_id="user1",
+    agent=agent,
+    full_session_memory=True,
+    summary_memory=True,
+    num_last_messages=50  # Keep last 50 messages in memory
+)
+
+# User profile analysis
+from pydantic import BaseModel
+
+class UserProfile(BaseModel):
+    interests: list[str] = []
+    communication_style: str = "professional"
+    expertise_level: str = "beginner"
+
+chat = Chat(
+    session_id="analyzed_session",
+    user_id="user1",
+    agent=agent,
+    user_analysis_memory=True,
+    user_profile_schema=UserProfile,
+    dynamic_user_profile=True
+)
+```
+
+## Chat Interface Methods
+
+### Basic Messaging
+
+```python
+# Send a simple message
+response = await chat.invoke("What's the weather like today?")
+
+# Send a message with attachments
+response = await chat.invoke(
+    "Analyze this document", 
+    attachments=["document.pdf", "data.csv"]
+)
+
+# Send a Task object
+from upsonic import Task
+
+task = Task(
+    description="Write a Python function to sort a list",
+    tools=[some_tool]
+)
+response = await chat.invoke(task)
+```
+
+### Streaming Responses
+
+```python
+# Stream a response
+async for chunk in chat.invoke("Tell me a story", stream=True):
+    print(chunk, end='', flush=True)
+
+# Using the dedicated stream method
+async for chunk in chat.stream("Explain quantum computing"):
+    print(chunk, end='', flush=True)
+```
+
+### Session Management
+
+```python
+# Get session information
+print(f"Session state: {chat.state}")
+print(f"Total messages: {len(chat.all_messages)}")
+print(f"Input tokens: {chat.input_tokens}")
+print(f"Output tokens: {chat.output_tokens}")
+print(f"Total cost: ${chat.total_cost:.4f}")
+
+# Get session metrics
+metrics = chat.get_session_metrics()
+print(f"Session duration: {metrics.duration:.1f}s")
+print(f"Average response time: {metrics.average_response_time:.2f}s")
+
+# Get cost history
+cost_history = chat.get_cost_history()
+for entry in cost_history:
+    print(f"Cost: ${entry['estimated_cost']:.4f} - {entry['model_name']}")
+```
+
+## Session State Management
+
+### Session States
+
+The Chat class manages several session states:
+
+- **IDLE**: Session is ready to accept new messages
+- **AWAITING_RESPONSE**: Processing a user message
+- **STREAMING**: Streaming a response to the user
+- **ERROR**: Session encountered an error
+
+```python
+# Check session state
+if chat.state == SessionState.IDLE:
+    response = await chat.invoke("Hello!")
+elif chat.state == SessionState.ERROR:
+    chat.reset_session()  # Reset to recover from error
+```
+
+### Session Lifecycle
+
+```python
+# Create and use a chat session
+async with chat:
+    # Send multiple messages
+    response1 = await chat.invoke("What is AI?")
+    response2 = await chat.invoke("How does it work?")
+    
+    # Session automatically cleaned up on exit
+```
+
+## Memory Integration
+
+### Conversation History
+
+```python
+# Access full conversation history
+messages = chat.all_messages
+for message in messages:
+    print(f"{message.role}: {message.content}")
+    if message.attachments:
+        print(f"  Attachments: {message.attachments}")
+    if message.tool_calls:
+        print(f"  Tool calls: {message.tool_calls}")
+
+# Get recent messages only
+recent_messages = chat.get_recent_messages(count=5)
+```
+
+### Memory Persistence
+
+```python
+# Chat automatically persists to storage
+chat = Chat(
+    session_id="persistent_session",
+    user_id="user1",
+    agent=agent,
+    storage=postgres_storage,
+    full_session_memory=True
+)
+
+# Memory is automatically loaded and saved
+response = await chat.invoke("Remember that I prefer Python over Java")
+# This preference is stored in user profile
+
+response = await chat.invoke("What programming language do I prefer?")
+# Agent will recall the preference from memory
+```
+
+## Cost and Token Tracking
+
+### Cost Monitoring
+
+```python
+# Track costs across the session
+print(f"Total cost: ${chat.total_cost:.4f}")
+print(f"Input tokens: {chat.input_tokens}")
+print(f"Output tokens: {chat.output_tokens}")
+
+# Get detailed cost breakdown
+cost_history = chat.get_cost_history()
+for entry in cost_history:
+    print(f"Model: {entry['model_name']}")
+    print(f"Cost: ${entry['estimated_cost']:.4f}")
+    print(f"Tokens: {entry['input_tokens']} in, {entry['output_tokens']} out")
+```
+
+### Session Analytics
+
+```python
+# Get comprehensive session metrics
+metrics = chat.get_session_metrics()
+print(f"Session duration: {metrics.duration:.1f}s")
+print(f"Messages per minute: {metrics.messages_per_minute:.1f}")
+print(f"Average response time: {metrics.average_response_time:.2f}s")
+print(f"Total cost: ${metrics.total_cost:.4f}")
+
+# Get session summary
+summary = chat.get_session_summary()
+print(summary)
+```
+
+## Error Handling and Retry Logic
+
+### Automatic Retry
+
+```python
+# Chat automatically retries failed requests
+chat = Chat(
+    session_id="robust_session",
+    user_id="user1",
+    agent=agent,
+    retry_attempts=5,
+    retry_delay=2.0
+)
+
+# Network errors are automatically retried
+response = await chat.invoke("This might fail due to network issues")
+# Chat will retry up to 5 times with exponential backoff
+```
+
+### Error Recovery
+
+```python
+# Check for errors and recover
+if chat.state == SessionState.ERROR:
+    print("Session encountered an error")
+    chat.reset_session()  # Reset to recover
+    response = await chat.invoke("Let's start over")
+```
+
+## Practical Examples
+
+### Customer Support Chat
+
+```python
+# Create storage for customer support
+support_storage = SqliteStorage(
+    sessions_table_name="support_sessions",
+    profiles_table_name="customer_profiles",
+    db_file="support_chat.db"
+)
+
+# Create a customer support chat
+support_chat = Chat(
+    session_id="support_ticket_12345",
+    user_id="customer_456",
+    agent=Agent("openai/gpt-4o"),
+    storage=support_storage,
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True
+)
+
+# Handle customer inquiry
+response = await support_chat.invoke("I'm having trouble with my account login")
+# Agent has access to conversation history and user profile
+
+# Continue the conversation
+response = await support_chat.invoke("The error message says 'invalid credentials'")
+# Agent remembers the context and can provide targeted help
+```
+
+### Educational Assistant
+
+```python
+# Create storage for educational chat
+edu_storage = SqliteStorage(
+    sessions_table_name="learning_sessions",
+    profiles_table_name="student_profiles",
+    db_file="education_chat.db"
+)
+
+# Create an educational chat with memory
+edu_chat = Chat(
+    session_id="student_learning_session",
+    user_id="student_789",
+    agent=Agent("openai/gpt-4o"),
+    storage=edu_storage,
+    full_session_memory=True,
+    user_analysis_memory=True,
+    user_memory_mode='update'
+)
+
+# Progressive learning conversation
+response = await edu_chat.invoke("I want to learn Python programming")
+# Agent creates a learning plan
+
+response = await edu_chat.invoke("What should I start with?")
+# Agent provides personalized recommendations based on user profile
+
+response = await edu_chat.invoke("I'm confused about functions")
+# Agent explains functions in context of previous conversation
+```
+
+### Multi-User Chat System
+
+```python
+# Create multiple chat sessions for different users
+chats = {}
+
+# Create shared storage for multi-user system
+shared_storage = SqliteStorage(
+    sessions_table_name="user_sessions",
+    profiles_table_name="user_profiles",
+    db_file="multi_user_chat.db"
+)
+
+def create_user_chat(user_id: str, agent: Agent):
+    return Chat(
+        session_id=f"user_{user_id}_session",
+        user_id=user_id,
+        agent=agent,
+        storage=shared_storage,
+        full_session_memory=True,
+        user_analysis_memory=True
+    )
+
+# Handle multiple users
+async def handle_user_message(user_id: str, message: str):
+    if user_id not in chats:
+        chats[user_id] = create_user_chat(user_id, agent)
+    
+    chat = chats[user_id]
+    response = await chat.invoke(message)
+    return response
+```
+
+### Streaming Chat Interface
+
+```python
+# Create a streaming chat for real-time applications
+streaming_chat = Chat(
+    session_id="realtime_chat",
+    user_id="user_streaming",
+    agent=agent,
+    debug=True
+)
+
+# Stream responses for real-time UI updates
+async def stream_chat_response(message: str):
+    async for chunk in streaming_chat.stream(message):
+        # Send chunk to frontend via WebSocket
+        await websocket.send(chunk)
+```
+
+## Best Practices
+
+### Performance Optimization
+
+1. **Choose appropriate storage**: Use in-memory for development, persistent storage for production
+2. **Configure memory settings**: Enable only needed memory features to optimize performance
+3. **Set retry limits**: Balance between reliability and response time
+4. **Use streaming for long responses**: Improve user experience with real-time output
+
+### Session Management
+
+1. **Use unique session IDs**: Ensure proper session isolation
+2. **Implement session cleanup**: Close unused sessions to free resources
+3. **Monitor session state**: Handle errors gracefully
+4. **Use context managers**: Ensure proper resource cleanup
+
+### Memory Configuration
+
+1. **Enable summarization for long conversations**: Prevent memory overflow
+2. **Use user analysis for personalization**: Improve user experience
+3. **Configure message limits**: Balance between context and performance
+4. **Choose appropriate memory modes**: Update vs replace based on use case
+
+## Complete Example
+
+```python
+import asyncio
+from upsonic import Chat, Agent, Task
+from upsonic.storage.providers import SqliteStorage
+
+async def main():
+    # Create agent
+    agent = Agent("openai/gpt-4o")
+    
+    # Create storage
+    storage = SqliteStorage(
+        sessions_table_name="sessions",
+        profiles_table_name="profiles",
+        db_file="chat_sessions.db"
+    )
+    
+    # Create chat with comprehensive configuration
+    chat = Chat(
+        session_id="comprehensive_session",
+        user_id="demo_user",
+        agent=agent,
+        storage=storage,
+        full_session_memory=True,
+        summary_memory=True,
+        user_analysis_memory=True,
+        debug=True,
+        retry_attempts=3,
+        retry_delay=1.5
+    )
+    
+    try:
+        # Basic conversation
+        print("=== BASIC CONVERSATION ===")
+        response = await chat.invoke("Hello! I'm interested in learning about AI.")
+        print(f"Agent: {response}")
+        
+        # Follow-up with context
+        response = await chat.invoke("What are the main types of AI?")
+        print(f"Agent: {response}")
+        
+        # Streaming response
+        print("\n=== STREAMING RESPONSE ===")
+        async for chunk in chat.stream("Explain machine learning in detail"):
+            print(chunk, end='', flush=True)
+        print()  # New line after streaming
+        
+        # Session analytics
+        print("\n=== SESSION ANALYTICS ===")
+        print(f"Total messages: {len(chat.all_messages)}")
+        print(f"Total cost: ${chat.total_cost:.4f}")
+        print(f"Input tokens: {chat.input_tokens}")
+        print(f"Output tokens: {chat.output_tokens}")
+        
+        # Session summary
+        print(f"\nSession summary:\n{chat.get_session_summary()}")
+        
+    finally:
+        # Clean up
+        await chat.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
