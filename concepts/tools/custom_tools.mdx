@@ -1,0 +1,517 @@
+# Custom Tools
+
+## Overview
+
+Upsonic's custom tool system provides the ultimate flexibility for building AI agents with domain-specific capabilities. Whether you need simple utility functions or complex business logic, the framework offers multiple approaches to create, configure, and deploy custom tools that integrate seamlessly with your AI agents.
+
+### Key Features
+
+- **Multiple Creation Patterns**: Functions, classes, toolkits, and agent-as-tool support
+- **Advanced Configuration**: Comprehensive tool configuration options for production use
+- **Execution Control**: External execution, user interaction, and confirmation workflows
+- **Performance Features**: Caching, retries, timeouts, and parallel execution
+- **Developer Experience**: Type hints, docstring parsing, and automatic schema generation
+- **Production Ready**: Built-in error handling, logging, and monitoring capabilities
+
+### Tool Creation Approaches
+
+1. **Function Tools**: Simple, decorator-based tool creation
+   - `@tool` decorator with configuration options
+   - Type hints and docstring-based schema generation
+   - Hooks for before/after execution logic
+
+2. **Class-Based Tools**: Object-oriented tool organization
+   - `ToolKit` classes for related functionality
+   - Regular classes with automatic method exposure
+   - Stateful tools with instance variables
+
+3. **Agent as Tool**: Hierarchical agent architectures
+   - Use specialized agents as tools for complex workflows
+   - Multi-agent systems with delegation and coordination
+
+### Advanced Capabilities
+
+- **External Execution**: Tools that run outside the framework (databases, file systems)
+- **User Interaction**: Tools that require user input or confirmation
+- **Caching & Performance**: Built-in caching, retries, and timeout management
+- **Error Handling**: Comprehensive error handling and recovery mechanisms
+- **Monitoring**: Execution tracking and performance metrics
+
+### When to Use Custom Tools
+
+- **Business Logic**: Implement domain-specific algorithms and workflows
+- **External Integrations**: Connect to databases, APIs, and external services
+- **Complex Workflows**: Multi-step processes requiring orchestration
+- **Specialized Domains**: Tools tailored to specific industries or use cases
+- **Performance Optimization**: Custom caching, batching, and optimization strategies
+- **Security Requirements**: Tools with specific security and access controls
+
+### Development Benefits
+
+- **Rapid Prototyping**: Quick tool creation with minimal boilerplate
+- **Type Safety**: Full type hint support with automatic validation
+- **Documentation**: Automatic schema generation from docstrings
+- **Testing**: Built-in testing and debugging capabilities
+- **Deployment**: Production-ready tools with monitoring and error handling
+- **Maintainability**: Clean, organized code with clear separation of concerns
+
+Upsonic provides a comprehensive tool system that allows you to create custom tools for your AI agents. You can create tools using functions, classes, toolkits, and even use other agents as tools.
+
+## Function Tools
+
+The simplest way to create a custom tool is by decorating a function with the `@tool` decorator.
+
+### Basic Function Tool
+
+```python
+from upsonic.tasks.tasks import Task
+from upsonic.agent.agent import Agent
+from upsonic.tools import tool
+
+@tool
+def simple_calculator(operation: str, a: float, b: float) -> float:
+    """
+    Perform basic mathematical operations.
+    
+    Args:
+        operation: The operation to perform ('add', 'subtract', 'multiply', 'divide')
+        a: First number
+        b: Second number
+        
+    Returns:
+        The result of the operation
+    """
+    if operation == "add":
+        return a + b
+    elif operation == "subtract":
+        return a - b
+    elif operation == "multiply":
+        return a * b
+    elif operation == "divide":
+        if b == 0:
+            raise ValueError("Cannot divide by zero")
+        return a / b
+    else:
+        raise ValueError(f"Unknown operation: {operation}")
+
+# Create task and agent
+task = Task(
+    description="Calculate 15 + 25 using the calculator",
+    tools=[simple_calculator]
+)
+
+agent = Agent(model="openai/gpt-4o", name="Calculator Agent")
+
+agent.print_do(task)
+```
+
+### Function Tool with Configuration
+
+You can configure tool behavior using the `@tool` decorator with parameters:
+
+```python
+from upsonic.tools import tool, ToolConfig
+
+@tool(
+    requires_confirmation=True,
+    show_result=True,
+    cache_results=True,
+    max_retries=3,
+    timeout=10.0
+)
+def weather_analyzer(city: str, temperature: float) -> str:
+    """
+    Analyze weather conditions for a city.
+    
+    Args:
+        city: Name of the city
+        temperature: Current temperature in Celsius
+        
+    Returns:
+        Weather analysis string
+    """
+    if temperature < 0:
+        condition = "freezing"
+    elif temperature < 10:
+        condition = "cold"
+    elif temperature < 20:
+        condition = "cool"
+    elif temperature < 30:
+        condition = "warm"
+    else:
+        condition = "hot"
+    
+    return f"Weather in {city}: {condition} ({temperature}°C)"
+
+task = Task(
+    description="Analyze weather in Paris with temperature 15 degrees",
+    tools=[weather_analyzer]
+)
+
+agent = Agent(model="openai/gpt-4o", name="Weather Agent")
+
+agent.print_do(task)
+```
+
+### Function Tool with Hooks
+
+You can add before/after execution hooks to your tools:
+
+```python
+from upsonic.tools import tool, ToolHooks
+
+def before_hook(**kwargs):
+    print(f"Before hook: Processing {kwargs}")
+    return {"hook_data": "before_execution"}
+
+def after_hook(result):
+    print(f"After hook: Result was {result}")
+    return {"hook_data": "after_execution"}
+
+@tool(
+    tool_hooks=ToolHooks(before=before_hook, after=after_hook),
+    sequential=True
+)
+def data_processor(data: list[str], operation: str = "uppercase") -> list[str]:
+    """
+    Process a list of strings.
+    
+    Args:
+        data: List of strings to process
+        operation: Type of operation ('uppercase', 'lowercase', 'reverse')
+        
+    Returns:
+        Processed list of strings
+    """
+    if operation == "uppercase":
+        return [item.upper() for item in data]
+    elif operation == "lowercase":
+        return [item.lower() for item in data]
+    elif operation == "reverse":
+        return [item[::-1] for item in data]
+    else:
+        raise ValueError(f"Unknown operation: {operation}")
+
+task = Task(
+    description="Process the list ['hello', 'world'] to uppercase",
+    tools=[data_processor]
+)
+
+agent = Agent(model="openai/gpt-4o", name="Data Processor Agent")
+
+agent.print_do(task)
+```
+
+## Tool Configuration Options
+
+The `@tool` decorator supports various configuration options:
+
+- `requires_confirmation`: If True, the agent will pause and require user confirmation before executing the tool
+- `requires_user_input`: If True, the agent will pause and prompt the user for input for specified fields
+- `user_input_fields`: Field names that the user should provide when requires_user_input is True
+- `external_execution`: If True, the tool's execution is handled by an external process
+- `show_result`: If True, the output is shown to the user and NOT sent back to the LLM
+- `stop_after_tool_call`: If True, the agent's run will terminate after this tool call
+- `sequential`: If True, this tool requires sequential execution (no parallelization)
+- `cache_results`: If True, the result will be cached based on arguments
+- `cache_dir`: Directory to store cache files
+- `cache_ttl`: Time-to-live for cache entries in seconds
+- `tool_hooks`: Custom functions to run before/after tool execution
+- `max_retries`: Maximum number of retries allowed for this tool
+- `timeout`: Timeout for tool execution in seconds
+- `strict`: Whether to enforce strict JSON schema validation on tool parameters
+- `docstring_format`: Format of the docstring ('google', 'numpy', 'sphinx', or 'auto')
+
+## External Execution and User Interaction
+
+### External Execution
+
+For tools that need to be executed outside the framework (e.g., database operations, file system operations):
+
+```python
+@tool(
+    external_execution=True,
+    show_result=True
+)
+def external_database_query(query: str) -> str:
+    """Execute a database query that requires external processing."""
+    return f"External database query executed: {query}"
+
+# Usage
+task = Task(
+    description="Call the external_database_query tool with query 'SELECT * FROM users'",
+    tools=[external_database_query]
+)
+agent = Agent(model="openai/gpt-4o")
+result = await agent.do_async(task)
+
+# Check if task is paused for external execution
+if task.is_paused and task.tools_awaiting_external_execution:
+    print("Task is paused for external execution. Executing external tools:")
+    for external_call in task.tools_awaiting_external_execution:
+        print(f"Tool: {external_call.tool_name}")
+        print(f"Args: {external_call.args}")
+        
+        # Execute the actual external tool function
+        if external_call.tool_name == "external_database_query":
+            result = external_database_query(**external_call.args)
+            external_call.result = result
+            print(f"Result: {result}")
+    
+    # Continue the run
+    final_result = agent.continue_run(task)
+    print(f"Final result: {final_result.output}")
+```
+
+### User Input Requirements
+
+For tools that need user input during execution:
+
+```python
+@tool(
+    requires_user_input=True,
+    user_input_fields=["username", "password"]
+)
+def secure_login(username: str, password: str) -> str:
+    """Login with user-provided credentials."""
+    return f"Login successful for user: {username}"
+
+# Usage
+task = Task(
+    description="Call the secure_login tool with username 'admin' and password 'secret123'",
+    tools=[secure_login]
+)
+agent = Agent(model="openai/gpt-4o")
+result = await agent.do_async(task)
+# Agent will prompt: "Enter value for 'username':" and "Enter value for 'password':"
+```
+
+### User Confirmation
+
+For tools that require user confirmation before execution:
+
+```python
+@tool(
+    requires_confirmation=True,
+    show_result=True
+)
+def dangerous_operation(operation: str) -> str:
+    """Perform a dangerous operation that requires confirmation."""
+    return f"Dangerous operation completed: {operation}"
+
+# Usage
+task = Task(
+    description="Perform a dangerous operation",
+    tools=[dangerous_operation]
+)
+agent = Agent(model="openai/gpt-4o")
+result = await agent.do_async(task)
+# Agent will prompt: "⚠️ Confirmation Required\nTool: dangerous_operation\nArguments: {...}\nProceed? (y/n):"
+```
+
+### Combined Features
+
+You can combine multiple features:
+
+```python
+@tool(
+    external_execution=True,
+    requires_confirmation=True,
+    show_result=True
+)
+def external_file_deletion(file_path: str) -> str:
+    """Delete a file using external process with confirmation."""
+    return f"File deleted: {file_path}"
+
+# Usage
+task = Task(
+    description="Call the external_file_deletion tool with file_path '/tmp/test.txt'",
+    tools=[external_file_deletion]
+)
+agent = Agent(model="openai/gpt-4o")
+result = await agent.do_async(task)
+
+# First asks for confirmation, then pauses for external execution
+if task.is_paused and task.tools_awaiting_external_execution:
+    for external_call in task.tools_awaiting_external_execution:
+        if external_call.tool_name == "external_file_deletion":
+            result = external_file_deletion(**external_call.args)
+            external_call.result = result
+    
+    final_result = agent.continue_run(task)
+```
+
+## ToolKit Classes
+
+ToolKit classes allow you to organize related tools together. Only methods decorated with `@tool` are exposed as tools:
+
+```python
+from upsonic.tools import tool, ToolKit
+
+class MathToolKit(ToolKit):
+    """A toolkit for mathematical operations."""
+    
+    @tool
+    def factorial(self, n: int) -> int:
+        """
+        Calculate factorial of a number.
+        
+        Args:
+            n: Non-negative integer
+            
+        Returns:
+            Factorial of n
+        """
+        if n < 0:
+            raise ValueError("Factorial is not defined for negative numbers")
+        if n == 0 or n == 1:
+            return 1
+        return n * self.factorial(n - 1)
+    
+    @tool(
+        cache_results=True,
+        cache_ttl=300
+    )
+    def fibonacci(self, n: int) -> int:
+        """
+        Calculate nth Fibonacci number.
+        
+        Args:
+            n: Position in Fibonacci sequence
+            
+        Returns:
+            nth Fibonacci number
+        """
+        if n < 0:
+            raise ValueError("Fibonacci is not defined for negative numbers")
+        if n <= 1:
+            return n
+        return self.fibonacci(n - 1) + self.fibonacci(n - 2)
+    
+    def non_tool_method(self):
+        """This method is not decorated with @tool, so it won't be exposed."""
+        return "This won't be available as a tool"
+
+task = Task(
+    description="Calculate factorial of 5 and fibonacci of 10",
+    tools=[MathToolKit()]
+)
+
+agent = Agent(model="openai/gpt-4o", name="Math Agent")
+
+agent.print_do(task)
+```
+
+## Regular Class Tools
+
+You can also use regular classes where all public methods are automatically exposed as tools:
+
+```python
+class StringProcessor:
+    """A regular class that will have all public methods exposed as tools."""
+    
+    def reverse_string(self, text: str) -> str:
+        """
+        Reverse a string.
+        
+        Args:
+            text: Input string
+            
+        Returns:
+            Reversed string
+        """
+        return text[::-1]
+    
+    def count_words(self, text: str) -> int:
+        """
+        Count words in a string.
+        
+        Args:
+            text: Input string
+            
+        Returns:
+            Number of words
+        """
+        return len(text.split())
+    
+    def _private_method(self):
+        """Private method - won't be exposed as tool."""
+        return "private"
+
+task = Task(
+    description="Reverse the string 'Hello World' and count its words",
+    tools=[StringProcessor()]
+)
+
+agent = Agent(model="openai/gpt-4o", name="String Processor Agent")
+
+agent.print_do(task)
+```
+
+## Agent as Tool
+
+You can use other agents as tools by simply adding them to the tools list:
+
+```python
+specialized_agent = Agent("Specialized Agent", model="openai/gpt-4o")
+
+task = Task(
+    description="Use the specialized agent to process 'Test task'",
+    tools=[specialized_agent]
+)
+
+agent = Agent(model="openai/gpt-4o", name="Main Agent")
+
+agent.print_do(task)
+```
+
+## Combining Multiple Tools
+
+You can combine different types of tools in a single task:
+
+```python
+# Create various tools
+calculator = simple_calculator
+weather_tool = weather_analyzer
+math_kit = MathToolKit()
+string_processor = StringProcessor()
+
+task = Task(
+    description="Use multiple tools to solve a complex problem",
+    tools=[
+        calculator,
+        weather_tool,
+        math_kit,
+        string_processor,
+        specialized_agent
+    ]
+)
+
+agent = Agent(model="openai/gpt-4o", name="Multi-Tool Agent")
+
+agent.print_do(task)
+```
+
+## Best Practices
+
+1. **Use descriptive docstrings**: Always provide clear docstrings with Args and Returns sections
+2. **Handle errors gracefully**: Use try-catch blocks and return meaningful error messages
+3. **Use type hints**: Specify parameter and return types for better tool schema generation
+4. **Organize related tools**: Use ToolKit classes for related functionality
+5. **Configure appropriately**: Use tool configuration options to control behavior
+6. **Test your tools**: Always test your tools before using them in production
+
+## Tool Schema Generation
+
+Upsonic automatically generates JSON schemas for your tools based on:
+- Function signatures and type hints
+- Docstring documentation
+- Tool configuration options
+
+The framework supports multiple docstring formats:
+- Google style
+- NumPy style  
+- Sphinx style
+- Auto-detection
+
+Make sure your docstrings follow one of these formats for optimal schema generation.
