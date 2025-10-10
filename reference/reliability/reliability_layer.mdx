@@ -1,0 +1,173 @@
+---
+title: Reliability Layer
+sidebarTitle: Reliability Layer
+---
+
+## Classes
+
+### SourceReliability
+
+Source reliability levels.
+
+#### Values
+
+| Value                              | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HIGH`                             | High reliability                                                                                                                                                                                                                 |
+| `MEDIUM`                           | Medium reliability                                                                                                                                                                                                               |
+| `LOW`                              | Low reliability                                                                                                                                                                                                                  |
+| `UNKNOWN`                          | Unknown reliability                                                                                                                                                                                                              |
+
+### ValidationPoint
+
+Validation point for content validation.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `is_suspicious`                    | `bool`                                                | -          | Whether the content is suspicious                                                                                                                                                                                                |
+| `feedback`                         | `str`                                                 | -          | Feedback about the validation                                                                                                                                                                                                    |
+| `suspicious_points`                | `list[str]`                                           | -          | List of suspicious information raw names                                                                                                                                                                                         |
+| `source_reliability`               | `SourceReliability`                                   | `UNKNOWN`  | Source reliability level                                                                                                                                                                                                         |
+| `verification_method`              | `str`                                                 | `""`       | Method used for verification                                                                                                                                                                                                     |
+| `confidence_score`                 | `float`                                               | `0.0`      | Confidence score for the validation                                                                                                                                                                                              |
+
+### ValidationResult
+
+Result of content validation.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url_validation`                    | `ValidationPoint`                                     | -          | URL validation results                                                                                                                                                                                                           |
+| `number_validation`                 | `ValidationPoint`                                     | -          | Number validation results                                                                                                                                                                                                        |
+| `information_validation`            | `ValidationPoint`                                     | -          | Information validation results                                                                                                                                                                                                    |
+| `code_validation`                   | `ValidationPoint`                                     | -          | Code validation results                                                                                                                                                                                                          |
+| `any_suspicion`                     | `bool`                                                | -          | Whether any suspicion was detected                                                                                                                                                                                                |
+| `suspicious_points`                 | `list[str]`                                           | -          | List of all suspicious points                                                                                                                                                                                                    |
+| `overall_feedback`                 | `str`                                                 | -          | Overall feedback about the validation                                                                                                                                                                                             |
+| `overall_confidence`                | `float`                                               | `0.0`      | Overall confidence score                                                                                                                                                                                                         |
+
+#### Functions
+
+##### `calculate_suspicion`
+
+Calculate suspicion based on all validation points.
+
+**Returns:**
+
+- `str`: Complete validation summary for editor
+
+### ReliabilityProcessor
+
+Processor for reliability and content validation.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `confidence_threshold`             | `float`                                               | `0.7`      | Confidence threshold for validation                                                                                                                                                                                              |
+
+#### Functions
+
+##### `process_task`
+
+Process a task through reliability validation.
+
+**Parameters:**
+
+- `task` (Task): The task to process
+- `reliability_layer` (Optional[Any]): The reliability layer configuration
+- `model_provider` (Optional[Union[Model, str]]): The model provider
+
+**Returns:**
+
+- `Task`: The processed task
+
+## Functions
+
+### `strip_context_tags`
+
+Remove context tags from text while preserving the content inside.
+
+**Parameters:**
+
+- `text` (str): The text to clean
+
+**Returns:**
+
+- `str`: The cleaned text
+
+### `find_urls_in_text`
+
+Find all URLs in the given text using regex pattern matching.
+
+**Parameters:**
+
+- `text` (str): The text to search
+
+**Returns:**
+
+- `List[str]`: List of found URLs
+
+### `find_numbers_in_text`
+
+Find all numbers in the given text using regex pattern matching.
+
+**Parameters:**
+
+- `text` (str): The text to search
+
+**Returns:**
+
+- `List[str]`: List of found numbers
+
+### `find_code_in_text`
+
+Check if text contains code-like patterns.
+
+**Parameters:**
+
+- `text` (str): The text to check
+
+**Returns:**
+
+- `bool`: True if code patterns are found
+
+### `contains_urls`
+
+Check if any of the provided texts contain URLs.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts to check
+
+**Returns:**
+
+- `bool`: True if any text contains URLs
+
+### `contains_numbers`
+
+Check if any of the provided texts contain numbers.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts to check
+
+**Returns:**
+
+- `bool`: True if any text contains numbers
+
+### `contains_code`
+
+Check if any of the provided texts contain code.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts to check
+
+**Returns:**
+
+- `bool`: True if any text contains code

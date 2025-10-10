@@ -1,0 +1,246 @@
+---
+title: ToolValidationError
+sidebarTitle: ToolValidationError
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`                          | `str`                                                 | -          | Error message                                                                                                                                                                                                                    |
+
+## Functions
+
+No specific functions - Exception raised for invalid tool definitions.
+
+---
+
+---
+title: ExternalExecutionPause
+sidebarTitle: ExternalExecutionPause
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_call`                        | `ToolCall`                                           | -          | The tool call that requires external execution                                                                                                                                                                                   |
+
+## Functions
+
+No specific functions - Exception for pausing agent execution for external tool execution.
+
+---
+
+---
+title: ToolProcessor
+sidebarTitle: ToolProcessor
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `registered_tools`                 | `Dict[str, Tool]`                                    | `{}`       | Dictionary of registered tools                                                                                                                                                                                                   |
+| `tool_definitions`                 | `Dict[str, ToolDefinition]`                          | `{}`       | Dictionary of tool definitions                                                                                                                                                                                                   |
+| `mcp_handlers`                     | `List[Any]`                                          | `[]`       | List of MCP handlers                                                                                                                                                                                                             |
+| `current_context`                  | `Optional[ToolContext]`                              | `None`     | Current tool execution context                                                                                                                                                                                                   |
+
+## Functions
+
+### `process_tools`
+
+Process a list of raw tools and return registered Tool instances.
+
+**Parameters:**
+
+- `tools` (List[Any]): List of tools to process
+- `context` (Optional[ToolContext]): Tool execution context
+
+**Returns:**
+
+- `Dict[str, Tool]`: Dictionary of processed tools
+
+### `_is_mcp_tool`
+
+Check if an item is an MCP tool configuration.
+
+**Parameters:**
+
+- `tool_item` (Any): The item to check
+
+**Returns:**
+
+- `bool`: True if the item is an MCP tool configuration
+
+### `_is_builtin_tool`
+
+Check if an item is a built-in tool.
+
+**Parameters:**
+
+- `tool_item` (Any): The item to check
+
+**Returns:**
+
+- `bool`: True if the item is a built-in tool
+
+### `extract_builtin_tools`
+
+Extract built-in tools from a list of tools.
+
+**Parameters:**
+
+- `tools` (List[Any]): List of tools to extract from
+
+**Returns:**
+
+- `List[Any]`: List of built-in tools
+
+### `_process_mcp_tool`
+
+Process MCP tool configuration.
+
+**Parameters:**
+
+- `mcp_config` (Type): MCP configuration class
+
+**Returns:**
+
+- `Dict[str, Tool]`: Dictionary of MCP tools
+
+### `_process_function_tool`
+
+Process a function into a Tool.
+
+**Parameters:**
+
+- `func` (Callable): The function to process
+
+**Returns:**
+
+- `Tool`: The processed tool
+
+### `_process_toolkit`
+
+Process a ToolKit instance.
+
+**Parameters:**
+
+- `toolkit` (ToolKit): The toolkit instance
+
+**Returns:**
+
+- `Dict[str, Tool]`: Dictionary of toolkit tools
+
+### `_process_class_tools`
+
+Process all public methods of a class instance as tools.
+
+**Parameters:**
+
+- `instance` (Any): The class instance
+
+**Returns:**
+
+- `Dict[str, Tool]`: Dictionary of class tools
+
+### `_is_agent_instance`
+
+Check if an object is an agent instance.
+
+**Parameters:**
+
+- `obj` (Any): The object to check
+
+**Returns:**
+
+- `bool`: True if the object is an agent instance
+
+### `_process_agent_tool`
+
+Process an agent instance as a tool.
+
+**Parameters:**
+
+- `agent` (Any): The agent instance
+
+**Returns:**
+
+- `Tool`: The agent tool
+
+### `create_behavioral_wrapper`
+
+Create a wrapper function with behavioral logic for a tool.
+
+**Parameters:**
+
+- `tool` (Tool): The tool to wrap
+- `context` (ToolContext): Tool execution context
+
+**Returns:**
+
+- `Callable`: The wrapped function
+
+### `_get_user_confirmation`
+
+Get user confirmation for tool execution.
+
+**Parameters:**
+
+- `tool_name` (str): Name of the tool
+- `args` (Dict[str, Any]): Tool arguments
+
+**Returns:**
+
+- `bool`: True if user confirms execution
+
+### `_get_user_input`
+
+Get user input for specified fields.
+
+**Parameters:**
+
+- `tool_name` (str): Name of the tool
+- `args` (Dict[str, Any]): Current arguments
+- `fields` (List[str]): Fields requiring user input
+
+**Returns:**
+
+- `Dict[str, Any]`: Updated arguments with user input
+
+### `_get_cache_key`
+
+Generate cache key for tool call.
+
+**Parameters:**
+
+- `tool_name` (str): Name of the tool
+- `args` (Dict[str, Any]): Tool arguments
+
+**Returns:**
+
+- `str`: Cache key
+
+### `_get_cached_result`
+
+Get cached result if available and valid.
+
+**Parameters:**
+
+- `cache_key` (str): Cache key
+- `config` (ToolConfig): Tool configuration
+
+**Returns:**
+
+- `Any`: Cached result or None
+
+### `_cache_result`
+
+Cache tool result.
+
+**Parameters:**
+
+- `cache_key` (str): Cache key
+- `result` (Any): Result to cache
+- `config` (ToolConfig): Tool configuration

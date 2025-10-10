@@ -1,0 +1,231 @@
+---
+title: GeminiEmbedding
+sidebarTitle: GeminiEmbedding
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api_key`                          | `Optional[str]`                                       | `None`     | Google AI API key                                                                                                                                                                                                                |
+| `model_name`                       | `str`                                                 | `"gemini-embedding-001"` | Gemini embedding model                                                                                                                                                                                                           |
+| `enable_safety_filtering`          | `bool`                                                | `True`     | Enable Google's safety filtering                                                                                                                                                                                                 |
+| `safety_settings`                  | `Dict[str, str]`                                      | `{"HARM_CATEGORY_HARASSMENT": "BLOCK_MEDIUM_AND_ABOVE", "HARM_CATEGORY_HATE_SPEECH": "BLOCK_MEDIUM_AND_ABOVE", "HARM_CATEGORY_SEXUALLY_EXPLICIT": "BLOCK_MEDIUM_AND_ABOVE", "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_MEDIUM_AND_ABOVE"}` | Safety filtering settings |
+| `task_type`                        | `str`                                                 | `"SEMANTIC_SIMILARITY"` | Embedding task type                                                                                                                                                                                                              |
+| `title`                            | `Optional[str]`                                       | `None`     | Optional title for context                                                                                                                                                                                                       |
+| `enable_batch_processing`          | `bool`                                                | `True`     | Enable batch processing optimization                                                                                                                                                                                             |
+| `use_google_cloud_auth`            | `bool`                                                | `False`    | Use Google Cloud authentication                                                                                                                                                                                                  |
+| `project_id`                       | `Optional[str]`                                       | `None`     | Google Cloud project ID                                                                                                                                                                                                          |
+| `location`                         | `str`                                                 | `"us-central1"` | Google Cloud location                                                                                                                                                                                                           |
+| `requests_per_minute`              | `int`                                                 | `60`       | Requests per minute limit                                                                                                                                                                                                        |
+| `use_vertex_ai`                    | `bool`                                                | `False`    | Use Vertex AI API instead of Gemini Developer API                                                                                                                                                                               |
+| `api_version`                      | `str`                                                 | `"v1beta"` | API version to use (v1beta, v1, v1alpha)                                                                                                                                                                                          |
+| `enable_caching`                   | `bool`                                                | `False`    | Enable response caching                                                                                                                                                                                                          |
+| `cache_ttl_seconds`                | `int`                                                 | `3600`     | Cache TTL in seconds                                                                                                                                                                                                             |
+| `output_dimensionality`            | `Optional[int]`                                       | `None`     | Output embedding dimension (128-3072)                                                                                                                                                                                            |
+| `embedding_config`                 | `Optional[Dict[str, Any]]`                            | `None`     | Additional embedding configuration                                                                                                                                                                                                |
+
+## Functions
+
+### `__init__`
+
+Initialize the GeminiEmbedding provider.
+
+**Parameters:**
+
+- `config` (Optional[GeminiEmbeddingConfig]): Configuration object
+- `**kwargs`: Additional configuration options
+
+### `_setup_authentication`
+
+Setup Google authentication.
+
+### `_setup_client`
+
+Setup Gemini client with new google-genai library.
+
+### `_setup_caching`
+
+Setup response caching.
+
+### `supported_modes`
+
+Get supported embedding modes.
+
+**Returns:**
+
+- `List[EmbeddingMode]`: List of supported embedding modes
+
+### `pricing_info`
+
+Get Google Gemini embedding pricing.
+
+**Returns:**
+
+- `Dict[str, float]`: Pricing information
+
+### `get_model_info`
+
+Get information about the current Gemini model.
+
+**Returns:**
+
+- `Dict[str, Any]`: Model information
+
+### `_get_task_type_for_mode`
+
+Map embedding mode to Gemini task type.
+
+**Parameters:**
+
+- `mode` (EmbeddingMode): Embedding mode
+
+**Returns:**
+
+- `str`: Task type for the mode
+
+### `_check_rate_limits`
+
+Check and enforce rate limits.
+
+### `_embed_batch`
+
+Embed a batch of texts using Google Gemini with new API.
+
+**Parameters:**
+
+- `texts` (List[str]): List of text strings to embed
+- `mode` (EmbeddingMode): Embedding mode for optimization
+
+**Returns:**
+
+- `List[List[float]]`: List of embedding vectors
+
+### `_embed_single_text`
+
+Embed a single text using Gemini with new API.
+
+**Parameters:**
+
+- `text` (str): Text to embed
+- `task_type` (str): Task type for embedding
+
+**Returns:**
+
+- `List[float]`: Embedding vector
+
+### `_embed_texts_batch`
+
+Embed multiple texts in batch using new API.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts to embed
+- `task_type` (str): Task type for embedding
+
+**Returns:**
+
+- `List[List[float]]`: List of embedding vectors
+
+### `validate_connection`
+
+Validate Gemini connection and model access.
+
+**Returns:**
+
+- `bool`: True if connection is valid
+
+### `get_usage_stats`
+
+Get detailed usage statistics.
+
+**Returns:**
+
+- `Dict[str, Any]`: Usage statistics
+
+### `get_safety_info`
+
+Get content safety and filtering information.
+
+**Returns:**
+
+- `Dict[str, Any]`: Safety information
+
+### `list_available_models`
+
+List available Gemini embedding models.
+
+**Returns:**
+
+- `List[Dict[str, Any]]`: List of available models
+
+### `close`
+
+Clean up Gemini client and clear resources.
+
+### `create_gemini_document_embedding`
+
+Create Gemini embedding optimized for documents.
+
+**Parameters:**
+
+- `api_key` (Optional[str]): Google AI API key
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `GeminiEmbedding`: Configured GeminiEmbedding instance
+
+### `create_gemini_query_embedding`
+
+Create Gemini embedding optimized for queries.
+
+**Parameters:**
+
+- `api_key` (Optional[str]): Google AI API key
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `GeminiEmbedding`: Configured GeminiEmbedding instance
+
+### `create_gemini_semantic_embedding`
+
+Create Gemini embedding for semantic similarity.
+
+**Parameters:**
+
+- `api_key` (Optional[str]): Google AI API key
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `GeminiEmbedding`: Configured GeminiEmbedding instance
+
+### `create_gemini_cloud_embedding`
+
+Create Gemini embedding with Google Cloud authentication.
+
+**Parameters:**
+
+- `project_id` (str): Google Cloud project ID
+- `location` (str): Google Cloud location
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `GeminiEmbedding`: Configured GeminiEmbedding instance
+
+### `create_gemini_vertex_embedding`
+
+Create Gemini embedding with Vertex AI.
+
+**Parameters:**
+
+- `project_id` (str): Google Cloud project ID
+- `location` (str): Google Cloud location
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `GeminiEmbedding`: Configured GeminiEmbedding instance

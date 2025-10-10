@@ -1,0 +1,78 @@
+---
+title: CoordinatorSetup
+sidebarTitle: CoordinatorSetup
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `members`                          | `List[Agent]`                                         | Required   | The list of member agents available to the team                                                                                                                                                                                  |
+| `tasks`                            | `List[Task]`                                          | Required   | The initial list of tasks for the team to accomplish                                                                                                                                                                            |
+| `mode`                             | `Literal["coordinate", "route"]`                     | Required   | The operational mode for the team                                                                                                                                                                                                |
+
+## Functions
+
+### `_summarize_tool`
+
+Creates a human-readable summary of a tool from its name and docstring.
+
+**Parameters:**
+
+- `tool` (Callable): The tool to summarize
+
+**Returns:**
+
+- `str`: Human-readable summary of the tool
+
+### `_format_agent_manifest`
+
+Format the agent manifest for display.
+
+**Returns:**
+
+- `str`: Formatted agent manifest string
+
+### `_serialize_context_item`
+
+Serialize a context item to a string representation.
+
+**Parameters:**
+
+- `item` (Any): The context item to serialize
+
+**Returns:**
+
+- `str`: String representation of the context item
+
+### `_format_tasks_manifest`
+
+Format the tasks manifest for display.
+
+**Returns:**
+
+- `str`: Formatted tasks manifest string
+
+### `create_leader_prompt`
+
+Constructs the complete system prompt for the Team Leader agent based on the team's operational mode.
+
+**Returns:**
+
+- `str`: The complete system prompt for the Team Leader agent
+
+### `_create_coordinate_prompt`
+
+Constructs the complete system prompt for the Team Leader agent, including manifests for both team members and initial tasks with full tool schemas.
+
+**Returns:**
+
+- `str`: The coordinate mode system prompt
+
+### `_create_route_prompt`
+
+Generates the new, specialized system prompt for the 'route' mode.
+
+**Returns:**
+
+- `str`: The route mode system prompt

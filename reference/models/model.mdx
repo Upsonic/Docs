@@ -1,0 +1,142 @@
+---
+title: Model
+sidebarTitle: Model
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `settings`                         | `Optional[ModelSettings]`                             | `None`     | Model-specific settings that will be used as defaults for this model                                                                                                                                                             |
+| `profile`                          | `Optional[ModelProfileSpec]`                         | `None`     | The model profile to use                                                                                                                                                                                                         |
+
+## Functions
+
+### `__init__`
+
+Initialize the model with optional settings and profile.
+
+**Parameters:**
+
+- `settings` (Optional[ModelSettings]): Model-specific settings that will be used as defaults for this model
+- `profile` (Optional[ModelProfileSpec]): The model profile to use
+
+### `settings`
+
+Get the model settings.
+
+**Returns:**
+
+- `Optional[ModelSettings]`: The model settings
+
+### `request`
+
+Make a request to the model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model settings to use for this request
+- `model_request_parameters` (ModelRequestParameters): Request parameters including tools and output handling
+
+**Returns:**
+
+- `ModelResponse`: The response from the model
+
+### `count_tokens`
+
+Make a request to the model for counting tokens.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to count tokens for
+- `model_settings` (ModelSettings | None): Model settings to use
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `RequestUsage`: The token usage information
+
+**Raises:**
+
+- `NotImplementedError`: If token counting is not supported by this model
+
+### `request_stream`
+
+Make a request to the model and return a streaming response.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model settings to use for this request
+- `model_request_parameters` (ModelRequestParameters): Request parameters including tools and output handling
+
+**Returns:**
+
+- `AsyncIterator[StreamedResponse]`: An async iterator of streamed responses
+
+**Raises:**
+
+- `NotImplementedError`: If streamed requests are not supported by this model
+
+### `customize_request_parameters`
+
+Customize the request parameters for the model.
+
+This method can be overridden by subclasses to modify the request parameters before sending them to the model. In particular, this method can be used to make modifications to the generated tool JSON schemas if necessary for vendor/model-specific reasons.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): The request parameters to customize
+
+**Returns:**
+
+- `ModelRequestParameters`: The customized request parameters
+
+### `model_name`
+
+The model name.
+
+**Returns:**
+
+- `str`: The model name
+
+### `profile`
+
+The model profile.
+
+**Returns:**
+
+- `ModelProfile`: The model profile
+
+### `system`
+
+The model provider, ex: openai.
+
+Use to populate the `gen_ai.system` OpenTelemetry semantic convention attribute, so should use well-known values listed in https://opentelemetry.io/docs/specs/semconv/attributes-registry/gen-ai/#gen-ai-system when applicable.
+
+**Returns:**
+
+- `str`: The system provider name
+
+### `base_url`
+
+The base URL for the provider API, if available.
+
+**Returns:**
+
+- `str | None`: The base URL for the provider API
+
+### `_get_instructions`
+
+Get instructions from the first ModelRequest found when iterating messages in reverse.
+
+In the case that a "mock" request was generated to include a tool-return part for a result tool, we want to use the instructions from the second-to-most-recent request (which should correspond to the original request that generated the response that resulted in the tool-return part).
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to search through
+
+**Returns:**
+
+- `str | None`: The instructions from the most recent relevant request

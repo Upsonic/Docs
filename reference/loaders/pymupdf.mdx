@@ -1,0 +1,211 @@
+---
+title: PyMuPDFLoader
+sidebarTitle: PyMuPDFLoader
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                           | `PyMuPDFLoaderConfig`                                 | Required   | Configuration object for PyMuPDF loading behavior                                                                                                                                                                               |
+
+## Functions
+
+### `__init__`
+
+Initializes the PyMuPDFLoader with its specific configuration.
+
+**Parameters:**
+
+- `config` (PyMuPDFLoaderConfig): A PyMuPDFLoaderConfig object with settings for PDF processing
+
+### `get_supported_extensions`
+
+Gets a list of file extensions supported by this loader.
+
+**Returns:**
+
+- `List[str]`: List of supported file extensions (`.pdf`)
+
+### `load`
+
+Loads all PDF documents from the given source synchronously.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): PDF source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `aload`
+
+Loads all PDF documents from the given source asynchronously and concurrently.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): PDF source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `batch`
+
+Loads documents from a list of sources, leveraging the core `load` method.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of PDF sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `abatch`
+
+Loads documents from a list of sources asynchronously, leveraging the core `aload` method.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of PDF sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `_process_single_pdf`
+
+Processes a single PDF file, consolidating all page content into a single Document.
+
+**Parameters:**
+
+- `path` (Path): Path to the PDF file
+
+**Returns:**
+
+- `List[Document]`: List of documents created from the PDF
+
+### `_extract_page_content`
+
+Extracts content from a single page based on the `extraction_mode` and `text_extraction_method`.
+
+**Parameters:**
+
+- `page` (pymupdf.Page): PDF page object to extract content from
+- `page_num` (int): Page number
+
+**Returns:**
+
+- `Tuple[str, int]`: Tuple of extracted content and page number
+
+### `_extract_text_from_page`
+
+Extracts text from a page using the configured extraction method.
+
+**Parameters:**
+
+- `page` (pymupdf.Page): PDF page object to extract text from
+
+**Returns:**
+
+- `str`: Extracted text content
+
+### `_process_text_dict`
+
+Processes PyMuPDF's text dictionary format into readable text.
+
+**Parameters:**
+
+- `text_dict` (Dict[str, Any]): Text dictionary from PyMuPDF
+
+**Returns:**
+
+- `str`: Processed text content
+
+### `_perform_ocr`
+
+Performs OCR on a PDF page using PyMuPDF's image extraction and RapidOCR.
+
+**Parameters:**
+
+- `page` (pymupdf.Page): PDF page object to perform OCR on
+
+**Returns:**
+
+- `str`: OCR extracted text
+
+### `_run_single_ocr`
+
+Helper function that runs the synchronous OCR engine.
+
+**Parameters:**
+
+- `image_data` (bytes): Image data to perform OCR on
+
+**Returns:**
+
+- `str`: OCR extracted text
+
+### `_extract_document_metadata`
+
+Extracts metadata from the PDF document.
+
+**Parameters:**
+
+- `doc` (pymupdf.Document): PDF document object
+
+**Returns:**
+
+- `Dict[str, Any]`: Extracted metadata dictionary
+
+### `_extract_images_info`
+
+Extracts information about images in the document.
+
+**Parameters:**
+
+- `doc` (pymupdf.Document): PDF document object
+
+**Returns:**
+
+- `List[Dict[str, Any]]`: List of image information dictionaries
+
+### `_extract_annotations`
+
+Extracts annotations from the specified page range.
+
+**Parameters:**
+
+- `doc` (pymupdf.Document): PDF document object
+- `start_idx` (int): Start page index
+- `end_idx` (int): End page index
+
+**Returns:**
+
+- `List[Dict[str, Any]]`: List of annotation information dictionaries
+
+### `_normalize_whitespace`
+
+Collapses multiple spaces/newlines and trims.
+
+**Parameters:**
+
+- `text` (str): Text to normalize
+
+**Returns:**
+
+- `str`: Normalized text
+
+### `_clean_page_numbers`
+
+Identifies and removes sequential page numbers from the top or bottom of pages.
+
+**Parameters:**
+
+- `page_content_list` (List[str]): List of page content strings
+
+**Returns:**
+
+- `Tuple[List[str], Optional[int]]`: Tuple of cleaned page content and best shift value

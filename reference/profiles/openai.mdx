@@ -1,0 +1,62 @@
+---
+title: OpenAIModelProfile
+sidebarTitle: OpenAIModelProfile
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supports_tools`                    | `bool`                                                | `True`     | Whether the model supports tools                                                                                                                                                                                                 |
+| `supports_json_schema_output`      | `bool`                                                | `True`     | Whether the model supports JSON schema output                                                                                                                                                                                     |
+| `supports_json_object_output`      | `bool`                                                | `True`     | Whether the model supports JSON object output                                                                                                                                                                                     |
+| `default_structured_output_mode`  | `StructuredOutputMode`                                | `'tool'`   | The default structured output mode to use for the model                                                                                                                                                                           |
+| `prompted_output_template`         | `str`                                                 | `"Always respond with a JSON object that's compatible with this schema:\n\n{schema}\n\nDon't include any text or Markdown fencing before or after.\n"` | The instructions template to use for prompted structured output. The '{schema}' placeholder will be replaced with the JSON schema for the output. |
+| `json_schema_transformer`          | `type[JsonSchemaTransformer] \| None`                 | `OpenAIJsonSchemaTransformer` | The transformer to use to make JSON schemas for tools and structured output compatible with the model                                                                                                                             |
+| `thinking_tags`                     | `tuple[str, str]`                                     | `('<think>', '</think>')` | The tags used to indicate thinking parts in the model's output. Defaults to ('<think>', '</think>').                                                                                                                           |
+| `ignore_streamed_leading_whitespace` | `bool`                                                | `False`    | Whether to ignore leading whitespace when streaming a response                                                                                                                                                                   |
+| `openai_supports_strict_tool_definition` | `bool`                                                | `True`     | This can be set by a provider or user if the OpenAI-"compatible" API doesn't support strict tool definitions                                                                                                                                                                                                 |
+| `openai_supports_sampling_settings` | `bool`                                                | `True`     | Turn off to don't send sampling settings like `temperature` and `top_p` to models that don't support them, like OpenAI's o-series reasoning models                                                                                                                                                                                                 |
+| `openai_unsupported_model_settings` | `Sequence[str]`                                       | `()`       | A list of model settings that are not supported by the model                                                                                                                                                                                                 |
+| `openai_supports_tool_choice_required` | `bool`                                                | `True`     | Whether the provider accepts the value ``tool_choice='required'`` in the request payload                                                                                                                                                                                                 |
+| `openai_system_prompt_role`        | `OpenAISystemPromptRole \| None`                     | `None`     | The role to use for the system prompt message. If not provided, defaults to `'system'`                                                                                                                                                                                                 |
+| `openai_chat_supports_web_search`  | `bool`                                                | `False`    | Whether the model supports web search in Chat Completions API                                                                                                                                                                                                 |
+| `openai_supports_encrypted_reasoning_content` | `bool`                                                | `False`    | Whether the model supports including encrypted reasoning content in the response                                                                                                                                                                                                 |
+
+## Functions
+
+### `openai_model_profile`
+
+Get the model profile for an OpenAI model.
+
+**Parameters:**
+
+- `model_name` (str): The name of the OpenAI model
+
+**Returns:**
+
+- `ModelProfile`: The model profile for the OpenAI model
+
+**Description:**
+
+This function returns the model profile for an OpenAI model. It creates an OpenAIModelProfile instance with specific configurations based on the model name. For reasoning models (starting with 'o' or 'gpt-5'), it disables certain sampling settings. For search-preview models, it enables web search support. For o1-mini models, it sets the system prompt role to 'user'.
+
+### `OpenAIJsonSchemaTransformer`
+
+Recursively handle the schema to make it compatible with OpenAI strict mode.
+
+**Description:**
+
+This transformer ensures compatibility with OpenAI's strict mode requirements:
+- `additionalProperties` must be set to false for each object in the parameters
+- All fields in properties must be marked as required
+- Handles various schema transformations and optimizations
+
+**Parameters:**
+
+- `schema` (JsonSchema): The JSON schema to transform
+- `strict` (bool | None): Whether to use strict mode
+
+**Returns:**
+
+- `JsonSchema`: The transformed JSON schema compatible with OpenAI strict mode

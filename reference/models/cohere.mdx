@@ -1,0 +1,150 @@
+---
+title: CohereModel
+sidebarTitle: CohereModel
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_name`                       | `CohereModelName`                                     | `None`     | The name of the Cohere model to use. List of model names available [here](https://docs.cohere.com/docs/models#command)                                                                                                                                                                                                      |
+| `provider`                         | `Literal['cohere'] \| Provider[AsyncClientV2]`        | `'cohere'` | The provider to use for authentication and API access. Can be either the string 'cohere' or an instance of `Provider[AsyncClientV2]`. If not provided, a new provider will be created using the other parameters                                                                                                                                                                                                      |
+| `profile`                          | `ModelProfileSpec \| None`                            | `None`     | The model profile to use. Defaults to a profile picked by the provider based on the model name                                                                                                                                                                                                      |
+| `settings`                         | `ModelSettings \| None`                               | `None`     | Model-specific settings that will be used as defaults for this model                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initialize a Cohere model.
+
+**Parameters:**
+
+- `model_name` (CohereModelName): The name of the Cohere model to use. List of model names available [here](https://docs.cohere.com/docs/models#command)
+- `provider` (Literal['cohere'] | Provider[AsyncClientV2]): The provider to use for authentication and API access. Can be either the string 'cohere' or an instance of `Provider[AsyncClientV2]`. If not provided, a new provider will be created using the other parameters
+- `profile` (ModelProfileSpec | None): The model profile to use. Defaults to a profile picked by the provider based on the model name
+- `settings` (ModelSettings | None): Model-specific settings that will be used as defaults for this model
+
+### `base_url`
+
+Get the base URL for the provider API.
+
+**Returns:**
+
+- `str`: The base URL for the provider API
+
+### `model_name`
+
+Get the model name.
+
+**Returns:**
+
+- `CohereModelName`: The model name
+
+### `system`
+
+Get the model provider.
+
+**Returns:**
+
+- `str`: The model provider
+
+### `request`
+
+Make a request to the model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `ModelResponse`: The model response
+
+### `_chat`
+
+Make a chat request to the Cohere API.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (CohereModelSettings): Cohere-specific model settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `V2ChatResponse`: The chat response from Cohere
+
+### `_process_response`
+
+Process a non-streamed response, and prepare a message to return.
+
+**Parameters:**
+
+- `response` (V2ChatResponse): The chat response from Cohere
+
+**Returns:**
+
+- `ModelResponse`: The processed model response
+
+### `_map_messages`
+
+Map messages to Cohere format.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to map
+
+**Returns:**
+
+- `list[ChatMessageV2]`: The mapped messages
+
+### `_get_tools`
+
+Get the tools for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `list[ToolV2]`: The tools for the request
+
+### `_map_tool_call`
+
+Map a tool call to Cohere format.
+
+**Parameters:**
+
+- `t` (ToolCallPart): The tool call part to map
+
+**Returns:**
+
+- `ToolCallV2`: The mapped tool call
+
+### `_map_tool_definition`
+
+Map a tool definition to Cohere format.
+
+**Parameters:**
+
+- `f` (ToolDefinition): The tool definition to map
+
+**Returns:**
+
+- `ToolV2`: The mapped tool definition
+
+### `_map_user_message`
+
+Map a user message to Cohere format.
+
+**Parameters:**
+
+- `message` (ModelRequest): The user message to map
+
+**Returns:**
+
+- `Iterable[ChatMessageV2]`: The mapped user message

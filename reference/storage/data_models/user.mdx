@@ -1,0 +1,35 @@
+---
+title: UserProfile
+sidebarTitle: UserProfile
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user_id`                          | `UserId`                                              | Required   | The unique identifier for the user, of type UserId. This is the primary key                                                                                                                                                    |
+| `profile_data`                     | `Dict[str, Any]`                                      | `{}`       | A flexible key-value store for persistent user metadata                                                                                                                                                                         |
+| `created_at`                       | `float`                                               | `time.time()` | The Unix timestamp when the user profile was first created                                                                                                                                                                     |
+| `updated_at`                       | `float`                                               | `time.time()` | The Unix timestamp when the user profile was last updated                                                                                                                                                                       |
+
+## Functions
+
+### `to_dict`
+
+Serializes the user profile model to a dictionary.
+
+**Returns:**
+
+- `Dict[str, Any]`: Dictionary representation of the user profile
+
+### `from_dict`
+
+Creates a UserProfile instance from a dictionary.
+
+**Parameters:**
+
+- `data` (Dict[str, Any]): Dictionary data to create UserProfile from
+
+**Returns:**
+
+- `UserProfile`: The created UserProfile instance

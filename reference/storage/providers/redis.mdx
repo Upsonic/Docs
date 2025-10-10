@@ -1,0 +1,163 @@
+---
+title: RedisStorage
+sidebarTitle: RedisStorage
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prefix`                           | `str`                                                 | Required   | A prefix to namespace all keys for this application instance                                                                                                                                                                      |
+| `host`                             | `str`                                                 | `"localhost"` | The Redis server hostname                                                                                                                                                                                                      |
+| `port`                             | `int`                                                 | `6379`     | The Redis server port                                                                                                                                                                                                           |
+| `db`                               | `int`                                                 | `0`        | The Redis database number to use                                                                                                                                                                                                 |
+| `password`                         | `Optional[str]`                                       | `None`     | Optional password for Redis authentication                                                                                                                                                                                      |
+| `ssl`                              | `bool`                                                | `False`    | If True, uses an SSL connection                                                                                                                                                                                                  |
+| `expire`                           | `Optional[int]`                                       | `None`     | Optional TTL in seconds for all created keys                                                                                                                                                                                    |
+
+## Functions
+
+### `is_connected`
+
+Check if the storage provider is connected.
+
+**Returns:**
+
+- `bool`: True if connected, False otherwise
+
+### `connect`
+
+Connect to the storage provider.
+
+### `disconnect`
+
+Disconnect from the storage provider.
+
+### `create`
+
+Create the necessary structure for storage.
+
+### `read`
+
+Read an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[T]): The Pydantic model type to deserialize to
+
+**Returns:**
+
+- `Optional[T]`: The deserialized object or None if not found
+
+### `upsert`
+
+Insert or update an object in storage.
+
+**Parameters:**
+
+- `data` (Union[InteractionSession, UserProfile]): The object to store
+
+### `delete`
+
+Delete an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[BaseModel]): The model type to delete
+
+### `drop`
+
+Drop all data from storage (delete all keys with prefix).
+
+### `is_connected_async`
+
+Asynchronously check if the storage provider is connected.
+
+**Returns:**
+
+- `bool`: True if connected, False otherwise
+
+### `connect_async`
+
+Asynchronously connect to the storage provider.
+
+### `disconnect_async`
+
+Asynchronously disconnect from the storage provider.
+
+### `create_async`
+
+Asynchronously create the necessary structure for storage.
+
+### `read_async`
+
+Asynchronously read an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[T]): The Pydantic model type to deserialize to
+
+**Returns:**
+
+- `Optional[T]`: The deserialized object or None if not found
+
+### `upsert_async`
+
+Asynchronously insert or update an object in storage.
+
+**Parameters:**
+
+- `data` (Union[InteractionSession, UserProfile]): The object to store
+
+### `delete_async`
+
+Asynchronously delete an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[BaseModel]): The model type to delete
+
+### `drop_async`
+
+Asynchronously drop all data from storage (delete all keys with prefix).
+
+### `_get_key`
+
+Get the Redis key for a given object ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[BaseModel]): The model type
+
+**Returns:**
+
+- `str`: The Redis key for the object
+
+### `_serialize`
+
+Serialize data to JSON string.
+
+**Parameters:**
+
+- `data` (Dict[str, Any]): The data to serialize
+
+**Returns:**
+
+- `str`: JSON string representation
+
+### `_deserialize`
+
+Deserialize JSON string to dictionary.
+
+**Parameters:**
+
+- `data` (str): The JSON string to deserialize
+
+**Returns:**
+
+- `Dict[str, Any]`: The deserialized dictionary

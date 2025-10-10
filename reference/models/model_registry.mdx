@@ -1,0 +1,282 @@
+---
+title: Model Registry
+sidebarTitle: Model Registry
+---
+
+## Classes
+
+### `ModelCapability`
+
+Categories of model capabilities.
+
+**Type:** `Enum`
+
+**Values:**
+- `REASONING` - "reasoning"
+- `CODE_GENERATION` - "code_generation"
+- `MATHEMATICS` - "mathematics"
+- `CREATIVE_WRITING` - "creative_writing"
+- `ANALYSIS` - "analysis"
+- `MULTILINGUAL` - "multilingual"
+- `VISION` - "vision"
+- `AUDIO` - "audio"
+- `LONG_CONTEXT` - "long_context"
+- `FAST_INFERENCE` - "fast_inference"
+- `COST_EFFECTIVE` - "cost_effective"
+- `FUNCTION_CALLING` - "function_calling"
+- `STRUCTURED_OUTPUT` - "structured_output"
+- `ETHICAL_SAFETY` - "ethical_safety"
+- `RESEARCH` - "research"
+- `PRODUCTION` - "production"
+
+### `ModelTier`
+
+Model performance tiers.
+
+**Type:** `Enum`
+
+**Values:**
+- `FLAGSHIP` - "flagship" (Top-tier, most capable models)
+- `ADVANCED` - "advanced" (High performance, balanced cost)
+- `STANDARD` - "standard" (Good performance, cost-effective)
+- `FAST` - "fast" (Optimized for speed and low cost)
+- `SPECIALIZED` - "specialized" (Domain-specific optimizations)
+
+### `BenchmarkScores`
+
+Performance metrics from standard AI benchmarks.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mmlu`                             | `Optional[float]`                                     | `None`     | Massive Multitask Language Understanding (0-100)                                                                                                                                                                                                      |
+| `gpqa`                             | `Optional[float]`                                     | `None`     | Graduate-level questions (0-100)                                                                                                                                                                                                      |
+| `math`                             | `Optional[float]`                                     | `None`     | MATH benchmark (0-100)                                                                                                                                                                                                      |
+| `gsm8k`                            | `Optional[float]`                                     | `None`     | Grade school math (0-100)                                                                                                                                                                                                      |
+| `aime`                             | `Optional[float]`                                     | `None`     | American Invitational Mathematics Examination (0-100)                                                                                                                                                                                                      |
+| `humaneval`                        | `Optional[float]`                                     | `None`     | Python code generation (0-100)                                                                                                                                                                                                      |
+| `mbpp`                             | `Optional[float]`                                     | `None`     | Mostly Basic Python Problems (0-100)                                                                                                                                                                                                      |
+| `drop`                             | `Optional[float]`                                     | `None`     | Discrete Reasoning Over Paragraphs (0-100)                                                                                                                                                                                                      |
+| `mgsm`                             | `Optional[float]`                                     | `None`     | Multilingual Grade School Math (0-100)                                                                                                                                                                                                      |
+| `arc_challenge`                    | `Optional[float]`                                     | `None`     | AI2 Reasoning Challenge (0-100)                                                                                                                                                                                                      |
+
+**Functions:**
+
+### `overall_score`
+
+Calculate a weighted overall score.
+
+**Returns:**
+
+- `float`: The overall benchmark score
+
+### `ModelMetadata`
+
+Complete metadata for an AI model.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                             | `str`                                                 | Required   | Model name                                                                                                                                                                                                      |
+| `provider`                         | `str`                                                 | Required   | Model provider                                                                                                                                                                                                      |
+| `tier`                             | `ModelTier`                                           | Required   | Model performance tier                                                                                                                                                                                                      |
+| `release_date`                     | `str`                                                 | Required   | Model release date                                                                                                                                                                                                      |
+| `capabilities`                     | `List[ModelCapability]`                              | `[]`       | Model capabilities                                                                                                                                                                                                      |
+| `context_window`                   | `int`                                                 | `8192`     | Context window (in tokens)                                                                                                                                                                                                      |
+| `benchmarks`                       | `Optional[BenchmarkScores]`                          | `None`     | Performance benchmarks                                                                                                                                                                                                      |
+| `strengths`                        | `List[str]`                                           | `[]`       | Model strengths and ideal use cases                                                                                                                                                                                                      |
+| `ideal_for`                        | `List[str]`                                           | `[]`       | Ideal use cases                                                                                                                                                                                                      |
+| `limitations`                     | `List[str]`                                           | `[]`       | Model limitations                                                                                                                                                                                                      |
+| `cost_tier`                        | `int`                                                 | `5`        | Cost indicators (relative scale: 1-10, where 1 is cheapest)                                                                                                                                                                                                      |
+| `speed_tier`                       | `int`                                                 | `5`        | Speed indicators (relative scale: 1-10, where 10 is fastest)                                                                                                                                                                                                      |
+| `notes`                            | `str`                                                 | `""`       | Additional notes                                                                                                                                                                                                      |
+
+## Constants
+
+### `MODEL_REGISTRY`
+
+A comprehensive registry of all available models.
+
+**Type:** `Dict[str, ModelMetadata]`
+
+Contains model metadata for:
+- OpenAI models (GPT-4o, GPT-4o-mini, O1-Pro, O1-Mini)
+- Anthropic models (Claude 4 Opus, Claude 3.7 Sonnet, Claude 3.5 Haiku)
+- Google models (Gemini 2.5 Pro, Gemini 2.5 Flash)
+- Meta Llama models (Llama 3.3 70B)
+- DeepSeek models (DeepSeek-R1, DeepSeek-Chat)
+- Qwen models (Qwen 3 235B)
+- Mistral models (Mistral Large, Mistral Small)
+- Cohere models (Command R+)
+- Grok models (Grok 4)
+
+## Functions
+
+### `get_model_metadata`
+
+Get metadata for a specific model.
+
+**Parameters:**
+
+- `model_name` (str): The model name (with or without provider prefix)
+
+**Returns:**
+
+- `Optional[ModelMetadata]`: ModelMetadata if found, None otherwise
+
+### `get_models_by_capability`
+
+Get all models that have a specific capability.
+
+**Parameters:**
+
+- `capability` (ModelCapability): The capability to filter by
+
+**Returns:**
+
+- `List[ModelMetadata]`: List of ModelMetadata objects with the capability
+
+### `get_models_by_tier`
+
+Get all models in a specific tier.
+
+**Parameters:**
+
+- `tier` (ModelTier): The tier to filter by
+
+**Returns:**
+
+- `List[ModelMetadata]`: List of ModelMetadata objects in the tier
+
+### `get_top_models`
+
+Get the top N models by overall score or specific benchmark.
+
+**Parameters:**
+
+- `n` (int): Number of top models to return (default: 10)
+- `by_benchmark` (Optional[str]): Specific benchmark to sort by (e.g., 'mmlu', 'humaneval')
+
+**Returns:**
+
+- `List[ModelMetadata]`: List of top ModelMetadata objects
+
+## Predefined Model Metadata
+
+### OpenAI Models
+
+#### `GPT_4O`
+- **Name:** "openai/gpt-4o"
+- **Tier:** FLAGSHIP
+- **Context Window:** 128,000 tokens
+- **Capabilities:** Reasoning, Code Generation, Mathematics, Creative Writing, Analysis, Multilingual, Vision, Audio, Long Context, Function Calling, Structured Output, Production
+- **Benchmarks:** MMLU: 88.7, GPQA: 53.6, Math: 76.6, HumanEval: 90.2, GSM8K: 95.8, MGSM: 90.5, DROP: 83.4
+- **Cost Tier:** 7/10
+- **Speed Tier:** 6/10
+
+#### `GPT_4O_MINI`
+- **Name:** "openai/gpt-4o-mini"
+- **Tier:** FAST
+- **Context Window:** 128,000 tokens
+- **Capabilities:** Reasoning, Code Generation, Mathematics, Creative Writing, Multilingual, Vision, Fast Inference, Cost Effective, Function Calling, Structured Output, Production
+- **Benchmarks:** MMLU: 82.0, Math: 70.2, HumanEval: 87.2, GSM8K: 91.8, MGSM: 86.7, DROP: 80.1
+- **Cost Tier:** 2/10
+- **Speed Tier:** 9/10
+
+#### `O1_PRO`
+- **Name:** "openai/o1-pro"
+- **Tier:** SPECIALIZED
+- **Context Window:** 128,000 tokens
+- **Capabilities:** Reasoning, Mathematics, Code Generation, Analysis
+- **Benchmarks:** MMLU: 91.8, GPQA: 78.3, Math: 94.8, AIME: 79.2, HumanEval: 92.5
+- **Cost Tier:** 10/10
+- **Speed Tier:** 3/10
+
+#### `O1_MINI`
+- **Name:** "openai/o1-mini"
+- **Tier:** SPECIALIZED
+- **Context Window:** 128,000 tokens
+- **Capabilities:** Reasoning, Code Generation, Mathematics, Cost Effective
+- **Benchmarks:** MMLU: 85.2, Math: 87.2, HumanEval: 89.3, GPQA: 60.0
+- **Cost Tier:** 6/10
+- **Speed Tier:** 5/10
+
+### Anthropic Models
+
+#### `CLAUDE_4_OPUS`
+- **Name:** "anthropic/claude-4-opus-20250514"
+- **Tier:** FLAGSHIP
+- **Context Window:** 200,000 tokens
+- **Capabilities:** Reasoning, Code Generation, Mathematics, Creative Writing, Analysis, Multilingual, Vision, Long Context, Function Calling, Ethical Safety, Production
+- **Benchmarks:** MMLU: 90.7, GPQA: 59.4, Math: 80.5, HumanEval: 92.0, GSM8K: 96.4, DROP: 85.3
+- **Cost Tier:** 9/10
+- **Speed Tier:** 5/10
+
+#### `CLAUDE_3_7_SONNET`
+- **Name:** "anthropic/claude-3-7-sonnet-20250219"
+- **Tier:** ADVANCED
+- **Context Window:** 200,000 tokens
+- **Capabilities:** Reasoning, Code Generation, Mathematics, Creative Writing, Analysis, Multilingual, Vision, Long Context, Function Calling, Ethical Safety, Production
+- **Benchmarks:** MMLU: 88.3, GPQA: 54.6, Math: 78.6, HumanEval: 90.0, GSM8K: 94.6, DROP: 84.4
+- **Cost Tier:** 6/10
+- **Speed Tier:** 7/10
+
+#### `CLAUDE_3_5_HAIKU`
+- **Name:** "anthropic/claude-3-5-haiku-20241022"
+- **Tier:** FAST
+- **Context Window:** 200,000 tokens
+- **Capabilities:** Reasoning, Code Generation, Creative Writing, Multilingual, Vision, Fast Inference, Cost Effective, Function Calling, Production
+- **Benchmarks:** MMLU: 81.0, Math: 65.5, HumanEval: 82.0, GSM8K: 88.3
+- **Cost Tier:** 2/10
+- **Speed Tier:** 9/10
+
+### Google Models
+
+#### `GEMINI_2_5_PRO`
+- **Name:** "google-gla/gemini-2.5-pro"
+- **Tier:** FLAGSHIP
+- **Context Window:** 1,000,000 tokens
+- **Capabilities:** Reasoning, Code Generation, Mathematics, Creative Writing, Analysis, Multilingual, Vision, Audio, Long Context, Function Calling, Production
+- **Benchmarks:** MMLU: 89.5, GPQA: 56.1, Math: 76.2, HumanEval: 88.9, GSM8K: 94.6, MGSM: 91.7, DROP: 84.9
+- **Cost Tier:** 7/10
+- **Speed Tier:** 7/10
+
+#### `GEMINI_2_5_FLASH`
+- **Name:** "google-gla/gemini-2.5-flash"
+- **Tier:** FAST
+- **Context Window:** 1,000,000 tokens
+- **Capabilities:** Reasoning, Code Generation, Creative Writing, Multilingual, Vision, Fast Inference, Cost Effective, Long Context, Function Calling, Production
+- **Benchmarks:** MMLU: 83.7, Math: 69.5, HumanEval: 84.7, GSM8K: 89.7
+- **Cost Tier:** 2/10
+- **Speed Tier:** 10/10
+
+### Other Notable Models
+
+#### `LLAMA_3_3_70B`
+- **Name:** "groq/llama-3.3-70b-versatile"
+- **Tier:** ADVANCED
+- **Context Window:** 128,000 tokens
+- **Capabilities:** Reasoning, Code Generation, Mathematics, Creative Writing, Multilingual, Function Calling, Research
+- **Benchmarks:** MMLU: 86.0, Math: 66.0, HumanEval: 79.5, GSM8K: 90.2
+- **Cost Tier:** 3/10
+- **Speed Tier:** 7/10
+
+#### `DEEPSEEK_R1`
+- **Name:** "deepseek/deepseek-reasoner"
+- **Tier:** SPECIALIZED
+- **Context Window:** 64,000 tokens
+- **Capabilities:** Reasoning, Mathematics, Code Generation, Analysis, Research
+- **Benchmarks:** MMLU: 90.8, Math: 97.3, AIME: 79.8, HumanEval: 90.2, GPQA: 71.5
+- **Cost Tier:** 5/10
+- **Speed Tier:** 4/10
+
+#### `QWEN_3_235B`
+- **Name:** "huggingface/Qwen/Qwen3-235B-A22B"
+- **Tier:** ADVANCED
+- **Context Window:** 32,768 tokens
+- **Capabilities:** Reasoning, Code Generation, Mathematics, Multilingual, Analysis, Research
+- **Benchmarks:** MMLU: 88.5, Math: 72.5, HumanEval: 87.2, GSM8K: 93.4
+- **Cost Tier:** 4/10
+- **Speed Tier:** 5/10

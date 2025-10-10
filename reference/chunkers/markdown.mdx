@@ -1,0 +1,58 @@
+---
+title: MarkdownChunker
+sidebarTitle: MarkdownChunker
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Optional[MarkdownChunkingConfig]`                                     | `None`     | A specialized configuration model for the syntax-aware Markdown Chunker. This config provides fine-grained control over which Markdown elements are treated as semantic boundaries and how the final text content is processed.                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initializes the chunker with a specific or default configuration.
+
+**Parameters:**
+
+- `config` (Optional[MarkdownChunkingConfig]): Configuration object with all settings.
+
+### `_chunk_document`
+
+The core implementation for chunking a single Markdown document.
+
+**Parameters:**
+
+- `document` (Document): The document to be chunked.
+
+**Returns:**
+
+- `List[Chunk]`: A list of `Chunk` objects derived from the document.
+
+### `_segment_markdown`
+
+Segments Markdown content into semantic blocks using regex patterns.
+
+**Parameters:**
+
+- `text` (str): The Markdown text to segment.
+
+**Returns:**
+
+- `List[_SemanticBlock]`: A list of semantic blocks identified in the Markdown.
+
+### `_finalize_chunk`
+
+Assembles a list of blocks into one or more final Chunk objects.
+
+**Parameters:**
+
+- `blocks` (List[_SemanticBlock]): List of semantic blocks to assemble.
+- `header_stack` (List[Dict[str, str]]): Stack of headers for context.
+- `document` (Document): Source document.
+
+**Returns:**
+
+- `List[Chunk]`: List of finalized chunks.

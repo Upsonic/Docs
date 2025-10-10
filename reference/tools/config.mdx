@@ -1,0 +1,96 @@
+---
+title: ToolConfig
+sidebarTitle: ToolConfig
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires_confirmation`            | `bool`                                                | `False`    | If True, the agent will pause and require user confirmation before executing the tool                                                                                                                                             |
+| `requires_user_input`              | `bool`                                                | `False`    | If True, the agent will pause and prompt the user for input for specified fields                                                                                                                                                 |
+| `user_input_fields`                | `List[str]`                                           | `[]`       | Field names that the user should provide when requires_user_input is True                                                                                                                                                       |
+| `external_execution`               | `bool`                                                | `False`    | If True, the tool's execution is handled by an external process                                                                                                                                                                 |
+| `show_result`                      | `bool`                                                | `False`    | If True, the output is shown to the user and NOT sent back to the LLM                                                                                                                                                           |
+| `stop_after_tool_call`              | `bool`                                                | `False`    | If True, the agent's run will terminate after this tool call                                                                                                                                                                     |
+| `sequential`                       | `bool`                                                | `False`    | If True, this tool requires sequential execution (no parallelization)                                                                                                                                                          |
+| `cache_results`                    | `bool`                                                | `False`    | If True, the result will be cached based on arguments                                                                                                                                                                           |
+| `cache_dir`                        | `Optional[str]`                                       | `None`     | Directory to store cache files                                                                                                                                                                                                  |
+| `cache_ttl`                        | `Optional[int]`                                       | `None`     | Time-to-live for cache entries in seconds                                                                                                                                                                                      |
+| `tool_hooks`                       | `Optional[ToolHooks]`                                | `None`     | Custom functions to run before/after tool execution                                                                                                                                                                             |
+| `max_retries`                      | `Optional[int]`                                       | `5`        | Maximum number of retries allowed for this tool                                                                                                                                                                                 |
+| `timeout`                          | `Optional[float]`                                     | `30.0`     | Timeout for tool execution in seconds                                                                                                                                                                                            |
+| `strict`                           | `Optional[bool]`                                      | `None`     | Whether to enforce strict JSON schema validation on tool parameters                                                                                                                                                             |
+| `docstring_format`                 | `str`                                                 | `'auto'`   | Format of the docstring: 'google', 'numpy', 'sphinx', or 'auto'                                                                                                                                                                 |
+| `require_parameter_descriptions`   | `bool`                                                | `False`    | If True, raise error if required parameter descriptions are missing                                                                                                                                                              |
+
+## Functions
+
+No specific functions - Configuration class for tool behavior.
+
+---
+
+---
+title: ToolHooks
+sidebarTitle: ToolHooks
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `before`                           | `Optional[Callable]`                                 | `None`     | Function to run before tool execution                                                                                                                                                                                            |
+| `after`                            | `Optional[Callable]`                                 | `None`     | Function to run after tool execution                                                                                                                                                                                             |
+
+## Functions
+
+No specific functions - Configuration class for tool execution hooks.
+
+---
+
+---
+title: _ToolDecorator
+sidebarTitle: _ToolDecorator
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                           | `ToolConfig`                                         | -          | Tool configuration object                                                                                                                                                                                                        |
+
+## Functions
+
+### `__call__`
+
+Apply the decorator to a function.
+
+**Parameters:**
+
+- `func` (Callable): The function to decorate
+
+**Returns:**
+
+- `Callable`: The decorated function
+
+---
+
+---
+title: tool
+sidebarTitle: tool
+---
+
+## Functions
+
+### `tool`
+
+Decorator to configure tool behavior. Use @tool or @tool(...) for configuration.
+
+**Parameters:**
+
+- `*args` (Any): Positional arguments
+- `**kwargs` (Any): Keyword arguments for ToolConfig
+
+**Returns:**
+
+- `Union[Callable, _ToolDecorator]`: Either a decorated function or a decorator instance

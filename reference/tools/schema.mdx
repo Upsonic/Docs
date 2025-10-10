@@ -1,0 +1,132 @@
+---
+title: FunctionSchema
+sidebarTitle: FunctionSchema
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `function`                         | `Callable[..., Any]`                                 | -          | The function to analyze                                                                                                                                                                                                           |
+| `name`                             | `str`                                                 | -          | The name of the function                                                                                                                                                                                                        |
+| `description`                      | `Optional[str]`                                      | -          | The description of the function                                                                                                                                                                                                  |
+| `parameters_schema`                | `Dict[str, Any]`                                     | -          | JSON schema for function parameters                                                                                                                                                                                             |
+| `return_schema`                    | `Optional[Dict[str, Any]]`                           | -          | JSON schema for return type                                                                                                                                                                                                      |
+| `is_async`                         | `bool`                                                | -          | Whether the function is async                                                                                                                                                                                                    |
+| `takes_ctx`                        | `bool`                                                | `False`    | Whether the function takes a RunContext as first parameter                                                                                                                                                                      |
+| `positional_params`                | `List[str]`                                           | `[]`       | List of positional parameter names                                                                                                                                                                                               |
+| `var_positional_param`             | `Optional[str]`                                       | `None`     | Name of the *args parameter if present                                                                                                                                                                                           |
+
+## Functions
+
+### `__post_init__`
+
+Initialize positional_params if None.
+
+---
+
+---
+title: SchemaGenerationError
+sidebarTitle: SchemaGenerationError
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`                          | `str`                                                 | -          | Error message                                                                                                                                                                                                                    |
+
+## Functions
+
+No specific functions - Exception raised during schema generation.
+
+---
+
+---
+title: is_async_callable
+sidebarTitle: is_async_callable
+---
+
+## Functions
+
+### `is_async_callable`
+
+Check if an object is an async callable.
+
+**Parameters:**
+
+- `obj` (Any): The object to check
+
+**Returns:**
+
+- `bool`: True if the object is an async callable
+
+---
+
+---
+title: extract_type_schema
+sidebarTitle: extract_type_schema
+---
+
+## Functions
+
+### `extract_type_schema`
+
+Extract JSON schema from a Python type hint.
+
+**Parameters:**
+
+- `type_hint` (Any): The type hint to extract schema from
+
+**Returns:**
+
+- `Dict[str, Any]`: JSON schema representation of the type
+
+---
+
+---
+title: generate_function_schema
+sidebarTitle: generate_function_schema
+---
+
+## Functions
+
+### `generate_function_schema`
+
+Generate schema information from a function.
+
+**Parameters:**
+
+- `function` (Callable[..., Any]): The function to analyze
+- `docstring_format` (str): The docstring format ('google', 'numpy', 'sphinx', 'auto')
+- `require_parameter_descriptions` (bool): Whether to require parameter descriptions
+- `takes_ctx` (bool): Whether the function takes a RunContext as first parameter
+
+**Returns:**
+
+- `FunctionSchema`: FunctionSchema object containing all schema information
+
+**Raises:**
+
+- `SchemaGenerationError`: If schema generation fails
+
+---
+
+---
+title: validate_tool_function
+sidebarTitle: validate_tool_function
+---
+
+## Functions
+
+### `validate_tool_function`
+
+Validate a function to ensure it meets tool requirements.
+
+**Parameters:**
+
+- `func` (Callable): The function to validate
+
+**Returns:**
+
+- `List[str]`: List of validation errors (empty if valid)

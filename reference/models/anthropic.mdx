@@ -1,0 +1,227 @@
+---
+title: AnthropicModel
+sidebarTitle: AnthropicModel
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_name`                       | `AnthropicModelName`                                  | Required   | The name of the Anthropic model to use. List of model names available [here](https://docs.anthropic.com/en/docs/about-claude/models).                                                                                                                                                                                                      |
+| `provider`                         | `Literal['anthropic'] \| Provider[AsyncAnthropicClient]` | `'anthropic'` | The provider to use for the Anthropic API. Can be either the string 'anthropic' or an instance of `Provider[AsyncAnthropicClient]`. If not provided, the other parameters will be used.                                                                                                                                                                                                      |
+| `profile`                          | `ModelProfileSpec \| None`                           | `None`     | The model profile to use. Defaults to a profile picked by the provider based on the model name.                                                                                                                                                                                                      |
+| `settings`                         | `ModelSettings \| None`                              | `None`     | Default model settings for this model instance.                                                                                                                                                                                                      |
+
+## Properties
+
+| Property                          | Type                                                  | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client`                          | `AsyncAnthropicClient`                               | The Anthropic client instance                                                                                                                                                                                                      |
+| `base_url`                        | `str`                                                 | The base URL of the Anthropic API                                                                                                                                                                                                      |
+| `model_name`                      | `AnthropicModelName`                                 | The model name                                                                                                                                                                                                      |
+| `system`                          | `str`                                                 | The model provider                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initialize an Anthropic model.
+
+**Parameters:**
+
+- `model_name` (AnthropicModelName): The name of the Anthropic model to use. List of model names available [here](https://docs.anthropic.com/en/docs/about-claude/models).
+- `provider` (Literal['anthropic'] | Provider[AsyncAnthropicClient]): The provider to use for the Anthropic API. Can be either the string 'anthropic' or an instance of `Provider[AsyncAnthropicClient]`. If not provided, the other parameters will be used.
+- `profile` (ModelProfileSpec | None): The model profile to use. Defaults to a profile picked by the provider based on the model name.
+- `settings` (ModelSettings | None): Default model settings for this model instance.
+
+### `request`
+
+Make a request to the Anthropic model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `ModelResponse`: The model response
+
+### `request_stream`
+
+Make a streaming request to the Anthropic model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `AsyncIterator[StreamedResponse]`: An async iterator of streamed responses
+
+### `_messages_create`
+
+Create messages for the Anthropic API.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send
+- `stream` (bool): Whether to stream the response
+- `model_settings` (AnthropicModelSettings): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `BetaMessage | AsyncStream[BetaRawMessageStreamEvent]`: Either a single message or a stream of events
+
+### `_process_response`
+
+Process a non-streamed response and prepare a message to return.
+
+**Parameters:**
+
+- `response` (BetaMessage): The response from the Anthropic API
+
+**Returns:**
+
+- `ModelResponse`: The processed model response
+
+### `_process_streamed_response`
+
+Process a streamed response and prepare a streaming response to return.
+
+**Parameters:**
+
+- `response` (AsyncStream[BetaRawMessageStreamEvent]): The streamed response from the Anthropic API
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `StreamedResponse`: The processed streamed response
+
+### `_get_tools`
+
+Get tools for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `list[BetaToolParam]`: List of tool parameters
+
+### `_get_builtin_tools`
+
+Get builtin tools for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `tuple[list[BetaToolUnionParam], dict[str, str]]`: Tuple of builtin tools and extra headers
+
+### `_map_message`
+
+Map messages to Anthropic format.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to map
+
+**Returns:**
+
+- `tuple[str, list[BetaMessageParam]]`: Tuple of system prompt and Anthropic messages
+
+### `_map_user_prompt`
+
+Map user prompt to Anthropic format.
+
+**Parameters:**
+
+- `part` (UserPromptPart): The user prompt part to map
+
+**Returns:**
+
+- `AsyncGenerator[BetaContentBlockParam]`: Async generator of content block parameters
+
+### `_map_tool_definition`
+
+Map tool definition to Anthropic format.
+
+**Parameters:**
+
+- `f` (ToolDefinition): The tool definition to map
+
+**Returns:**
+
+- `BetaToolParam`: The mapped tool parameter
+
+---
+
+## AnthropicModelSettings
+
+Settings used for an Anthropic model request.
+
+### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `anthropic_metadata`              | `BetaMetadataParam`                                  | `None`     | An object describing metadata about the request. Contains `user_id`, an external identifier for the user who is associated with the request.                                                                                                                                                                                                      |
+| `anthropic_thinking`               | `BetaThinkingConfigParam`                            | `None`     | Determine whether the model should generate a thinking block. See [the Anthropic docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking) for more information.                                                                                                                                                                                                      |
+
+---
+
+## AnthropicStreamedResponse
+
+Implementation of `StreamedResponse` for Anthropic models.
+
+### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_model_name`                      | `AnthropicModelName`                                 | Required   | The model name                                                                                                                                                                                                      |
+| `_response`                        | `AsyncIterable[BetaRawMessageStreamEvent]`           | Required   | The streamed response from Anthropic                                                                                                                                                                                                      |
+| `_timestamp`                       | `datetime`                                           | Required   | The timestamp of the response                                                                                                                                                                                                      |
+| `_provider_name`                   | `str`                                                | Required   | The provider name                                                                                                                                                                                                      |
+
+### Functions
+
+### `_get_event_iterator`
+
+Get an async iterator of model response stream events.
+
+**Returns:**
+
+- `AsyncIterator[ModelResponseStreamEvent]`: Async iterator of stream events
+
+### Properties
+
+### `model_name`
+
+Get the model name of the response.
+
+**Returns:**
+
+- `AnthropicModelName`: The model name
+
+### `provider_name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str`: The provider name
+
+### `timestamp`
+
+Get the timestamp of the response.
+
+**Returns:**
+
+- `datetime`: The timestamp

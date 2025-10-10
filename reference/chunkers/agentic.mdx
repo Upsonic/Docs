@@ -1,0 +1,240 @@
+---
+title: AgenticChunker
+sidebarTitle: AgenticChunker
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent`                            | `Agent`                                     | Required     | Pre-configured Agent class for cognitive processing                                                                                                                                                                                                      |
+| `config`                            | `Optional[AgenticChunkingConfig]`                                     | `None`     | Configuration object with all settings                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initialize agentic chunker.
+
+**Parameters:**
+
+- `agent` (Agent): Pre-configured Agent class for cognitive processing
+- `config` (Optional[AgenticChunkingConfig]): Configuration object with all settings
+
+### `_chunk_document`
+
+Synchronous chunking - delegates to async implementation.
+
+**Parameters:**
+
+- `document` (Document): Document to chunk
+
+**Returns:**
+
+- `List[Chunk]`: List of chunks
+
+### `_achunk_document`
+
+Core agentic chunking pipeline.
+
+**Parameters:**
+
+- `document` (Document): Document to process with AI agents
+
+**Returns:**
+
+- `List[Chunk]`: List of cognitively-optimized chunks with rich metadata
+
+### `_get_cache_key`
+
+Generate cache key for text content.
+
+**Parameters:**
+
+- `text` (str): Text content to generate key for
+
+**Returns:**
+
+- `str`: MD5 hash of the text content
+
+### `_extract_propositions`
+
+Extract atomic propositions from document using AI agent.
+
+**Parameters:**
+
+- `document` (Document): Document to extract propositions from
+
+**Returns:**
+
+- `List[str]`: List of extracted propositions
+
+### `_validate_propositions`
+
+Validate proposition quality and filter invalid ones.
+
+**Parameters:**
+
+- `propositions` (List[str]): List of propositions to validate
+
+**Returns:**
+
+- `List[str]`: List of validated propositions
+
+### `_group_propositions_into_topics`
+
+Group propositions into coherent thematic topics using AI agent.
+
+**Parameters:**
+
+- `propositions` (List[str]): List of propositions to group
+- `document` (Document): Source document
+
+**Returns:**
+
+- `List[Topic]`: List of topics containing grouped propositions
+
+### `_validate_topic_sizes`
+
+Validate topic sizes and split oversized topics.
+
+**Parameters:**
+
+- `topics` (List[Topic]): List of topics to validate
+
+**Returns:**
+
+- `List[Topic]`: List of validated topics
+
+### `_optimize_topics`
+
+Optimize topic assignments by merging small topics.
+
+**Parameters:**
+
+- `topics` (List[Topic]): List of topics to optimize
+
+**Returns:**
+
+- `List[Topic]`: List of optimized topics
+
+### `_find_chunk_indices_in_document`
+
+Find start and end indices of chunk text within document.
+
+**Parameters:**
+
+- `chunk_text` (str): Text content of the chunk
+- `document_content` (str): Full document content
+
+**Returns:**
+
+- `Tuple[int, int]`: Start and end indices
+
+### `_create_chunks_from_topics`
+
+Create chunks from grouped topics.
+
+**Parameters:**
+
+- `topics` (List[Topic]): List of topics to create chunks from
+- `document` (Document): Source document
+
+**Returns:**
+
+- `List[Chunk]`: List of created chunks
+
+### `_finalize_topic_chunk`
+
+Finalize a chunk from topics with metadata enrichment.
+
+**Parameters:**
+
+- `topics` (List[Topic]): List of topics for the chunk
+- `document` (Document): Source document
+
+**Returns:**
+
+- `Chunk`: Finalized chunk with enriched metadata
+
+### `_refine_topic_metadata`
+
+Refine topic metadata using AI agent.
+
+**Parameters:**
+
+- `chunk_text` (str): Text content of the chunk
+- `topic` (Topic): Base topic for metadata
+
+**Returns:**
+
+- `RefinedTopic`: Refined topic with title and summary
+
+### `_score_chunk_coherence`
+
+Score chunk coherence and add quality assessment.
+
+**Parameters:**
+
+- `chunks` (List[Chunk]): List of chunks to score
+
+**Returns:**
+
+- `List[Chunk]`: List of chunks with coherence scores
+
+### `_calculate_coherence_score`
+
+Calculate coherence score for a chunk.
+
+**Parameters:**
+
+- `chunk` (Chunk): Chunk to calculate score for
+
+**Returns:**
+
+- `float`: Coherence score between 0 and 1
+
+### `_assess_chunk_quality`
+
+Assess chunk quality based on coherence score.
+
+**Parameters:**
+
+- `coherence_score` (float): Coherence score to assess
+
+**Returns:**
+
+- `str`: Quality assessment ("excellent", "good", "fair", "poor")
+
+### `_fallback_chunking`
+
+Fallback to recursive chunking on agent failure.
+
+**Parameters:**
+
+- `document` (Document): Document to chunk with fallback method
+
+**Returns:**
+
+- `List[Chunk]`: List of chunks created with fallback method
+
+### `_add_processing_metadata`
+
+Add processing metadata to chunks.
+
+**Parameters:**
+
+- `chunks` (List[Chunk]): List of chunks to add metadata to
+- `processing_time` (float): Processing time in milliseconds
+
+### `get_agentic_stats`
+
+Get statistics about agentic processing.
+
+**Returns:**
+
+- `Dict[str, any]`: Dictionary containing processing statistics
+
+### `clear_agentic_caches`
+
+Clear all agentic processing caches.

@@ -1,0 +1,621 @@
+---
+title: OpenAI Models
+sidebarTitle: OpenAI Models
+---
+
+## Parameters
+
+### OpenAIChatModelSettings
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `openai_reasoning_effort`          | `ReasoningEffort`                                     | `None`     | Constrains effort on reasoning for reasoning models. Currently supported values are `low`, `medium`, and `high`. Reducing reasoning effort can result in faster responses and fewer tokens used on reasoning in a response. |
+| `openai_logprobs`                  | `bool`                                                | `None`     | Include log probabilities in the response.                                                                                                                                                                                       |
+| `openai_top_logprobs`              | `int`                                                 | `None`     | Include log probabilities of the top n tokens in the response.                                                                                                                                                                   |
+| `openai_user`                      | `str`                                                 | `None`     | A unique identifier representing the end-user, which can help OpenAI monitor and detect abuse. See OpenAI's safety best practices for more details.                                                                             |
+| `openai_service_tier`              | `Literal['auto', 'default', 'flex', 'priority']`      | `None`     | The service tier to use for the model request. Currently supported values are `auto`, `default`, `flex`, and `priority`. For more information, see OpenAI's service tiers documentation.                                        |
+| `openai_prediction`                | `ChatCompletionPredictionContentParam`               | `None`     | Enables predictive outputs. This feature is currently only supported for some OpenAI models.                                                                                                                                    |
+
+### OpenAIModelSettings
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| *Inherits from OpenAIChatModelSettings* | | | *Deprecated alias for `OpenAIChatModelSettings`.* |
+
+### OpenAIResponsesModelSettings
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| *Inherits from OpenAIChatModelSettings* | | | *All fields from OpenAIChatModelSettings are available.* |
+| `openai_builtin_tools`             | `Sequence[FileSearchToolParam \| WebSearchToolParam \| ComputerToolParam]` | `None`     | The provided OpenAI built-in tools to use. See OpenAI's built-in tools for more details.                                                                                                                                        |
+| `openai_reasoning_generate_summary` | `Literal['detailed', 'concise']`                     | `None`     | Deprecated alias for `openai_reasoning_summary`.                                                                                                                                                                                |
+| `openai_reasoning_summary`         | `Literal['detailed', 'concise']`                     | `None`     | A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model's reasoning process. One of `concise` or `detailed`. Check the OpenAI Reasoning documentation for more details. |
+| `openai_send_reasoning_ids`        | `bool`                                                | `None`     | Whether to send the unique IDs of reasoning, text, and function call parts from the message history to the model. Enabled by default for reasoning models. This can result in errors if the message history doesn't match exactly what was received from the Responses API. |
+| `openai_truncation`                | `Literal['disabled', 'auto']`                         | `None`     | The truncation strategy to use for the model response. It can be either `disabled` (default) or `auto`. If the context exceeds the model's context window size, the model will truncate the response to fit.                   |
+| `openai_text_verbosity`            | `Literal['low', 'medium', 'high']`                   | `None`     | Constrains the verbosity of the model's text response. Lower values will result in more concise responses, while higher values will result in more verbose responses. Currently supported values are `low`, `medium`, and `high`. |
+| `openai_previous_response_id`       | `Literal['auto'] \| str`                              | `None`     | The ID of a previous response from the model to use as the starting point for a continued conversation. When set to `'auto'`, the request automatically uses the most recent `provider_response_id` from the message history and omits earlier messages. |
+| `openai_include_code_execution_outputs` | `bool`                                           | `None`     | Whether to include the code execution results in the response. Corresponds to the `code_interpreter_call.outputs` value of the `include` parameter in the Responses API.                                                         |
+| `openai_include_web_search_sources` | `bool`                                            | `None`     | Whether to include the web search results in the response. Corresponds to the `web_search_call.action.sources` value of the `include` parameter in the Responses API.                                                          |
+
+### OpenAIChatModel
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_name`                       | `OpenAIModelName`                                     | Required   | The name of the OpenAI model to use. List of model names available in OpenAI's documentation.                                                                                                                                    |
+| `provider`                         | `Literal['azure', 'deepseek', 'cerebras', 'fireworks', 'github', 'grok', 'heroku', 'moonshotai', 'ollama', 'openai', 'openai-chat', 'openrouter', 'together', 'vercel', 'litellm'] \| Provider[AsyncOpenAI]` | `'openai'` | The provider to use. Defaults to `'openai'`.                                                                                                                                                                                    |
+| `profile`                          | `ModelProfileSpec`                                    | `None`     | The model profile to use. Defaults to a profile picked by the provider based on the model name.                                                                                                                               |
+| `system_prompt_role`               | `OpenAISystemPromptRole`                              | `None`     | The role to use for the system prompt message. If not provided, defaults to `'system'`. In the future, this may be inferred from the model name. (Deprecated)                                                                   |
+| `settings`                         | `ModelSettings`                                       | `None`     | Default model settings for this model instance.                                                                                                                                                                                 |
+
+### OpenAIModel
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| *Inherits from OpenAIChatModel* | | | *Deprecated alias for `OpenAIChatModel`. Use `OpenAIChatModel` instead unless you're using an OpenAI Chat Completions-compatible API, or require a feature that the Responses API doesn't support yet like audio.* |
+
+### OpenAIResponsesModel
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_name`                       | `OpenAIModelName`                                     | Required   | The name of the OpenAI model to use.                                                                                                                                                                                            |
+| `provider`                         | `Literal['openai', 'deepseek', 'azure', 'openrouter', 'grok', 'fireworks', 'together'] \| Provider[AsyncOpenAI]` | `'openai'` | The provider to use. Defaults to `'openai'`.                                                                                                                                                                                    |
+| `profile`                          | `ModelProfileSpec`                                    | `None`     | The model profile to use. Defaults to a profile picked by the provider based on the model name.                                                                                                                               |
+| `settings`                         | `ModelSettings`                                       | `None`     | Default model settings for this model instance.                                                                                                                                                                                 |
+
+### OpenAIStreamedResponse
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_model_name`                      | `OpenAIModelName`                                     | Required   | The model name of the response.                                                                                                                                                                                                 |
+| `_model_profile`                   | `ModelProfile`                                        | Required   | The model profile.                                                                                                                                                                                                           |
+| `_response`                        | `AsyncIterable[ChatCompletionChunk]`                  | Required   | The async iterable response from OpenAI.                                                                                                                                                                                         |
+| `_timestamp`                       | `datetime`                                            | Required   | The timestamp of the response.                                                                                                                                                                                                  |
+| `_provider_name`                   | `str`                                                 | Required   | The provider name.                                                                                                                                                                                                              |
+
+### OpenAIResponsesStreamedResponse
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_model_name`                      | `OpenAIModelName`                                     | Required   | The model name of the response.                                                                                                                                                                                                 |
+| `_response`                        | `AsyncIterable[responses.ResponseStreamEvent]`       | Required   | The async iterable response from OpenAI Responses API.                                                                                                                                                                           |
+| `_timestamp`                       | `datetime`                                            | Required   | The timestamp of the response.                                                                                                                                                                                                  |
+| `_provider_name`                   | `str`                                                 | Required   | The provider name.                                                                                                                                                                                                              |
+
+## Functions
+
+### OpenAIChatModel
+
+#### `__init__`
+
+Initialize an OpenAI model.
+
+**Parameters:**
+
+- `model_name` (OpenAIModelName): The name of the OpenAI model to use. List of model names available in OpenAI's documentation.
+- `provider` (Literal['azure', 'deepseek', 'cerebras', 'fireworks', 'github', 'grok', 'heroku', 'moonshotai', 'ollama', 'openai', 'openai-chat', 'openrouter', 'together', 'vercel', 'litellm'] | Provider[AsyncOpenAI]): The provider to use. Defaults to `'openai'`.
+- `profile` (ModelProfileSpec): The model profile to use. Defaults to a profile picked by the provider based on the model name.
+- `system_prompt_role` (OpenAISystemPromptRole): The role to use for the system prompt message. If not provided, defaults to `'system'`. In the future, this may be inferred from the model name. (Deprecated)
+- `settings` (ModelSettings): Default model settings for this model instance.
+
+#### `base_url`
+
+Get the base URL of the client.
+
+**Returns:**
+
+- `str`: The base URL of the client.
+
+#### `model_name`
+
+Get the model name.
+
+**Returns:**
+
+- `OpenAIModelName`: The model name.
+
+#### `system`
+
+Get the model provider.
+
+**Returns:**
+
+- `str`: The model provider.
+
+#### `system_prompt_role`
+
+Get the system prompt role. (Deprecated)
+
+**Returns:**
+
+- `OpenAISystemPromptRole | None`: The system prompt role.
+
+#### `request`
+
+Make a request to the model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model.
+- `model_settings` (ModelSettings | None): Model settings to use.
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `ModelResponse`: The model response.
+
+#### `request_stream`
+
+Make a streaming request to the model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model.
+- `model_settings` (ModelSettings | None): Model settings to use.
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `AsyncIterator[StreamedResponse]`: An async iterator of streamed responses.
+
+#### `_completions_create`
+
+Create a completion request to OpenAI.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send.
+- `stream` (bool): Whether to stream the response.
+- `model_settings` (OpenAIChatModelSettings): Model settings.
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `chat.ChatCompletion | AsyncStream[ChatCompletionChunk]`: The completion response.
+
+#### `_process_response`
+
+Process a non-streamed response and prepare a message to return.
+
+**Parameters:**
+
+- `response` (chat.ChatCompletion | str): The response from OpenAI.
+
+**Returns:**
+
+- `ModelResponse`: The processed model response.
+
+#### `_process_streamed_response`
+
+Process a streamed response and prepare a streaming response to return.
+
+**Parameters:**
+
+- `response` (AsyncStream[ChatCompletionChunk]): The streamed response.
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `OpenAIStreamedResponse`: The processed streamed response.
+
+#### `_get_tools`
+
+Get the tools for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `list[chat.ChatCompletionToolParam]`: The tools.
+
+#### `_get_web_search_options`
+
+Get web search options for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `WebSearchOptions | None`: The web search options.
+
+#### `_map_messages`
+
+Map messages to OpenAI format.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to map.
+
+**Returns:**
+
+- `list[chat.ChatCompletionMessageParam]`: The mapped messages.
+
+#### `_map_tool_call`
+
+Map a tool call to OpenAI format.
+
+**Parameters:**
+
+- `t` (ToolCallPart): The tool call part.
+
+**Returns:**
+
+- `ChatCompletionMessageFunctionToolCallParam`: The mapped tool call.
+
+#### `_map_json_schema`
+
+Map a JSON schema to OpenAI format.
+
+**Parameters:**
+
+- `o` (OutputObjectDefinition): The output object definition.
+
+**Returns:**
+
+- `chat.completion_create_params.ResponseFormat`: The mapped response format.
+
+#### `_map_tool_definition`
+
+Map a tool definition to OpenAI format.
+
+**Parameters:**
+
+- `f` (ToolDefinition): The tool definition.
+
+**Returns:**
+
+- `chat.ChatCompletionToolParam`: The mapped tool.
+
+#### `_map_user_message`
+
+Map a user message to OpenAI format.
+
+**Parameters:**
+
+- `message` (ModelRequest): The user message.
+
+**Returns:**
+
+- `AsyncIterable[chat.ChatCompletionMessageParam]`: The mapped user message.
+
+#### `_map_user_prompt`
+
+Map a user prompt to OpenAI format.
+
+**Parameters:**
+
+- `part` (UserPromptPart): The user prompt part.
+
+**Returns:**
+
+- `chat.ChatCompletionUserMessageParam`: The mapped user prompt.
+
+### OpenAIResponsesModel
+
+#### `__init__`
+
+Initialize an OpenAI Responses model.
+
+**Parameters:**
+
+- `model_name` (OpenAIModelName): The name of the OpenAI model to use.
+- `provider` (Literal['openai', 'deepseek', 'azure', 'openrouter', 'grok', 'fireworks', 'together'] | Provider[AsyncOpenAI]): The provider to use. Defaults to `'openai'`.
+- `profile` (ModelProfileSpec): The model profile to use. Defaults to a profile picked by the provider based on the model name.
+- `settings` (ModelSettings): Default model settings for this model instance.
+
+#### `model_name`
+
+Get the model name.
+
+**Returns:**
+
+- `OpenAIModelName`: The model name.
+
+#### `system`
+
+Get the model provider.
+
+**Returns:**
+
+- `str`: The model provider.
+
+#### `request`
+
+Make a request to the model.
+
+**Parameters:**
+
+- `messages` (list[ModelRequest | ModelResponse]): The messages to send to the model.
+- `model_settings` (ModelSettings | None): Model settings to use.
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `ModelResponse`: The model response.
+
+#### `request_stream`
+
+Make a streaming request to the model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model.
+- `model_settings` (ModelSettings | None): Model settings to use.
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `AsyncIterator[StreamedResponse]`: An async iterator of streamed responses.
+
+#### `_process_response`
+
+Process a non-streamed response and prepare a message to return.
+
+**Parameters:**
+
+- `response` (responses.Response): The response from OpenAI.
+
+**Returns:**
+
+- `ModelResponse`: The processed model response.
+
+#### `_process_streamed_response`
+
+Process a streamed response and prepare a streaming response to return.
+
+**Parameters:**
+
+- `response` (AsyncStream[responses.ResponseStreamEvent]): The streamed response.
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `OpenAIResponsesStreamedResponse`: The processed streamed response.
+
+#### `_responses_create`
+
+Create a responses request to OpenAI.
+
+**Parameters:**
+
+- `messages` (list[ModelRequest | ModelResponse]): The messages to send.
+- `stream` (bool): Whether to stream the response.
+- `model_settings` (OpenAIResponsesModelSettings): Model settings.
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `responses.Response | AsyncStream[responses.ResponseStreamEvent]`: The responses response.
+
+#### `_get_reasoning`
+
+Get reasoning configuration for the model.
+
+**Parameters:**
+
+- `model_settings` (OpenAIResponsesModelSettings): Model settings.
+
+**Returns:**
+
+- `Reasoning | NotGiven`: The reasoning configuration.
+
+#### `_get_tools`
+
+Get the tools for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `list[responses.FunctionToolParam]`: The tools.
+
+#### `_get_builtin_tools`
+
+Get builtin tools for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters.
+
+**Returns:**
+
+- `list[responses.ToolParam]`: The builtin tools.
+
+#### `_map_tool_definition`
+
+Map a tool definition to OpenAI Responses format.
+
+**Parameters:**
+
+- `f` (ToolDefinition): The tool definition.
+
+**Returns:**
+
+- `responses.FunctionToolParam`: The mapped tool.
+
+#### `_get_previous_response_id_and_new_messages`
+
+Get the previous response ID and new messages for continued conversations.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages.
+
+**Returns:**
+
+- `tuple[str | None, list[ModelMessage]]`: The previous response ID and trimmed messages.
+
+#### `_map_messages`
+
+Map messages to OpenAI Responses format.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to map.
+- `model_settings` (OpenAIResponsesModelSettings): Model settings.
+
+**Returns:**
+
+- `tuple[str | NotGiven, list[responses.ResponseInputItemParam]]`: The instructions and mapped messages.
+
+#### `_map_json_schema`
+
+Map a JSON schema to OpenAI Responses format.
+
+**Parameters:**
+
+- `o` (OutputObjectDefinition): The output object definition.
+
+**Returns:**
+
+- `responses.ResponseFormatTextJSONSchemaConfigParam`: The mapped response format.
+
+#### `_map_user_prompt`
+
+Map a user prompt to OpenAI Responses format.
+
+**Parameters:**
+
+- `part` (UserPromptPart): The user prompt part.
+
+**Returns:**
+
+- `responses.EasyInputMessageParam`: The mapped user prompt.
+
+### OpenAIStreamedResponse
+
+#### `_get_event_iterator`
+
+Get the event iterator for the streamed response.
+
+**Returns:**
+
+- `AsyncIterator[ModelResponseStreamEvent]`: An async iterator of response events.
+
+#### `model_name`
+
+Get the model name of the response.
+
+**Returns:**
+
+- `OpenAIModelName`: The model name.
+
+#### `provider_name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str`: The provider name.
+
+#### `timestamp`
+
+Get the timestamp of the response.
+
+**Returns:**
+
+- `datetime`: The timestamp.
+
+### OpenAIResponsesStreamedResponse
+
+#### `_get_event_iterator`
+
+Get the event iterator for the streamed response.
+
+**Returns:**
+
+- `AsyncIterator[ModelResponseStreamEvent]`: An async iterator of response events.
+
+#### `model_name`
+
+Get the model name of the response.
+
+**Returns:**
+
+- `OpenAIModelName`: The model name.
+
+#### `provider_name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str`: The provider name.
+
+#### `timestamp`
+
+Get the timestamp of the response.
+
+**Returns:**
+
+- `datetime`: The timestamp.
+
+## Helper Functions
+
+### `_map_usage`
+
+Map usage information from OpenAI response to internal format.
+
+**Parameters:**
+
+- `response` (chat.ChatCompletion | ChatCompletionChunk | responses.Response): The response from OpenAI.
+
+**Returns:**
+
+- `usage.RequestUsage`: The mapped usage information.
+
+### `_combine_tool_call_ids`
+
+Combine tool call IDs for Responses API compatibility.
+
+**Parameters:**
+
+- `call_id` (str): The call ID.
+- `id` (str | None): The item ID.
+
+**Returns:**
+
+- `str`: The combined tool call ID.
+
+### `_split_combined_tool_call_id`
+
+Split a combined tool call ID back into its components.
+
+**Parameters:**
+
+- `combined_id` (str): The combined tool call ID.
+
+**Returns:**
+
+- `tuple[str, str | None]`: The call ID and item ID.
+
+### `_map_code_interpreter_tool_call`
+
+Map a code interpreter tool call to internal format.
+
+**Parameters:**
+
+- `item` (responses.ResponseCodeInterpreterToolCall): The code interpreter tool call.
+- `provider_name` (str): The provider name.
+
+**Returns:**
+
+- `tuple[BuiltinToolCallPart, BuiltinToolReturnPart]`: The mapped tool call and return parts.
+
+### `_map_web_search_tool_call`
+
+Map a web search tool call to internal format.
+
+**Parameters:**
+
+- `item` (responses.ResponseFunctionWebSearch): The web search tool call.
+- `provider_name` (str): The provider name.
+
+**Returns:**
+
+- `tuple[BuiltinToolCallPart, BuiltinToolReturnPart]`: The mapped tool call and return parts.

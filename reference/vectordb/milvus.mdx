@@ -1,0 +1,184 @@
+---
+title: MilvusProvider
+sidebarTitle: MilvusProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Config`                                             | Required   | A validated and immutable Config object containing all necessary parameters for the provider's operation                                                                                                                       |
+
+## Functions
+
+### `connect`
+
+Establishes a connection to the Milvus database.
+
+This method uses the connection parameters from `self._config.core` to initialize the database client and verify the connection. It also pre-loads a handle to the collection if it already exists.
+
+**Raises:**
+- `VectorDBConnectionError`: If the connection fails.
+
+### `disconnect`
+
+Gracefully terminates the connection to the Milvus database.
+
+Resets the internal state of the provider.
+
+### `is_ready`
+
+Performs a health check to ensure the database is responsive.
+
+**Returns:**
+- `bool`: True if the database is connected and responsive, False otherwise.
+
+### `create_collection`
+
+Creates the collection and all specified indexes based on the full config.
+
+This method dynamically builds the schema and then proceeds to create up to three different types of indexes (dense, sparse, and full-text) based on the flags set in the IndexingConfig.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to Milvus.
+- `VectorDBError`: If the collection creation fails.
+
+### `delete_collection`
+
+Permanently deletes the collection specified in the config.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to the database.
+- `CollectionDoesNotExistError`: If the collection to be deleted does not exist.
+- `VectorDBError`: For other Milvus-related errors.
+
+### `collection_exists`
+
+Checks if the collection specified in the config already exists.
+
+**Returns:**
+- `bool`: True if the collection exists, False otherwise.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to the database.
+- `VectorDBError`: If checking collection existence fails.
+
+### `upsert`
+
+Adds or updates data, now with support for sparse vectors.
+
+This method validates the presence of required vector types based on the collection's schema, prepares the data in a row-based format (list of dicts), and uploads it to Milvus in batches.
+
+**Parameters:**
+- `vectors` (List[List[float]]): A list of dense vector embeddings. Can be None if the collection is sparse-only.
+- `payloads` (List[Dict[str, Any]]): A list of corresponding metadata objects.
+- `ids` (List[Union[str, int]]): A list of unique identifiers for each data point.
+- `chunks` (Optional[List[str]]): A list of text chunks.
+- `**kwargs`: Must contain `sparse_vectors: List[Dict[int, float]]` if the collection was created with `create_sparse_index=True`.
+
+**Raises:**
+- `UpsertError`: If data ingestion fails, or if the required vector types are missing or have mismatched lengths.
+
+### `delete`
+
+Removes data from the collection by their unique identifiers.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of specific IDs to remove.
+- `**kwargs`: Provider-specific options.
+
+**Raises:**
+- `VectorDBError`: If the deletion fails.
+
+### `fetch`
+
+Retrieves full records (payload and vector) by their IDs.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of IDs to retrieve the full records for.
+- `**kwargs`: Provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects containing the fetched data.
+
+**Raises:**
+- `VectorDBError`: If the fetch operation fails.
+
+### `search`
+
+Master search dispatcher. Routes queries to the appropriate specialized search method based on provided arguments and collection configuration.
+
+**Parameters:**
+- `top_k` (Optional[int]): The number of results to return. If None, falls back to the default in the Config.
+- `query_vector` (Optional[List[float]]): The vector for dense or hybrid search.
+- `query_text` (Optional[str]): The text for full-text or hybrid search.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weighting factor for hybrid search. If None, falls back to the default in the Config.
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): The algorithm to use for hybrid search ('rrf' or 'weighted').
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects.
+
+**Raises:**
+- `ConfigurationError`: If the requested search is disabled or the wrong combination of arguments is provided.
+- `SearchError`: If any underlying search operation fails.
+
+### `dense_search`
+
+Performs a pure dense vector similarity search.
+
+**Parameters:**
+- `query_vector` (List[float]): The vector embedding to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): A metadata filter to apply. Defaults to None.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of the most similar results.
+
+**Raises:**
+- `ConfigurationError`: If dense search is not possible; no dense index was created for this collection.
+- `SearchError`: If the search operation fails.
+
+### `full_text_search`
+
+Performs true full-text search using the best available index.
+
+**Parameters:**
+- `query_text` (str): The text string to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): A metadata filter to apply. Defaults to None.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of matching results.
+
+**Raises:**
+- `SearchError`: If the search operation fails.
+- `ConfigurationError`: If the required search field is not provided in kwargs.
+
+### `hybrid_search`
+
+Performs native hybrid search using Milvus's multi-vector search and server-side reranking.
+
+**Parameters:**
+- `query_vector` (List[float]): The dense vector for the semantic part of the search.
+- `query_text` (str): The raw text for the keyword/sparse part of the search.
+- `top_k` (int): The number of final results to return.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weight for combining scores. If None, falls back to the default in the Config.
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): The algorithm to use for fusing results ('rrf' or 'weighted').
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects, ordered by the combined hybrid score.
+
+**Raises:**
+- `ConfigurationError`: If hybrid search is only possible on collections with both dense and sparse indexes.
+- `SearchError`: If hybrid search requires `query_sparse_vector` in kwargs.
+- `SearchError`: If the search operation fails.

@@ -1,0 +1,66 @@
+---
+title: DuckDuckGoResult
+sidebarTitle: DuckDuckGoResult
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`                            | `str`                                                 | -          | The title of the search result                                                                                                                                                                                                   |
+| `href`                             | `str`                                                 | -          | The URL of the search result                                                                                                                                                                                                     |
+| `body`                             | `str`                                                 | -          | The body of the search result                                                                                                                                                                                                    |
+
+## Functions
+
+No specific functions - TypedDict for DuckDuckGo search results.
+
+---
+
+---
+title: DuckDuckGoSearchTool
+sidebarTitle: DuckDuckGoSearchTool
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client`                           | `DDGS`                                                | -          | The DuckDuckGo search client                                                                                                                                                                                                    |
+| `max_results`                      | `int | None`                                          | -          | The maximum number of results. If None, returns results only from the first response                                                                                                                                             |
+
+## Functions
+
+### `__call__`
+
+Searches DuckDuckGo for the given query and returns the results.
+
+**Parameters:**
+
+- `query` (str): The query to search for
+
+**Returns:**
+
+- `list[DuckDuckGoResult]`: The search results
+
+---
+
+---
+title: duckduckgo_search_tool
+sidebarTitle: duckduckgo_search_tool
+---
+
+## Functions
+
+### `duckduckgo_search_tool`
+
+Creates a DuckDuckGo search tool.
+
+**Parameters:**
+
+- `duckduckgo_client` (DDGS | None): The DuckDuckGo search client
+- `max_results` (int | None): The maximum number of results. If None, returns results only from the first response
+
+**Returns:**
+
+- `Callable`: The DuckDuckGo search tool function

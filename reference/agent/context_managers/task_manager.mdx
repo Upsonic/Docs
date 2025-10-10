@@ -1,0 +1,50 @@
+---
+title: TaskManager
+sidebarTitle: TaskManager
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `task`                             | `Task`                                                | Required  | The task being managed                                                                                                                                                                                                           |
+| `agent`                            | `Agent`                                               | Required  | The agent instance managing the task                                                                                                                                                                                             |
+
+## Functions
+
+### `process_response`
+
+Process the model response and set it as the task response.
+
+**Parameters:**
+
+- `model_response` (Any): The model response to process
+
+**Returns:**
+
+- `Any`: The processed model response
+
+### `manage_task`
+
+Asynchronous context manager for managing task lifecycle.
+
+**Returns:**
+
+- `AsyncContextManager`: Context manager that handles task lifecycle
+
+**Usage:**
+
+```python
+async with task_manager.manage_task() as manager:
+    # Execute task logic
+    response = await model.request(...)
+    manager.process_response(response)
+    # Task lifecycle handled automatically
+```
+
+**Features:**
+
+- Automatic task start (calls `task.task_start(agent)`)
+- Task response processing (calls `task.task_response(model_response)`)
+- Automatic task end (calls `task.task_end()`)
+- Task lifecycle state management

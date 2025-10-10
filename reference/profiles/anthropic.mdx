@@ -1,0 +1,35 @@
+---
+title: AnthropicModelProfile
+sidebarTitle: AnthropicModelProfile
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supports_tools`                    | `bool`                                                | `True`     | Whether the model supports tools                                                                                                                                                                                                 |
+| `supports_json_schema_output`      | `bool`                                                | `False`    | Whether the model supports JSON schema output                                                                                                                                                                                     |
+| `supports_json_object_output`      | `bool`                                                | `False`    | Whether the model supports JSON object output                                                                                                                                                                                     |
+| `default_structured_output_mode`  | `StructuredOutputMode`                                | `'tool'`   | The default structured output mode to use for the model                                                                                                                                                                           |
+| `prompted_output_template`         | `str`                                                 | `"Always respond with a JSON object that's compatible with this schema:\n\n{schema}\n\nDon't include any text or Markdown fencing before or after.\n"` | The instructions template to use for prompted structured output. The '{schema}' placeholder will be replaced with the JSON schema for the output. |
+| `json_schema_transformer`          | `type[JsonSchemaTransformer] \| None`                 | `None`     | The transformer to use to make JSON schemas for tools and structured output compatible with the model                                                                                                                             |
+| `thinking_tags`                     | `tuple[str, str]`                                     | `('<thinking>', '</thinking>')` | The tags used to indicate thinking parts in the model's output. Defaults to ('<thinking>', '</thinking>') for Anthropic models.                                                                                                                           |
+| `ignore_streamed_leading_whitespace` | `bool`                                                | `False`    | Whether to ignore leading whitespace when streaming a response                                                                                                                                                                   |
+
+## Functions
+
+### `anthropic_model_profile`
+
+Get the model profile for an Anthropic model.
+
+**Parameters:**
+
+- `model_name` (str): The name of the Anthropic model
+
+**Returns:**
+
+- `ModelProfile | None`: The model profile for the Anthropic model, or None if no specific profile is defined
+
+**Description:**
+
+This function returns the model profile for an Anthropic model. It creates a ModelProfile instance with custom thinking tags ('<thinking>', '</thinking>') that are specific to Anthropic's model format, replacing the default ('<think>', '</think>') tags.

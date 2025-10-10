@@ -1,0 +1,142 @@
+---
+title: Canvas
+sidebarTitle: Canvas
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `canvas_name`                      | `str`                                                 | Required  | Name of the canvas for file identification and management                                                                                                                                                                       |
+| `model_provider`                   | `Optional[Model | str]`                               | `"openai/gpt-4o-mini"` | Model provider for canvas editing operations                                                                                                                                                                                    |
+
+## Functions
+
+### `get_current_state_of_canvas`
+
+Get the current state of the text canvas.
+
+**Returns:**
+
+- `str`: The current canvas content, or "Empty Canvas" if no content exists
+
+### `change_in_canvas`
+
+Change the text of a part of the canvas using AI-powered editing.
+
+**Parameters:**
+
+- `new_text_of_part` (str): The new text content to add or replace
+- `part_definition` (str): Definition or identifier of the part to change
+
+**Returns:**
+
+- `str`: The updated canvas content after the change
+
+**Behavior:**
+- If the canvas is empty, creates a new canvas with the provided text
+- If a section matching `part_definition` exists, replaces it with `new_text_of_part`
+- If no matching section exists, appends the new text as a new section
+- Uses AI agent to intelligently manage document structure and content
+
+### `functions`
+
+Get the available canvas functions for tool integration.
+
+**Returns:**
+
+- `List[Callable]`: List of canvas functions that can be used as tools
+
+## Features
+
+- **Persistent Storage**: Automatically saves canvas content to files
+- **AI-Powered Editing**: Uses AI agents for intelligent text manipulation
+- **Smart Content Management**: Automatically handles content replacement and addition
+- **File-Based Persistence**: Canvas content is saved to normalized filename
+- **Code Block Cleaning**: Automatically removes code blocks from canvas content
+- **Flexible Model Support**: Supports any model provider for editing operations
+- **Tool Integration**: Provides functions for use as agent tools
+- **Empty Canvas Handling**: Gracefully handles empty or new canvases
+- **Content Normalization**: Normalizes canvas names for safe file operations
+
+## File Management
+
+### Automatic File Operations
+- **Save**: Canvas content is automatically saved to `{normalized_name}.txt`
+- **Load**: Canvas content is loaded from the corresponding file
+- **Normalization**: Canvas names are normalized for safe file operations
+- **Encoding**: Files are saved and loaded with UTF-8 encoding
+
+### Canvas Name Normalization
+- Removes special characters except alphanumeric, spaces, and hyphens
+- Converts spaces to underscores for filename compatibility
+- Ensures safe file system operations
+
+## Usage Examples
+
+### Basic Canvas Operations
+```python
+# Create a new canvas
+canvas = Canvas("My Project Canvas")
+
+# Get current state
+current_content = canvas.get_current_state_of_canvas()
+print(current_content)  # "Empty Canvas" for new canvas
+
+# Add content to canvas
+updated_content = await canvas.change_in_canvas(
+    new_text_of_part="Project Overview: Building an AI agent framework",
+    part_definition="overview"
+)
+```
+
+### Advanced Canvas Editing
+```python
+# Create canvas with custom model
+canvas = Canvas("Technical Documentation", model_provider="openai/gpt-4o")
+
+# Update existing section
+updated_content = await canvas.change_in_canvas(
+    new_text_of_part="## API Reference\n\nComplete API documentation...",
+    part_definition="API Reference"
+)
+
+# Add new section
+updated_content = await canvas.change_in_canvas(
+    new_text_of_part="## Installation\n\npip install upsonic",
+    part_definition="Installation"
+)
+```
+
+### Tool Integration
+```python
+# Get canvas functions for agent tools
+canvas_functions = canvas.functions()
+
+# Use with agent
+agent = Agent("openai/gpt-4o", tools=canvas_functions)
+```
+
+## AI-Powered Features
+
+### Intelligent Content Management
+- **Smart Replacement**: AI identifies and replaces matching content sections
+- **Automatic Appending**: Adds new content when no matching section exists
+- **Structure Preservation**: Maintains document structure and formatting
+- **Context Awareness**: AI understands document context for better editing
+
+### Content Processing
+- **Code Block Removal**: Automatically cleans code blocks from canvas content
+- **Format Preservation**: Maintains original formatting and structure
+- **Error Handling**: Graceful handling of file operations and AI processing
+- **Content Validation**: Ensures valid content updates
+
+## Integration with AI Agent Framework
+
+The Canvas class is designed to integrate seamlessly with your AI agent framework:
+
+- **Tool Functions**: Provides functions that can be used as agent tools
+- **Model Integration**: Uses the same model system as your agents
+- **Async Support**: Full async/await support for modern Python applications
+- **Error Handling**: Robust error handling for production use
+- **File Safety**: Safe file operations with proper encoding and normalization

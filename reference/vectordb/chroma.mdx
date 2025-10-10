@@ -1,0 +1,182 @@
+---
+title: ChromaProvider
+sidebarTitle: ChromaProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Config`                                             | Required   | A validated and immutable Config object containing all necessary parameters for the provider's operation                                                                                                                       |
+
+## Functions
+
+### `connect`
+
+Establishes a connection to the ChromaDB vector database.
+
+This method uses the connection parameters from `self._config.core` to initialize the ChromaDB client based on the specified operational mode (IN_MEMORY, EMBEDDED, LOCAL, or CLOUD).
+
+**Raises:**
+- `VectorDBConnectionError`: If the connection fails for any reason.
+
+### `disconnect`
+
+Gracefully terminates the connection to the ChromaDB database.
+
+This method resets the client session and clears all internal state.
+
+### `is_ready`
+
+Performs a health check to ensure the ChromaDB instance is responsive.
+
+**Returns:**
+- `bool`: True if the database is connected and responsive, False otherwise.
+
+### `create_collection`
+
+Creates or retrieves the collection in ChromaDB according to the full framework config.
+
+This method handles the `recreate_if_exists` logic and translates the framework configuration into ChromaDB-specific metadata.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to the database.
+- `VectorDBError`: If the collection creation fails.
+
+### `delete_collection`
+
+Permanently deletes the collection specified in the config.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to the database.
+- `CollectionDoesNotExistError`: If the collection to be deleted does not exist.
+- `VectorDBError`: For other unexpected errors.
+
+### `collection_exists`
+
+Checks if the collection specified in the config already exists.
+
+**Returns:**
+- `bool`: True if the collection exists, False otherwise.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to the database.
+
+### `upsert`
+
+Adds or updates records in the ChromaDB collection.
+
+**Parameters:**
+- `vectors` (List[List[float]]): A list of vector embeddings.
+- `payloads` (List[Dict[str, Any]]): A list of corresponding metadata objects.
+- `ids` (List[Union[str, int]]): A list of unique identifiers for each vector-payload pair.
+- `chunks` (Optional[List[str]]): A list of text chunks.
+- `sparse_vectors` (Optional[List[Dict[str, Any]]]): Optional sparse vectors (not used by ChromaDB).
+- `**kwargs`: Provider-specific options.
+
+**Raises:**
+- `UpsertError`: If the data ingestion operation fails.
+- `VectorDBError`: If the collection is not initialized.
+
+### `delete`
+
+Removes records from the collection by their unique identifiers.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of specific IDs to remove.
+- `**kwargs`: Provider-specific options.
+
+**Raises:**
+- `VectorDBError`: If the deletion fails or the collection is not initialized.
+
+### `fetch`
+
+Retrieves full records from the collection by their IDs.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of IDs for which to retrieve the full records.
+- `**kwargs`: Provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects containing the fetched data. The order of results is guaranteed to match the order of the input IDs.
+
+**Raises:**
+- `VectorDBError`: If fetching fails or the collection is not initialized.
+
+### `search`
+
+A master search method that dispatches to the appropriate specialized search function.
+
+**Parameters:**
+- `top_k` (Optional[int]): The number of results to return. If None, falls back to the default in the Config.
+- `query_vector` (Optional[List[float]]): The vector for dense or hybrid search.
+- `query_text` (Optional[str]): The text for full-text or hybrid search.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weighting factor for hybrid search. If None, falls back to the default in the Config.
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): The algorithm to use for hybrid search ('rrf' or 'weighted').
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects.
+
+**Raises:**
+- `ConfigurationError`: If the requested search is disabled or the wrong combination of arguments is provided.
+- `SearchError`: If any underlying search operation fails.
+
+### `dense_search`
+
+Performs a pure vector similarity search.
+
+**Parameters:**
+- `query_vector` (List[float]): The vector embedding to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): A metadata filter to apply. Defaults to None.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of the most similar results.
+
+**Raises:**
+- `ConfigurationError`: If dense search is not enabled for this provider.
+- `SearchError`: If the search operation fails.
+
+### `full_text_search`
+
+Performs a full-text search using ChromaDB's document filtering.
+
+**Parameters:**
+- `query_text` (str): The text string to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): A metadata filter to apply. Defaults to None.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of matching results.
+
+**Raises:**
+- `ConfigurationError`: If full-text search is not enabled for this provider.
+- `SearchError`: If the search operation fails.
+
+### `hybrid_search`
+
+Combines dense and full-text search results using specified fusion methods.
+
+**Parameters:**
+- `query_vector` (List[float]): The dense vector for the semantic part of the search.
+- `query_text` (str): The raw text for the keyword/sparse part of the search.
+- `top_k` (int): The number of final results to return.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weight for combining scores. If None, falls back to the default in the Config.
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): The algorithm to use for fusing results ('rrf' or 'weighted').
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects, ordered by the combined hybrid score.
+
+**Raises:**
+- `ConfigurationError`: If hybrid search is not enabled for this provider.
+- `SearchError`: If the search operation fails.

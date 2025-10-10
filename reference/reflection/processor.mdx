@@ -1,0 +1,140 @@
+---
+title: Reflection Processor
+sidebarTitle: Reflection Processor
+---
+
+## Classes
+
+### ReflectionProcessor
+
+Processor for reflection-based self-evaluation and improvement.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                           | `ReflectionConfig`                                    | -          | Configuration for reflection process                                                                                                                                                                                              |
+
+#### Functions
+
+##### `process_with_reflection`
+
+Process a task response through reflection and improvement cycles.
+
+**Parameters:**
+
+- `agent` (Agent): The main agent that generated the response
+- `task` (Task): The task being processed
+- `initial_response` (Any): The initial response to evaluate and improve
+
+**Returns:**
+
+- `Any`: The final improved response
+
+##### `_create_evaluator_agent`
+
+Create an evaluator agent for reflection.
+
+**Parameters:**
+
+- `main_agent` (Agent): The main agent to create evaluator from
+
+**Returns:**
+
+- `Agent`: The evaluator agent
+
+##### `_evaluate_response`
+
+Evaluate a response using the evaluator agent.
+
+**Parameters:**
+
+- `evaluator` (Agent): The evaluator agent
+- `task` (Task): The task being evaluated
+- `response` (str): The response to evaluate
+- `state` (ReflectionState): The current reflection state
+
+**Returns:**
+
+- `EvaluationResult`: The evaluation result
+
+##### `_generate_improved_response`
+
+Generate an improved response based on evaluation feedback.
+
+**Parameters:**
+
+- `agent` (Agent): The main agent
+- `task` (Task): The task being processed
+- `previous_response` (str): The previous response
+- `evaluation` (EvaluationResult): The evaluation result
+- `state` (ReflectionState): The current reflection state
+
+**Returns:**
+
+- `Any`: The improved response
+
+##### `_extract_response_text`
+
+Extract text representation from response.
+
+**Parameters:**
+
+- `response` (Any): The response to extract text from
+
+**Returns:**
+
+- `str`: The extracted text
+
+##### `_convert_to_response_format`
+
+Convert improved response back to original format.
+
+**Parameters:**
+
+- `response_text` (str): The improved response text
+- `original_response` (Any): The original response
+- `task` (Task): The task being processed
+
+**Returns:**
+
+- `Any`: The converted response
+
+##### `_build_evaluation_context`
+
+Build context for evaluation.
+
+**Parameters:**
+
+- `task` (Task): The task being evaluated
+- `state` (ReflectionState): The current reflection state
+
+**Returns:**
+
+- `str`: The evaluation context
+
+##### `_build_improvement_context`
+
+Build context for improvement.
+
+**Parameters:**
+
+- `task` (Task): The task being processed
+- `state` (ReflectionState): The current reflection state
+
+**Returns:**
+
+- `str`: The improvement context
+
+##### `_create_fallback_evaluation`
+
+Create a fallback evaluation when the evaluator fails.
+
+**Parameters:**
+
+- `response` (str): The response to evaluate
+- `error` (str): The error message
+
+**Returns:**
+
+- `EvaluationResult`: The fallback evaluation result

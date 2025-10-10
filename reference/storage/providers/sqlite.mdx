@@ -1,0 +1,130 @@
+---
+title: SqliteStorage
+sidebarTitle: SqliteStorage
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sessions_table_name`              | `str`                                                 | Required   | Name of the table for InteractionSession storage                                                                                                                                                                                  |
+| `profiles_table_name`              | `str`                                                 | Required   | Name of the table for UserProfile storage                                                                                                                                                                                        |
+| `db_file`                          | `Optional[str]`                                       | `None`     | Path to a local database file. If None, uses in-memory DB                                                                                                                                                                        |
+
+## Functions
+
+### `is_connected`
+
+Check if the storage provider is connected.
+
+**Returns:**
+
+- `bool`: True if connected, False otherwise
+
+### `connect`
+
+Connect to the storage provider.
+
+### `disconnect`
+
+Disconnect from the storage provider.
+
+### `create`
+
+Create the necessary tables for storage.
+
+### `read`
+
+Read an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[T]): The Pydantic model type to deserialize to
+
+**Returns:**
+
+- `Optional[T]`: The deserialized object or None if not found
+
+### `upsert`
+
+Insert or update an object in storage.
+
+**Parameters:**
+
+- `data` (Union[InteractionSession, UserProfile]): The object to store
+
+### `delete`
+
+Delete an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[BaseModel]): The model type to delete
+
+### `drop`
+
+Drop all data from storage (delete all tables).
+
+### `is_connected_async`
+
+Asynchronously check if the storage provider is connected.
+
+**Returns:**
+
+- `bool`: True if connected, False otherwise
+
+### `connect_async`
+
+Asynchronously connect to the storage provider.
+
+### `disconnect_async`
+
+Asynchronously disconnect from the storage provider.
+
+### `create_async`
+
+Asynchronously create the necessary tables for storage.
+
+### `read_async`
+
+Asynchronously read an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[T]): The Pydantic model type to deserialize to
+
+**Returns:**
+
+- `Optional[T]`: The deserialized object or None if not found
+
+### `upsert_async`
+
+Asynchronously insert or update an object in storage.
+
+**Parameters:**
+
+- `data` (Union[InteractionSession, UserProfile]): The object to store
+
+### `delete_async`
+
+Asynchronously delete an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[BaseModel]): The model type to delete
+
+### `drop_async`
+
+Asynchronously drop all data from storage (delete all tables).
+
+### `_get_connection`
+
+Helper to lazily initialize the database connection.
+
+**Returns:**
+
+- `aiosqlite.Connection`: The database connection

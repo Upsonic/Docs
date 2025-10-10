@@ -1,0 +1,38 @@
+---
+title: TaskAssignment
+sidebarTitle: TaskAssignment
+---
+
+## Parameters
+
+This class has no initialization parameters as it uses only methods without state.
+
+## Functions
+
+### `prepare_agents_registry`
+
+Prepare a registry of agents indexed by their names.
+
+**Parameters:**
+
+- `agent_configurations` (List[Any]): List of agent configurations
+
+**Returns:**
+
+- `tuple[Dict[str, Any], List[str]]`: Tuple of (agents_dict, agent_names_list)
+
+### `select_agent_for_task`
+
+Select the most appropriate agent for a given task.
+
+**Parameters:**
+
+- `current_task` (Task): The task that needs an agent
+- `context` (List[Any]): Context for agent selection
+- `agents_registry` (Dict[str, Any]): Dictionary of available agents
+- `agent_names` (List[str]): List of agent names
+- `agent_configurations` (List[Any]): Original agent configurations
+
+**Returns:**
+
+- `Optional[str]`: Selected agent name or None if selection fails

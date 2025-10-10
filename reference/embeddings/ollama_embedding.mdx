@@ -1,0 +1,227 @@
+---
+title: OllamaEmbedding
+sidebarTitle: OllamaEmbedding
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `base_url`                         | `str`                                                 | `"http://localhost:11434"` | Ollama server URL                                                                                                                                                                                                              |
+| `model_name`                       | `str`                                                 | `"nomic-embed-text"` | Ollama embedding model name                                                                                                                                                                                                     |
+| `auto_pull_model`                  | `bool`                                                | `True`     | Automatically pull model if not available                                                                                                                                                                                       |
+| `keep_alive`                       | `Optional[str]`                                       | `"5m"`     | Keep model loaded for duration                                                                                                                                                                                                  |
+| `temperature`                      | `Optional[float]`                                     | `None`     | Model temperature                                                                                                                                                                                                               |
+| `top_p`                            | `Optional[float]`                                     | `None`     | Top-p sampling                                                                                                                                                                                                                   |
+| `num_ctx`                          | `Optional[int]`                                       | `None`     | Context window size                                                                                                                                                                                                              |
+| `request_timeout`                  | `float`                                               | `120.0`    | Request timeout in seconds                                                                                                                                                                                                       |
+| `connection_timeout`               | `float`                                               | `10.0`     | Connection timeout in seconds                                                                                                                                                                                                    |
+| `max_retries`                      | `int`                                                 | `3`        | Maximum number of retries                                                                                                                                                                                                        |
+| `enable_keep_alive`                | `bool`                                                | `True`     | Keep model loaded between requests                                                                                                                                                                                               |
+| `enable_model_preload`             | `bool`                                                | `True`     | Preload model on startup                                                                                                                                                                                                        |
+
+## Functions
+
+### `__init__`
+
+Initialize the OllamaEmbedding provider.
+
+**Parameters:**
+
+- `config` (Optional[OllamaEmbeddingConfig]): Configuration object
+- `**kwargs`: Additional configuration options
+
+### `_setup_http_session`
+
+Setup HTTP session for requests.
+
+### `_initialize_sync`
+
+Initialize Ollama connection and model synchronously.
+
+### `_initialize_async`
+
+Initialize Ollama connection and model asynchronously.
+
+### `_check_ollama_health_sync`
+
+Check if Ollama server is healthy synchronously.
+
+**Returns:**
+
+- `bool`: True if server is healthy
+
+### `_check_ollama_health`
+
+Check if Ollama server is healthy asynchronously.
+
+**Returns:**
+
+- `bool`: True if server is healthy
+
+### `_ensure_model_available_sync`
+
+Ensure the embedding model is available synchronously.
+
+### `_ensure_model_available`
+
+Ensure the embedding model is available asynchronously.
+
+### `_list_models_sync`
+
+List available models in Ollama synchronously.
+
+**Returns:**
+
+- `List[Dict[str, Any]]`: List of available models
+
+### `_list_models`
+
+List available models in Ollama asynchronously.
+
+**Returns:**
+
+- `List[Dict[str, Any]]`: List of available models
+
+### `_pull_model_sync`
+
+Pull the embedding model synchronously.
+
+### `_pull_model`
+
+Pull the embedding model asynchronously.
+
+### `_preload_model`
+
+Preload the model to keep it in memory.
+
+### `supported_modes`
+
+Get supported embedding modes.
+
+**Returns:**
+
+- `List[EmbeddingMode]`: List of supported embedding modes
+
+### `pricing_info`
+
+Get Ollama pricing info (local execution is free).
+
+**Returns:**
+
+- `Dict[str, float]`: Pricing information
+
+### `get_model_info`
+
+Get information about the current Ollama model.
+
+**Returns:**
+
+- `Dict[str, Any]`: Model information
+
+### `_make_embedding_request`
+
+Make embedding request to Ollama API.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts to embed
+
+**Returns:**
+
+- `Dict[str, Any]`: API response
+
+### `_embed_batch`
+
+Embed a batch of texts using Ollama.
+
+**Parameters:**
+
+- `texts` (List[str]): List of text strings to embed
+- `mode` (EmbeddingMode): Embedding mode
+
+**Returns:**
+
+- `List[List[float]]`: List of embedding vectors
+
+### `validate_connection`
+
+Validate Ollama connection and model access.
+
+**Returns:**
+
+- `bool`: True if connection is valid
+
+### `get_server_info`
+
+Get Ollama server information.
+
+**Returns:**
+
+- `Dict[str, Any]`: Server information
+
+### `get_model_details`
+
+Get detailed information about the current model.
+
+**Returns:**
+
+- `Dict[str, Any]`: Model details
+
+### `close`
+
+Clean up Ollama HTTP sessions and connections.
+
+### `__del__`
+
+Destructor to ensure session is closed when object is garbage collected.
+
+### `create_nomic_embedding`
+
+Create Nomic Embed Text embedding provider.
+
+**Parameters:**
+
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `OllamaEmbedding`: Configured OllamaEmbedding instance
+
+### `create_mxbai_embedding`
+
+Create MXBAI Large embedding provider.
+
+**Parameters:**
+
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `OllamaEmbedding`: Configured OllamaEmbedding instance
+
+### `create_arctic_embedding`
+
+Create Snowflake Arctic embedding provider.
+
+**Parameters:**
+
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `OllamaEmbedding`: Configured OllamaEmbedding instance
+
+### `create_ollama_embedding_with_auto_setup`
+
+Create Ollama embedding with automatic model setup.
+
+**Parameters:**
+
+- `model_name` (str): Model name to use
+- `base_url` (str): Ollama server URL
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `OllamaEmbedding`: Configured OllamaEmbedding instance

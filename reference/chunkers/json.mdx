@@ -1,0 +1,101 @@
+---
+title: JSONChunker
+sidebarTitle: JSONChunker
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Optional[JSONChunkingConfig]`                                     | `None`     | A specialized configuration model for the path-aware JSON Chunker strategy. This configuration extends the base settings with parameters that provide granular control over how a JSON data graph is traversed, segmented, and serialized.                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initializes the chunker with a specific or default configuration.
+
+**Parameters:**
+
+- `config` (Optional[JSONChunkingConfig]): Configuration object with all settings.
+
+### `_chunk_document`
+
+The core implementation for splitting a single JSON document.
+
+**Parameters:**
+
+- `document` (Document): The document containing the raw JSON content string.
+
+**Returns:**
+
+- `List[Chunk]`: A list of `Chunk` objects, where each chunk's content is a valid JSON string, and its metadata contains the paths of its data.
+
+### `_recursive_walk`
+
+Recursively walk through JSON data structure to build chunks.
+
+**Parameters:**
+
+- `data` (Any): The JSON data to walk through.
+- `current_path` (List[str]): Current path in the JSON structure.
+- `chunk_builders` (List[Dict[str, Any]]): List of chunk builders.
+- `depth` (int): Current recursion depth.
+- `min_chunk_size` (int): Minimum chunk size threshold.
+
+### `_add_to_chunk`
+
+Add a value to the current chunk or create a new chunk if needed.
+
+**Parameters:**
+
+- `value` (Any): The value to add to the chunk.
+- `path` (List[str]): JSON path to the value.
+- `chunk_builders` (List[Dict[str, Any]]): List of chunk builders.
+- `min_chunk_size` (int): Minimum chunk size threshold.
+
+### `_json_size`
+
+Calculate the size of JSON data when serialized.
+
+**Parameters:**
+
+- `data` (Dict): JSON data to calculate size for.
+
+**Returns:**
+
+- `int`: Size of the serialized JSON data.
+
+### `_preprocess_lists`
+
+Convert lists to dictionaries for chunking.
+
+**Parameters:**
+
+- `data` (Any): JSON data to preprocess.
+
+**Returns:**
+
+- `Any`: Preprocessed data with lists converted to dictionaries.
+
+### `_set_nested_dict`
+
+Set a value in a nested dictionary using a path.
+
+**Parameters:**
+
+- `d` (Dict): Dictionary to set value in.
+- `path` (List[str]): Path to the value.
+- `value` (Any): Value to set.
+
+### `_fallback_to_text_chunking`
+
+Fallback to text chunking when JSON parsing fails.
+
+**Parameters:**
+
+- `document` (Document): Document to chunk with fallback method.
+
+**Returns:**
+
+- `List[Chunk]`: List of chunks created with fallback method.

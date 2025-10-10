@@ -1,0 +1,101 @@
+---
+title: KnowledgeBase
+sidebarTitle: KnowledgeBase
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sources`                          | `Union[str, Path, List[Union[str, Path]]]`          | Required   | Source identifiers (file path, list of files, directory path, or string content)                                                                                                                                                |
+| `embedding_provider`               | `EmbeddingProvider`                                  | Required   | An instance of a concrete EmbeddingProvider                                                                                                                                                                                      |
+| `vectordb`                         | `BaseVectorDBProvider`                               | Required   | An instance of a concrete BaseVectorDBProvider                                                                                                                                                                                   |
+| `splitters`                        | `Optional[Union[BaseChunker, List[BaseChunker]]]`   | `None`     | A single BaseChunker or list of BaseChunker instances                                                                                                                                                                            |
+| `loaders`                          | `Optional[Union[BaseLoader, List[BaseLoader]]]`      | `None`     | A single BaseLoader or list of BaseLoader instances for different file types                                                                                                                                                     |
+| `name`                             | `Optional[str]`                                       | `None`     | An optional human-readable name for this knowledge base                                                                                                                                                                          |
+| `use_case`                         | `str`                                                 | `"rag_retrieval"` | The intended use case for chunking optimization                                                                                                                                                                              |
+| `quality_preference`               | `str`                                                 | `"balanced"` | Speed vs quality preference ("fast", "balanced", "quality")                                                                                                                                                                   |
+| `loader_config`                    | `Optional[Dict[str, Any]]`                           | `None`     | Configuration options specifically for loaders                                                                                                                                                                                   |
+| `splitter_config`                  | `Optional[Dict[str, Any]]`                           | `None`     | Configuration options specifically for splitters                                                                                                                                                                                 |
+
+## Functions
+
+### `setup_async`
+
+The main just-in-time engine for processing and indexing knowledge.
+
+This method is idempotent. It checks if the knowledge has already been processed and indexed. If so, it does nothing. If not, it executes the full data pipeline: Load -> Chunk -> Embed -> Store. A lock is used to prevent race conditions in concurrent environments.
+
+Now supports indexed processing where each source uses its corresponding loader and splitter.
+
+**Returns:**
+
+- `None`
+
+### `query_async`
+
+Performs a similarity search to retrieve relevant knowledge.
+
+This is the primary retrieval method. It automatically triggers the setup process if it hasn't been run yet. It then embeds the user's query and searches the vector database for the most relevant chunks of text.
+
+**Parameters:**
+
+- `query` (str): The user's query string
+
+**Returns:**
+
+- `List[RAGSearchResult]`: A list of RAGSearchResult objects, where each contains the text content and metadata of a retrieved chunk
+
+### `setup_rag`
+
+Setup RAG functionality for the knowledge base.
+
+This method is called by the context manager when RAG is enabled.
+
+**Returns:**
+
+- `None`
+
+### `markdown`
+
+Return a markdown representation of the knowledge base.
+
+Used when RAG is disabled.
+
+**Returns:**
+
+- `str`: Markdown representation of the knowledge base
+
+### `get_config_summary`
+
+Get a comprehensive summary of the KnowledgeBase configuration.
+
+**Returns:**
+
+- `Dict[str, Any]`: Dictionary containing configuration details of all components
+
+### `health_check_async`
+
+Perform a comprehensive health check of the KnowledgeBase.
+
+**Returns:**
+
+- `Dict[str, Any]`: Dictionary containing health status and diagnostic information
+
+### `get_collection_info_async`
+
+Get detailed information about the vector database collection.
+
+**Returns:**
+
+- `Dict[str, Any]`: Dictionary containing collection metadata and statistics
+
+### `close`
+
+Clean up resources and close connections.
+
+This method should be called when the KnowledgeBase is no longer needed to prevent resource leaks.
+
+**Returns:**
+
+- `None`

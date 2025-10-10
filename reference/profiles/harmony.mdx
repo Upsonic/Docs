@@ -1,0 +1,36 @@
+---
+title: HarmonyModelProfile
+sidebarTitle: HarmonyModelProfile
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supports_tools`                    | `bool`                                                | `True`     | Whether the model supports tools                                                                                                                                                                                                 |
+| `supports_json_schema_output`      | `bool`                                                | `False`    | Whether the model supports JSON schema output                                                                                                                                                                                     |
+| `supports_json_object_output`      | `bool`                                                | `False`    | Whether the model supports JSON object output                                                                                                                                                                                     |
+| `default_structured_output_mode`  | `StructuredOutputMode`                                | `'tool'`   | The default structured output mode to use for the model                                                                                                                                                                           |
+| `prompted_output_template`         | `str`                                                 | `"Always respond with a JSON object that's compatible with this schema:\n\n{schema}\n\nDon't include any text or Markdown fencing before or after.\n"` | The instructions template to use for prompted structured output. The '{schema}' placeholder will be replaced with the JSON schema for the output. |
+| `json_schema_transformer`          | `type[JsonSchemaTransformer] \| None`                 | `None`     | The transformer to use to make JSON schemas for tools and structured output compatible with the model                                                                                                                             |
+| `thinking_tags`                     | `tuple[str, str]`                                     | `('<think>', '</think>')` | The tags used to indicate thinking parts in the model's output. Defaults to ('<think>', '</think>').                                                                                                                           |
+| `ignore_streamed_leading_whitespace` | `bool`                                                | `False`    | Whether to ignore leading whitespace when streaming a response                                                                                                                                                                   |
+| `openai_supports_tool_choice_required` | `bool`                                                | `False`    | Whether the provider accepts the value ``tool_choice='required'`` in the request payload                                                                                                                                                                                                 |
+
+## Functions
+
+### `harmony_model_profile`
+
+Get the model profile for the OpenAI Harmony Response format.
+
+**Parameters:**
+
+- `model_name` (str): The name of the model
+
+**Returns:**
+
+- `ModelProfile | None`: The model profile for the Harmony model, or None if no specific profile is defined
+
+**Description:**
+
+This function returns the model profile for the OpenAI Harmony Response format. It creates an OpenAIModelProfile with `openai_supports_tool_choice_required` set to False, which is then updated with the base OpenAI model profile. This is specifically designed for the OpenAI Harmony format as described in the OpenAI cookbook.

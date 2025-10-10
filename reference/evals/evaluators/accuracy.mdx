@@ -1,0 +1,118 @@
+---
+title: AccuracyEvaluator
+sidebarTitle: AccuracyEvaluator
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `judge_agent`                      | `Agent`                                               | Required  | The agent that will act as the judge for evaluation                                                                                                                                                                             |
+| `agent_under_test`                 | `Union[Agent, Graph, Team]`                          | Required  | The agent, graph, or team to be evaluated                                                                                                                                                                                       |
+| `query`                           | `str`                                                 | Required  | The input query to test the agent with                                                                                                                                                                                           |
+| `expected_output`                 | `str`                                                 | Required  | The expected or ground-truth output for comparison                                                                                                                                                                               |
+| `additional_guidelines`           | `Optional[str]`                                       | `None`     | Additional evaluation guidelines for the judge                                                                                                                                                                                   |
+| `num_iterations`                   | `int`                                                 | `1`        | Number of evaluation iterations to run                                                                                                                                                                                          |
+
+## Functions
+
+### `__init__`
+
+Initialize the AccuracyEvaluator.
+
+**Parameters:**
+
+- `judge_agent` (Agent): The agent that will act as the judge for evaluation
+- `agent_under_test` (Union[Agent, Graph, Team]): The agent, graph, or team to be evaluated
+- `query` (str): The input query to test the agent with
+- `expected_output` (str): The expected or ground-truth output for comparison
+- `additional_guidelines` (Optional[str]): Additional evaluation guidelines for the judge
+- `num_iterations` (int): Number of evaluation iterations to run
+
+**Raises:**
+
+- `TypeError`: If judge_agent is not an Agent instance
+- `TypeError`: If agent_under_test is not an Agent, Graph, or Team instance
+- `ValueError`: If num_iterations is not a positive integer
+
+### `run`
+
+Run the accuracy evaluation.
+
+**Parameters:**
+
+- `print_results` (bool): Whether to print formatted results to console
+
+**Returns:**
+
+- `AccuracyEvaluationResult`: The evaluation results
+
+### `run_with_output`
+
+Run evaluation on a pre-existing output.
+
+**Parameters:**
+
+- `output` (str): The pre-existing output to evaluate
+- `print_results` (bool): Whether to print formatted results to console
+
+**Returns:**
+
+- `AccuracyEvaluationResult`: The evaluation results
+
+### `_get_judge_score`
+
+Get the judge's score for a generated output.
+
+**Parameters:**
+
+- `generated_output` (str): The output to be scored
+
+**Returns:**
+
+- `EvaluationScore`: The judge's evaluation score
+
+**Raises:**
+
+- `TypeError`: If judge agent fails to return a valid EvaluationScore object
+
+### `_aggregate_and_present_results`
+
+Aggregate results and present them in a formatted way.
+
+**Parameters:**
+
+- `final_generated_output` (str): The final generated output
+- `print_results` (bool): Whether to print results
+
+**Returns:**
+
+- `AccuracyEvaluationResult`: The aggregated evaluation results
+
+**Raises:**
+
+- `RuntimeError`: If evaluation finished without producing any results
+
+### `_construct_judge_prompt`
+
+Construct the prompt for the judge agent.
+
+**Parameters:**
+
+- `generated_output` (str): The generated output to evaluate
+
+**Returns:**
+
+- `str`: The constructed judge prompt
+
+### `_print_formatted_results`
+
+Print formatted evaluation results to console.
+
+**Parameters:**
+
+- `result` (AccuracyEvaluationResult): The evaluation results to print
+
+## Description
+
+The main orchestrator for running accuracy evaluations on Upsonic agents, graphs, or teams using the LLM-as-a-judge pattern.

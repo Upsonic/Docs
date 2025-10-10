@@ -1,0 +1,179 @@
+---
+title: PlanStep
+sidebarTitle: PlanStep
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_name`                        | `str`                                                 | -          | The exact name of the tool to be called for this step                                                                                                                                                                            |
+| `parameters`                       | `Dict[str, Any]`                                     | `{}`       | The dictionary of parameters to pass to the tool                                                                                                                                                                                 |
+| `description`                      | `Optional[str]`                                       | `None`     | Optional description of what this step accomplishes                                                                                                                                                                              |
+
+## Functions
+
+No specific functions - Single tool call in a high-level plan.
+
+---
+
+---
+title: AnalysisResult
+sidebarTitle: AnalysisResult
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `evaluation`                       | `str`                                                 | -          | Detailed reasoning and evaluation of the last tool's result                                                                                                                                                                      |
+| `next_action`                      | `Literal['continue_plan', 'revise_plan', 'final_answer']` | -       | Agent directive for the orchestrator: continue, revise, or finalize                                                                                                                                                             |
+| `reasoning`                        | `Optional[str]`                                       | `None`     | Additional reasoning for the chosen next action                                                                                                                                                                                  |
+
+## Functions
+
+No specific functions - Structured output of an automated analysis step.
+
+---
+
+---
+title: Thought
+sidebarTitle: Thought
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `reasoning`                        | `str`                                                 | -          | Detailed explanation of understanding and strategy                                                                                                                                                                                |
+| `plan`                             | `List[PlanStep]`                                     | -          | Step-by-step execution plan of tool calls                                                                                                                                                                                       |
+| `criticism`                        | `str`                                                 | -          | Self-critique identifying potential flaws or ambiguities                                                                                                                                                                         |
+| `action`                           | `Literal['execute_plan', 'request_clarification']`   | `'execute_plan'` | Next action: execute the plan or request clarification                                                                                                                                                                          |
+| `clarification_needed`             | `Optional[str]`                                       | `None`     | Specific clarification needed if action is 'request_clarification'                                                                                                                                                               |
+
+## Functions
+
+No specific functions - Initial structured thinking process for the AI agent.
+
+---
+
+---
+title: ExecutionResult
+sidebarTitle: ExecutionResult
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `success`                         | `bool`                                                | -          | Whether the plan execution was successful                                                                                                                                                                                        |
+| `final_result`                     | `Any`                                                 | -          | The final synthesized result                                                                                                                                                                                                     |
+| `execution_history`                | `List[Dict[str, Any]]`                               | `[]`       | History of all tool executions                                                                                                                                                                                                   |
+| `total_steps`                      | `int`                                                 | -          | Total number of steps executed                                                                                                                                                                                                    |
+| `revisions`                        | `int`                                                 | `0`        | Number of plan revisions made                                                                                                                                                                                                     |
+
+## Functions
+
+No specific functions - Result of executing an orchestrated plan.
+
+---
+
+---
+title: plan_and_execute
+sidebarTitle: plan_and_execute
+---
+
+## Functions
+
+### `plan_and_execute`
+
+Master tool for complex tasks. Executes multi-step plans sequentially.
+
+**Parameters:**
+
+- `thought` (Thought): Structured thought object with reasoning, plan, and criticism
+
+**Returns:**
+
+- `str`: Placeholder string - actual execution handled by orchestrator
+
+---
+
+---
+title: Orchestrator
+sidebarTitle: Orchestrator
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent_instance`                   | `Any`                                                 | -          | The agent instance                                                                                                                                                                                                               |
+| `task`                             | `Task`                                                | -          | The task to execute                                                                                                                                                                                                              |
+| `wrapped_tools`                    | `Dict[str, Callable]`                               | -          | Dictionary of wrapped tools                                                                                                                                                                                                      |
+| `is_reasoning_enabled`             | `bool`                                                | -          | Whether reasoning is enabled                                                                                                                                                                                                     |
+| `original_user_request`            | `str`                                                 | -          | The original user request                                                                                                                                                                                                        |
+| `execution_history`                | `str`                                                 | -          | Orchestrator's execution history                                                                                                                                                                                                 |
+| `program_counter`                  | `int`                                                 | `0`        | Current step in the plan                                                                                                                                                                                                         |
+| `pending_plan`                     | `List[PlanStep]`                                     | `[]`       | The current plan to execute                                                                                                                                                                                                      |
+| `revision_count`                   | `int`                                                 | `0`        | Number of plan revisions made                                                                                                                                                                                                     |
+| `all_tools`                        | `Dict[str, Callable]`                               | -          | All available tools except plan_and_execute                                                                                                                                                                                      |
+
+## Functions
+
+### `execute`
+
+Main entry point for orchestrator execution.
+
+**Parameters:**
+
+- `thought` (Thought): The initial thought and plan
+
+**Returns:**
+
+- `Any`: The final result of execution
+
+### `_execute_single_step`
+
+Execute a single tool step from the plan.
+
+**Parameters:**
+
+- `step` (PlanStep): The step to execute
+
+**Returns:**
+
+- `Any`: The result of the step execution
+
+### `_inject_analysis`
+
+Inject mandatory analysis step after tool execution.
+
+**Returns:**
+
+- `AnalysisResult`: The analysis result
+
+### `_handle_reasoning_step`
+
+Handle reasoning injection after tool execution.
+
+**Parameters:**
+
+- `tool_name` (str): Name of the tool that was executed
+- `result` (Any): Result of the tool execution
+
+**Returns:**
+
+- `bool`: Whether to continue execution
+
+### `_request_plan_revision`
+
+Request revised plan based on execution history.
+
+### `_synthesize_final_answer`
+
+Synthesize final answer based on execution history.
+
+**Returns:**
+
+- `Any`: The final synthesized answer

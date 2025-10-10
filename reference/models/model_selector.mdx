@@ -1,0 +1,304 @@
+---
+title: Model Selector
+sidebarTitle: Model Selector
+---
+
+## Classes
+
+### `ModelRecommendation`
+
+Model recommendation with reasoning and confidence score.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_name`                       | `str`                                                 | Required   | The recommended model identifier                                                                                                                                                                                                      |
+| `reason`                           | `str`                                                 | Required   | Explanation for why this model was selected                                                                                                                                                                                                      |
+| `confidence_score`                 | `float`                                               | Required   | Confidence in the recommendation (0.0 to 1.0)                                                                                                                                                                                                      |
+| `alternative_models`                | `List[str]`                                           | `[]`       | Alternative models that could also work                                                                                                                                                                                                      |
+| `estimated_cost_tier`              | `int`                                                 | `5`        | Relative cost tier (1=cheapest, 10=most expensive)                                                                                                                                                                                                      |
+| `estimated_speed_tier`             | `int`                                                 | `5`        | Relative speed tier (1=slowest, 10=fastest)                                                                                                                                                                                                      |
+| `selection_method`                 | `Literal["llm", "rule_based"]`                       | Required   | Method used for selection                                                                                                                                                                                                      |
+
+### `SelectionCriteria`
+
+Criteria for model selection.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires_reasoning`                | `Optional[bool]`                                      | `None`     | Whether the task requires reasoning capabilities                                                                                                                                                                                                      |
+| `requires_code_generation`         | `Optional[bool]`                                      | `None`     | Whether the task requires code generation capabilities                                                                                                                                                                                                      |
+| `requires_math`                    | `Optional[bool]`                                      | `None`     | Whether the task requires mathematical capabilities                                                                                                                                                                                                      |
+| `requires_creative_writing`         | `Optional[bool]`                                      | `None`     | Whether the task requires creative writing capabilities                                                                                                                                                                                                      |
+| `requires_vision`                  | `Optional[bool]`                                      | `None`     | Whether the task requires vision capabilities                                                                                                                                                                                                      |
+| `requires_audio`                   | `Optional[bool]`                                      | `None`     | Whether the task requires audio capabilities                                                                                                                                                                                                      |
+| `requires_long_context`             | `Optional[bool]`                                      | `None`     | Whether the task requires long context capabilities                                                                                                                                                                                                      |
+| `prioritize_speed`                 | `bool`                                                | `False`    | Whether to prioritize speed over other factors                                                                                                                                                                                                      |
+| `prioritize_cost`                  | `bool`                                                | `False`    | Whether to prioritize cost over other factors                                                                                                                                                                                                      |
+| `prioritize_quality`               | `bool`                                                | `False`    | Whether to prioritize quality over other factors                                                                                                                                                                                                      |
+| `max_cost_tier`                    | `Optional[int]`                                       | `None`     | Maximum cost tier (1-10)                                                                                                                                                                                                      |
+| `min_context_window`               | `Optional[int]`                                       | `None`     | Minimum context window in tokens                                                                                                                                                                                                      |
+| `preferred_provider`               | `Optional[str]`                                       | `None`     | Preferred model provider                                                                                                                                                                                                      |
+| `require_open_source`             | `bool`                                                | `False`    | Whether to require open source models                                                                                                                                                                                                      |
+| `require_production_ready`         | `bool`                                                | `False`    | Whether to require production-ready models                                                                                                                                                                                                      |
+| `required_capabilities`            | `List[ModelCapability]`                              | `[]`       | Required model capabilities                                                                                                                                                                                                      |
+
+### `RuleBasedSelector`
+
+Rule-based model selector that doesn't require an LLM.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `capability_keywords`              | `Dict[ModelCapability, List[str]]`                   | Auto-generated | Keywords for each capability type                                                                                                                                                                                                      |
+
+**Functions:**
+
+### `__init__`
+
+Initialize the rule-based selector.
+
+### `_analyze_task_description`
+
+Analyze task description and assign scores to capabilities.
+
+**Parameters:**
+
+- `task_description` (str): The task description to analyze
+
+**Returns:**
+
+- `Dict[ModelCapability, float]`: Dictionary mapping capabilities to scores
+
+### `_score_model`
+
+Score a model based on task requirements and criteria.
+
+**Parameters:**
+
+- `model` (ModelMetadata): The model to score
+- `capability_scores` (Dict[ModelCapability, float]): Capability scores from task analysis
+- `criteria` (Optional[SelectionCriteria]): Selection criteria
+
+**Returns:**
+
+- `float`: The model score
+
+### `select_model`
+
+Select the best model using rule-based logic.
+
+**Parameters:**
+
+- `task_description` (str): Description of the task
+- `criteria` (Optional[SelectionCriteria]): Optional selection criteria
+- `default_model` (str): Fallback model if no good match found (default: "openai/gpt-4o")
+
+**Returns:**
+
+- `ModelRecommendation`: Model recommendation with reasoning
+
+### `LLMBasedSelector`
+
+LLM-based model selector using GPT-4o for intelligent recommendations.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent`                            | `Optional[Any]`                                       | `None`     | Agent instance to use for LLM calls (will create one if not provided)                                                                                                                                                                                                      |
+
+**Functions:**
+
+### `__init__`
+
+Initialize LLM-based selector.
+
+**Parameters:**
+
+- `agent` (Optional[Any]): Agent instance to use for LLM calls (will create one if not provided)
+
+### `select_model_async`
+
+Select the best model using an LLM for analysis.
+
+**Parameters:**
+
+- `task_description` (str): Description of the task
+- `criteria` (Optional[SelectionCriteria]): Optional selection criteria
+- `default_model` (str): Fallback model if needed (default: "openai/gpt-4o")
+
+**Returns:**
+
+- `ModelRecommendation`: Model recommendation with LLM-selected model and reasoning
+
+### `_prepare_model_info_for_llm`
+
+Prepare concise model information for the LLM prompt.
+
+**Returns:**
+
+- `str`: Formatted model information
+
+### `_build_selection_prompt`
+
+Build the prompt for LLM-based model selection.
+
+**Parameters:**
+
+- `task_description` (str): The task description
+- `model_info` (str): Model information
+- `criteria` (Optional[SelectionCriteria]): Selection criteria
+
+**Returns:**
+
+- `str`: The selection prompt
+
+## Functions
+
+### `select_model`
+
+Select the best model for a task (synchronous wrapper).
+
+**Parameters:**
+
+- `task_description` (str): Description of the task
+- `criteria` (Optional[SelectionCriteria]): Optional selection criteria
+- `use_llm` (bool): Whether to use LLM-based selection (default: False)
+- `agent` (Optional[Any]): Agent instance for LLM calls
+- `default_model` (str): Fallback model (default: "openai/gpt-4o")
+
+**Returns:**
+
+- `ModelRecommendation`: Model recommendation
+
+### `select_model_async`
+
+Select the best model for a task (asynchronous).
+
+**Parameters:**
+
+- `task_description` (str): Description of the task
+- `criteria` (Optional[SelectionCriteria]): Optional selection criteria
+- `use_llm` (bool): Whether to use LLM-based selection (default: False)
+- `agent` (Optional[Any]): Agent instance for LLM calls
+- `default_model` (str): Fallback model (default: "openai/gpt-4o")
+
+**Returns:**
+
+- `ModelRecommendation`: Model recommendation
+
+## Usage Examples
+
+### Rule-Based Selection
+
+```python
+from upsonic.models.model_selector import select_model, SelectionCriteria
+
+# Basic selection
+recommendation = select_model(
+    task_description="I need to generate Python code for data analysis",
+    use_llm=False
+)
+
+# With criteria
+criteria = SelectionCriteria(
+    requires_code_generation=True,
+    prioritize_cost=True,
+    max_cost_tier=5
+)
+
+recommendation = select_model(
+    task_description="Generate a machine learning model",
+    criteria=criteria,
+    use_llm=False
+)
+```
+
+### LLM-Based Selection
+
+```python
+from upsonic.models.model_selector import select_model_async, SelectionCriteria
+
+# Using LLM for intelligent selection
+recommendation = await select_model_async(
+    task_description="I need to analyze complex scientific papers and generate insights",
+    use_llm=True
+)
+
+# With specific criteria
+criteria = SelectionCriteria(
+    requires_reasoning=True,
+    requires_long_context=True,
+    prioritize_quality=True,
+    min_context_window=100000
+)
+
+recommendation = await select_model_async(
+    task_description="Research and analyze market trends",
+    criteria=criteria,
+    use_llm=True
+)
+```
+
+### Custom Selection Criteria
+
+```python
+from upsonic.models.model_selector import SelectionCriteria, ModelCapability
+
+# Advanced criteria
+criteria = SelectionCriteria(
+    requires_reasoning=True,
+    requires_code_generation=True,
+    requires_math=True,
+    prioritize_quality=True,
+    require_production_ready=True,
+    preferred_provider="openai",
+    required_capabilities=[
+        ModelCapability.REASONING,
+        ModelCapability.CODE_GENERATION,
+        ModelCapability.PRODUCTION
+    ],
+    max_cost_tier=7,
+    min_context_window=50000
+)
+
+recommendation = select_model(
+    task_description="Build a production AI system for financial analysis",
+    criteria=criteria,
+    use_llm=True
+)
+```
+
+## Selection Methods
+
+### Rule-Based Selection
+
+The rule-based selector analyzes task descriptions using keyword matching and scoring:
+
+- **Capability Keywords**: Maps task descriptions to required capabilities
+- **Model Scoring**: Scores models based on capability matches and criteria
+- **Tier Bonuses**: Adds bonuses based on model tiers (flagship > advanced > standard > fast)
+- **Benchmark Integration**: Considers benchmark scores for quality assessment
+- **Criteria Application**: Applies cost, speed, and quality constraints
+
+### LLM-Based Selection
+
+The LLM-based selector uses GPT-4o for intelligent analysis:
+
+- **Contextual Understanding**: Better understanding of complex task requirements
+- **Model Comparison**: Comprehensive comparison of available models
+- **Reasoning**: Explains why specific models are recommended
+- **Fallback**: Falls back to rule-based selection if LLM fails
+
+## Best Practices
+
+1. **Use Rule-Based for Simple Tasks**: For straightforward tasks, rule-based selection is faster and more cost-effective
+2. **Use LLM-Based for Complex Tasks**: For complex or ambiguous requirements, LLM-based selection provides better results
+3. **Specify Clear Criteria**: Provide detailed selection criteria for better recommendations
+4. **Consider Cost vs Quality**: Balance cost constraints with quality requirements
+5. **Test Recommendations**: Always test recommended models with your specific use case

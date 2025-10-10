@@ -1,0 +1,170 @@
+---
+title: FaissProvider
+sidebarTitle: FaissProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Config`                                             | Required   | A validated and immutable Config object containing all necessary parameters for the provider's operation                                                                                                                       |
+
+## Functions
+
+### `connect`
+
+Establishes a connection to the FAISS vector database by hydrating state from disk.
+
+This method loads the FAISS index, metadata store, and ID mappings from the filesystem. If running in 'in_memory' mode, it initializes empty state.
+
+**Raises:**
+- `VectorDBConnectionError`: If the connection fails.
+
+### `disconnect`
+
+Gracefully terminates the connection to the FAISS database by persisting state to disk.
+
+This method saves the FAISS index, metadata store, and ID mappings to the filesystem. If running in 'in_memory' mode, it simply clears the state without persisting.
+
+### `is_ready`
+
+Performs a health check to ensure the FAISS index is ready for operations.
+
+**Returns:**
+- `bool`: True if the index is connected and ready, False otherwise.
+
+### `create_collection`
+
+Creates the collection by building a FAISS index in memory based on the provider's configuration.
+
+This method is the designated "index factory" that creates the appropriate FAISS index type based on the configuration.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected before creating a collection.
+- `VectorDBError`: If the index creation fails.
+
+### `delete_collection`
+
+Permanently deletes the collection from the filesystem.
+
+This method removes the entire collection directory and clears all in-memory state.
+
+**Raises:**
+- `VectorDBError`: If the deletion fails.
+
+### `collection_exists`
+
+Checks if the collection (directory) exists on the filesystem.
+
+**Returns:**
+- `bool`: True if the collection exists, False otherwise.
+
+### `upsert`
+
+Adds new data or updates existing data by performing a delete-then-add operation.
+
+This method synchronizes the FAISS index, metadata store, and ID maps. It handles vector normalization for cosine similarity and trains the index if needed.
+
+**Parameters:**
+- `vectors` (List[List[float]]): A list of dense vector embeddings.
+- `payloads` (List[Dict[str, Any]]): A list of corresponding metadata objects.
+- `ids` (List[Union[str, int]]): A list of unique identifiers for each record.
+- `chunks` (Optional[List[str]]): Optional list of text chunks.
+- `sparse_vectors` (Optional[List[Dict[str, Any]]]): Optional sparse vectors (not supported by FAISS).
+- `**kwargs`: Provider-specific options.
+
+**Raises:**
+- `UpsertError`: If the data ingestion fails or if the provided data is inconsistent.
+- `VectorDBError`: If the index is not ready.
+
+### `delete`
+
+Deletes data using a "tombstone" strategy.
+
+It removes entries from the metadata and ID maps, but the vector remains in the FAISS index until the next full rebuild. Search results will ignore these "ghost" vectors.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of specific IDs to remove.
+- `**kwargs`: Provider-specific options.
+
+### `fetch`
+
+Retrieves full records (payload and vector) by their user-provided IDs.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of IDs to retrieve the full records for.
+- `**kwargs`: Provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects containing the fetched data.
+
+### `search`
+
+A master search method that dispatches to the appropriate specialized search function.
+
+**Parameters:**
+- `top_k` (Optional[int]): The number of results to return. If None, falls back to the default in the Config.
+- `query_vector` (Optional[List[float]]): The vector for dense or hybrid search.
+- `query_text` (Optional[str]): The text for full-text or hybrid search.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weighting factor for hybrid search. If None, falls back to the default in the Config.
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): The algorithm to use for hybrid search ('rrf' or 'weighted').
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects.
+
+**Raises:**
+- `ConfigurationError`: If the requested search is disabled or the wrong combination of arguments is provided.
+- `SearchError`: If any underlying search operation fails.
+
+### `dense_search`
+
+Performs a pure vector similarity search.
+
+**Parameters:**
+- `query_vector` (List[float]): The vector embedding to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): A metadata filter to apply. Defaults to None.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of the most similar results.
+
+### `full_text_search`
+
+Performs a full-text search if the provider supports it.
+
+**Parameters:**
+- `query_text` (str): The text string to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): A metadata filter to apply. Defaults to None.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of matching results.
+
+**Raises:**
+- `NotImplementedError`: FAISS is a dense-vector-only library and does not support full-text search.
+
+### `hybrid_search`
+
+Combines dense and sparse/keyword search results.
+
+**Parameters:**
+- `query_vector` (List[float]): The dense vector for the semantic part of the search.
+- `query_text` (str): The raw text for the keyword/sparse part of the search.
+- `top_k` (int): The number of final results to return.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weight for combining scores. If None, falls back to the default in the Config.
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): The algorithm to use for fusing results ('rrf' or 'weighted').
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects, ordered by the combined hybrid score.
+
+**Note:** FAISS provider will ignore the text query and alpha, performing a dense search instead.

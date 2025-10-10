@@ -1,0 +1,109 @@
+---
+title: Memory
+sidebarTitle: Memory
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`                          | `Storage`                                             | Required   | Storage backend to use for persistence                                                                                                                                                                                          |
+| `session_id`                       | `Optional[str]`                                       | `None`     | Session ID for session-based memory features                                                                                                                                                                                     |
+| `user_id`                          | `Optional[str]`                                       | `None`     | User ID for user-specific memory features                                                                                                                                                                                        |
+| `full_session_memory`              | `bool`                                                | `False`    | Enable full session memory storage                                                                                                                                                                                               |
+| `summary_memory`                   | `bool`                                                | `False`    | Enable session summary generation and storage                                                                                                                                                                                    |
+| `user_analysis_memory`             | `bool`                                                | `False`    | Enable user trait analysis and profile building                                                                                                                                                                                  |
+| `user_profile_schema`              | `Optional[Type[BaseModel]]`                           | `None`     | Custom schema for user profile data                                                                                                                                                                                              |
+| `dynamic_user_profile`             | `bool`                                                | `False`    | Enable dynamic user profile schema generation                                                                                                                                                                                    |
+| `num_last_messages`                | `Optional[int]`                                       | `None`     | Limit conversation history to last N messages                                                                                                                                                                                    |
+| `model_provider`                   | `Optional[Union[Model, str]]`                        | `None`     | Model provider for memory analysis tasks                                                                                                                                                                                         |
+| `debug`                            | `bool`                                                | `False`    | Enable debug logging                                                                                                                                                                                                             |
+| `feed_tool_call_results`           | `bool`                                                | `False`    | Include tool call results in memory analysis                                                                                                                                                                                      |
+| `user_memory_mode`                 | `Literal['update', 'replace']`                       | `'update'` | Mode for updating user memory (update existing or replace)                                                                                                                                                                       |
+
+## Functions
+
+### `prepare_inputs_for_task`
+
+Gathers all relevant memory data before a task execution, correctly parsing and limiting the chat history.
+
+**Returns:**
+
+- `Dict[str, Any]`: Dictionary containing:
+  - `message_history`: List of validated and limited message history
+  - `context_injection`: Context string for session summary
+  - `system_prompt_injection`: System prompt injection for user profile
+
+### `update_memories_after_task`
+
+Updates all relevant memories after a task has been completed, saving the chat history in the correct format.
+
+**Parameters:**
+
+- `model_response`: The model response containing new messages to store
+
+### `_update_interaction_session`
+
+Helper method to handle updating the InteractionSession object.
+
+**Parameters:**
+
+- `model_response`: The model response containing new messages
+
+### `_update_user_profile`
+
+Helper method to handle updating the UserProfile object.
+
+**Parameters:**
+
+- `model_response`: The model response containing new messages
+
+### `_limit_message_history`
+
+Limits conversation history to the last N runs, creating a new synthetic first request that combines the original system prompt with the user prompt from the beginning of the limited window.
+
+**Parameters:**
+
+- `message_history` (List): The full, flat list of ModelRequest and ModelResponse objects
+
+**Returns:**
+
+- `List`: A new, limited message history list
+
+### `_generate_new_summary`
+
+Generates a new session summary based on the previous summary and new conversation turn.
+
+**Parameters:**
+
+- `previous_summary` (str): The previous session summary
+- `model_response`: The model response containing new messages
+
+**Returns:**
+
+- `str`: The updated session summary
+
+### `_extract_user_prompt_content`
+
+Extracts the content string from all UserPromptParts in a list of messages.
+
+**Parameters:**
+
+- `messages` (list): List of messages to extract user prompts from
+
+**Returns:**
+
+- `list[str]`: List of user prompt content strings
+
+### `_analyze_interaction_for_traits`
+
+Analyzes user interaction to extract traits using the configured model provider.
+
+**Parameters:**
+
+- `current_profile` (dict): Current user profile data
+- `model_response`: The model response containing new messages
+
+**Returns:**
+
+- `Tuple[dict, Literal['update', 'replace']]`: Updated traits and update mode

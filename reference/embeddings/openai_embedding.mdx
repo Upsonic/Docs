@@ -1,0 +1,187 @@
+---
+title: OpenAIEmbedding
+sidebarTitle: OpenAIEmbedding
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api_key`                          | `Optional[str]`                                       | `None`     | OpenAI API key                                                                                                                                                                                                                   |
+| `organization`                      | `Optional[str]`                                       | `None`     | OpenAI organization ID                                                                                                                                                                                                           |
+| `base_url`                         | `Optional[str]`                                       | `None`     | Custom OpenAI API base URL                                                                                                                                                                                                       |
+| `model_name`                       | `str`                                                 | `"text-embedding-3-small"` | OpenAI embedding model                                                                                                                                                                                                         |
+| `enable_rate_limiting`             | `bool`                                                | `True`     | Enable intelligent rate limiting                                                                                                                                                                                                  |
+| `requests_per_minute`               | `int`                                                 | `3000`     | Max requests per minute                                                                                                                                                                                                          |
+| `tokens_per_minute`                | `int`                                                 | `1000000`  | Max tokens per minute                                                                                                                                                                                                            |
+| `parallel_requests`                 | `int`                                                 | `5`        | Number of parallel requests                                                                                                                                                                                                      |
+| `request_timeout`                  | `float`                                               | `60.0`     | Request timeout in seconds                                                                                                                                                                                                       |
+
+## Functions
+
+### `__init__`
+
+Initialize the OpenAIEmbedding provider.
+
+**Parameters:**
+
+- `config` (Optional[OpenAIEmbeddingConfig]): Configuration object
+- `**kwargs`: Additional configuration options
+
+### `_setup_client`
+
+Setup the OpenAI client with proper configuration.
+
+### `supported_modes`
+
+Get supported embedding modes.
+
+**Returns:**
+
+- `List[EmbeddingMode]`: List of supported embedding modes
+
+### `pricing_info`
+
+Get current OpenAI embedding pricing.
+
+**Returns:**
+
+- `Dict[str, float]`: Pricing information
+
+### `get_model_info`
+
+Get information about the current OpenAI model.
+
+**Returns:**
+
+- `Dict[str, Any]`: Model information
+
+### `_check_rate_limits`
+
+Check and enforce rate limits.
+
+**Parameters:**
+
+- `estimated_tokens` (int): Estimated token count
+
+### `_estimate_tokens`
+
+Estimate token count for texts.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts
+
+**Returns:**
+
+- `int`: Estimated token count
+
+### `_embed_batch`
+
+Embed a batch of texts using OpenAI API.
+
+**Parameters:**
+
+- `texts` (List[str]): List of text strings to embed
+- `mode` (EmbeddingMode): Embedding mode (not used by OpenAI, but kept for compatibility)
+
+**Returns:**
+
+- `List[List[float]]`: List of embedding vectors
+
+### `validate_connection`
+
+Validate OpenAI connection and model access.
+
+**Returns:**
+
+- `bool`: True if connection is valid
+
+### `get_usage_stats`
+
+Get detailed usage statistics for this session.
+
+**Returns:**
+
+- `Dict[str, Any]`: Usage statistics
+
+### `estimate_cost_detailed`
+
+Detailed cost estimation with breakdown.
+
+**Parameters:**
+
+- `num_texts` (int): Number of texts
+- `avg_text_length` (int): Average text length
+
+**Returns:**
+
+- `Dict[str, Any]`: Detailed cost estimation
+
+### `_compare_model_cost`
+
+Compare cost with another model.
+
+**Parameters:**
+
+- `model_name` (str): Model name to compare
+- `num_texts` (int): Number of texts
+- `avg_text_length` (int): Average text length
+
+**Returns:**
+
+- `Dict[str, float]`: Cost comparison
+
+### `close`
+
+Clean up OpenAI client connections and resources.
+
+### `create_openai_embedding`
+
+Quick factory function for OpenAI embeddings.
+
+**Parameters:**
+
+- `model_name` (str): OpenAI model name
+- `api_key` (Optional[str]): OpenAI API key (optional, uses env var if not provided)
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `OpenAIEmbedding`: Configured OpenAIEmbedding instance
+
+### `create_ada_002_embedding`
+
+Create OpenAI Ada-002 embedding provider.
+
+**Parameters:**
+
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `OpenAIEmbedding`: Configured OpenAIEmbedding instance
+
+### `create_3_small_embedding`
+
+Create OpenAI text-embedding-3-small provider.
+
+**Parameters:**
+
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `OpenAIEmbedding`: Configured OpenAIEmbedding instance
+
+### `create_3_large_embedding`
+
+Create OpenAI text-embedding-3-large provider.
+
+**Parameters:**
+
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `OpenAIEmbedding`: Configured OpenAIEmbedding instance

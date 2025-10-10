@@ -1,0 +1,145 @@
+---
+title: CacheManager
+sidebarTitle: CacheManager
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session_id`                       | `Optional[str]`                                       | `f"session_{int(time.time())}"` | Optional session identifier for cache isolation                                                                                                                                                                                 |
+
+## Functions
+
+### `get_cached_response`
+
+Get cached response for the given input text.
+
+**Parameters:**
+
+- `input_text` (str): The input text to search for in cache
+- `cache_method` (CacheMethod): The cache method to use ("vector_search" or "llm_call")
+- `cache_threshold` (float): Similarity threshold for vector search
+- `duration_minutes` (int): Cache duration in minutes
+- `embedding_provider` (Optional[Any]): Embedding provider for vector search
+- `llm_provider` (Optional[Union[Model, str]]): LLM provider for semantic comparison
+
+**Returns:**
+
+- `Optional[Any]`: Cached response if found, None otherwise
+
+### `store_cache_entry`
+
+Store a new cache entry.
+
+**Parameters:**
+
+- `input_text` (str): The input text
+- `output` (Any): The corresponding output
+- `cache_method` (CacheMethod): The cache method used
+- `embedding_provider` (Optional[Any]): Embedding provider for vector search
+
+### `get_cache_stats`
+
+Get cache statistics.
+
+**Returns:**
+
+- `Dict[str, Any]`: Cache statistics including:
+  - session_id: Session identifier
+  - total_entries: Total number of cache entries
+  - cache_hits: Number of cache hits
+  - cache_misses: Number of cache misses
+  - hit_rate: Cache hit rate (0.0 to 1.0)
+
+### `clear_cache`
+
+Clear all cache entries.
+
+### `get_cache_size`
+
+Get the number of cache entries.
+
+**Returns:**
+
+- `int`: Number of cache entries
+
+### `get_session_id`
+
+Get the session ID.
+
+**Returns:**
+
+- `str`: The session identifier
+
+## Features
+
+- **Session-Level Caching**: Manages cache storage and retrieval for tasks within a session
+- **Dual Cache Methods**: Supports both vector search and exact match capabilities
+- **Vector Search**: Uses embedding providers for semantic similarity matching
+- **LLM-Based Matching**: Uses LLM providers for intelligent semantic comparison
+- **Cache Expiration**: Automatic cleanup of expired cache entries based on duration
+- **Similarity Thresholding**: Configurable similarity thresholds for vector search
+- **Batch Processing**: Efficient batch comparison of cached queries using LLM
+- **Performance Metrics**: Comprehensive cache statistics and hit rate tracking
+- **Session Isolation**: Cache isolation between different sessions
+- **Error Handling**: Robust error handling for embedding and LLM operations
+- **Memory Management**: Efficient memory usage with automatic cleanup
+- **Debug Support**: Detailed logging and error reporting for cache operations
+
+## Cache Methods
+
+### Vector Search (`"vector_search"`)
+- Uses embedding providers to create vector representations
+- Calculates cosine similarity between input and cached vectors
+- Finds most similar cached entry above threshold
+- Supports configurable similarity thresholds
+
+### LLM Call (`"llm_call"`)
+- Uses LLM providers for intelligent semantic comparison
+- Batch processes multiple cached entries for efficiency
+- Leverages LLM reasoning for complex semantic matching
+- Falls back to exact matching when LLM is not available
+
+## Usage Examples
+
+### Basic Caching
+```python
+cache_manager = CacheManager(session_id="my_session")
+
+# Store a cache entry
+await cache_manager.store_cache_entry(
+    input_text="What is the weather?",
+    output="It's sunny today",
+    cache_method="vector_search",
+    embedding_provider=embedding_provider
+)
+
+# Retrieve cached response
+cached_response = await cache_manager.get_cached_response(
+    input_text="How's the weather?",
+    cache_method="vector_search",
+    cache_threshold=0.8,
+    duration_minutes=60,
+    embedding_provider=embedding_provider
+)
+```
+
+### LLM-Based Caching
+```python
+# Use LLM for semantic matching
+cached_response = await cache_manager.get_cached_response(
+    input_text="Tell me about the weather",
+    cache_method="llm_call",
+    cache_threshold=0.0,  # Not used for LLM method
+    duration_minutes=60,
+    llm_provider="openai/gpt-4o"
+)
+```
+
+### Cache Statistics
+```python
+stats = cache_manager.get_cache_stats()
+print(f"Hit rate: {stats['hit_rate']:.2%}")
+print(f"Total entries: {stats['total_entries']}")
+```

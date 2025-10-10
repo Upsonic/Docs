@@ -1,0 +1,134 @@
+---
+title: Reflection Models
+sidebarTitle: Reflection Models
+---
+
+## Classes
+
+### ReflectionAction
+
+Action to take based on evaluation.
+
+#### Values
+
+| Value                              | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ACCEPT`                           | Accept the current response                                                                                                                                                                                                     |
+| `REVISE`                           | Revise the response based on feedback                                                                                                                                                                                            |
+| `RETRY`                            | Retry with different approach                                                                                                                                                                                                    |
+| `CLARIFY`                          | Need clarification from user                                                                                                                                                                                                     |
+
+### EvaluationCriteria
+
+Criteria for evaluating responses.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `accuracy`                         | `float`                                               | -          | Accuracy of the information (0-1)                                                                                                                                                                                               |
+| `completeness`                     | `float`                                               | -          | Completeness of the response (0-1)                                                                                                                                                                                              |
+| `relevance`                        | `float`                                               | -          | Relevance to the task (0-1)                                                                                                                                                                                                     |
+| `clarity`                          | `float`                                               | -          | Clarity and readability (0-1)                                                                                                                                                                                                    |
+
+#### Functions
+
+##### `overall_score`
+
+Calculate overall evaluation score.
+
+**Returns:**
+
+- `float`: The overall evaluation score
+
+### EvaluationResult
+
+Result of response evaluation.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `criteria`                         | `EvaluationCriteria`                                  | -          | Criteria for evaluating responses                                                                                                                                                                                                |
+| `overall_score`                    | `float`                                               | -          | Overall evaluation score (0-1)                                                                                                                                                                                                  |
+| `feedback`                         | `str`                                                 | -          | Detailed feedback for improvement                                                                                                                                                                                                |
+| `suggested_improvements`          | `List[str]`                                           | -          | Specific improvement suggestions                                                                                                                                                                                                 |
+| `action`                           | `ReflectionAction`                                    | -          | Recommended action                                                                                                                                                                                                              |
+| `confidence`                       | `float`                                               | -          | Confidence in evaluation (0-1)                                                                                                                                                                                                 |
+
+#### Functions
+
+##### `__post_init__`
+
+Calculate overall score after initialization.
+
+### ReflectionConfig
+
+Configuration for reflection process.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `max_iterations`                    | `int`                                                 | `3`        | Maximum reflection iterations                                                                                                                                                                                                    |
+| `acceptance_threshold`             | `float`                                               | `0.8`      | Minimum score to accept response                                                                                                                                                                                                 |
+| `evaluator_model`                  | `Optional[str]`                                       | `None`     | Model for evaluation                                                                                                                                                                                                             |
+| `enable_self_critique`             | `bool`                                                | `True`     | Enable self-critique                                                                                                                                                                                                              |
+| `enable_improvement_suggestions`   | `bool`                                                | `True`     | Enable improvement suggestions                                                                                                                                                                                                   |
+
+### ReflectionState
+
+State tracking for reflection process.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `iteration`                        | `int`                                                 | `0`        | Current iteration number                                                                                                                                                                                                         |
+| `evaluations`                      | `List[EvaluationResult]`                             | `[]`       | History of evaluations                                                                                                                                                                                                           |
+| `responses`                        | `List[str]`                                           | `[]`       | History of responses                                                                                                                                                                                                              |
+| `final_response`                   | `Optional[str]`                                       | `None`     | Final accepted response                                                                                                                                                                                                          |
+| `terminated_reason`                | `Optional[str]`                                       | `None`     | Reason for termination                                                                                                                                                                                                           |
+
+#### Functions
+
+##### `add_evaluation`
+
+Add an evaluation result to the state.
+
+**Parameters:**
+
+- `response` (str): The response text
+- `evaluation` (EvaluationResult): The evaluation result
+
+##### `get_latest_evaluation`
+
+Get the most recent evaluation.
+
+**Returns:**
+
+- `Optional[EvaluationResult]`: The most recent evaluation result
+
+##### `should_continue`
+
+Check if reflection should continue.
+
+**Parameters:**
+
+- `config` (ReflectionConfig): The reflection configuration
+
+**Returns:**
+
+- `bool`: True if reflection should continue
+
+### ReflectionPrompts
+
+Prompt templates for reflection process.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EVALUATION_PROMPT`                | `str`                                                 | -          | Template for evaluation prompts                                                                                                                                                                                                  |
+| `IMPROVEMENT_PROMPT`               | `str`                                                 | -          | Template for improvement prompts                                                                                                                                                                                                 |
+| `SELF_CRITIQUE_PROMPT`             | `str`                                                 | -          | Template for self-critique prompts                                                                                                                                                                                               |

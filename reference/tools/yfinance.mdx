@@ -1,0 +1,141 @@
+---
+title: YFinanceTools
+sidebarTitle: YFinanceTools
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stock_price`                      | `bool`                                                | `True`     | Enable stock price retrieval                                                                                                                                                                                                     |
+| `company_info`                     | `bool`                                                | `False`    | Enable company information retrieval                                                                                                                                                                                             |
+| `analyst_recommendations`          | `bool`                                                | `False`    | Enable analyst recommendations                                                                                                                                                                                                   |
+| `company_news`                     | `bool`                                                | `False`    | Enable company news retrieval                                                                                                                                                                                                    |
+| `enable_all`                       | `bool`                                                | `False`    | Enable all available tools                                                                                                                                                                                                        |
+| `_tools`                           | `List`                                                | `[]`       | List of enabled tool functions                                                                                                                                                                                                    |
+
+## Functions
+
+### `get_current_stock_price`
+
+Get the current stock price for a given symbol.
+
+**Parameters:**
+
+- `symbol` (str): Stock symbol (e.g., 'AAPL', 'TSLA')
+
+**Returns:**
+
+- `str`: Current stock price as formatted string
+
+### `get_company_info`
+
+Get comprehensive company information.
+
+**Parameters:**
+
+- `symbol` (str): Stock symbol
+
+**Returns:**
+
+- `str`: JSON-formatted company information
+
+### `get_analyst_recommendations`
+
+Get analyst recommendations for a stock.
+
+**Parameters:**
+
+- `symbol` (str): Stock symbol
+
+**Returns:**
+
+- `str`: JSON-formatted analyst recommendations
+
+### `get_company_news`
+
+Get recent company news.
+
+**Parameters:**
+
+- `symbol` (str): Stock symbol
+- `num_stories` (int): Number of news stories to retrieve
+
+**Returns:**
+
+- `str`: JSON-formatted news stories
+
+### `get_stock_fundamentals`
+
+Get key financial fundamentals for a stock.
+
+**Parameters:**
+
+- `symbol` (str): Stock symbol
+
+**Returns:**
+
+- `str`: JSON-formatted fundamental data
+
+### `get_income_statements`
+
+Get income statement data.
+
+**Parameters:**
+
+- `symbol` (str): Stock symbol
+
+**Returns:**
+
+- `str`: JSON-formatted income statement data
+
+### `get_key_financial_ratios`
+
+Get key financial ratios.
+
+**Parameters:**
+
+- `symbol` (str): Stock symbol
+
+**Returns:**
+
+- `str`: JSON-formatted financial ratios
+
+### `get_historical_stock_prices`
+
+Get historical stock price data.
+
+**Parameters:**
+
+- `symbol` (str): Stock symbol
+- `period` (str): Time period ('1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max')
+- `interval` (str): Data interval ('1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo')
+
+**Returns:**
+
+- `str`: JSON-formatted historical price data
+
+### `get_technical_indicators`
+
+Get technical indicator data.
+
+**Parameters:**
+
+- `symbol` (str): Stock symbol
+- `period` (str): Time period for analysis
+
+**Returns:**
+
+- `str`: JSON-formatted technical indicator data
+
+### `functions`
+
+Return the list of tool functions to be used by the agent.
+
+**Returns:**
+
+- `List`: List of tool functions
+
+### `enable_all_tools`
+
+Enable all available financial tools.

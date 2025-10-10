@@ -1,0 +1,96 @@
+---
+title: Team
+sidebarTitle: Team
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agents`                           | `list[Any]`                                           | Required   | List of Direct agent instances to use as team members                                                                                                                                                                           |
+| `tasks`                            | `list[Task] \| None`                                  | `None`     | List of tasks to execute (optional)                                                                                                                                                                                             |
+| `model_provider`                   | `Optional[Any]`                                        | `None`     | The model provider instance for any internal agents (leader, router)                                                                                                                                                            |
+| `response_format`                  | `Any`                                                 | `str`      | The response format for the end task (optional)                                                                                                                                                                                  |
+| `ask_other_team_members`           | `bool`                                                | `False`    | A flag to automatically add other agents as tools                                                                                                                                                                               |
+| `mode`                             | `Literal["sequential", "coordinate", "route"]`       | `"sequential"` | The operational mode for the team ('sequential', 'coordinate', or 'route')                                                                                                                                                  |
+| `memory`                           | `Optional[Memory]`                                    | `None`     | Memory manager for the team coordination                                                                                                                                                                                        |
+
+## Functions
+
+### `complete`
+
+Execute multi-agent operations with the predefined agents and tasks (alias for `do`).
+
+**Parameters:**
+
+- `tasks` (list[Task] | Task | None): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
+
+**Returns:**
+
+- The response from the multi-agent operation
+
+### `print_complete`
+
+Execute the multi-agent operation and print the result (alias for `print_do`).
+
+**Parameters:**
+
+- `tasks` (list[Task] | Task | None): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
+
+**Returns:**
+
+- The response from the multi-agent operation
+
+### `do`
+
+Execute multi-agent operations with the predefined agents and tasks.
+
+**Parameters:**
+
+- `tasks` (list[Task] | Task | None): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
+
+**Returns:**
+
+- The response from the multi-agent operation
+
+### `multi_agent`
+
+Execute multi-agent operations with agent configurations and tasks.
+
+**Parameters:**
+
+- `agent_configurations` (List[Agent]): List of agent configurations
+- `tasks` (Any): Tasks to execute
+
+**Returns:**
+
+- The response from the multi-agent operation
+
+### `multi_agent_async`
+
+Asynchronous version of the multi_agent method.
+
+**Parameters:**
+
+- `agent_configurations` (List[Agent]): List of agent configurations
+- `tasks` (Any): Tasks to execute
+
+**Returns:**
+
+- The response from the multi-agent operation
+
+### `print_do`
+
+Execute the multi-agent operation and print the result.
+
+**Parameters:**
+
+- `tasks` (list[Task] | Task | None): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
+
+**Returns:**
+
+- The response from the multi-agent operation
+
+### `add_tool`
+
+Add agents as a tool to each Task object.

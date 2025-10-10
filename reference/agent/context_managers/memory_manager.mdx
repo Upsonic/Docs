@@ -1,0 +1,79 @@
+---
+title: MemoryManager
+sidebarTitle: MemoryManager
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`                           | `Optional[Memory]`                                   | `None`     | The configured Memory object from the parent agent                                                                                                                                                                               |
+
+## Functions
+
+### `get_message_history`
+
+Provides the prepared message history (full session memory) to the agent's core run method.
+
+**Returns:**
+
+- `List[Any]`: The prepared message history
+
+### `get_context_injection`
+
+Provides the prepared context string (e.g., session summary) to the ContextManager.
+
+**Returns:**
+
+- `str`: The prepared context injection string
+
+### `get_system_prompt_injection`
+
+Provides the prepared system prompt string (e.g., user profile) to the SystemPromptManager.
+
+**Returns:**
+
+- `str`: The prepared system prompt injection string
+
+### `process_response`
+
+Captures the final model response from the LLM call, making it available for the memory update process on exit.
+
+**Parameters:**
+
+- `model_response` (Any): The model response to process
+
+**Returns:**
+
+- `Any`: The processed model response
+
+### `manage_memory`
+
+Asynchronous context manager for orchestrating memory operations throughout a task's lifecycle.
+
+**Returns:**
+
+- `AsyncContextManager`: Context manager that handles memory operations
+
+**Usage:**
+
+```python
+async with memory_manager.manage_memory() as manager:
+    # Get prepared inputs
+    history = manager.get_message_history()
+    context = manager.get_context_injection()
+    system_prompt = manager.get_system_prompt_injection()
+    
+    # Execute task
+    response = await model.request(...)
+    manager.process_response(response)
+    # Memory updates handled automatically
+```
+
+**Features:**
+
+- **On Entry**: Calls `memory.prepare_inputs_for_task()` to prepare all necessary inputs (history, summaries, profiles)
+- **On Exit**: Calls `memory.update_memories_after_task(model_response)` to process the LLM response and update all relevant memories
+- **Memory Integration**: Seamlessly integrates with the Memory orchestrator
+- **Async Processing**: Handles memory updates asynchronously to avoid blocking
+- **Context Preparation**: Provides prepared inputs for other context managers

@@ -1,0 +1,80 @@
+---
+title: SemanticChunker
+sidebarTitle: SemanticChunker
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `SemanticChunkingConfig`                                     | Required     | A specialized configuration model for the data-driven Semantic Chunker. This config requires an embedding provider and provides fine-grained control over the statistical methods used to identify semantic boundaries in text.                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initializes the chunker with a specific configuration.
+
+**Parameters:**
+
+- `config` (SemanticChunkingConfig): Configuration with embedding provider (required for this chunker).
+
+### `_chunk_document`
+
+Synchronous chunking - delegates to async implementation.
+
+**Parameters:**
+
+- `document` (Document): Document to chunk
+
+**Returns:**
+
+- `List[Chunk]`: List of chunks
+
+### `_achunk_document`
+
+Core semantic chunking pipeline using embeddings.
+
+**Parameters:**
+
+- `document` (Document): Document to process with semantic analysis
+
+**Returns:**
+
+- `List[Chunk]`: List of semantically-coherent chunks
+
+### `_segment_into_sentences`
+
+Segment text into sentences using the configured sentence splitter.
+
+**Parameters:**
+
+- `text` (str): Text to segment into sentences
+
+**Returns:**
+
+- `List[_Sentence]`: List of sentence objects with position information
+
+### `_calculate_distances`
+
+Calculate cosine distances between adjacent sentence embeddings.
+
+**Parameters:**
+
+- `sentences` (List[_Sentence]): List of sentences with embeddings
+
+**Returns:**
+
+- `List[float]`: List of cosine distances between adjacent sentences
+
+### `_calculate_breakpoint_threshold`
+
+Calculate the threshold for identifying topic breaks using statistical methods.
+
+**Parameters:**
+
+- `distances` (List[float]): List of cosine distances
+
+**Returns:**
+
+- `float`: Threshold value for identifying topic breaks

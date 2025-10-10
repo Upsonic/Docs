@@ -1,0 +1,59 @@
+---
+title: GoogleModelProfile
+sidebarTitle: GoogleModelProfile
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supports_tools`                    | `bool`                                                | `True`     | Whether the model supports tools                                                                                                                                                                                                 |
+| `supports_json_schema_output`      | `bool`                                                | `True`     | Whether the model supports JSON schema output                                                                                                                                                                                     |
+| `supports_json_object_output`      | `bool`                                                | `True`     | Whether the model supports JSON object output                                                                                                                                                                                     |
+| `default_structured_output_mode`  | `StructuredOutputMode`                                | `'tool'`   | The default structured output mode to use for the model                                                                                                                                                                           |
+| `prompted_output_template`         | `str`                                                 | `"Always respond with a JSON object that's compatible with this schema:\n\n{schema}\n\nDon't include any text or Markdown fencing before or after.\n"` | The instructions template to use for prompted structured output. The '{schema}' placeholder will be replaced with the JSON schema for the output. |
+| `json_schema_transformer`          | `type[JsonSchemaTransformer] \| None`                 | `GoogleJsonSchemaTransformer` | The transformer to use to make JSON schemas for tools and structured output compatible with the model                                                                                                                             |
+| `thinking_tags`                     | `tuple[str, str]`                                     | `('<think>', '</think>')` | The tags used to indicate thinking parts in the model's output. Defaults to ('<think>', '</think>').                                                                                                                           |
+| `ignore_streamed_leading_whitespace` | `bool`                                                | `False`    | Whether to ignore leading whitespace when streaming a response                                                                                                                                                                   |
+
+## Functions
+
+### `google_model_profile`
+
+Get the model profile for a Google model.
+
+**Parameters:**
+
+- `model_name` (str): The name of the Google model
+
+**Returns:**
+
+- `ModelProfile | None`: The model profile for the Google model, or None if no specific profile is defined
+
+**Description:**
+
+This function returns the model profile for a Google model. It creates a ModelProfile instance with GoogleJsonSchemaTransformer configured for JSON schema compatibility with Gemini models, and enables both JSON schema and JSON object output support.
+
+### `GoogleJsonSchemaTransformer`
+
+Transforms the JSON Schema from Pydantic to be suitable for Gemini.
+
+**Description:**
+
+Gemini supports a subset of OpenAPI v3.0.3. This transformer handles the specific requirements:
+
+- Removes the `title` keyword (not allowed by Gemini)
+- Removes `$defs` and inlines definitions where possible
+- Handles `additionalProperties` removal with warnings
+- Converts `const` to `enum` with single value
+- Converts enum values to strings
+- Handles various format conversions and schema transformations
+
+**Parameters:**
+
+- `schema` (JsonSchema): The JSON schema to transform
+- `strict` (bool | None): Whether to use strict mode
+
+**Returns:**
+
+- `JsonSchema`: The transformed JSON schema compatible with Gemini

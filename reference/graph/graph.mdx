@@ -1,0 +1,192 @@
+---
+title: Graph
+sidebarTitle: Graph
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `default_agent`                    | `Optional[BaseAgent]`                                | `None`     | Default agent to use when a task doesn't specify one                                                                                                                                                                             |
+| `parallel_execution`               | `bool`                                                | `False`    | Whether to execute independent tasks in parallel                                                                                                                                                                                  |
+| `max_parallel_tasks`               | `int`                                                 | `4`        | Maximum number of tasks to execute in parallel                                                                                                                                                                                   |
+| `show_progress`                    | `bool`                                                | `True`     | Whether to display a progress bar during execution                                                                                                                                                                               |
+| `nodes`                            | `List[Union[TaskNode, DecisionFunc, DecisionLLM]]`    | `[]`       | List of nodes in the graph                                                                                                                                                                                                       |
+| `edges`                            | `Dict[str, List[str]]`                               | `{}`       | Dictionary mapping node IDs to their next nodes                                                                                                                                                                                  |
+| `state`                            | `State`                                               | `State()`  | State object managing task execution state                                                                                                                                                                                       |
+| `storage`                          | `Optional[Storage]`                                  | `None`     | Storage backend for persistence                                                                                                                                                                                                  |
+
+## Functions
+
+### `add`
+
+Adds a complete workflow (chain) to the graph.
+
+**Parameters:**
+
+- `tasks_chain` (Union[Task, TaskNode, TaskChain, DecisionFunc, DecisionLLM]): A Task, Node, or fully-formed TaskChain to add to the graph
+
+**Returns:**
+
+- `Graph`: This graph for method chaining
+
+### `_get_available_agent`
+
+Finds an available agent either from the graph default or from any task node.
+
+**Returns:**
+
+- `Any`: An agent that can be used for execution, or None if none is found
+
+### `_execute_task`
+
+Executes a single task.
+
+**Parameters:**
+
+- `node` (TaskNode): The TaskNode containing the task to execute
+- `state` (State): Current state object
+- `verbose` (bool): Whether to print detailed information
+- `graph_execution_id` (Optional[str]): Unique identifier for this graph execution
+
+**Returns:**
+
+- `Any`: The output of the task
+
+### `_evaluate_decision`
+
+Evaluates a decision node to determine which branch to follow.
+
+**Parameters:**
+
+- `decision_node` (Union[DecisionFunc, DecisionLLM]): The decision node to evaluate
+- `state` (State): Current state object
+- `verbose` (bool): Whether to print detailed information
+
+**Returns:**
+
+- `Union[TaskNode, TaskChain, None]`: The branch to follow (true or false)
+
+### `_format_output_for_display`
+
+Format an output value for display in verbose mode.
+
+**Parameters:**
+
+- `output` (Any): The output value to format
+
+**Returns:**
+
+- `str`: A string representation of the output
+
+### `_get_predecessors`
+
+Gets the predecessor nodes that feed into the given node.
+
+**Parameters:**
+
+- `node` (Union[TaskNode, DecisionFunc, DecisionLLM]): The node to find predecessors for
+
+**Returns:**
+
+- `List[Union[TaskNode, DecisionFunc, DecisionLLM]]`: List of predecessor nodes
+
+### `_get_start_nodes`
+
+Gets the starting nodes of the graph (those with no predecessors).
+
+**Returns:**
+
+- `List[Union[TaskNode, DecisionFunc, DecisionLLM]]`: List of start nodes
+
+### `_get_next_nodes`
+
+Gets the nodes that come after the given node.
+
+**Parameters:**
+
+- `node` (Union[TaskNode, DecisionFunc, DecisionLLM]): The node to find successors for
+
+**Returns:**
+
+- `List[Union[TaskNode, DecisionFunc, DecisionLLM]]`: List of successor nodes
+
+### `_get_all_branch_node_ids`
+
+Recursively collects all node IDs within a given branch.
+
+**Parameters:**
+
+- `branch` (Union[TaskNode, TaskChain, DecisionFunc, DecisionLLM, None]): The branch to collect node IDs from
+
+**Returns:**
+
+- `Set[str]`: Set of all node IDs in the branch
+
+### `_run_sequential`
+
+Runs tasks sequentially.
+
+**Parameters:**
+
+- `verbose` (bool): Whether to print detailed information
+- `show_progress` (bool): Whether to display a progress bar during execution
+- `graph_execution_id` (Optional[str]): Unique identifier for this graph execution
+
+**Returns:**
+
+- `State`: The final state object with all task outputs
+
+### `_count_all_possible_nodes`
+
+Counts all nodes in the graph, which are pre-flattened during construction.
+
+**Returns:**
+
+- `int`: The total number of nodes in the graph
+
+### `run_async`
+
+Executes the graph, running all tasks in the appropriate order.
+
+**Parameters:**
+
+- `verbose` (bool): Whether to print detailed information
+- `show_progress` (Optional[bool]): Whether to display a progress bar during execution. If None, uses the graph's show_progress attribute
+
+**Returns:**
+
+- `State`: The final state object with all task outputs
+
+### `run`
+
+Executes the graph, running all tasks in the appropriate order synchronously.
+
+**Parameters:**
+
+- `verbose` (bool): Whether to print detailed information
+- `show_progress` (Optional[bool]): Whether to display a progress bar during execution. If None, uses the graph's show_progress attribute
+
+**Returns:**
+
+- `State`: The final state object with all task outputs
+
+### `get_output`
+
+Gets the output of the last task executed in the graph.
+
+**Returns:**
+
+- `Any`: The output of the last task
+
+### `get_task_output`
+
+Gets the output of a task by its description.
+
+**Parameters:**
+
+- `description` (str): The description of the task
+
+**Returns:**
+
+- `Any`: The output of the specified task, or None if not found

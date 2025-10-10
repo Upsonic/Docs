@@ -1,0 +1,140 @@
+---
+title: YAMLLoader
+sidebarTitle: YAMLLoader
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                           | `YAMLLoaderConfig`                                    | Required   | Configuration object for YAML loading behavior                                                                                                                                                                                   |
+
+## Functions
+
+### `__init__`
+
+Initializes the YAMLLoader with its specific configuration.
+
+**Parameters:**
+
+- `config` (YAMLLoaderConfig): A YAMLLoaderConfig object with settings for YAML processing
+
+### `get_supported_extensions`
+
+Gets a list of file extensions supported by this loader.
+
+**Returns:**
+
+- `List[str]`: List of supported file extensions (`.yaml`, `.yml`)
+
+### `load`
+
+Loads all YAML documents from the given source synchronously.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): YAML source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `aload`
+
+Loads all YAML documents from the given source asynchronously and concurrently.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): YAML source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `batch`
+
+Loads documents from a list of sources, leveraging the core `load` method.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of YAML sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `abatch`
+
+Loads documents from a list of sources asynchronously, leveraging `aload`.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of YAML sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `_process_single_yaml_file`
+
+Processes a single YAML file. Wraps the synchronous parsing logic in a separate thread to avoid blocking the asyncio event loop.
+
+**Parameters:**
+
+- `path` (Path): Path to the YAML file
+
+**Returns:**
+
+- `List[Document]`: List of documents created from the YAML file
+
+### `_read_file_content`
+
+Reads file content asynchronously.
+
+**Parameters:**
+
+- `path` (Path): Path to the YAML file
+
+**Returns:**
+
+- `str`: File content as string
+
+### `_parse_and_extract`
+
+Synchronous helper that performs the actual parsing and document creation.
+
+**Parameters:**
+
+- `content` (str): YAML content to parse
+- `path` (Path): Path to the source file
+- `document_id` (str): Document ID
+
+**Returns:**
+
+- `List[Document]`: List of documents created from YAML content
+
+### `_flatten_dict`
+
+Flattens a nested dictionary.
+
+**Parameters:**
+
+- `data` (Dict[str, Any]): Dictionary to flatten
+- `parent_key` (str): Parent key for nested items
+- `sep` (str): Separator for flattened keys
+
+**Returns:**
+
+- `Dict[str, Any]`: Flattened dictionary
+
+### `_extract_smart_text`
+
+Recursively extracts all string values from a nested data structure.
+
+**Parameters:**
+
+- `data` (Any): Data structure to extract text from
+
+**Returns:**
+
+- `Generator[str, None, None]`: Generator yielding extracted text strings

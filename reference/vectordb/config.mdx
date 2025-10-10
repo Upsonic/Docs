@@ -1,0 +1,220 @@
+---
+title: VectorDBConfig
+sidebarTitle: VectorDBConfig
+---
+
+## Enums
+
+### `ProviderName`
+
+Enumeration for supported vector database providers.
+
+**Values:**
+- `CHROMA = 'chroma'`
+- `QDRANT = 'qdrant'`
+- `WEAVIATE = 'weaviate'`
+- `PINECONE = 'pinecone'`
+- `MILVUS = 'milvus'`
+- `FAISS = 'faiss'`
+- `PG = "pgvector"`
+
+### `Mode`
+
+Enumeration for the operational mode of the provider.
+
+**Values:**
+- `CLOUD = 'cloud'`
+- `LOCAL = 'local'`
+- `EMBEDDED = 'embedded'`
+- `IN_MEMORY = 'in_memory'`
+
+### `DistanceMetric`
+
+Enumeration for similarity calculation algorithms.
+
+**Values:**
+- `COSINE = 'Cosine'`
+- `EUCLIDEAN = 'Euclidean'`
+- `DOT_PRODUCT = 'DotProduct'`
+
+### `IndexType`
+
+Enumeration for the core Approximate Nearest Neighbor (ANN) index algorithm.
+
+**Values:**
+- `HNSW = 'HNSW'`
+- `IVF_FLAT = 'IVF_FLAT'`
+- `FLAT = 'FLAT'`
+
+### `WriteConsistency`
+
+Enumeration for write consistency in distributed databases.
+
+**Values:**
+- `STRONG = 'strong'`
+- `EVENTUAL = 'eventual'`
+
+### `ConsistencyLevel`
+
+**Values:**
+- `STRONG = "Strong"`
+- `BOUNDED = "Bounded"`
+- `SESSION = "Session"`
+- `EVENTUALLY = "Eventually"`
+
+## Classes
+
+### `CoreConfig`
+
+Handles connection, identity, and the fundamental vector schema. Corresponds to Table 1: Core Configuration & Schema.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db_path`                          | `Optional[str]`                                       | `None`     | Database path for embedded mode                                                                                                                                                                                                  |
+| `provider_name`                    | `ProviderName`                                        | Required   | The vector database provider to use                                                                                                                                                                                              |
+| `mode`                             | `Mode`                                                | Required   | The operational mode of the provider                                                                                                                                                                                             |
+| `collection_name`                  | `str`                                                 | `"default_collection"` | Name of the collection                                                                                                                                                                                                           |
+| `cloud`                            | `Optional[str]`                                       | `None`     | Cloud provider identifier                                                                                                                                                                                                         |
+| `region`                           | `Optional[str]`                                       | `None`     | Cloud region                                                                                                                                                                                                                     |
+| `host`                             | `Optional[str]`                                       | `None`     | Database host                                                                                                                                                                                                                     |
+| `port`                             | `Optional[int]`                                       | `None`     | Database port                                                                                                                                                                                                                     |
+| `api_key`                          | `Optional[pydantic.SecretStr]`                       | `None`     | API key for authentication                                                                                                                                                                                                        |
+| `use_tls`                          | `bool`                                                | `True`     | Whether to use TLS encryption                                                                                                                                                                                                    |
+| `vector_size`                      | `int`                                                 | Required   | Size of the dense vectors                                                                                                                                                                                                         |
+| `vector_size_sparse`                | `Optional[int]`                                       | `None`     | Size of the sparse vectors                                                                                                                                                                                                        |
+| `distance_metric`                  | `DistanceMetric`                                      | `DistanceMetric.COSINE` | Distance metric for similarity calculation                                                                                                                                                                                       |
+| `recreate_if_exists`                | `bool`                                                | `False`    | Whether to recreate collection if it already exists                                                                                                                                                                                |
+
+### `HNSWTuningConfig`
+
+Fine-tunes the Hierarchical Navigable Small World (HNSW) index.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index_type`                       | `Literal[IndexType.HNSW]`                            | Required   | Must be HNSW index type                                                                                                                                                                                                           |
+| `m`                                | `int`                                                 | `16`       | Number of bi-directional links created for every new element during construction                                                                                                                                                   |
+| `ef_construction`                  | `int`                                                 | `200`      | Size of the dynamic candidate list for construction                                                                                                                                                                                |
+
+### `IVFTuningConfig`
+
+Fine-tunes Inverted File (IVF) based indexes.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index_type`                       | `Literal[IndexType.IVF_FLAT]`                        | Required   | Must be IVF_FLAT index type                                                                                                                                                                                                       |
+| `nlist`                            | `int`                                                 | `100`      | Number of clusters for the index                                                                                                                                                                                                  |
+
+### `FlatTuningConfig`
+
+Configuration for a FLAT (brute-force) index. No tuning needed.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index_type`                       | `Literal[IndexType.FLAT]`                           | Required   | Must be FLAT index type                                                                                                                                                                                                            |
+
+### `QuantizationConfig`
+
+Compresses vectors to reduce memory usage.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `quantization_type`                | `Literal['Scalar', 'Product']`                      | Required   | Type of quantization to apply                                                                                                                                                                                                    |
+| `bits`                             | `int`                                                 | `8`        | Number of bits for quantization                                                                                                                                                                                                  |
+
+### `PayloadIndexConfig`
+
+Defines a schema for a single payload index, allowing for optimized filtering on metadata fields.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `field_name`                       | `str`                                                 | Required   | Name of the field to index                                                                                                                                                                                                        |
+| `field_schema_type`                | `Literal['text', 'keyword', 'integer', 'float', 'geo', 'boolean']` | Required | Schema type of the field                                                                                                                                                                                                         |
+| `params`                           | `Optional[Dict[str, Any]]`                           | `None`     | Additional parameters for the index                                                                                                                                                                                              |
+| `enable_full_text_index`           | `Optional[bool]`                                      | `None`     | Whether to enable full-text search on this field                                                                                                                                                                                 |
+
+### `IndexingConfig`
+
+Manages performance-critical aspects of index algorithm and memory usage. Corresponds to Table 2: Indexing, Storage & Performance Tuning.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index_config`                     | `IndexTuningConfig`                                  | `HNSWTuningConfig(index_type=IndexType.HNSW)` | Index configuration                                                                                                                                                                                                              |
+| `quantization`                     | `Optional[QuantizationConfig]`                       | `None`     | Quantization settings                                                                                                                                                                                                             |
+| `payload_indexes`                  | `Optional[List[PayloadIndexConfig]]`                 | `None`     | List of payload field indexes                                                                                                                                                                                                     |
+| `create_dense_index`               | `bool`                                                | `True`     | Whether to create a dense vector index                                                                                                                                                                                            |
+| `create_sparse_index`              | `bool`                                                | `False`    | Whether to create a sparse vector index                                                                                                                                                                                           |
+
+### `SearchConfig`
+
+Defines the default parameters for all retrieval operations. Corresponds to Table 3: Search & Retrieval Operations. These can be overridden at query time.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `default_top_k`                    | `Optional[int]`                                      | `None`     | Default number of results to return                                                                                                                                                                                              |
+| `default_ef_search`                | `Optional[int]`                                      | `None`     | Default ef parameter for HNSW search                                                                                                                                                                                             |
+| `default_nprobe`                   | `Optional[int]`                                      | `None`     | Default nprobe parameter for IVF search                                                                                                                                                                                          |
+| `default_hybrid_alpha`             | `Optional[float]`                                    | `None`     | Default alpha parameter for hybrid search                                                                                                                                                                                        |
+| `default_fusion_method`            | `Optional[Literal['rrf', 'weighted']]`              | `None`     | Default fusion method for hybrid search                                                                                                                                                                                          |
+| `default_similarity_threshold`     | `Optional[float]`                                    | `None`     | Default similarity threshold for results                                                                                                                                                                                         |
+| `dense_search_enabled`             | `Optional[bool]`                                     | `None`     | Whether dense search is enabled                                                                                                                                                                                                  |
+| `full_text_search_enabled`         | `Optional[bool]`                                     | `None`     | Whether full-text search is enabled                                                                                                                                                                                              |
+| `hybrid_search_enabled`            | `Optional[bool]`                                     | `None`     | Whether hybrid search is enabled                                                                                                                                                                                                 |
+| `filter`                           | `Optional[Dict[str, Any]]`                           | `None`     | Default filter to apply to all searches                                                                                                                                                                                          |
+
+### `DataManagementConfig`
+
+Governs the behavior of data ingestion and lifecycle. Corresponds to Table 4: Data Management & Ingestion.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `batch_size`                       | `int`                                                 | `128`      | Number of records to process in each batch                                                                                                                                                                                       |
+| `parallel_uploads`                 | `int`                                                 | `4`        | Number of parallel upload processes                                                                                                                                                                                               |
+| `write_consistency`               | `WriteConsistency`                                   | `WriteConsistency.EVENTUAL` | Write consistency level                                                                                                                                                                                                          |
+
+### `AdvancedConfig`
+
+Contains optional, enterprise-grade operational features. Corresponds to Table 5: Advanced & Operational Features.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `namespace`                        | `Optional[str]`                                      | `None`     | Namespace for multi-tenancy                                                                                                                                                                                                       |
+| `num_shards`                       | `Optional[int]`                                      | `None`     | Number of shards for the collection                                                                                                                                                                                               |
+| `replication_factor`                | `Optional[int]`                                      | `None`     | Replication factor for the collection                                                                                                                                                                                             |
+
+### `Config`
+
+The master configuration object for a VectorDBProvider.
+
+This class is the single source of truth for a provider's setup. It is composed of modular sub-configs, each handling a specific functional area. Upon instantiation, it performs a deep validation of all parameters and their interdependencies, ensuring a valid and complete configuration.
+
+The object is immutable after creation to guarantee configuration stability.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core`                             | `CoreConfig`                                         | Required   | Core configuration for connection and basic settings                                                                                                                                                                             |
+| `indexing`                         | `IndexingConfig`                                     | `IndexingConfig()` | Indexing configuration                                                                                                                                                                                                            |
+| `search`                           | `SearchConfig`                                       | `SearchConfig()` | Search configuration                                                                                                                                                                                                              |
+| `data_management`                  | `DataManagementConfig`                               | `DataManagementConfig()` | Data management configuration                                                                                                                                                                                                     |
+| `advanced`                         | `AdvancedConfig`                                     | `AdvancedConfig()` | Advanced configuration                                                                                                                                                                                                            |

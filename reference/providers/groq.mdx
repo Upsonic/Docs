@@ -1,0 +1,62 @@
+---
+title: GroqProvider
+sidebarTitle: GroqProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api_key`                          | `str \| None`                                         | `None`     | The API key to use for authentication, if not provided, the `GROQ_API_KEY` environment variable will be used if available.                                                                                                        |
+| `base_url`                         | `str \| None`                                         | `None`     | The base url for the Groq requests. If not provided, the `GROQ_BASE_URL` environment variable will be used if available. Otherwise, defaults to Groq's base url.                                                               |
+| `groq_client`                     | `AsyncGroq \| None`                                   | `None`     | An existing [`AsyncGroq`](https://github.com/groq/groq-python?tab=readme-ov-file#async-usage) client to use. If provided, `api_key` and `http_client` must be `None`.                                                        |
+| `http_client`                      | `httpx.AsyncClient \| None`                           | `None`     | An existing `AsyncHTTPClient` to use for making HTTP requests.                                                                                                                                                                     |
+
+## Functions
+
+### `__init__`
+
+Create a new Groq provider.
+
+**Parameters:**
+
+- `api_key` (str | None): The API key to use for authentication, if not provided, the `GROQ_API_KEY` environment variable will be used if available.
+- `base_url` (str | None): The base url for the Groq requests. If not provided, the `GROQ_BASE_URL` environment variable will be used if available. Otherwise, defaults to Groq's base url.
+- `groq_client` (AsyncGroq | None): An existing [`AsyncGroq`](https://github.com/groq/groq-python?tab=readme-ov-file#async-usage) client to use. If provided, `api_key` and `http_client` must be `None`.
+- `http_client` (httpx.AsyncClient | None): An existing `AsyncHTTPClient` to use for making HTTP requests.
+
+### `name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str`: The provider name ('groq')
+
+### `base_url`
+
+Get the base URL for the provider API.
+
+**Returns:**
+
+- `str`: The base URL for the provider API
+
+### `client`
+
+Get the client for the provider.
+
+**Returns:**
+
+- `AsyncGroq`: The Groq client
+
+### `model_profile`
+
+Get the model profile for the named model, if available.
+
+**Parameters:**
+
+- `model_name` (str): The name of the model
+
+**Returns:**
+
+- `ModelProfile | None`: The model profile for the named model, if available

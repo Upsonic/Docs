@@ -1,0 +1,158 @@
+---
+title: JSONStorage
+sidebarTitle: JSONStorage
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `directory_path`                   | `str`                                                 | Required   | The root directory where data will be stored                                                                                                                                                                                    |
+| `pretty_print`                     | `bool`                                                | `True`     | If True, JSON files will be indented for readability                                                                                                                                                                             |
+
+## Functions
+
+### `is_connected`
+
+Check if the storage provider is connected.
+
+**Returns:**
+
+- `bool`: True if connected, False otherwise
+
+### `connect`
+
+Connect to the storage provider.
+
+### `disconnect`
+
+Disconnect from the storage provider.
+
+### `create`
+
+Create the necessary directory structure for storage.
+
+### `read`
+
+Read an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[T]): The Pydantic model type to deserialize to
+
+**Returns:**
+
+- `Optional[T]`: The deserialized object or None if not found
+
+### `upsert`
+
+Insert or update an object in storage.
+
+**Parameters:**
+
+- `data` (Union[InteractionSession, UserProfile]): The object to store
+
+### `delete`
+
+Delete an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[BaseModel]): The model type to delete
+
+### `drop`
+
+Drop all data from storage (delete all files).
+
+### `is_connected_async`
+
+Asynchronously check if the storage provider is connected.
+
+**Returns:**
+
+- `bool`: True if connected, False otherwise
+
+### `connect_async`
+
+Asynchronously connect to the storage provider.
+
+### `disconnect_async`
+
+Asynchronously disconnect from the storage provider.
+
+### `create_async`
+
+Asynchronously create the necessary directory structure for storage.
+
+### `read_async`
+
+Asynchronously read an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[T]): The Pydantic model type to deserialize to
+
+**Returns:**
+
+- `Optional[T]`: The deserialized object or None if not found
+
+### `upsert_async`
+
+Asynchronously insert or update an object in storage.
+
+**Parameters:**
+
+- `data` (Union[InteractionSession, UserProfile]): The object to store
+
+### `delete_async`
+
+Asynchronously delete an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[BaseModel]): The model type to delete
+
+### `drop_async`
+
+Asynchronously drop all data from storage (delete all files).
+
+### `_get_path`
+
+Get the file path for a given object ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[BaseModel]): The model type
+
+**Returns:**
+
+- `Path`: The file path for the object
+
+### `_serialize`
+
+Serialize data to JSON string.
+
+**Parameters:**
+
+- `data` (Dict[str, Any]): The data to serialize
+
+**Returns:**
+
+- `str`: JSON string representation
+
+### `_deserialize`
+
+Deserialize JSON string to dictionary.
+
+**Parameters:**
+
+- `data` (str): The JSON string to deserialize
+
+**Returns:**
+
+- `Dict[str, Any]`: The deserialized dictionary

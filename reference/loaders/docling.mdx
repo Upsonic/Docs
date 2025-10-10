@@ -1,0 +1,206 @@
+---
+title: DoclingLoader
+sidebarTitle: DoclingLoader
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                           | `DoclingLoaderConfig`                                 | Required   | Configuration object for Docling loading behavior                                                                                                                                                                                |
+
+## Functions
+
+### `__init__`
+
+Initialize the Docling loader.
+
+**Parameters:**
+
+- `config` (DoclingLoaderConfig): Configuration object specifying extraction mode, chunking strategy, and other processing options
+
+### `_create_converter`
+
+Create and configure a DocumentConverter instance with OCR and pipeline options.
+
+**Returns:**
+
+- `DocumentConverter`: Configured DocumentConverter instance
+
+### `_create_pdf_pipeline_options`
+
+Create PDF pipeline options with OCR configuration.
+
+**Returns:**
+
+- `PdfPipelineOptions`: Configured PdfPipelineOptions instance
+
+### `_create_ocr_options`
+
+Create OCR options based on configured backend.
+
+**Returns:**
+
+- `Union[RapidOcrOptions, TesseractCliOcrOptions]`: Configured OCR options instance
+
+### `_create_chunker`
+
+Create and configure a chunker instance based on config.
+
+**Returns:**
+
+- `Optional[any]`: Configured chunker instance or None if chunking is not available
+
+### `_is_url`
+
+Check if the source is a URL.
+
+**Parameters:**
+
+- `source` (Union[str, Path]): Source to check
+
+**Returns:**
+
+- `bool`: True if source is a URL
+
+### `_validate_source`
+
+Validate a source path or URL.
+
+**Parameters:**
+
+- `source` (Union[str, Path]): File path or URL to validate
+
+**Returns:**
+
+- `Union[str, Path]`: Validated source
+
+### `_convert_document`
+
+Convert a single document using Docling.
+
+**Parameters:**
+
+- `source` (Union[str, Path]): Path or URL to the document
+
+**Returns:**
+
+- `Optional[DoclingDocument]`: DoclingDocument instance or None if conversion failed
+
+### `_handle_conversion_error`
+
+Handle conversion errors using base class method.
+
+**Parameters:**
+
+- `source` (Union[str, Path]): Source that failed conversion
+- `error` (Exception): Error that occurred
+
+**Returns:**
+
+- `None`: Returns None for document conversion failures
+
+### `_extract_markdown`
+
+Extract document as markdown.
+
+**Parameters:**
+
+- `dl_doc` (DoclingDocument): DoclingDocument instance
+- `source` (Union[str, Path]): Original source path/URL
+- `document_id` (str): Document ID from base class
+
+**Returns:**
+
+- `List[Document]`: List containing a single Document with markdown content
+
+### `_extract_chunks`
+
+Extract document as semantic chunks.
+
+**Parameters:**
+
+- `dl_doc` (DoclingDocument): DoclingDocument instance
+- `source` (Union[str, Path]): Original source path/URL
+- `document_id` (str): Document ID from base class
+
+**Returns:**
+
+- `List[Document]`: List of Documents, one per chunk
+
+### `_add_docling_metadata`
+
+Add Docling-specific metadata to the metadata dict.
+
+**Parameters:**
+
+- `metadata` (dict): Metadata dictionary to update
+- `dl_doc` (DoclingDocument): DoclingDocument instance
+
+### `load`
+
+Load and process documents from the given source(s).
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): Single file path/URL or list of file paths/URLs
+
+**Returns:**
+
+- `List[Document]`: List of processed Document objects
+
+### `aload`
+
+Asynchronously load and process documents.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): Single file path/URL or list of file paths/URLs
+
+**Returns:**
+
+- `List[Document]`: List of processed Document objects
+
+### `batch`
+
+Load documents from multiple sources.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of file paths/URLs
+
+**Returns:**
+
+- `List[Document]`: List of processed Document objects from all sources
+
+### `abatch`
+
+Asynchronously load documents from multiple sources with parallel processing.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of file paths/URLs
+
+**Returns:**
+
+- `List[Document]`: List of processed Document objects from all sources
+
+### `get_supported_extensions`
+
+Get list of file extensions supported by Docling.
+
+**Returns:**
+
+- `List[str]`: List of supported extensions including dot (e.g., '.pdf')
+
+### `can_load`
+
+Check if this loader can handle the given source.
+
+**Parameters:**
+
+- `source` (Union[str, Path]): File path or URL to check
+
+**Returns:**
+
+- `bool`: True if the source can be loaded, False otherwise

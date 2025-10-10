@@ -1,0 +1,68 @@
+---
+title: TavilySearchResult
+sidebarTitle: TavilySearchResult
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`                            | `str`                                                 | -          | The title of the search result                                                                                                                                                                                                   |
+| `url`                              | `str`                                                 | -          | The URL of the search result                                                                                                                                                                                                     |
+| `content`                          | `str`                                                 | -          | A short description of the search result                                                                                                                                                                                         |
+| `score`                            | `float`                                               | -          | The relevance score of the search result                                                                                                                                                                                         |
+
+## Functions
+
+No specific functions - TypedDict for Tavily search results.
+
+---
+
+---
+title: TavilySearchTool
+sidebarTitle: TavilySearchTool
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client`                           | `AsyncTavilyClient`                                  | -          | The Tavily search client                                                                                                                                                                                                         |
+
+## Functions
+
+### `__call__`
+
+Searches Tavily for the given query and returns the results.
+
+**Parameters:**
+
+- `query` (str): The search query to execute with Tavily
+- `search_deep` (Literal['basic', 'advanced']): The depth of the search
+- `topic` (Literal['general', 'news']): The category of the search
+- `time_range` (Literal['day', 'week', 'month', 'year', 'd', 'w', 'm', 'y'] | None): The time range back from the current date to filter results
+
+**Returns:**
+
+- `list[TavilySearchResult]`: The search results
+
+---
+
+---
+title: tavily_search_tool
+sidebarTitle: tavily_search_tool
+---
+
+## Functions
+
+### `tavily_search_tool`
+
+Creates a Tavily search tool.
+
+**Parameters:**
+
+- `api_key` (str): The Tavily API key
+
+**Returns:**
+
+- `Callable`: The Tavily search tool function

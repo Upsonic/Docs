@@ -1,0 +1,73 @@
+---
+title: ContextManager
+sidebarTitle: ContextManager
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent`                            | `Agent`                                               | Required  | The agent instance                                                                                                                                                                                                               |
+| `task`                             | `Task`                                                | Required  | The task being executed                                                                                                                                                                                                         |
+| `state`                            | `Optional[State]`                                     | `None`     | Graph execution state                                                                                                                                                                                                            |
+
+## Functions
+
+### `get_context_prompt`
+
+Public getter to retrieve the constructed context prompt.
+
+**Returns:**
+
+- `str`: The constructed context prompt string
+
+### `manage_context`
+
+Asynchronous context manager for building the task-specific context.
+
+**Parameters:**
+
+- `memory_handler` (Optional[MemoryManager]): Memory manager for context injection
+
+**Returns:**
+
+- `AsyncContextManager`: Context manager that handles context building
+
+**Usage:**
+
+```python
+async with context_manager.manage_context(memory_handler) as manager:
+    context_prompt = manager.get_context_prompt()
+    # Use the context prompt
+```
+
+### `get_knowledge_base_health_status`
+
+Get health status of all KnowledgeBase instances in the context.
+
+**Returns:**
+
+- `Dict[str, Any]`: Health status dictionary for each KnowledgeBase
+
+### `get_context_summary`
+
+Get a comprehensive summary of the current context configuration.
+
+**Returns:**
+
+- `Dict[str, Any]`: Context summary containing:
+  - task: Task information (id, description, attachments, etc.)
+  - context: Context items (knowledge_bases, tasks, task_output_sources, etc.)
+  - agent: Agent configuration
+  - state: State availability
+
+**Features:**
+
+- **Dynamic Context Building**: Constructs context from multiple sources
+- **Knowledge Base Integration**: Handles RAG queries and static knowledge bases
+- **Task Context**: Processes Task objects and TaskOutputSource items
+- **Error Handling**: Comprehensive error handling for all context types
+- **Health Monitoring**: Provides health status for KnowledgeBase instances
+- **Context Formatting**: Formats RAG results with metadata and scores
+- **Memory Integration**: Integrates with MemoryManager for context injection
+- **State Support**: Handles graph execution state for task outputs

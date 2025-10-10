@@ -1,0 +1,64 @@
+---
+title: AzureProvider
+sidebarTitle: AzureProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `azure_endpoint`                    | `str \| None`                                         | `None`     | The Azure endpoint to use for authentication, if not provided, the `AZURE_OPENAI_ENDPOINT` environment variable will be used if available.                                                                                      |
+| `api_version`                       | `str \| None`                                         | `None`     | The API version to use for authentication, if not provided, the `OPENAI_API_VERSION` environment variable will be used if available.                                                                                            |
+| `api_key`                          | `str \| None`                                         | `None`     | The API key to use for authentication, if not provided, the `AZURE_OPENAI_API_KEY` environment variable will be used if available.                                                                                              |
+| `openai_client`                    | `AsyncAzureOpenAI \| None`                            | `None`     | An existing [`AsyncAzureOpenAI`](https://github.com/openai/openai-python#microsoft-azure-openai) client to use. If provided, `base_url`, `api_key`, and `http_client` must be `None`.                                          |
+| `http_client`                      | `httpx.AsyncClient \| None`                           | `None`     | An existing `httpx.AsyncClient` to use for making HTTP requests.                                                                                                                                                                 |
+
+## Functions
+
+### `__init__`
+
+Create a new Azure provider.
+
+**Parameters:**
+
+- `azure_endpoint` (str | None): The Azure endpoint to use for authentication, if not provided, the `AZURE_OPENAI_ENDPOINT` environment variable will be used if available.
+- `api_version` (str | None): The API version to use for authentication, if not provided, the `OPENAI_API_VERSION` environment variable will be used if available.
+- `api_key` (str | None): The API key to use for authentication, if not provided, the `AZURE_OPENAI_API_KEY` environment variable will be used if available.
+- `openai_client` (AsyncAzureOpenAI | None): An existing [`AsyncAzureOpenAI`](https://github.com/openai/openai-python#microsoft-azure-openai) client to use. If provided, `base_url`, `api_key`, and `http_client` must be `None`.
+- `http_client` (httpx.AsyncClient | None): An existing `httpx.AsyncClient` to use for making HTTP requests.
+
+### `name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str`: The provider name ('azure')
+
+### `base_url`
+
+Get the base URL for the provider API.
+
+**Returns:**
+
+- `str`: The base URL for the provider API
+
+### `client`
+
+Get the client for the provider.
+
+**Returns:**
+
+- `AsyncOpenAI`: The Azure OpenAI client
+
+### `model_profile`
+
+Get the model profile for the named model, if available.
+
+**Parameters:**
+
+- `model_name` (str): The name of the model
+
+**Returns:**
+
+- `ModelProfile | None`: The model profile for the named model, if available

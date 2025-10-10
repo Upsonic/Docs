@@ -1,0 +1,245 @@
+---
+title: HuggingFaceEmbedding
+sidebarTitle: HuggingFaceEmbedding
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_name`                       | `str`                                                 | `"sentence-transformers/all-MiniLM-L6-v2"` | HuggingFace model name or path                                                                                                                                                                                                 |
+| `hf_token`                        | `Optional[str]`                                       | `None`     | HuggingFace API token                                                                                                                                                                                                           |
+| `use_api`                         | `bool`                                                | `False`    | Use HuggingFace Inference API instead of local model                                                                                                                                                                         |
+| `use_local`                       | `bool`                                                | `True`     | Use local model execution                                                                                                                                                                                                       |
+| `device`                          | `Optional[str]`                                       | `None`     | Device to run model on (auto-detected if None)                                                                                                                                                                                 |
+| `torch_dtype`                     | `str`                                                 | `"float32"` | PyTorch data type (float16, float32, bfloat16)                                                                                                                                                                                |
+| `trust_remote_code`               | `bool`                                                | `False`    | Trust remote code in model                                                                                                                                                                                                      |
+| `max_seq_length`                  | `Optional[int]`                                       | `None`     | Maximum sequence length                                                                                                                                                                                                         |
+| `pooling_strategy`                | `str`                                                 | `"mean"`   | Pooling strategy (mean, cls, max)                                                                                                                                                                                              |
+| `normalize_embeddings`            | `bool`                                                | `True`     | Normalize embeddings to unit length                                                                                                                                                                                             |
+| `enable_quantization`             | `bool`                                                | `False`    | Enable model quantization                                                                                                                                                                                                       |
+| `quantization_bits`               | `int`                                                 | `8`        | Quantization bits (4, 8, 16)                                                                                                                                                                                                   |
+| `enable_gradient_checkpointing`   | `bool`                                                | `False`    | Enable gradient checkpointing to save memory                                                                                                                                                                                   |
+| `wait_for_model`                  | `bool`                                                | `True`     | Wait for model to load if using API                                                                                                                                                                                             |
+| `timeout`                         | `int`                                                 | `None`     | Timeout for model                                                                                                                                                                                                               |
+| `cache_dir`                       | `Optional[str]`                                       | `None`     | Model cache directory                                                                                                                                                                                                            |
+| `force_download`                  | `bool`                                                | `False`    | Force re-download of model                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initialize the HuggingFaceEmbedding provider.
+
+**Parameters:**
+
+- `config` (Optional[HuggingFaceEmbeddingConfig]): Configuration object
+- `**kwargs`: Additional configuration options
+
+### `_setup_device`
+
+Setup compute device for local models.
+
+### `_setup_authentication`
+
+Setup HuggingFace authentication.
+
+### `_setup_local_model`
+
+Setup local model and tokenizer with optional quantization.
+
+### `_setup_api_session`
+
+Setup InferenceClient for HuggingFace API calls.
+
+### `supported_modes`
+
+Get supported embedding modes.
+
+**Returns:**
+
+- `List[EmbeddingMode]`: List of supported embedding modes
+
+### `pricing_info`
+
+Get HuggingFace pricing info (API usage).
+
+**Returns:**
+
+- `Dict[str, float]`: Pricing information
+
+### `get_model_info`
+
+Get information about the current HuggingFace model.
+
+**Returns:**
+
+- `Dict[str, Any]`: Model information
+
+### `_mean_pooling`
+
+Apply mean pooling to get sentence embeddings.
+
+**Parameters:**
+
+- `model_output`: Model output
+- `attention_mask`: Attention mask
+
+**Returns:**
+
+- `torch.Tensor`: Pooled embeddings
+
+### `_cls_pooling`
+
+Use CLS token for pooling.
+
+**Parameters:**
+
+- `model_output`: Model output
+- `attention_mask`: Attention mask
+
+**Returns:**
+
+- `torch.Tensor`: CLS token embeddings
+
+### `_max_pooling`
+
+Apply max pooling.
+
+**Parameters:**
+
+- `model_output`: Model output
+- `attention_mask`: Attention mask
+
+**Returns:**
+
+- `torch.Tensor`: Max pooled embeddings
+
+### `_apply_pooling`
+
+Apply the configured pooling strategy.
+
+**Parameters:**
+
+- `model_output`: Model output
+- `attention_mask`: Attention mask
+
+**Returns:**
+
+- `torch.Tensor`: Pooled embeddings
+
+### `_embed_local`
+
+Embed texts using local model.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts to embed
+
+**Returns:**
+
+- `List[List[float]]`: List of embedding vectors
+
+### `_embed_api`
+
+Embed texts using HuggingFace InferenceClient.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts to embed
+
+**Returns:**
+
+- `List[List[float]]`: List of embedding vectors
+
+### `_embed_batch`
+
+Embed a batch of texts using HuggingFace model or API.
+
+**Parameters:**
+
+- `texts` (List[str]): List of text strings to embed
+- `mode` (EmbeddingMode): Embedding mode
+
+**Returns:**
+
+- `List[List[float]]`: List of embedding vectors
+
+### `validate_connection`
+
+Validate HuggingFace model or API connection.
+
+**Returns:**
+
+- `bool`: True if connection is valid
+
+### `get_memory_usage`
+
+Get memory usage information for local models.
+
+**Returns:**
+
+- `Dict[str, Any]`: Memory usage information
+
+### `close`
+
+Clean up HuggingFace models, tokenizer, and API client.
+
+### `remove_local_cache`
+
+Remove HuggingFace model/tokenizer cache files from local storage.
+
+**Returns:**
+
+- `bool`: True if cache was removed successfully
+
+### `create_sentence_transformer_embedding`
+
+Create a sentence transformer embedding provider.
+
+**Parameters:**
+
+- `model_name` (str): HuggingFace model name
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `HuggingFaceEmbedding`: Configured HuggingFaceEmbedding instance
+
+### `create_mpnet_embedding`
+
+Create MPNet embedding provider (high quality).
+
+**Parameters:**
+
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `HuggingFaceEmbedding`: Configured HuggingFaceEmbedding instance
+
+### `create_minilm_embedding`
+
+Create MiniLM embedding provider (fast and efficient).
+
+**Parameters:**
+
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `HuggingFaceEmbedding`: Configured HuggingFaceEmbedding instance
+
+### `create_huggingface_api_embedding`
+
+Create HuggingFace API embedding provider.
+
+**Parameters:**
+
+- `model_name` (str): HuggingFace model name
+- `hf_token` (Optional[str]): HuggingFace API token
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `HuggingFaceEmbedding`: Configured HuggingFaceEmbedding instance
