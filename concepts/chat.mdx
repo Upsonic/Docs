@@ -1,12 +1,13 @@
-# Chat
-
-Build conversational AI experiences with stateful session management
+---
+description: "Build conversational AI experiences with stateful session management"
+---
 
 ## Overview
 
 In the Upsonic framework, `Chat` is a comprehensive conversational interface that provides stateful session management for AI agents. It handles the complete lifecycle of chat interactions, including message history, memory integration, cost tracking, and both streaming and non-streaming interfaces.
 
 The Chat class serves as a high-level orchestrator that manages:
+
 - Session lifecycle and state management
 - Memory integration and conversation persistence
 - Cost and token tracking across sessions
@@ -20,34 +21,34 @@ The Chat class provides comprehensive configuration options to customize convers
 
 ### Core Attributes
 
-| Attribute               | Type                                                  | Description                                                         |
-| ----------------------- | ----------------------------------------------------- | ------------------------------------------------------------------- |
-| **session_id**          | str                                                   | Unique identifier for this chat session                             |
-| **user_id**             | str                                                   | Unique identifier for the user                                      |
-| **agent**               | Agent                                                 | The Agent instance to handle conversations                          |
-| **storage**             | Optional[Storage]                                     | Storage backend for persistence (defaults to InMemoryStorage)       |
+| Attribute      | Type              | Description                                                   |
+| -------------- | ----------------- | ------------------------------------------------------------- |
+| **session_id** | str               | Unique identifier for this chat session                       |
+| **user_id**    | str               | Unique identifier for the user                                |
+| **agent**      | Agent             | The Agent instance to handle conversations                    |
+| **storage**    | Optional[Storage] | Storage backend for persistence (defaults to InMemoryStorage) |
 
 ### Memory Configuration
 
-| Attribute               | Type                         | Description                                                    |
-| ----------------------- | ---------------------------- | -------------------------------------------------------------- |
-| **full_session_memory** | bool                         | Enable full conversation history storage (default: True)        |
-| **summary_memory**      | bool                         | Enable conversation summarization (default: False)             |
-| **user_analysis_memory**| bool                         | Enable user profile analysis (default: False)                 |
-| **user_profile_schema** | Optional[Type[BaseModel]]    | Custom user profile schema                                      |
-| **dynamic_user_profile**| bool                         | Enable dynamic profile schema generation (default: False)       |
-| **num_last_messages**   | Optional[int]                | Limit conversation history to last N messages                   |
-| **feed_tool_call_results**| bool                        | Include tool calls in memory (default: False)                   |
-| **user_memory_mode**    | Literal['update', 'replace'] | How to update user profiles (default: 'update')                |
+| Attribute                  | Type                         | Description                                               |
+| -------------------------- | ---------------------------- | --------------------------------------------------------- |
+| **full_session_memory**    | bool                         | Enable full conversation history storage (default: True)  |
+| **summary_memory**         | bool                         | Enable conversation summarization (default: False)        |
+| **user_analysis_memory**   | bool                         | Enable user profile analysis (default: False)             |
+| **user_profile_schema**    | Optional[Type[BaseModel]]    | Custom user profile schema                                |
+| **dynamic_user_profile**   | bool                         | Enable dynamic profile schema generation (default: False) |
+| **num_last_messages**      | Optional[int]                | Limit conversation history to last N messages             |
+| **feed_tool_call_results** | bool                         | Include tool calls in memory (default: False)             |
+| **user_memory_mode**       | Literal['update', 'replace'] | How to update user profiles (default: 'update')           |
 
 ### Advanced Configuration
 
-| Attribute               | Type                         | Description                                                    |
-| ----------------------- | ---------------------------- | -------------------------------------------------------------- |
-| **debug**               | bool                         | Enable debug logging (default: False)                          |
-| **max_concurrent_invocations** | int                    | Maximum concurrent invoke calls (default: 1)                  |
-| **retry_attempts**      | int                          | Number of retry attempts for failed calls (default: 3)        |
-| **retry_delay**         | float                        | Delay between retry attempts in seconds (default: 1.0)         |
+| Attribute                      | Type  | Description                                            |
+| ------------------------------ | ----- | ------------------------------------------------------ |
+| **debug**                      | bool  | Enable debug logging (default: False)                  |
+| **max_concurrent_invocations** | int   | Maximum concurrent invoke calls (default: 1)           |
+| **retry_attempts**             | int   | Number of retry attempts for failed calls (default: 3) |
+| **retry_delay**                | float | Delay between retry attempts in seconds (default: 1.0) |
 
 ## Creating a Chat Session
 
