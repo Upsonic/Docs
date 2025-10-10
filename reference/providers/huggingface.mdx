@@ -1,0 +1,64 @@
+---
+title: HuggingFaceProvider
+sidebarTitle: HuggingFaceProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `base_url`                         | `str \| None`                                         | `None`     | The base url for the Hugging Face requests.                                                                                                                                                                                      |
+| `api_key`                          | `str \| None`                                         | `None`     | The API key to use for authentication, if not provided, the `HF_TOKEN` environment variable will be used if available.                                                                                                          |
+| `hf_client`                        | `AsyncInferenceClient \| None`                        | `None`     | An existing [`AsyncInferenceClient`](https://huggingface.co/docs/huggingface_hub/v0.29.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient) client to use. If not provided, a new instance will be created. |
+| `http_client`                      | `AsyncClient \| None`                                 | `None`     | (currently ignored) An existing `httpx.AsyncClient` to use for making HTTP requests.                                                                                                                                              |
+| `provider_name`                    | `str \| None`                                         | `None`     | Name of the provider to use for inference. available providers can be found in the [HF Inference Providers documentation](https://huggingface.co/docs/inference-providers/index#partners). defaults to "auto", which will select the first available provider for the model, the first of the providers available for the model, sorted by the user's order in https://hf.co/settings/inference-providers. If `base_url` is passed, then `provider_name` is not used. |
+
+## Functions
+
+### `__init__`
+
+Create a new Hugging Face provider.
+
+**Parameters:**
+
+- `base_url` (str | None): The base url for the Hugging Face requests.
+- `api_key` (str | None): The API key to use for authentication, if not provided, the `HF_TOKEN` environment variable will be used if available.
+- `hf_client` (AsyncInferenceClient | None): An existing [`AsyncInferenceClient`](https://huggingface.co/docs/huggingface_hub/v0.29.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient) client to use. If not provided, a new instance will be created.
+- `http_client` (AsyncClient | None): (currently ignored) An existing `httpx.AsyncClient` to use for making HTTP requests.
+- `provider_name` (str | None): Name of the provider to use for inference. available providers can be found in the [HF Inference Providers documentation](https://huggingface.co/docs/inference-providers/index#partners). defaults to "auto", which will select the first available provider for the model, the first of the providers available for the model, sorted by the user's order in https://hf.co/settings/inference-providers. If `base_url` is passed, then `provider_name` is not used.
+
+### `name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str`: The provider name ('huggingface')
+
+### `base_url`
+
+Get the base URL for the provider API.
+
+**Returns:**
+
+- `str`: The base URL for the provider API
+
+### `client`
+
+Get the client for the provider.
+
+**Returns:**
+
+- `AsyncInferenceClient`: The HuggingFace client
+
+### `model_profile`
+
+Get the model profile for the named model, if available.
+
+**Parameters:**
+
+- `model_name` (str): The name of the model
+
+**Returns:**
+
+- `ModelProfile | None`: The model profile for the named model, if available

@@ -1,0 +1,108 @@
+---
+title: XMLLoader
+sidebarTitle: XMLLoader
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                           | `XMLLoaderConfig`                                     | Required   | Configuration object for XML loading behavior                                                                                                                                                                                    |
+
+## Functions
+
+### `__init__`
+
+Initializes the XMLLoader with its specific configuration.
+
+**Parameters:**
+
+- `config` (XMLLoaderConfig): An XMLLoaderConfig object with settings for XML processing
+
+### `get_supported_extensions`
+
+Gets a list of file extensions supported by this loader.
+
+**Returns:**
+
+- `List[str]`: List of supported file extensions (`.xml`)
+
+### `load`
+
+Loads all XML documents from the given source synchronously.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): XML source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `aload`
+
+Loads all XML documents from the given source asynchronously and concurrently.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): XML source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `batch`
+
+Loads documents from a list of sources, leveraging the core `load` method.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of XML sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `abatch`
+
+Loads documents from a list of sources asynchronously, leveraging `aload`.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of XML sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `_process_single_xml_file`
+
+Processes a single XML file. Wraps the synchronous parsing logic in a separate thread to avoid blocking the asyncio event loop.
+
+**Parameters:**
+
+- `path` (Path): Path to the XML file
+
+**Returns:**
+
+- `List[Document]`: List of documents created from the XML file
+
+### `_parse_and_extract`
+
+Synchronous helper that performs the actual parsing and document creation.
+
+**Parameters:**
+
+- `path` (Path): Path to the XML file
+
+**Returns:**
+
+- `List[Document]`: List of documents created from the XML file
+
+### `_strip_namespaces`
+
+Recursively removes namespace information from all elements in the tree.
+
+**Parameters:**
+
+- `root_element` (etree._Element): Root element to strip namespaces from

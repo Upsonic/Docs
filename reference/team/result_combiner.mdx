@@ -1,0 +1,51 @@
+---
+title: ResultCombiner
+sidebarTitle: ResultCombiner
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_provider`                   | `Optional[Any]`                                       | `None`     | The model provider to use for combining results                                                                                                                                                                                  |
+| `debug`                            | `bool`                                                | `False`    | Whether to enable debug mode                                                                                                                                                                                                     |
+
+## Functions
+
+### `should_combine_results`
+
+Determine if results need to be combined or if single result should be returned.
+
+**Parameters:**
+
+- `results` (List[Task]): List of completed tasks with results
+
+**Returns:**
+
+- `bool`: True if results should be combined, False if single result should be returned
+
+### `get_single_result`
+
+Get the result from a single task.
+
+**Parameters:**
+
+- `results` (List[Task]): List containing one completed task
+
+**Returns:**
+
+- `Any`: The response from the single task
+
+### `combine_results`
+
+Combine multiple task results into a coherent final answer.
+
+**Parameters:**
+
+- `results` (List[Task]): List of completed tasks with results
+- `response_format` (Any): The desired format for the final response
+- `agents` (List[Any]): List of agents (used for fallback debug setting)
+
+**Returns:**
+
+- `Any`: Combined final response

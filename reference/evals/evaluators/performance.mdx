@@ -1,0 +1,96 @@
+---
+title: PerformanceEvaluator
+sidebarTitle: PerformanceEvaluator
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent_under_test`                 | `Union[Agent, Graph, Team]`                          | Required  | The agent, graph, or team to be performance tested                                                                                                                                                                              |
+| `task`                            | `Union[Task, List[Task]]`                            | Required  | The task or list of tasks to execute during performance testing                                                                                                                                                                  |
+| `num_iterations`                   | `int`                                                 | `10`       | Number of measurement iterations to run                                                                                                                                                                                          |
+| `warmup_runs`                     | `int`                                                 | `2`        | Number of warmup runs before measurements begin                                                                                                                                                                                  |
+
+## Functions
+
+### `__init__`
+
+Initialize the PerformanceEvaluator.
+
+**Parameters:**
+
+- `agent_under_test` (Union[Agent, Graph, Team]): The agent, graph, or team to be performance tested
+- `task` (Union[Task, List[Task]]): The task or list of tasks to execute during performance testing
+- `num_iterations` (int): Number of measurement iterations to run
+- `warmup_runs` (int): Number of warmup runs before measurements begin
+
+**Raises:**
+
+- `TypeError`: If agent_under_test is not an Agent, Graph, or Team instance
+- `TypeError`: If task is not a Task or list of Task objects
+- `ValueError`: If num_iterations is not a positive integer
+- `ValueError`: If warmup_runs is not a non-negative integer
+
+### `run`
+
+Execute the end-to-end performance profiling workflow.
+
+This method will:
+1. Perform warmup runs to ensure steady-state measurements
+2. Execute the component for a set number of iterations, capturing high-precision latency and memory metrics for each run
+3. Aggregate the metrics into detailed statistics
+4. Return a final `PerformanceEvaluationResult` object
+
+**Parameters:**
+
+- `print_results` (bool): If True, prints a formatted summary of the results to the console
+
+**Returns:**
+
+- `PerformanceEvaluationResult`: A PerformanceEvaluationResult object with detailed statistics
+
+### `_execute_component`
+
+Internal helper that executes the component to be tested.
+
+**Parameters:**
+
+- `agent` (Union[Agent, Graph, Team]): The agent, graph, or team to execute
+- `task` (Union[Task, List[Task]]): The task or tasks to execute
+
+### `_calculate_stats`
+
+Calculate and return a dictionary of statistics for a list of numbers.
+
+**Parameters:**
+
+- `data` (List[float]): List of numerical data to calculate statistics for
+
+**Returns:**
+
+- `Dict[str, float]`: Dictionary containing statistical measures (average, median, min, max, std_dev)
+
+### `_aggregate_results`
+
+Aggregate raw run data into the final result object.
+
+**Parameters:**
+
+- `run_results` (List[PerformanceRunResult]): List of performance run results
+
+**Returns:**
+
+- `PerformanceEvaluationResult`: The aggregated performance evaluation result
+
+### `_print_formatted_results`
+
+Print a rich, formatted table of the performance results.
+
+**Parameters:**
+
+- `result` (PerformanceEvaluationResult): The performance evaluation results to print
+
+## Description
+
+The main user-facing profiler for measuring the latency and memory footprint of Upsonic agents, graphs, or teams.

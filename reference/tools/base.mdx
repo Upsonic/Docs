@@ -1,0 +1,162 @@
+---
+title: ToolBase
+sidebarTitle: ToolBase
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                             | `str`                                                 | -          | The name of the tool                                                                                                                                                                                                             |
+| `description`                      | `Optional[str]`                                       | `None`     | The description of the tool                                                                                                                                                                                                      |
+| `schema`                           | `Optional[ToolSchema]`                                | `None`     | The schema for the tool                                                                                                                                                                                                          |
+| `metadata`                         | `Optional[ToolMetadata]`                             | `None`     | Metadata for the tool                                                                                                                                                                                                            |
+
+## Functions
+
+### `execute`
+
+Execute the tool.
+
+**Parameters:**
+
+- `*args` (Any): Positional arguments
+- `**kwargs` (Any): Keyword arguments
+
+**Returns:**
+
+- `Any`: The result of tool execution
+
+---
+
+---
+title: ToolKit
+sidebarTitle: ToolKit
+---
+
+## Parameters
+
+No parameters - Base class for organized tool collections. Only @tool decorated methods are exposed.
+
+## Functions
+
+No specific functions - Base class for tool collections.
+
+---
+
+---
+title: ToolDefinition
+sidebarTitle: ToolDefinition
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                             | `str`                                                 | -          | The name of the tool                                                                                                                                                                                                             |
+| `parameters_json_schema`           | `Dict[str, Any]`                                      | `{'type': 'object', 'properties': {}}` | The JSON schema for the tool's parameters                                                                                                                                                                                       |
+| `description`                      | `Optional[str]`                                       | `None`     | The description of the tool                                                                                                                                                                                                      |
+| `kind`                             | `ToolKind`                                            | `'function'` | The kind of tool                                                                                                                                                                                                               |
+| `strict`                           | `Optional[bool]`                                      | `None`     | Whether to enforce strict JSON schema validation                                                                                                                                                                                 |
+| `sequential`                       | `bool`                                                | `False`    | Whether this tool requires a sequential/serial execution environment                                                                                                                                                             |
+| `metadata`                         | `Optional[Dict[str, Any]]`                           | `None`     | Tool metadata that is not sent to the model                                                                                                                                                                                      |
+
+## Functions
+
+### `defer`
+
+Whether calls to this tool will be deferred.
+
+**Returns:**
+
+- `bool`: True if the tool kind is 'external' or 'unapproved'
+
+---
+
+---
+title: ToolCall
+sidebarTitle: ToolCall
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_name`                        | `str`                                                 | -          | The name of the tool to call                                                                                                                                                                                                     |
+| `args`                             | `Optional[Dict[str, Any]]`                            | `None`     | The arguments to pass to the tool                                                                                                                                                                                                |
+| `tool_call_id`                     | `Optional[str]`                                       | `None`     | The tool call identifier                                                                                                                                                                                                         |
+| `metadata`                         | `Optional[Dict[str, Any]]`                           | `None`     | Additional metadata for the tool call                                                                                                                                                                                            |
+
+## Functions
+
+No specific functions - Data class for tool call representation.
+
+---
+
+---
+title: ToolResult
+sidebarTitle: ToolResult
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_name`                        | `str`                                                 | -          | The name of the tool that was called                                                                                                                                                                                             |
+| `content`                          | `Any`                                                 | -          | The return value                                                                                                                                                                                                                 |
+| `tool_call_id`                     | `Optional[str]`                                       | `None`     | The tool call identifier                                                                                                                                                                                                         |
+| `success`                          | `bool`                                                | `True`     | Whether the tool execution was successful                                                                                                                                                                                         |
+| `error`                            | `Optional[str]`                                       | `None`     | Error message if the tool execution failed                                                                                                                                                                                       |
+| `metadata`                         | `Optional[Dict[str, Any]]`                           | `None`     | Additional metadata for the result                                                                                                                                                                                               |
+| `execution_time`                   | `Optional[float]`                                     | `None`     | Time taken to execute the tool in seconds                                                                                                                                                                                        |
+
+## Functions
+
+No specific functions - Data class for tool execution result representation.
+
+---
+
+---
+title: ToolMetadata
+sidebarTitle: ToolMetadata
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                             | `str`                                                 | -          | The name of the tool                                                                                                                                                                                                             |
+| `description`                     | `Optional[str]`                                       | `None`     | The description of the tool                                                                                                                                                                                                      |
+| `version`                          | `Optional[str]`                                       | `None`     | The version of the tool                                                                                                                                                                                                          |
+| `author`                           | `Optional[str]`                                       | `None`     | The author of the tool                                                                                                                                                                                                           |
+| `tags`                             | `List[str]`                                           | `[]`       | Tags associated with the tool                                                                                                                                                                                                    |
+| `custom`                           | `Dict[str, Any]`                                     | `{}`       | Custom metadata for the tool                                                                                                                                                                                                     |
+
+## Functions
+
+No specific functions - Data class for tool metadata.
+
+---
+
+---
+title: ToolSchema
+sidebarTitle: ToolSchema
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `parameters`                       | `Dict[str, Any]`                                     | -          | JSON Schema for parameters                                                                                                                                                                                                       |
+| `return_type`                      | `Optional[Dict[str, Any]]`                           | `None`     | JSON Schema for return type                                                                                                                                                                                                      |
+| `strict`                           | `bool`                                                | `False`    | Whether to enforce strict schema validation                                                                                                                                                                                      |
+
+## Functions
+
+### `json_schema`
+
+Get the full JSON schema for the tool.
+
+**Returns:**
+
+- `Dict[str, Any]`: The complete JSON schema for the tool

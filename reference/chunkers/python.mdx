@@ -1,0 +1,109 @@
+---
+title: PythonChunker
+sidebarTitle: PythonChunker
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Optional[PythonChunkingConfig]`                                     | `None`     | A specialized configuration model for the AST-powered Python Chunker. This config provides fine-grained control over how Python source code is parsed, segmented by its grammatical structure, and chunked.                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initializes the chunker with a specific or default configuration.
+
+**Parameters:**
+
+- `config` (Optional[PythonChunkingConfig]): Configuration object with all settings.
+
+### `_chunk_document`
+
+The core implementation for chunking a single Python document.
+
+**Parameters:**
+
+- `document` (Document): The document to be chunked.
+
+**Returns:**
+
+- `List[Chunk]`: A list of `Chunk` objects derived from the document.
+
+### `_segment_python_code`
+
+Segments Python code into semantic blocks using AST parsing.
+
+**Parameters:**
+
+- `code` (str): The Python source code to segment.
+
+**Returns:**
+
+- `List[_SemanticBlock]`: A list of semantic blocks identified in the code.
+
+### `_strip_decorators_from_string`
+
+Strips decorator syntax from code string.
+
+**Parameters:**
+
+- `code` (str): The code string to process.
+
+**Returns:**
+
+- `str`: The code string with decorators removed.
+
+### `_CodeVisitor`
+
+An AST visitor that traverses the code tree to find and extract semantic blocks like classes and functions.
+
+**Parameters:**
+
+- `source_code` (str): The source code to analyze.
+- `config` (PythonChunkingConfig): Configuration for the visitor.
+
+### `_get_node_source`
+
+Gets the source code for a specific AST node.
+
+**Parameters:**
+
+- `node` (ast.AST): The AST node to extract source from.
+
+**Returns:**
+
+- `str`: The source code for the node.
+
+### `_visit_node`
+
+Visits a node and extracts semantic blocks if it matches the configuration criteria.
+
+**Parameters:**
+
+- `node` (ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef): The node to visit.
+
+### `visit_ClassDef`
+
+Visits a class definition node.
+
+**Parameters:**
+
+- `node` (ast.ClassDef): The class definition node.
+
+### `visit_FunctionDef`
+
+Visits a function definition node.
+
+**Parameters:**
+
+- `node` (ast.FunctionDef): The function definition node.
+
+### `visit_AsyncFunctionDef`
+
+Visits an async function definition node.
+
+**Parameters:**
+
+- `node` (ast.AsyncFunctionDef): The async function definition node.

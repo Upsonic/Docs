@@ -1,0 +1,164 @@
+---
+title: AzureOpenAIEmbedding
+sidebarTitle: AzureOpenAIEmbedding
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api_key`                          | `Optional[str]`                                       | `None`     | Azure OpenAI API key                                                                                                                                                                                                             |
+| `azure_endpoint`                   | `Optional[str]`                                       | `None`     | Azure OpenAI endpoint URL                                                                                                                                                                                                        |
+| `api_version`                      | `str`                                                 | `"2024-02-01"` | Azure OpenAI API version                                                                                                                                                                                                      |
+| `deployment_name`                  | `Optional[str]`                                       | `None`     | Azure deployment name                                                                                                                                                                                                            |
+| `use_managed_identity`             | `bool`                                                | `False`    | Use Azure Managed Identity                                                                                                                                                                                                       |
+| `tenant_id`                       | `Optional[str]`                                       | `None`     | Azure tenant ID                                                                                                                                                                                                                  |
+| `client_id`                       | `Optional[str]`                                       | `None`     | Azure client ID for managed identity                                                                                                                                                                                            |
+| `model_name`                       | `str`                                                 | `"text-embedding-ada-002"` | Embedding model name                                                                                                                                                                                                           |
+| `enable_content_filtering`        | `bool`                                                | `True`     | Enable Azure content filtering                                                                                                                                                                                                   |
+| `data_residency_region`           | `Optional[str]`                                       | `None`     | Data residency region                                                                                                                                                                                                            |
+| `parallel_requests`               | `int`                                                 | `3`        | Parallel requests (Azure has lower limits)                                                                                                                                                                                      |
+| `requests_per_minute`             | `int`                                                 | `240`      | Requests per minute for Azure                                                                                                                                                                                                    |
+| `tokens_per_minute`               | `int`                                                 | `240000`   | Tokens per minute for Azure                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initialize the AzureOpenAIEmbedding provider.
+
+**Parameters:**
+
+- `config` (Optional[AzureOpenAIEmbeddingConfig]): Configuration object
+- `**kwargs`: Additional configuration options
+
+### `_setup_managed_identity`
+
+Setup Azure Managed Identity authentication.
+
+### `_setup_client`
+
+Setup the Azure OpenAI client with proper configuration.
+
+### `_get_azure_token`
+
+Get Azure AD token for authentication.
+
+**Returns:**
+
+- `str`: Azure AD token
+
+### `supported_modes`
+
+Get supported embedding modes.
+
+**Returns:**
+
+- `List[EmbeddingMode]`: List of supported embedding modes
+
+### `pricing_info`
+
+Get Azure OpenAI embedding pricing (may differ from standard OpenAI).
+
+**Returns:**
+
+- `Dict[str, float]`: Pricing information
+
+### `get_model_info`
+
+Get information about the current Azure OpenAI model.
+
+**Returns:**
+
+- `Dict[str, Any]`: Model information
+
+### `_check_rate_limits`
+
+Check and enforce Azure-specific rate limits.
+
+**Parameters:**
+
+- `estimated_tokens` (int): Estimated token count
+
+### `_estimate_tokens`
+
+Estimate token count for texts.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts
+
+**Returns:**
+
+- `int`: Estimated token count
+
+### `_embed_batch`
+
+Embed a batch of texts using Azure OpenAI API.
+
+**Parameters:**
+
+- `texts` (List[str]): List of text strings to embed
+- `mode` (EmbeddingMode): Embedding mode (not used by Azure OpenAI, but kept for compatibility)
+
+**Returns:**
+
+- `List[List[float]]`: List of embedding vectors
+
+### `validate_connection`
+
+Validate Azure OpenAI connection and deployment access.
+
+**Returns:**
+
+- `bool`: True if connection is valid
+
+### `get_azure_info`
+
+Get Azure-specific configuration information.
+
+**Returns:**
+
+- `Dict[str, Any]`: Azure configuration information
+
+### `get_compliance_info`
+
+Get compliance and security information.
+
+**Returns:**
+
+- `Dict[str, Any]`: Compliance information
+
+### `close`
+
+Clean up Azure OpenAI client connections and resources.
+
+### `create_azure_openai_embedding`
+
+Quick factory function for Azure OpenAI embeddings.
+
+**Parameters:**
+
+- `azure_endpoint` (str): Azure OpenAI endpoint URL
+- `deployment_name` (str): Azure deployment name
+- `api_key` (Optional[str]): Azure OpenAI API key (optional if using managed identity)
+- `use_managed_identity` (bool): Use Azure Managed Identity authentication
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `AzureOpenAIEmbedding`: Configured AzureOpenAIEmbedding instance
+
+### `create_azure_embedding_with_managed_identity`
+
+Create Azure OpenAI embedding with managed identity.
+
+**Parameters:**
+
+- `azure_endpoint` (str): Azure OpenAI endpoint URL
+- `deployment_name` (str): Azure deployment name
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `AzureOpenAIEmbedding`: Configured AzureOpenAIEmbedding instance

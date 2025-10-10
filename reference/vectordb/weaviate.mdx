@@ -1,0 +1,187 @@
+---
+title: WeaviateProvider
+sidebarTitle: WeaviateProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Config`                                             | Required   | A validated and immutable Config object containing all necessary parameters for the provider's operation                                                                                                                       |
+
+## Functions
+
+### `connect`
+
+Establishes a connection to the Weaviate vector database instance.
+
+This method interprets the `CoreConfig` to determine the connection mode (cloud, local, embedded) and uses the appropriate Weaviate client constructor. It then verifies the connection is live and ready for operations.
+
+**Raises:**
+- `VectorDBConnectionError`: If the connection fails for any reason, such as authentication errors, network issues, or a non-responsive Weaviate instance.
+
+### `disconnect`
+
+Gracefully terminates the connection to the Weaviate database.
+
+This method is idempotent; calling it on an already disconnected provider will not raise an error.
+
+### `is_ready`
+
+Performs a health check to ensure the Weaviate instance is responsive.
+
+**Returns:**
+- `bool`: True if the client is connected and the database is responsive, False otherwise.
+
+### `create_collection`
+
+Creates the collection in Weaviate according to the full framework config.
+
+This method handles the `recreate_if_exists` logic and translates the framework configuration into Weaviate-specific parameters.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to Weaviate before creating a collection.
+- `VectorDBError`: If the collection creation fails.
+
+### `delete_collection`
+
+Permanently deletes the collection specified in the config from Weaviate.
+
+This operation is irreversible and is a core part of lifecycle management.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to the database.
+- `CollectionDoesNotExistError`: If the collection to be deleted does not exist, providing a clear, actionable error.
+- `VectorDBError`: For other unexpected API or operational errors.
+
+### `collection_exists`
+
+Checks if the collection specified in the config already exists in Weaviate.
+
+This is a critical guard method to prevent accidental overwrites or errors.
+
+**Returns:**
+- `bool`: True if the collection exists, False otherwise.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to the database.
+
+### `upsert`
+
+Adds new data or updates existing data in the collection using Weaviate's high-performance batching system.
+
+**Parameters:**
+- `vectors` (List[List[float]]): A list of vector embeddings.
+- `payloads` (List[Dict[str, Any]]): A list of corresponding metadata objects (properties).
+- `ids` (List[Union[str, int]]): A list of unique identifiers. These will be deterministically converted to UUIDs for idempotency.
+- `chunks` (Optional[List[str]]): A list of text chunks.
+- `**kwargs`: Provider-specific options are ignored in this implementation but could be used for overriding batch settings in the future.
+
+**Raises:**
+- `UpsertError`: If the data ingestion fails for any reason.
+- `VectorDBConnectionError`: If not connected to the database.
+
+### `delete`
+
+Removes data from the collection by their unique identifiers.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of specific IDs to remove.
+- `**kwargs`: Ignored.
+
+**Raises:**
+- `VectorDBError`: If the deletion fails.
+
+### `fetch`
+
+Retrieves full records (payload and vector) by their IDs.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of IDs to retrieve the full records for.
+- `**kwargs`: Ignored.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects containing the fetched data.
+
+**Raises:**
+- `CollectionDoesNotExistError`: If the collection does not exist in Weaviate.
+- `VectorDBError`: If the fetch operation fails.
+
+### `search`
+
+A master search method that dispatches to the appropriate specialized search function based on the provided arguments.
+
+This is the primary entry point for all search queries.
+
+**Parameters:**
+- `top_k` (Optional[int]): The number of results to return. If None, falls back to the default in the Config.
+- `query_vector` (Optional[List[float]]): The vector for dense or hybrid search.
+- `query_text` (Optional[str]): The text for full-text or hybrid search.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weighting factor for hybrid search. If None, falls back to the default in the Config.
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): The algorithm to use for hybrid search ('rrf' or 'weighted').
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects.
+
+**Raises:**
+- `ConfigurationError`: If the requested search is not possible with the provided arguments (e.g., asking for hybrid search without both text and vector).
+- `SearchError`: If any underlying search operation fails.
+
+### `dense_search`
+
+Performs a pure vector similarity search using Weaviate's `near_vector` query.
+
+**Parameters:**
+- `query_vector` (List[float]): The vector embedding to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter dictionary to apply.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Can include `score_threshold` for filtering by certainty.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of the most similar results, translated into the standard VectorSearchResult format.
+
+**Raises:**
+- `SearchError`: If the search operation fails.
+
+### `full_text_search`
+
+Performs a full-text (keyword) search using Weaviate's BM25 algorithm.
+
+**Parameters:**
+- `query_text` (str): The text string to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter to apply before the search.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Ignored in this implementation.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of matching results, ordered by BM25 relevance score.
+
+**Raises:**
+- `SearchError`: If the search operation fails.
+
+### `hybrid_search`
+
+Combines dense and sparse search results using Weaviate's native hybrid query.
+
+**Parameters:**
+- `query_vector` (List[float]): The dense vector for the semantic part of the search.
+- `query_text` (str): The raw text for the keyword/sparse part of the search.
+- `top_k` (int): The number of final results to return.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weight for combining scores (0.0 = pure keyword, 1.0 = pure vector).
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): NOTE: Weaviate's native hybrid endpoint uses its own fusion algorithm. This parameter is ignored in favor of Weaviate's default behavior, which is controlled by `alpha`.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects, ordered by the combined hybrid score.
+
+**Raises:**
+- `ConfigurationError`: If hybrid search alpha must be between 0.0 and 1.0.
+- `ConfigurationError`: If the fusion method is unsupported.
+- `SearchError`: If the search operation fails.

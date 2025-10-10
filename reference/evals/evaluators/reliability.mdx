@@ -1,0 +1,70 @@
+---
+title: ReliabilityEvaluator
+sidebarTitle: ReliabilityEvaluator
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `expected_tool_calls`              | `List[str]`                                           | Required  | List of tool names that are expected to be called during execution                                                                                                                                                               |
+| `order_matters`                    | `bool`                                                | `False`    | Whether the order of tool calls matters for the evaluation                                                                                                                                                                        |
+| `exact_match`                      | `bool`                                                | `False`    | Whether to require an exact match of tool calls (no unexpected tools allowed)                                                                                                                                                     |
+
+## Functions
+
+### `__init__`
+
+Initialize the ReliabilityEvaluator.
+
+**Parameters:**
+
+- `expected_tool_calls` (List[str]): List of tool names that are expected to be called during execution
+- `order_matters` (bool): Whether the order of tool calls matters for the evaluation
+- `exact_match` (bool): Whether to require an exact match of tool calls (no unexpected tools allowed)
+
+**Raises:**
+
+- `TypeError`: If expected_tool_calls is not a list of strings
+- `ValueError`: If expected_tool_calls is an empty list
+
+### `run`
+
+Analyze the result of an agent, team, or graph run and verify its tool-calling behavior against the configured rules.
+
+**Parameters:**
+
+- `run_result` (Union[Task, List[Task], Graph]): The completed result object from an execution. This can be a single `Task`, a list of `Task`s (from a Team), or a `Graph` object after its `run()` method has completed
+- `print_results` (bool): If True, prints a formatted summary of the results
+
+**Returns:**
+
+- `ReliabilityEvaluationResult`: A ReliabilityEvaluationResult object with the detailed outcome
+
+### `_normalize_tool_call_history`
+
+Extract a single, flat list of tool call names from the run result.
+
+**Parameters:**
+
+- `run_result` (Union[Task, List[Task], Graph]): The run result to extract tool calls from
+
+**Returns:**
+
+- `List[str]`: List of tool call names
+
+**Raises:**
+
+- `TypeError`: If run_result is not a supported type (Task, List[Task], or Graph)
+
+### `_print_formatted_results`
+
+Print a rich, formatted summary of the reliability results.
+
+**Parameters:**
+
+- `result` (ReliabilityEvaluationResult): The reliability evaluation results to print
+
+## Description
+
+A post-execution assertion and verification engine for an agent's tool usage.

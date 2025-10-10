@@ -1,0 +1,37 @@
+---
+title: LLMManager
+sidebarTitle: LLMManager
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `default_model`                    | `Any`                                                 | Required  | Default model to use when no specific model is requested                                                                                                                                                                        |
+| `requested_model`                  | `Optional[str]`                                       | `None`     | Specific model requested for this execution                                                                                                                                                                                      |
+
+## Functions
+
+### `get_model`
+
+Get the currently selected model.
+
+**Returns:**
+
+- `Any`: The selected model instance
+
+### `manage_llm`
+
+Asynchronous context manager for LLM selection and management.
+
+**Returns:**
+
+- `AsyncContextManager`: Context manager that handles LLM selection logic
+
+**Usage:**
+
+```python
+async with llm_manager.manage_llm() as manager:
+    model = manager.get_model()
+    # Use the selected model
+```

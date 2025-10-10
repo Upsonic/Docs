@@ -1,0 +1,688 @@
+---
+title: Messages
+sidebarTitle: Messages
+---
+
+## Classes
+
+### SystemPromptPart
+
+A system prompt, generally written by the application developer.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`                          | `str`                                                 | -          | The content of the prompt                                                                                                                                                                                                       |
+| `timestamp`                        | `datetime`                                            | `_now_utc()` | The timestamp of the prompt                                                                                                                                                                                                   |
+| `dynamic_ref`                      | `str \| None`                                         | `None`     | The ref of the dynamic system prompt function that generated this part                                                                                                                                                          |
+| `part_kind`                        | `Literal['system-prompt']`                           | `'system-prompt'` | Part type identifier, this is available on all parts as a discriminator                                                                                                                                                    |
+
+### FileUrl
+
+Abstract base class for any URL-based file.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`                              | `str`                                                 | -          | The URL of the file                                                                                                                                                                                                             |
+| `force_download`                   | `bool`                                                | `False`    | If True, the file is downloaded and the data is sent to the model as bytes                                                                                                                                                      |
+| `vendor_metadata`                  | `dict[str, Any] \| None`                              | `None`     | Vendor-specific metadata for the file                                                                                                                                                                                           |
+| `media_type`                       | `str \| None`                                         | `None`     | The media type of the file, based on the URL or the provided `media_type`                                                                                                                                                      |
+| `identifier`                       | `str \| None`                                         | `None`     | The identifier of the file, such as a unique ID                                                                                                                                                                                 |
+
+#### Functions
+
+##### `_infer_media_type`
+
+Infer the media type of the file based on the URL.
+
+**Returns:**
+
+- `str`: The inferred media type
+
+##### `format`
+
+The file format.
+
+**Returns:**
+
+- `str`: The file format
+
+### VideoUrl
+
+A URL to a video.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`                              | `str`                                                 | -          | The URL of the video                                                                                                                                                                                                             |
+| `force_download`                   | `bool`                                                | `False`    | If True, the file is downloaded and the data is sent to the model as bytes                                                                                                                                                      |
+| `vendor_metadata`                  | `dict[str, Any] \| None`                              | `None`     | Vendor-specific metadata for the file                                                                                                                                                                                           |
+| `media_type`                       | `str \| None`                                         | `None`     | The media type of the file, based on the URL or the provided `media_type`                                                                                                                                                      |
+| `identifier`                       | `str \| None`                                         | `None`     | The identifier of the file, such as a unique ID                                                                                                                                                                                 |
+| `kind`                             | `Literal['video-url']`                               | `'video-url'` | Type identifier, this is available on all parts as a discriminator                                                                                                                                                        |
+
+#### Functions
+
+##### `_infer_media_type`
+
+Return the media type of the video, based on the url.
+
+**Returns:**
+
+- `VideoMediaType`: The inferred media type
+
+##### `is_youtube`
+
+True if the URL has a YouTube domain.
+
+**Returns:**
+
+- `bool`: True if the URL is a YouTube URL
+
+##### `format`
+
+The file format of the video.
+
+**Returns:**
+
+- `VideoFormat`: The file format
+
+### AudioUrl
+
+A URL to an audio file.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`                              | `str`                                                 | -          | The URL of the audio file                                                                                                                                                                                                        |
+| `force_download`                   | `bool`                                                | `False`    | If True, the file is downloaded and the data is sent to the model as bytes                                                                                                                                                      |
+| `vendor_metadata`                  | `dict[str, Any] \| None`                              | `None`     | Vendor-specific metadata for the file                                                                                                                                                                                           |
+| `media_type`                       | `str \| None`                                         | `None`     | The media type of the file, based on the URL or the provided `media_type`                                                                                                                                                      |
+| `identifier`                       | `str \| None`                                         | `None`     | The identifier of the file, such as a unique ID                                                                                                                                                                                 |
+| `kind`                             | `Literal['audio-url']`                               | `'audio-url'` | Type identifier, this is available on all parts as a discriminator                                                                                                                                                        |
+
+#### Functions
+
+##### `_infer_media_type`
+
+Return the media type of the audio file, based on the url.
+
+**Returns:**
+
+- `AudioMediaType`: The inferred media type
+
+##### `format`
+
+The file format of the audio file.
+
+**Returns:**
+
+- `AudioFormat`: The file format
+
+### ImageUrl
+
+A URL to an image.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`                              | `str`                                                 | -          | The URL of the image                                                                                                                                                                                                             |
+| `force_download`                   | `bool`                                                | `False`    | If True, the file is downloaded and the data is sent to the model as bytes                                                                                                                                                      |
+| `vendor_metadata`                  | `dict[str, Any] \| None`                              | `None`     | Vendor-specific metadata for the file                                                                                                                                                                                           |
+| `media_type`                       | `str \| None`                                         | `None`     | The media type of the file, based on the URL or the provided `media_type`                                                                                                                                                      |
+| `identifier`                       | `str \| None`                                         | `None`     | The identifier of the file, such as a unique ID                                                                                                                                                                                 |
+| `kind`                             | `Literal['image-url']`                               | `'image-url'` | Type identifier, this is available on all parts as a discriminator                                                                                                                                                        |
+
+#### Functions
+
+##### `_infer_media_type`
+
+Return the media type of the image, based on the url.
+
+**Returns:**
+
+- `ImageMediaType`: The inferred media type
+
+##### `format`
+
+The file format of the image.
+
+**Returns:**
+
+- `ImageFormat`: The file format
+
+### DocumentUrl
+
+The URL of the document.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`                              | `str`                                                 | -          | The URL of the document                                                                                                                                                                                                          |
+| `force_download`                   | `bool`                                                | `False`    | If True, the file is downloaded and the data is sent to the model as bytes                                                                                                                                                      |
+| `vendor_metadata`                  | `dict[str, Any] \| None`                              | `None`     | Vendor-specific metadata for the file                                                                                                                                                                                           |
+| `media_type`                       | `str \| None`                                         | `None`     | The media type of the file, based on the URL or the provided `media_type`                                                                                                                                                      |
+| `identifier`                       | `str \| None`                                         | `None`     | The identifier of the file, such as a unique ID                                                                                                                                                                                 |
+| `kind`                             | `Literal['document-url']`                            | `'document-url'` | Type identifier, this is available on all parts as a discriminator                                                                                                                                                        |
+
+#### Functions
+
+##### `_infer_media_type`
+
+Return the media type of the document, based on the url.
+
+**Returns:**
+
+- `str`: The inferred media type
+
+##### `format`
+
+The file format of the document.
+
+**Returns:**
+
+- `DocumentFormat`: The file format
+
+### BinaryContent
+
+Binary content, e.g. an audio or image file.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `data`                             | `bytes`                                               | -          | The binary data                                                                                                                                                                                                                  |
+| `media_type`                       | `AudioMediaType \| ImageMediaType \| DocumentMediaType \| str` | - | The media type of the binary data                                                                                                                                                                                           |
+| `identifier`                       | `str \| None`                                         | `None`     | Identifier for the binary content, such as a unique ID. generating one from the data if not explicitly set                                                                                                                      |
+| `vendor_metadata`                  | `dict[str, Any] \| None`                              | `None`     | Vendor-specific metadata for the file                                                                                                                                                                                           |
+| `kind`                             | `Literal['binary']`                                   | `'binary'` | Type identifier, this is available on all parts as a discriminator                                                                                                                                                          |
+
+#### Functions
+
+##### `is_audio`
+
+Return `True` if the media type is an audio type.
+
+**Returns:**
+
+- `bool`: True if the media type is audio
+
+##### `is_image`
+
+Return `True` if the media type is an image type.
+
+**Returns:**
+
+- `bool`: True if the media type is image
+
+##### `is_video`
+
+Return `True` if the media type is a video type.
+
+**Returns:**
+
+- `bool`: True if the media type is video
+
+##### `is_document`
+
+Return `True` if the media type is a document type.
+
+**Returns:**
+
+- `bool`: True if the media type is document
+
+##### `format`
+
+The file format of the binary content.
+
+**Returns:**
+
+- `str`: The file format
+
+### ToolReturn
+
+A structured return value for tools that need to provide both a return value and custom content to the model.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `return_value`                     | `Any`                                                 | -          | The return value to be used in the tool response                                                                                                                                                                                |
+| `content`                          | `str \| Sequence[UserContent] \| None`                | `None`     | The content to be sent to the model as a UserPromptPart                                                                                                                                                                         |
+| `metadata`                         | `Any`                                                 | `None`     | Additional data that can be accessed programmatically by the application but is not sent to the LLM                                                                                                                             |
+| `kind`                             | `Literal['tool-return']`                             | `'tool-return'` | Type identifier                                                                                                                                                                                                             |
+
+### UserPromptPart
+
+A user prompt, generally written by the end user.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`                          | `str \| Sequence[UserContent]`                       | -          | The content of the prompt                                                                                                                                                                                                       |
+| `timestamp`                        | `datetime`                                            | `_now_utc()` | The timestamp of the prompt                                                                                                                                                                                                   |
+| `part_kind`                        | `Literal['user-prompt']`                              | `'user-prompt'` | Part type identifier, this is available on all parts as a discriminator                                                                                                                                                    |
+
+### BaseToolReturnPart
+
+Base class for tool return parts.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_name`                        | `str`                                                 | -          | The name of the "tool" was called                                                                                                                                                                                               |
+| `content`                          | `Any`                                                 | -          | The return value                                                                                                                                                                                                                |
+| `tool_call_id`                     | `str`                                                 | `_generate_tool_call_id()` | The tool call identifier, this is used by some models including OpenAI                                                                                                                                                      |
+| `metadata`                         | `Any`                                                 | `None`     | Additional data that can be accessed programmatically by the application but is not sent to the LLM                                                                                                                             |
+| `timestamp`                        | `datetime`                                            | `_now_utc()` | The timestamp, when the tool returned                                                                                                                                                                                         |
+
+#### Functions
+
+##### `model_response_str`
+
+Return a string representation of the content for the model.
+
+**Returns:**
+
+- `str`: String representation of the content
+
+##### `model_response_object`
+
+Return a dictionary representation of the content, wrapping non-dict types appropriately.
+
+**Returns:**
+
+- `dict[str, Any]`: Dictionary representation of the content
+
+##### `has_content`
+
+Return `True` if the tool return has content.
+
+**Returns:**
+
+- `bool`: True if the tool return has content
+
+### ToolReturnPart
+
+A tool return message, this encodes the result of running a tool.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_name`                        | `str`                                                 | -          | The name of the "tool" was called                                                                                                                                                                                               |
+| `content`                          | `Any`                                                 | -          | The return value                                                                                                                                                                                                                |
+| `tool_call_id`                     | `str`                                                 | `_generate_tool_call_id()` | The tool call identifier, this is used by some models including OpenAI                                                                                                                                                      |
+| `metadata`                         | `Any`                                                 | `None`     | Additional data that can be accessed programmatically by the application but is not sent to the LLM                                                                                                                             |
+| `timestamp`                        | `datetime`                                            | `_now_utc()` | The timestamp, when the tool returned                                                                                                                                                                                         |
+| `part_kind`                        | `Literal['tool-return']`                             | `'tool-return'` | Part type identifier, this is available on all parts as a discriminator                                                                                                                                                      |
+
+### BuiltinToolReturnPart
+
+A tool return message from a built-in tool.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_name`                        | `str`                                                 | -          | The name of the "tool" was called                                                                                                                                                                                               |
+| `content`                          | `Any`                                                 | -          | The return value                                                                                                                                                                                                                |
+| `tool_call_id`                     | `str`                                                 | `_generate_tool_call_id()` | The tool call identifier, this is used by some models including OpenAI                                                                                                                                                      |
+| `metadata`                         | `Any`                                                 | `None`     | Additional data that can be accessed programmatically by the application but is not sent to the LLM                                                                                                                             |
+| `timestamp`                        | `datetime`                                            | `_now_utc()` | The timestamp, when the tool returned                                                                                                                                                                                         |
+| `provider_name`                    | `str \| None`                                        | `None`     | The name of the provider that generated the response                                                                                                                                                                            |
+| `part_kind`                        | `Literal['builtin-tool-return']`                      | `'builtin-tool-return'` | Part type identifier, this is available on all parts as a discriminator                                                                                                                                                    |
+
+### RetryPromptPart
+
+A message back to a model asking it to try again.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`                          | `list[pydantic_core.ErrorDetails] \| str`            | -          | Details of why and how the model should retry                                                                                                                                                                                   |
+| `tool_name`                        | `str \| None`                                         | `None`     | The name of the tool that was called, if any                                                                                                                                                                                    |
+| `tool_call_id`                     | `str`                                                 | `_generate_tool_call_id()` | The tool call identifier, this is used by some models including OpenAI                                                                                                                                                      |
+| `timestamp`                        | `datetime`                                            | `_now_utc()` | The timestamp, when the retry was triggered                                                                                                                                                                                 |
+| `part_kind`                        | `Literal['retry-prompt']`                            | `'retry-prompt'` | Part type identifier, this is available on all parts as a discriminator                                                                                                                                                  |
+
+#### Functions
+
+##### `model_response`
+
+Return a string message describing why the retry is requested.
+
+**Returns:**
+
+- `str`: String message describing the retry request
+
+### ModelRequest
+
+A request generated by Pydantic AI and sent to a model, e.g. a message from the Pydantic AI app to the model.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `parts`                            | `Sequence[ModelRequestPart]`                         | -          | The parts of the user message                                                                                                                                                                                                    |
+| `instructions`                     | `str \| None`                                         | `None`     | The instructions for the model                                                                                                                                                                                                   |
+| `kind`                             | `Literal['request']`                                  | `'request'` | Message type identifier, this is available on all parts as a discriminator                                                                                                                                                  |
+
+#### Functions
+
+##### `user_text_prompt`
+
+Create a `ModelRequest` with a single user prompt as text.
+
+**Parameters:**
+
+- `user_prompt` (str): The user prompt text
+- `instructions` (str | None): Optional instructions for the model
+
+**Returns:**
+
+- `ModelRequest`: A new ModelRequest instance
+
+### TextPart
+
+A plain text response from a model.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`                          | `str`                                                 | -          | The text content of the response                                                                                                                                                                                                 |
+| `id`                               | `str \| None`                                         | `None`     | An optional identifier of the text part                                                                                                                                                                                          |
+| `part_kind`                        | `Literal['text']`                                     | `'text'`   | Part type identifier, this is available on all parts as a discriminator                                                                                                                                                        |
+
+#### Functions
+
+##### `has_content`
+
+Return `True` if the text content is non-empty.
+
+**Returns:**
+
+- `bool`: True if the text content is non-empty
+
+### ThinkingPart
+
+A thinking response from a model.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`                          | `str`                                                 | -          | The thinking content of the response                                                                                                                                                                                             |
+| `id`                               | `str \| None`                                         | `None`     | The identifier of the thinking part                                                                                                                                                                                              |
+| `signature`                        | `str \| None`                                         | `None`     | The signature of the thinking                                                                                                                                                                                                   |
+| `provider_name`                    | `str \| None`                                         | `None`     | The name of the provider that generated the response                                                                                                                                                                             |
+| `part_kind`                        | `Literal['thinking']`                                 | `'thinking'` | Part type identifier, this is available on all parts as a discriminator                                                                                                                                                      |
+
+#### Functions
+
+##### `has_content`
+
+Return `True` if the thinking content is non-empty.
+
+**Returns:**
+
+- `bool`: True if the thinking content is non-empty
+
+### BaseToolCallPart
+
+A tool call from a model.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_name`                        | `str`                                                 | -          | The name of the tool to call                                                                                                                                                                                                    |
+| `args`                             | `str \| dict[str, Any] \| None`                       | `None`     | The arguments to pass to the tool                                                                                                                                                                                                |
+| `tool_call_id`                     | `str`                                                 | `_generate_tool_call_id()` | The tool call identifier, this is used by some models including OpenAI                                                                                                                                                      |
+
+#### Functions
+
+##### `args_as_dict`
+
+Return the arguments as a Python dictionary.
+
+**Returns:**
+
+- `dict[str, Any]`: The arguments as a dictionary
+
+##### `args_as_json_str`
+
+Return the arguments as a JSON string.
+
+**Returns:**
+
+- `str`: The arguments as a JSON string
+
+##### `has_content`
+
+Return `True` if the arguments contain any data.
+
+**Returns:**
+
+- `bool`: True if the arguments contain data
+
+### ToolCallPart
+
+A tool call from a model.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_name`                        | `str`                                                 | -          | The name of the tool to call                                                                                                                                                                                                    |
+| `args`                             | `str \| dict[str, Any] \| None`                       | `None`     | The arguments to pass to the tool                                                                                                                                                                                                |
+| `tool_call_id`                     | `str`                                                 | `_generate_tool_call_id()` | The tool call identifier, this is used by some models including OpenAI                                                                                                                                                      |
+| `part_kind`                        | `Literal['tool-call']`                                | `'tool-call'` | Part type identifier, this is available on all parts as a discriminator                                                                                                                                                    |
+
+### BuiltinToolCallPart
+
+A tool call to a built-in tool.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_name`                        | `str`                                                 | -          | The name of the tool to call                                                                                                                                                                                                    |
+| `args`                             | `str \| dict[str, Any] \| None`                       | `None`     | The arguments to pass to the tool                                                                                                                                                                                                |
+| `tool_call_id`                     | `str`                                                 | `_generate_tool_call_id()` | The tool call identifier, this is used by some models including OpenAI                                                                                                                                                      |
+| `provider_name`                    | `str \| None`                                        | `None`     | The name of the provider that generated the response                                                                                                                                                                             |
+| `part_kind`                        | `Literal['builtin-tool-call']`                        | `'builtin-tool-call'` | Part type identifier, this is available on all parts as a discriminator                                                                                                                                                  |
+
+### ModelResponse
+
+A response from a model, e.g. a message from the model to the upsonic app.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `parts`                            | `Sequence[ModelResponsePart]`                        | -          | The parts of the model message                                                                                                                                                                                                  |
+| `usage`                            | `RequestUsage`                                        | `RequestUsage()` | Usage information for the request                                                                                                                                                                                           |
+| `model_name`                       | `str \| None`                                        | `None`     | The name of the model that generated the response                                                                                                                                                                               |
+| `timestamp`                        | `datetime`                                            | `_now_utc()` | The timestamp of the response                                                                                                                                                                                               |
+| `kind`                             | `Literal['response']`                                | `'response'` | Message type identifier, this is available on all parts as a discriminator                                                                                                                                                 |
+| `provider_name`                    | `str \| None`                                        | `None`     | The name of the LLM provider that generated the response                                                                                                                                                                       |
+| `provider_details`                 | `dict[str, Any] \| None`                             | `None`     | Additional provider-specific details in a serializable format                                                                                                                                                                   |
+| `provider_response_id`             | `str \| None`                                        | `None`     | request ID as specified by the model provider                                                                                                                                                                                  |
+| `finish_reason`                    | `FinishReason \| None`                               | `None`     | Reason the model finished generating the response, normalized to OpenTelemetry values                                                                                                                                          |
+
+### TextPartDelta
+
+A partial update (delta) for a `TextPart` to append new text content.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content_delta`                    | `str`                                                 | -          | The incremental text content to add to the existing `TextPart` content                                                                                                                                                         |
+| `part_delta_kind`                  | `Literal['text']`                                     | `'text'`   | Part delta type identifier, used as a discriminator                                                                                                                                                                              |
+
+#### Functions
+
+##### `apply`
+
+Apply this text delta to an existing `TextPart`.
+
+**Parameters:**
+
+- `part` (ModelResponsePart): The existing model response part, which must be a `TextPart`
+
+**Returns:**
+
+- `TextPart`: A new `TextPart` with updated text content
+
+### ThinkingPartDelta
+
+A partial update (delta) for a `ThinkingPart` to append new thinking content.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content_delta`                    | `str \| None`                                         | `None`     | The incremental thinking content to add to the existing `ThinkingPart` content                                                                                                                                                 |
+| `signature_delta`                  | `str \| None`                                         | `None`     | Optional signature delta                                                                                                                                                                                                         |
+| `provider_name`                    | `str \| None`                                         | `None`     | Optional provider name for the thinking part                                                                                                                                                                                     |
+| `part_delta_kind`                  | `Literal['thinking']`                                 | `'thinking'` | Part delta type identifier, used as a discriminator                                                                                                                                                                          |
+
+#### Functions
+
+##### `apply`
+
+Apply this thinking delta to an existing `ThinkingPart`.
+
+**Parameters:**
+
+- `part` (ModelResponsePart | ThinkingPartDelta): The existing model response part, which must be a `ThinkingPart`
+
+**Returns:**
+
+- `ThinkingPart | ThinkingPartDelta`: A new `ThinkingPart` with updated thinking content
+
+### ToolCallPartDelta
+
+A partial update (delta) for a `ToolCallPart` to modify tool name, arguments, or tool call ID.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_name_delta`                  | `str \| None`                                         | `None`     | Incremental text to add to the existing tool name, if any                                                                                                                                                                       |
+| `args_delta`                       | `str \| dict[str, Any] \| None`                       | `None`     | Incremental data to add to the tool arguments                                                                                                                                                                                   |
+| `tool_call_id`                     | `str \| None`                                         | `None`     | Optional tool call identifier, this is used by some models including OpenAI                                                                                                                                                      |
+| `part_delta_kind`                  | `Literal['tool_call']`                               | `'tool_call'` | Part delta type identifier, used as a discriminator                                                                                                                                                                          |
+
+#### Functions
+
+##### `as_part`
+
+Convert this delta to a fully formed `ToolCallPart` if possible, otherwise return `None`.
+
+**Returns:**
+
+- `ToolCallPart | None`: A `ToolCallPart` if `tool_name_delta` is set, otherwise `None`
+
+##### `apply`
+
+Apply this delta to a part or delta, returning a new part or delta with the changes applied.
+
+**Parameters:**
+
+- `part` (ModelResponsePart | ToolCallPartDelta): The existing model response part or delta to update
+
+**Returns:**
+
+- `ToolCallPart | BuiltinToolCallPart | ToolCallPartDelta`: Either a new `ToolCallPart` or `BuiltinToolCallPart`, or an updated `ToolCallPartDelta`
+
+### PartStartEvent
+
+An event indicating that a new part has started.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index`                            | `int`                                                 | -          | The index of the part within the overall response parts list                                                                                                                                                                     |
+| `part`                             | `ModelResponsePart`                                   | -          | The newly started `ModelResponsePart`                                                                                                                                                                                           |
+| `event_kind`                       | `Literal['part_start']`                              | `'part_start'` | Event type identifier, used as a discriminator                                                                                                                                                                               |
+
+### PartDeltaEvent
+
+An event indicating a delta update for an existing part.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index`                            | `int`                                                 | -          | The index of the part within the overall response parts list                                                                                                                                                                     |
+| `delta`                            | `ModelResponsePartDelta`                             | -          | The delta to apply to the specified part                                                                                                                                                                                       |
+| `event_kind`                       | `Literal['part_delta']`                              | `'part_delta'` | Event type identifier, used as a discriminator                                                                                                                                                                               |
+
+### FinalResultEvent
+
+An event indicating that the final result has been completely received.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool_name`                        | `str \| None`                                         | -          | The name of the output tool that was called. `None` if the result is from text content and not from a tool                                                                                                                     |
+| `tool_call_id`                     | `str \| None`                                        | -          | The tool call ID, if any, that this result is associated with                                                                                                                                                                    |
+| `event_kind`                       | `Literal['final_result']`                            | `'final_result'` | Event type identifier, used as a discriminator                                                                                                                                                                               |
+
+### FunctionToolCallEvent
+
+An event indicating the start to a call to a function tool.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `part`                             | `ToolCallPart`                                        | -          | The (function) tool call to make                                                                                                                                                                                               |
+| `event_kind`                       | `Literal['function_tool_call']`                      | `'function_tool_call'` | Event type identifier, used as a discriminator                                                                                                                                                                             |
+
+#### Functions
+
+##### `tool_call_id`
+
+An ID used for matching details about the call to its result.
+
+**Returns:**
+
+- `str`: The tool call ID
+
+### FunctionToolResultEvent
+
+An event indicating the result of a function tool call.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `result`                           | `ToolReturnPart \| RetryPromptPart`                  | -          | The result of the call to the function tool                                                                                                                                                                                     |
+| `event_kind`                       | `Literal['function_tool_result']`                    | `'function_tool_result'` | Event type identifier, used as a discriminator                                                                                                                                                                             |
+
+#### Functions
+
+##### `tool_call_id`
+
+An ID used to match the result to its original call.
+
+**Returns:**
+
+- `str`: The tool call ID

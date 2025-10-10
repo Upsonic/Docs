@@ -1,0 +1,190 @@
+---
+title: QdrantProvider
+sidebarTitle: QdrantProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Config`                                             | Required   | A validated and immutable Config object containing all necessary parameters for the provider's operation                                                                                                                       |
+
+## Functions
+
+### `connect`
+
+Establishes a connection to the Qdrant vector database.
+
+This method uses the connection parameters from `self._config.core` to initialize the QdrantClient based on the specified operational mode.
+
+**Raises:**
+- `VectorDBConnectionError`: If the connection fails for any reason.
+
+### `disconnect`
+
+Gracefully terminates the connection to the Qdrant database.
+
+### `disconnect_async`
+
+Async version of disconnect for proper async cleanup.
+
+### `is_ready`
+
+Performs a health check to ensure the Qdrant instance is responsive.
+
+**Returns:**
+- `bool`: True if the database is connected and responsive, False otherwise.
+
+### `create_collection`
+
+Creates the collection in Qdrant according to the full framework config.
+
+This method handles the `recreate_if_exists` logic and translates the framework configuration into Qdrant-specific parameters.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to Qdrant to create a collection.
+- `VectorDBError`: If the collection creation fails.
+
+### `delete_collection`
+
+Permanently deletes the collection specified in the config.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to Qdrant to delete a collection.
+- `CollectionDoesNotExistError`: If the collection to be deleted does not exist.
+- `VectorDBError`: For other unexpected errors.
+
+### `collection_exists`
+
+Checks if the collection specified in the config already exists.
+
+**Returns:**
+- `bool`: True if the collection exists, False otherwise.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to Qdrant to check for a collection.
+- `VectorDBError`: If checking collection existence fails.
+
+### `upsert`
+
+Adds new data or updates existing data in the Qdrant collection.
+
+This method transforms the framework-native data lists into Qdrant's `PointStruct` format and uses the high-performance `upsert` API. It respects the write consistency and batching parameters defined in the config.
+
+**Parameters:**
+- `vectors` (List[List[float]]): A list of dense vector embeddings.
+- `payloads` (List[Dict[str, Any]]): A list of corresponding metadata objects.
+- `ids` (List[Union[str, int]]): A list of unique identifiers for each record.
+- `chunks` (Optional[List[str]]): A list of text chunks.
+- `**kwargs`: Provider-specific options.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to upsert data.
+- `ValueError`: If the lengths of vectors, payloads, and ids lists are not identical.
+- `UpsertError`: If the data ingestion fails.
+
+### `delete`
+
+Removes data from the collection by their unique identifiers.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of specific IDs to remove.
+- `**kwargs`: Provider-specific options.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to delete data.
+- `VectorDBError`: If the deletion fails.
+
+### `fetch`
+
+Retrieves full records (payload and vector) by their unique IDs.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of IDs to retrieve the full records for.
+- `**kwargs`: Provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects containing the fetched data.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to fetch data.
+- `VectorDBError`: If the fetch operation fails.
+
+### `search`
+
+A master search method that dispatches to the appropriate specialized search function.
+
+**Parameters:**
+- `top_k` (Optional[int]): The number of results to return. If None, falls back to the default in the Config.
+- `query_vector` (Optional[List[float]]): The vector for dense or hybrid search.
+- `query_text` (Optional[str]): The text for full-text or hybrid search.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weighting factor for hybrid search. If None, falls back to the default in the Config.
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): The algorithm to use for hybrid search ('rrf' or 'weighted').
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects.
+
+**Raises:**
+- `ConfigurationError`: If the requested search is disabled or the wrong combination of arguments is provided.
+- `SearchError`: If any underlying search operation fails.
+
+### `dense_search`
+
+Performs a pure vector similarity search.
+
+**Parameters:**
+- `query_vector` (List[float]): The vector embedding to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): A metadata filter to apply. Defaults to None.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of the most similar results.
+
+**Raises:**
+- `SearchError`: If the search operation fails.
+
+### `full_text_search`
+
+Performs a full-text search using Qdrant's payload filtering.
+
+For this to be performant, a payload index should be created on the target text field in Qdrant beforehand.
+
+**Parameters:**
+- `query_text` (str): The text string to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): A metadata filter to apply. Defaults to None.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of matching results.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to perform a full-text search.
+- `SearchError`: If the search operation fails.
+
+### `hybrid_search`
+
+Combines dense and full-text search results using a specified fusion method.
+
+**Parameters:**
+- `query_vector` (List[float]): The dense vector for the semantic part of the search.
+- `query_text` (str): The raw text for the keyword/sparse part of the search.
+- `top_k` (int): The number of final results to return.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weight for combining scores. If None, falls back to the default in the Config.
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): The algorithm to use for fusing results ('rrf' or 'weighted').
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects, ordered by the combined hybrid score.
+
+**Raises:**
+- `ConfigurationError`: If the fusion method is unsupported.
+- `SearchError`: If the search operation fails.

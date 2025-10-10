@@ -1,0 +1,159 @@
+---
+title: MongoStorage
+sidebarTitle: MongoStorage
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db_url`                           | `str`                                                 | Required   | The full MongoDB connection string (e.g., "mongodb://localhost:27017")                                                                                                                                                         |
+| `database_name`                    | `str`                                                 | Required   | The name of the database to use                                                                                                                                                                                                  |
+| `sessions_collection_name`         | `str`                                                 | `"interaction_sessions"` | The name of the collection for InteractionSession                                                                                                                                                                               |
+| `profiles_collection_name`         | `str`                                                 | `"user_profiles"` | The name of the collection for UserProfile                                                                                                                                                                                      |
+
+## Functions
+
+### `is_connected`
+
+Check if the storage provider is connected.
+
+**Returns:**
+
+- `bool`: True if connected, False otherwise
+
+### `connect`
+
+Connect to the storage provider.
+
+### `disconnect`
+
+Disconnect from the storage provider.
+
+### `create`
+
+Create the necessary indexes for storage.
+
+### `read`
+
+Read an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[T]): The Pydantic model type to deserialize to
+
+**Returns:**
+
+- `Optional[T]`: The deserialized object or None if not found
+
+### `upsert`
+
+Insert or update an object in storage.
+
+**Parameters:**
+
+- `data` (Union[InteractionSession, UserProfile]): The object to store
+
+### `delete`
+
+Delete an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[BaseModel]): The model type to delete
+
+### `drop`
+
+Drop all data from storage (delete all collections).
+
+### `is_connected_async`
+
+Asynchronously check if the storage provider is connected.
+
+**Returns:**
+
+- `bool`: True if connected, False otherwise
+
+### `connect_async`
+
+Asynchronously connect to the storage provider.
+
+### `disconnect_async`
+
+Asynchronously disconnect from the storage provider.
+
+### `create_async`
+
+Asynchronously create the necessary indexes for storage.
+
+### `read_async`
+
+Asynchronously read an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[T]): The Pydantic model type to deserialize to
+
+**Returns:**
+
+- `Optional[T]`: The deserialized object or None if not found
+
+### `upsert_async`
+
+Asynchronously insert or update an object in storage.
+
+**Parameters:**
+
+- `data` (Union[InteractionSession, UserProfile]): The object to store
+
+### `delete_async`
+
+Asynchronously delete an object from storage by ID and model type.
+
+**Parameters:**
+
+- `object_id` (str): The unique identifier of the object
+- `model_type` (Type[BaseModel]): The model type to delete
+
+### `drop_async`
+
+Asynchronously drop all data from storage (delete all collections).
+
+### `read_sessions_for_user_async`
+
+Retrieves all interaction sessions associated with a specific user ID, leveraging the secondary index on the `user_id` field for high performance.
+
+**Parameters:**
+
+- `user_id` (str): The ID of the user whose sessions are to be retrieved
+
+**Returns:**
+
+- `List[InteractionSession]`: A list of InteractionSession objects, which may be empty if the user has no sessions
+
+### `_get_collection_for_model`
+
+Get the MongoDB collection for a given model type.
+
+**Parameters:**
+
+- `model_type` (Type[BaseModel]): The model type
+
+**Returns:**
+
+- `AsyncIOMotorCollection`: The MongoDB collection
+
+### `_get_id_field`
+
+Get the ID field name for a given model type.
+
+**Parameters:**
+
+- `model_or_type` (Union[BaseModel, Type[BaseModel]]): The model or model type
+
+**Returns:**
+
+- `str`: The ID field name

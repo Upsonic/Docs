@@ -1,0 +1,66 @@
+---
+title: GoogleProvider
+sidebarTitle: GoogleProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api_key`                          | `str \| None`                                         | `None`     | The `API key <https://ai.google.dev/gemini-api/docs/api-key>`_ to use for authentication. It can also be set via the `GOOGLE_API_KEY` environment variable. Applies to the Gemini Developer API only.                          |
+| `credentials`                      | `Credentials \| None`                                 | `None`     | The credentials to use for authentication when calling the Vertex AI APIs. Credentials can be obtained from environment variables and default credentials. For more information, see Set up Application Default Credentials. Applies to the Vertex AI API only. |
+| `project`                         | `str \| None`                                         | `None`     | The Google Cloud project ID to use for quota. Can be obtained from environment variables (for example, GOOGLE_CLOUD_PROJECT). Applies to the Vertex AI API only.                                                                 |
+| `location`                         | `VertexAILocation \| Literal['global'] \| None`       | `None`     | The location to send API requests to (for example, us-central1). Can be obtained from environment variables. Applies to the Vertex AI API only.                                                                                 |
+| `client`                          | `Client \| None`                                      | `None`     | A pre-initialized client to use.                                                                                                                                                                                                 |
+| `vertexai`                         | `bool \| None`                                        | `None`     | Force the use of the Vertex AI API. If `False`, the Google Generative Language API will be used. Defaults to `False`.                                                                                                            |
+
+## Functions
+
+### `__init__`
+
+Create a new Google provider.
+
+**Parameters:**
+
+- `api_key` (str | None): The `API key <https://ai.google.dev/gemini-api/docs/api-key>`_ to use for authentication. It can also be set via the `GOOGLE_API_KEY` environment variable. Applies to the Gemini Developer API only.
+- `credentials` (Credentials | None): The credentials to use for authentication when calling the Vertex AI APIs. Credentials can be obtained from environment variables and default credentials. For more information, see Set up Application Default Credentials. Applies to the Vertex AI API only.
+- `project` (str | None): The Google Cloud project ID to use for quota. Can be obtained from environment variables (for example, GOOGLE_CLOUD_PROJECT). Applies to the Vertex AI API only.
+- `location` (VertexAILocation | Literal['global'] | None): The location to send API requests to (for example, us-central1). Can be obtained from environment variables. Applies to the Vertex AI API only.
+- `client` (Client | None): A pre-initialized client to use.
+- `vertexai` (bool | None): Force the use of the Vertex AI API. If `False`, the Google Generative Language API will be used. Defaults to `False`.
+
+### `name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str`: The provider name ('google-vertex' if using Vertex AI, 'google-gla' otherwise)
+
+### `base_url`
+
+Get the base URL for the provider API.
+
+**Returns:**
+
+- `str`: The base URL for the provider API
+
+### `client`
+
+Get the client for the provider.
+
+**Returns:**
+
+- `Client`: The Google client
+
+### `model_profile`
+
+Get the model profile for the named model, if available.
+
+**Parameters:**
+
+- `model_name` (str): The name of the model
+
+**Returns:**
+
+- `ModelProfile | None`: The model profile for the named model, if available

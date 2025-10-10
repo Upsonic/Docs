@@ -1,0 +1,62 @@
+---
+title: ToolContext
+sidebarTitle: ToolContext
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `deps`                             | `AgentDepsT`                                         | -          | Dependencies for the agent                                                                                                                                                                                                        |
+| `agent_id`                         | `Optional[str]`                                       | `None`     | ID of the agent executing the tool                                                                                                                                 |
+| `task_id`                          | `Optional[str]`                                       | `None`     | ID of the current task                                                                                                                                             |
+| `tool_call`                        | `Optional[ToolCall]`                                 | `None`     | The current tool call being executed                                                                                                                                 |
+| `messages`                         | `list[Any]`                                          | `[]`       | Messages exchanged in the conversation so far                                                                                                                                                                                    |
+| `retries`                          | `Dict[str, int]`                                     | `{}`       | Number of retries for each tool so far                                                                                                                                                                                           |
+| `retry`                            | `int`                                                 | `0`        | Number of retries of current tool so far                                                                                                                                                                                         |
+| `max_retries`                      | `int`                                                 | `0`        | Maximum number of retries allowed                                                                                                                                                                                                 |
+| `tool_call_count`                  | `int`                                                 | `0`        | Total number of tool calls made                                                                                                                                                                                                   |
+| `tool_call_limit`                  | `Optional[int]`                                       | `None`     | Maximum number of tool calls allowed                                                                                                                                                                                             |
+| `metadata`                         | `Dict[str, Any]`                                     | `{}`       | Additional metadata for the context                                                                                                                                                                                               |
+
+## Functions
+
+### `last_attempt`
+
+Whether this is the last attempt at running this tool.
+
+**Returns:**
+
+- `bool`: True if retry equals max_retries
+
+### `can_call_tool`
+
+Check if another tool call is allowed.
+
+**Returns:**
+
+- `bool`: True if tool call limit is not reached
+
+### `increment_tool_count`
+
+Increment the tool call count.
+
+### `get_retry_count`
+
+Get the retry count for a specific tool.
+
+**Parameters:**
+
+- `tool_name` (str): Name of the tool
+
+**Returns:**
+
+- `int`: Number of retries for the tool
+
+### `increment_retry`
+
+Increment the retry count for a tool.
+
+**Parameters:**
+
+- `tool_name` (str): Name of the tool

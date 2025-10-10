@@ -1,0 +1,60 @@
+---
+title: GitHubProvider
+sidebarTitle: GitHubProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api_key`                          | `str \| None`                                         | `None`     | The GitHub token to use for authentication. If not provided, the `GITHUB_API_KEY` environment variable will be used if available.                                                                                               |
+| `openai_client`                   | `AsyncOpenAI \| None`                                 | `None`     | An existing `AsyncOpenAI` client to use. If provided, `api_key` and `http_client` must be `None`.                                                                                                                                |
+| `http_client`                      | `httpx.AsyncClient \| None`                           | `None`     | An existing `httpx.AsyncClient` to use for making HTTP requests.                                                                                                                                                                 |
+
+## Functions
+
+### `__init__`
+
+Create a new GitHub Models provider.
+
+**Parameters:**
+
+- `api_key` (str | None): The GitHub token to use for authentication. If not provided, the `GITHUB_API_KEY` environment variable will be used if available.
+- `openai_client` (AsyncOpenAI | None): An existing `AsyncOpenAI` client to use. If provided, `api_key` and `http_client` must be `None`.
+- `http_client` (httpx.AsyncClient | None): An existing `httpx.AsyncClient` to use for making HTTP requests.
+
+### `name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str`: The provider name ('github')
+
+### `base_url`
+
+Get the base URL for the provider API.
+
+**Returns:**
+
+- `str`: The base URL for the provider API ('https://models.github.ai/inference')
+
+### `client`
+
+Get the client for the provider.
+
+**Returns:**
+
+- `AsyncOpenAI`: The GitHub client
+
+### `model_profile`
+
+Get the model profile for the named model, if available.
+
+**Parameters:**
+
+- `model_name` (str): The name of the model
+
+**Returns:**
+
+- `ModelProfile | None`: The model profile for the named model, if available

@@ -1,0 +1,59 @@
+---
+title: RecursiveChunker
+sidebarTitle: RecursiveChunker
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Optional[RecursiveChunkingConfig]`                                     | `None`     | A specialized configuration model for the Recursive Chunker strategy. This configuration extends the base settings with parameters that control the recursive splitting behavior, such as the prioritized list of separators to use.                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initializes the chunker with a specific or default configuration.
+
+**Parameters:**
+
+- `config` (Optional[RecursiveChunkingConfig]): Configuration object with all settings.
+
+### `_chunk_document`
+
+The core implementation for recursively chunking a single document.
+
+**Parameters:**
+
+- `document` (Document): The document to be chunked.
+
+**Returns:**
+
+- `List[Chunk]`: A list of `Chunk` objects derived from the document.
+
+### `_recursive_split`
+
+Recursively splits text using a prioritized list of separators.
+
+**Parameters:**
+
+- `text` (str): The text to split.
+- `separators` (List[str]): List of separators to try in order.
+- `offset` (int): Character offset for position tracking.
+
+**Returns:**
+
+- `List[Tuple[str, int, int]]`: List of tuples containing (text, start_index, end_index).
+
+### `from_language`
+
+Create a RecursiveChunker configured for a specific programming language.
+
+**Parameters:**
+
+- `language` (Language): The programming language to configure for.
+- `config` (Optional[RecursiveChunkingConfig]): Optional configuration to use.
+
+**Returns:**
+
+- `RecursiveChunker`: A chunker configured for the specified language.

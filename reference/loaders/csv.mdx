@@ -1,0 +1,138 @@
+---
+title: CSVLoader
+sidebarTitle: CSVLoader
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                           | `CSVLoaderConfig`                                     | Required   | Configuration object for CSV loading behavior                                                                                                                                                                                    |
+
+## Functions
+
+### `__init__`
+
+Initialize the CSVLoader with its specific configuration.
+
+**Parameters:**
+
+- `config` (CSVLoaderConfig): Configuration object for CSV loading behavior
+
+### `get_supported_extensions`
+
+Gets the list of supported file extensions.
+
+**Returns:**
+
+- `List[str]`: List of supported file extensions (`.csv`)
+
+### `_filter_row_columns`
+
+Filters columns in a row based on include/exclude rules in the config.
+
+**Parameters:**
+
+- `row` (Dict[str, Any]): Row data to filter
+
+**Returns:**
+
+- `Dict[str, Any]`: Filtered row data
+
+### `_synthesize_content`
+
+Creates the document content from a row based on the synthesis mode.
+
+**Parameters:**
+
+- `row` (Dict[str, Any]): Row data to synthesize content from
+
+**Returns:**
+
+- `str`: Synthesized content string
+
+### `_create_documents_from_rows`
+
+Creates documents from processed rows based on split_mode configuration.
+
+**Parameters:**
+
+- `all_rows` (List[str]): List of processed row content
+- `file_path` (Path): Path to the source file
+- `document_id` (str): Base document ID
+
+**Returns:**
+
+- `List[Document]`: List of created documents
+
+### `_load_single_file`
+
+Helper method to load documents from a single CSV file.
+
+**Parameters:**
+
+- `file_path` (Path): Path to the CSV file
+
+**Returns:**
+
+- `List[Document]`: List of documents loaded from the file
+
+### `load`
+
+Loads documents from the given CSV source(s) synchronously.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): CSV source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `_aload_single_file`
+
+Async helper to load documents from a single CSV file.
+
+**Parameters:**
+
+- `file_path` (Path): Path to the CSV file
+
+**Returns:**
+
+- `List[Document]`: List of documents loaded from the file
+
+### `aload`
+
+Loads documents from the given CSV source(s) asynchronously.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): CSV source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `batch`
+
+A simple synchronous batch load implementation.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of CSV sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `abatch`
+
+An efficient asynchronous batch load implementation using asyncio.gather.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of CSV sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents

@@ -1,0 +1,50 @@
+---
+title: ReliabilityManager
+sidebarTitle: ReliabilityManager
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `task`                             | `Task`                                                | Required  | The task being executed                                                                                                                                                                                                         |
+| `reliability_layer`                | `Any`                                                 | Required  | The configured reliability layer                                                                                                                                                                                                 |
+| `model_provider`                   | `Model`                                               | Required  | The instantiated model object                                                                                                                                                                                                   |
+
+## Functions
+
+### `process_task`
+
+Process the task through the reliability layer.
+
+**Parameters:**
+
+- `task` (Task): The task to process
+
+**Returns:**
+
+- `Any`: The processed task result
+
+### `manage_reliability`
+
+Asynchronous context manager for managing reliability layer operations.
+
+**Returns:**
+
+- `AsyncContextManager`: Context manager that handles reliability processing
+
+**Usage:**
+
+```python
+async with reliability_manager.manage_reliability() as manager:
+    processed_task = await manager.process_task(task)
+    # Reliability processing handled automatically
+```
+
+**Features:**
+
+- **Reliability Processing**: Integrates with ReliabilityProcessor for task processing
+- **Model Integration**: Uses the model provider for reliability operations
+- **Task Processing**: Processes tasks through the configured reliability layer
+- **Async Support**: Handles reliability operations asynchronously
+- **Error Handling**: Manages reliability layer errors gracefully

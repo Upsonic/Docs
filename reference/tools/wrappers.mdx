@@ -1,0 +1,98 @@
+---
+title: FunctionTool
+sidebarTitle: FunctionTool
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `function`                         | `Callable`                                            | -          | The function to wrap                                                                                                                                                                                                             |
+| `schema`                           | `FunctionSchema`                                     | -          | Schema information for the function                                                                                                                                                                                              |
+| `config`                           | `Optional[ToolConfig]`                                | `None`     | Tool configuration                                                                                                                                                                                                               |
+
+## Functions
+
+### `execute`
+
+Execute the tool function.
+
+**Parameters:**
+
+- `*args` (Any): Positional arguments
+- `**kwargs` (Any): Keyword arguments
+
+**Returns:**
+
+- `Any`: The result of the function execution
+
+---
+
+---
+title: AgentTool
+sidebarTitle: AgentTool
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent`                           | `Any`                                                 | -          | The agent instance to wrap                                                                                                                                                                                                       |
+
+## Functions
+
+### `_sanitize_name`
+
+Sanitize name for use as method name.
+
+**Parameters:**
+
+- `name` (str): The name to sanitize
+
+**Returns:**
+
+- `str`: Sanitized name in snake_case
+
+### `execute`
+
+Execute the agent with the given request.
+
+**Parameters:**
+
+- `request` (str): The task or question to delegate to the agent
+- `**kwargs` (Any): Additional keyword arguments
+
+**Returns:**
+
+- `Any`: The result from the agent execution
+
+---
+
+---
+title: MethodTool
+sidebarTitle: MethodTool
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `instance`                         | `Any`                                                 | -          | The instance containing the method                                                                                                                                                                                               |
+| `method`                           | `Callable`                                            | -          | The method to wrap                                                                                                                                                                                                               |
+| `schema`                           | `FunctionSchema`                                     | -          | Schema information for the method                                                                                                                                                                                                |
+| `config`                           | `Optional[ToolConfig]`                                | `None`     | Tool configuration                                                                                                                                                                                                               |
+
+## Functions
+
+### `execute`
+
+Execute the method.
+
+**Parameters:**
+
+- `*args` (Any): Positional arguments
+- `**kwargs` (Any): Keyword arguments
+
+**Returns:**
+
+- `Any`: The result of the method execution

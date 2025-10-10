@@ -1,0 +1,32 @@
+---
+title: CharacterChunker
+sidebarTitle: CharacterChunker
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Optional[CharacterChunkingConfig]`                                     | `None`     | A specialized configuration model for the Character Chunker strategy. This configuration extends the base settings with parameters that control the splitting behavior based on a single, user-defined separator.                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initializes the chunker with a specific or default configuration.
+
+**Parameters:**
+
+- `config` (Optional[CharacterChunkingConfig]): Configuration object with all settings.
+
+### `_chunk_document`
+
+The core implementation for splitting a single document by a character separator.
+
+**Parameters:**
+
+- `document` (Document): The document to be chunked.
+
+**Returns:**
+
+- `List[Chunk]`: A list of `Chunk` objects with accurate content and positional data.

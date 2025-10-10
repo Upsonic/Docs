@@ -1,0 +1,52 @@
+---
+title: Data Models Schemas
+sidebarTitle: Data Models Schemas
+---
+
+## Classes
+
+### Document
+
+Represents a single, discrete source of information, such as a file or a web page, before it is processed into smaller chunks.
+
+This model serves as the standardized input for the chunking process. It ensures that every piece of knowledge entering the pipeline is tagged with its origin and can be uniquely identified.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`                          | `str`                                                 | -          | The full, raw text content extracted from the source                                                                                                                                                                            |
+| `metadata`                         | `Dict[str, Any]`                                      | `{}`       | A flexible dictionary to store metadata about the source, e.g., {'source': 'resume1.pdf', 'author': 'John Doe'}                                                                                                                |
+| `document_id`                      | `str`                                                 | -          | A unique, deterministic identifier for the source, typically an MD5 hash of its absolute path or URL                                                                                                                             |
+
+### Chunk
+
+Represents a single, embeddable piece of a parent Document.
+
+This is the atomic unit that will be converted into a vector and stored in the vector database. It critically maintains a link to its parent Document and inherits its metadata, which can be augmented with chunk-specific details like page numbers. This rich, inherited metadata is the key to enabling advanced retrieval strategies, such as filtering by source or providing citations.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text_content`                     | `str`                                                 | -          | The actual text content of this specific chunk                                                                                                                                                                                   |
+| `metadata`                         | `Dict[str, Any]`                                      | -          | Metadata inherited from the parent Document and potentially augmented with chunk-specific info, e.g., {'source': 'resume1.pdf', 'page_number': 3}                                                                                |
+| `document_id`                      | `str`                                                 | -          | Document ID                                                                                                                                                                                                                      |
+| `chunk_id`                         | `str`                                                 | `str(uuid.uuid4())` | A unique identifier for this specific chunk                                                                                                                                                                               |
+| `start_index`                      | `Optional[int]`                                        | `None`     | The start index of the chunk in the original document                                                                                                                                                                           |
+| `end_index`                        | `Optional[int]`                                        | `None`     | The end index of the chunk in the original document                                                                                                                                                                             |
+
+### RAGSearchResult
+
+Represents a single search result from a RAG query with both text content and metadata.
+
+This model provides a structured way to return search results that include both the retrieved text content and its associated metadata, enabling better context formatting and citation capabilities.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text`                             | `str`                                                 | -          | The text content retrieved from the search                                                                                                                                                                                       |
+| `metadata`                         | `Dict[str, Any]`                                      | `{}`       | Metadata associated with this search result, including source information, scores, etc.                                                                                                                                          |
+| `score`                            | `Optional[float]`                                     | `None`     | The similarity score for this search result                                                                                                                                                                                      |
+| `chunk_id`                         | `Optional[str]`                                       | `None`     | The unique identifier for this chunk                                                                                                                                                                                             |

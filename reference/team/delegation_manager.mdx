@@ -1,0 +1,33 @@
+---
+title: DelegationManager
+sidebarTitle: DelegationManager
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `members`                          | `List[Agent]`                                         | Required   | The list of member agents available for delegation                                                                                                                                                                              |
+| `tool_mapping`                     | `Dict[str, Callable]`                                | Required   | A mapping from tool names to their callable function objects                                                                                                                                                                     |
+
+## Functions
+
+### `get_delegation_tool`
+
+Dynamically generates the 'delegate_task' tool for the Team Leader.
+
+**Parameters:**
+
+- `session_memory` (Memory): The shared Memory object for the coordination session
+
+**Returns:**
+
+- `Callable`: An asynchronous callable function that serves as the delegation tool
+
+### `get_routing_tool`
+
+Generates the 'route_request_to_member' tool for the 'route' mode.
+
+**Returns:**
+
+- `Callable`: The routing tool function

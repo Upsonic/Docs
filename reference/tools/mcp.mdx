@@ -1,0 +1,115 @@
+---
+title: MCPTool
+sidebarTitle: MCPTool
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handler`                          | `MCPHandler`                                         | -          | The MCP handler instance                                                                                                                                                                                                         |
+| `tool_info`                        | `mcp_types.Tool`                                     | -          | MCP tool information                                                                                                                                                                                                             |
+
+## Functions
+
+### `execute`
+
+Execute the MCP tool.
+
+**Parameters:**
+
+- `**kwargs` (Any): Tool arguments
+
+**Returns:**
+
+- `Any`: Tool execution result
+
+---
+
+---
+title: MCPHandler
+sidebarTitle: MCPHandler
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                           | `Type`                                               | -          | Class with MCP configuration (url, command, args, env)                                                                                                                                                                          |
+| `session`                          | `Optional[ClientSession]`                            | `None`     | MCP client session                                                                                                                                                                                                               |
+| `tools`                            | `List[MCPTool]`                                      | `[]`       | List of MCP tools                                                                                                                                                                                                                |
+| `_connection_context`              | `Optional[Any]`                                      | `None`     | Connection context                                                                                                                                                                                                               |
+| `_client_context`                  | `Optional[Any]`                                      | `None`     | Client context                                                                                                                                                                                                                   |
+| `connection_type`                  | `str`                                                | -          | Type of connection ('sse' or 'stdio')                                                                                                                                                                                           |
+| `server_name`                      | `str`                                                | -          | Name of the MCP server                                                                                                                                                                                                           |
+
+## Functions
+
+### `_extract_server_name`
+
+Extract server name from URL.
+
+**Parameters:**
+
+- `url` (str): The URL to extract server name from
+
+**Returns:**
+
+- `str`: Server name
+
+### `_create_session`
+
+Create a new session for MCP communication.
+
+**Returns:**
+
+- `Any`: MCP client session
+
+### `_initialize_session`
+
+Initialize the MCP session and discover tools.
+
+### `get_tools`
+
+Get all available tools from this MCP server.
+
+**Returns:**
+
+- `List[MCPTool]`: List of MCP tools
+
+### `_discover_tools_async`
+
+Discover tools asynchronously.
+
+**Returns:**
+
+- `List[MCPTool]`: List of discovered tools
+
+### `call_tool`
+
+Call a tool on the MCP server.
+
+**Parameters:**
+
+- `tool_name` (str): Name of the tool to call
+- `arguments` (Dict[str, Any]): Arguments to pass to the tool
+
+**Returns:**
+
+- `Any`: Tool execution result
+
+### `_convert_content`
+
+Convert MCP content to standard format.
+
+**Parameters:**
+
+- `content` (Any): MCP content to convert
+
+**Returns:**
+
+- `Any`: Converted content
+
+### `disconnect`
+
+Disconnect from the MCP server (no-op since we use on-demand connections).

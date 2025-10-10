@@ -1,0 +1,41 @@
+---
+title: InteractionSession
+sidebarTitle: InteractionSession
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session_id`                       | `SessionId`                                           | `uuid.uuid4()` | The unique identifier for the session, of type SessionId. This is the primary key                                                                                                                                            |
+| `user_id`                          | `Optional[UserId]`                                    | `None`     | The ID of the user associated with this session, linking it to a UserProfile                                                                                                                                                  |
+| `agent_id`                         | `Optional[str]`                                       | `None`     | The unique identifier of the agent entity involved in the session                                                                                                                                                               |
+| `team_session_id`                  | `Optional[str]`                                       | `None`     | An optional foreign key linking this session to a parent team session                                                                                                                                                           |
+| `chat_history`                     | `List[Any]`                                           | `[]`       | The complete, ordered list of messages for the session ('Full Session Memory')                                                                                                                                                |
+| `summary`                          | `Optional[str]`                                       | `None`     | An evolving, high-level summary of the session's content ('Summary Memory')                                                                                                                                                  |
+| `session_data`                     | `Dict[str, Any]`                                      | `{}`       | A flexible key-value store for structured data relevant to the session's immediate state                                                                                                                                       |
+| `extra_data`                       | `Dict[str, Any]`                                      | `{}`       | A flexible key-value store for any other custom metadata, tags, or IDs                                                                                                                                                        |
+| `created_at`                       | `float`                                               | `time.time()` | The Unix timestamp when the session was created                                                                                                                                                                               |
+| `updated_at`                       | `float`                                               | `time.time()` | The Unix timestamp when the session was last updated                                                                                                                                                                           |
+
+## Functions
+
+### `to_dict`
+
+Serializes the session model to a dictionary.
+
+**Returns:**
+
+- `Dict[str, Any]`: Dictionary representation of the interaction session
+
+### `from_dict`
+
+Creates an InteractionSession instance from a dictionary.
+
+**Parameters:**
+
+- `data` (Dict[str, Any]): Dictionary data to create InteractionSession from
+
+**Returns:**
+
+- `InteractionSession`: The created InteractionSession instance

@@ -1,0 +1,70 @@
+---
+title: BedrockProvider
+sidebarTitle: BedrockProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bedrock_client`                   | `BaseClient \| None`                                  | `None`     | A boto3 client for Bedrock Runtime. If provided, other arguments are ignored.                                                                                                                                                    |
+| `region_name`                      | `str \| None`                                         | `None`     | The AWS region name.                                                                                                                                                                                                             |
+| `aws_access_key_id`                | `str \| None`                                         | `None`     | The AWS access key ID.                                                                                                                                                                                                             |
+| `aws_secret_access_key`            | `str \| None`                                         | `None`     | The AWS secret access key.                                                                                                                                                                                                         |
+| `aws_session_token`                | `str \| None`                                         | `None`     | The AWS session token.                                                                                                                                                                                                             |
+| `profile_name`                     | `str \| None`                                         | `None`     | The AWS profile name.                                                                                                                                                                                                               |
+| `aws_read_timeout`                 | `float \| None`                                       | `None`     | The read timeout for Bedrock client.                                                                                                                                                                                               |
+| `aws_connect_timeout`              | `float \| None`                                       | `None`     | The connect timeout for Bedrock client.                                                                                                                                                                                            |
+
+## Functions
+
+### `__init__`
+
+Initialize the Bedrock provider.
+
+**Parameters:**
+
+- `bedrock_client` (BaseClient | None): A boto3 client for Bedrock Runtime. If provided, other arguments are ignored.
+- `region_name` (str | None): The AWS region name.
+- `aws_access_key_id` (str | None): The AWS access key ID.
+- `aws_secret_access_key` (str | None): The AWS secret access key.
+- `aws_session_token` (str | None): The AWS session token.
+- `profile_name` (str | None): The AWS profile name.
+- `aws_read_timeout` (float | None): The read timeout for Bedrock client.
+- `aws_connect_timeout` (float | None): The connect timeout for Bedrock client.
+
+### `name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str`: The provider name ('bedrock')
+
+### `base_url`
+
+Get the base URL for the provider API.
+
+**Returns:**
+
+- `str`: The base URL for the provider API
+
+### `client`
+
+Get the client for the provider.
+
+**Returns:**
+
+- `BaseClient`: The Bedrock client
+
+### `model_profile`
+
+Get the model profile for the named model, if available.
+
+**Parameters:**
+
+- `model_name` (str): The name of the model
+
+**Returns:**
+
+- `ModelProfile | None`: The model profile for the named model, if available

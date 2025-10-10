@@ -1,0 +1,62 @@
+---
+title: LiteLLMProvider
+sidebarTitle: LiteLLMProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api_key`                          | `str \| None`                                         | `None`     | API key for the model provider. If None, LiteLLM will try to get it from environment variables.                                                                                                                                  |
+| `api_base`                         | `str \| None`                                         | `None`     | Base URL for the model provider. Use this for custom endpoints or self-hosted models.                                                                                                                                             |
+| `openai_client`                   | `AsyncOpenAI \| None`                                 | `None`     | Pre-configured OpenAI client. If provided, other parameters are ignored.                                                                                                                                                          |
+| `http_client`                      | `AsyncHTTPClient \| None`                             | `None`     | Custom HTTP client to use.                                                                                                                                                                                                        |
+
+## Functions
+
+### `__init__`
+
+Initialize a LiteLLM provider.
+
+**Parameters:**
+
+- `api_key` (str | None): API key for the model provider. If None, LiteLLM will try to get it from environment variables.
+- `api_base` (str | None): Base URL for the model provider. Use this for custom endpoints or self-hosted models.
+- `openai_client` (AsyncOpenAI | None): Pre-configured OpenAI client. If provided, other parameters are ignored.
+- `http_client` (AsyncHTTPClient | None): Custom HTTP client to use.
+
+### `name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str`: The provider name ('litellm')
+
+### `base_url`
+
+Get the base URL for the provider API.
+
+**Returns:**
+
+- `str`: The base URL for the provider API
+
+### `client`
+
+Get the client for the provider.
+
+**Returns:**
+
+- `AsyncOpenAI`: The LiteLLM client
+
+### `model_profile`
+
+Get the model profile for the named model, if available.
+
+**Parameters:**
+
+- `model_name` (str): The name of the model
+
+**Returns:**
+
+- `ModelProfile | None`: The model profile for the named model, if available

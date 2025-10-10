@@ -1,0 +1,133 @@
+---
+title: AbstractBuiltinTool
+sidebarTitle: AbstractBuiltinTool
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`                             | `str`                                                 | `'unknown_builtin_tool'` | Built-in tool identifier, used as a discriminator                                                                                                                                                                               |
+
+## Functions
+
+No specific functions - Abstract base class for built-in tools provided by model providers.
+
+---
+
+---
+title: WebSearchTool
+sidebarTitle: WebSearchTool
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `search_context_size`              | `Literal['low', 'medium', 'high']`                   | `'medium'` | Controls how much context is retrieved from web searches                                                                                                                                                                         |
+| `user_location`                    | `Optional[WebSearchUserLocation]`                    | `None`     | Localizes search results based on user location                                                                                                                                                                                 |
+| `blocked_domains`                  | `Optional[list[str]]`                                | `None`     | Domains to exclude from search results                                                                                                                                                                                           |
+| `allowed_domains`                  | `Optional[list[str]]`                                | `None`     | If provided, only these domains will be included in results                                                                                                                                                                    |
+| `max_uses`                         | `Optional[int]`                                      | `None`     | Maximum number of web searches allowed                                                                                                                                                                                           |
+| `kind`                             | `str`                                                 | `'web_search'` | The kind of tool                                                                                                                                                                                                               |
+
+## Functions
+
+No specific functions - Built-in tool for web search functionality.
+
+---
+
+---
+title: WebSearchUserLocation
+sidebarTitle: WebSearchUserLocation
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `city`                             | `str`                                                 | -          | The city where the user is located                                                                                                                                                                                              |
+| `country`                          | `str`                                                 | -          | The country where the user is located (2-letter country code for OpenAI)                                                                                                                                                        |
+| `region`                           | `str`                                                 | -          | The region or state where the user is located                                                                                                                                                                                    |
+| `timezone`                         | `str`                                                 | -          | The timezone of the user's location                                                                                                                                                                                              |
+
+## Functions
+
+No specific functions - TypedDict for user location information.
+
+---
+
+---
+title: CodeExecutionTool
+sidebarTitle: CodeExecutionTool
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`                             | `str`                                                 | `'code_execution'` | The kind of tool                                                                                                                                                                                                               |
+
+## Functions
+
+No specific functions - Built-in tool for code execution functionality.
+
+---
+
+---
+title: UrlContextTool
+sidebarTitle: UrlContextTool
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`                             | `str`                                                 | `'url_context'` | The kind of tool                                                                                                                                                                                                               |
+
+## Functions
+
+No specific functions - Built-in tool for URL context access.
+
+---
+
+---
+title: WebSearch
+sidebarTitle: WebSearch
+---
+
+## Functions
+
+### `WebSearch`
+
+Search the web for the given query and return formatted results.
+
+**Parameters:**
+
+- `query` (str): The search query
+- `max_results` (int): Maximum number of results to return (default: 10)
+
+**Returns:**
+
+- `str`: Formatted string containing search results
+
+---
+
+---
+title: WebRead
+sidebarTitle: WebRead
+---
+
+## Functions
+
+### `WebRead`
+
+Read and extract text content from a web page.
+
+**Parameters:**
+
+- `url` (str): The URL to read from
+
+**Returns:**
+
+- `str`: Extracted text content from the webpage

@@ -109,6 +109,410 @@ print("Safe Task Result:", safe_task.response[:100] + "...")
 print("Privacy Task Result:", privacy_task.response)
 ```
 
+## Creating Custom Safety Policies
+
+You can build policies that integrate seamlessly with your AI agents.
+
+### Policy Architecture Overview
+
+Custom policies follow a three-component architecture:
+
+1. **Rule**: Defines what content to detect (using regex patterns or LLM-based detection)
+2. **Action**: Specifies what to do when content is detected (block, anonymize, or raise exception)
+3. **Policy**: Combines the rule and action into a complete safety policy
+
+### Step-by-Step Custom Policy Creation
+
+Let's create a custom policy to protect credit card information in a financial application:
+
+#### Step 1: Create the Rule Class
+
+```python
+import re
+from typing import List
+from upsonic.safety_engine.base import RuleBase
+from upsonic.safety_engine.models import PolicyInput, RuleOutput
+
+class CreditCardDetectionRule(RuleBase):
+    """Rule to detect credit card numbers"""
+    
+    name = "Credit Card Detection Rule"
+    description = "Detects credit card numbers in various formats"
+    language = "en"  # Default language for this rule
+    
+    def __init__(self):
+        super().__init__()
+        # Regex pattern for credit card numbers (supports major card types)
+        self.pattern = r'\b(?:\d{4}[-\s]?){3}\d{4}\b'
+    
+    def process(self, policy_input: PolicyInput) -> RuleOutput:
+        """Process input texts for credit card detection"""
+        
+        # Combine all input texts
+        combined_text = " ".join(policy_input.input_texts or [])
+        
+        # Find matching credit card numbers
+        triggered_cards = []
+        for match in re.finditer(self.pattern, combined_text):
+            card_number = match.group(0).replace(" ", "").replace("-", "")
+            # Basic Luhn algorithm validation
+            if self._is_valid_credit_card(card_number):
+                triggered_cards.append(match.group(0))
+        
+        # Calculate confidence based on number of matches
+        if not triggered_cards:
+            return RuleOutput(
+                confidence=0.0,
+                content_type="CREDIT_CARD",
+                details="No credit card numbers detected"
+            )
+        
+        return RuleOutput(
+            confidence=1.0,
+            content_type="CREDIT_CARD",
+            details=f"Detected {len(triggered_cards)} credit card numbers",
+            triggered_keywords=triggered_cards
+        )
+    
+    def _is_valid_credit_card(self, card_number: str) -> bool:
+        """Validate credit card using Luhn algorithm"""
+        def luhn_checksum(card_num):
+            def digits_of(n):
+                return [int(d) for d in str(n)]
+            digits = digits_of(card_num)
+            odd_digits = digits[-1::-2]
+            even_digits = digits[-2::-2]
+            checksum = sum(odd_digits)
+            for d in even_digits:
+                checksum += sum(digits_of(d*2))
+            return checksum % 10
+        
+        return luhn_checksum(card_number) == 0
+```
+
+#### Step 2: Create the Action Class
+
+```python
+from upsonic.safety_engine.base import ActionBase
+from upsonic.safety_engine.models import RuleOutput, PolicyOutput
+
+class CreditCardBlockAction(ActionBase):
+    """Action to block content containing credit card numbers"""
+    
+    name = "Credit Card Block Action"
+    description = "Blocks content containing credit card numbers"
+    language = "en"  # Default language for this action
+    
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        """Execute credit card blocking based on rule confidence"""
+        if rule_result.confidence >= 0.8:
+            return self.raise_block_error(
+                "Credit card information detected. For security reasons, please do not share credit card details in conversations."
+            )
+        else:
+            return self.allow_content()
+
+# Alternative: Replace Action for Credit Cards
+class CreditCardReplaceAction(ActionBase):
+    """Action to replace credit card numbers with safe placeholders"""
+    
+    name = "Credit Card Replace Action"
+    description = "Replaces credit card numbers with safe placeholders"
+    language = "en"
+    
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        """Execute credit card replacement based on rule confidence"""
+        if rule_result.confidence >= 0.8:
+            return self.replace_triggered_keywords("[CARD-NUMBER-REDACTED]")
+        else:
+            return self.allow_content()
+
+# Alternative: Anonymize Action for Credit Cards
+class CreditCardAnonymizeAction(ActionBase):
+    """Action to anonymize credit card numbers with unique replacements"""
+    
+    name = "Credit Card Anonymize Action"
+    description = "Anonymizes credit card numbers with unique replacements"
+    language = "en"
+    
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        """Execute credit card anonymization based on rule confidence"""
+        if rule_result.confidence >= 0.8:
+            return self.anonymize_triggered_keywords()
+        else:
+            return self.allow_content()
+```
+
+#### Step 3: Create the Policy
+
+```python
+from upsonic.safety_engine.base import Policy
+
+# Option 1: Block Policy (Complete blocking)
+CreditCardBlockPolicy = Policy(
+    name="Credit Card Block Policy",
+    description="Blocks content containing credit card numbers for security",
+    rule=CreditCardDetectionRule(),
+    action=CreditCardBlockAction()
+)
+
+# Option 2: Replace Policy (Replace with placeholder)
+CreditCardReplacePolicy = Policy(
+    name="Credit Card Replace Policy",
+    description="Replaces credit card numbers with safe placeholders",
+    rule=CreditCardDetectionRule(),
+    action=CreditCardReplaceAction()
+)
+
+# Option 3: Anonymize Policy (Unique anonymization)
+CreditCardAnonymizePolicy = Policy(
+    name="Credit Card Anonymize Policy",
+    description="Anonymizes credit card numbers with unique replacements",
+    rule=CreditCardDetectionRule(),
+    action=CreditCardAnonymizeAction()
+)
+```
+
+### Advanced: LLM-Enhanced Detection
+
+For more sophisticated detection, you can use LLM-based rules that leverage AI for better accuracy:
+
+```python
+class CreditCardDetectionRule_LLM(RuleBase):
+    """LLM-enhanced rule to detect credit card numbers and related financial information"""
+    
+    name = "Credit Card Detection Rule LLM"
+    description = "Uses LLM to detect credit card numbers and financial information"
+    language = "en"
+    
+    def process(self, policy_input: PolicyInput) -> RuleOutput:
+        """Process input texts using LLM for enhanced detection"""
+        
+        # Use LLM to find financial information including credit cards
+        triggered_keywords = self._llm_find_keywords_with_input("Credit Card Information", policy_input)
+        
+        if not triggered_keywords:
+            return RuleOutput(
+                confidence=0.0,
+                content_type="CREDIT_CARD",
+                details="No credit card information detected"
+            )
+        
+        return RuleOutput(
+            confidence=1.0,
+            content_type="CREDIT_CARD",
+            details=f"Detected {len(triggered_keywords)} instances of credit card information",
+            triggered_keywords=triggered_keywords
+        )
+
+# Create LLM-enhanced policy
+CreditCardBlockPolicy_LLM = Policy(
+    name="Credit Card Block Policy LLM",
+    description="Uses LLM to detect and block credit card information",
+    rule=CreditCardDetectionRule_LLM(),
+    action=CreditCardBlockAction()
+)
+```
+
+### Policy Action Types
+
+Choose the appropriate action type based on your security requirements:
+
+#### 1. Allow Actions
+```python
+class AllowAction(ActionBase):
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        # Always allow content to pass through
+        return self.allow_content()
+```
+
+#### 2. Blocking Actions
+```python
+class BlockAction(ActionBase):
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        if rule_result.confidence >= 0.8:
+            return self.raise_block_error("Content blocked due to policy violation")
+        return self.allow_content()
+```
+
+#### 3. Replace Actions
+```python
+class ReplaceAction(ActionBase):
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        if rule_result.confidence >= 0.8:
+            # Replace sensitive content with a safe placeholder
+            return self.replace_triggered_keywords("[REDACTED]")
+        return self.allow_content()
+```
+
+#### 4. Anonymization Actions
+```python
+class AnonymizeAction(ActionBase):
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        if rule_result.confidence >= 0.8:
+            # Replace with unique anonymized versions
+            return self.anonymize_triggered_keywords()
+        return self.allow_content()
+```
+
+#### 5. Exception Actions
+```python
+class ExceptionAction(ActionBase):
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        if rule_result.confidence >= 0.8:
+            # Raise exception to stop execution
+            return self.raise_exception("Policy violation detected")
+        return self.allow_content()
+```
+
+#### 6. LLM-Enhanced Blocking Actions
+```python
+class LLMBlockAction(ActionBase):
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        if rule_result.confidence >= 0.8:
+            # Use LLM to generate contextual block message
+            return self.llm_raise_block_error("Sensitive information detected")
+        return self.allow_content()
+```
+
+#### 7. LLM-Enhanced Exception Actions
+```python
+class LLMExceptionAction(ActionBase):
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        if rule_result.confidence >= 0.8:
+            # Use LLM to generate contextual exception message
+            return self.llm_raise_exception("Policy violation detected")
+        return self.allow_content()
+```
+
+### Integrating Custom Policies with Agents
+
+Once you've created your custom policy, integrate it with your AI agents:
+
+```python
+from upsonic import Agent, Task
+
+# Example 1: Blocking Policy (Complete Security)
+secure_agent_block = Agent(
+    name="Secure Financial Assistant (Block Mode)",
+    role="Financial advisor with strict security controls",
+    goal="Provide financial guidance while blocking sensitive information",
+    instructions="Help users with financial planning while maintaining strict security standards",
+    user_policy=CreditCardBlockPolicy,  # Block credit cards in user input
+    agent_policy=CreditCardBlockPolicy  # Block credit cards in agent output
+)
+
+# Example 2: Replace Policy (Content Preservation)
+secure_agent_replace = Agent(
+    name="Secure Financial Assistant (Replace Mode)",
+    role="Financial advisor with content replacement",
+    goal="Provide financial guidance while replacing sensitive information",
+    instructions="Help users with financial planning while replacing sensitive data",
+    user_policy=CreditCardReplacePolicy,  # Replace credit cards in user input
+    agent_policy=CreditCardReplacePolicy  # Replace credit cards in agent output
+)
+
+# Example 3: Anonymize Policy (Unique Anonymization)
+secure_agent_anonymize = Agent(
+    name="Secure Financial Assistant (Anonymize Mode)",
+    role="Financial advisor with anonymization",
+    goal="Provide financial guidance while anonymizing sensitive information",
+    instructions="Help users with financial planning while anonymizing sensitive data",
+    user_policy=CreditCardAnonymizePolicy,  # Anonymize credit cards in user input
+    agent_policy=CreditCardAnonymizePolicy  # Anonymize credit cards in agent output
+)
+
+# Test the different policies
+test_task = Task(
+    description="My credit card number is 4532-1234-5678-9012. Can you help me with my account?",
+    response_format=str
+)
+
+print("=== Blocking Policy Test ===")
+secure_agent_block.print_do(test_task)
+print("Result:", test_task.response)
+
+print("\n=== Replace Policy Test ===")
+secure_agent_replace.print_do(test_task)
+print("Result:", test_task.response)
+
+print("\n=== Anonymize Policy Test ===")
+secure_agent_anonymize.print_do(test_task)
+print("Result:", test_task.response)
+```
+
+### Multi-Language Support
+
+Custom policies automatically support multiple languages:
+
+```python
+class MultiLanguageCreditCardRule(RuleBase):
+    """Credit card detection with multi-language support"""
+    
+    name = "Multi-Language Credit Card Rule"
+    description = "Detects credit cards in multiple languages"
+    language = "auto"  # Auto-detect language
+    
+    def process(self, policy_input: PolicyInput) -> RuleOutput:
+        # The framework will automatically detect language and apply appropriate detection
+        triggered_keywords = self._llm_find_keywords_with_input("Credit Card", policy_input)
+        
+        if not triggered_keywords:
+            return RuleOutput(
+                confidence=0.0,
+                content_type="CREDIT_CARD",
+                details="No credit card information detected"
+            )
+        
+        return RuleOutput(
+            confidence=1.0,
+            content_type="CREDIT_CARD",
+            details=f"Detected {len(triggered_keywords)} credit card instances",
+            triggered_keywords=triggered_keywords
+        )
+```
+
+### Advanced Configuration Options
+
+Custom policies support advanced configuration for enterprise use cases:
+
+```python
+# Policy with custom LLM models
+AdvancedCreditCardPolicy = Policy(
+    name="Advanced Credit Card Policy",
+    description="Advanced credit card detection with custom models",
+    rule=CreditCardDetectionRule_LLM(),
+    action=CreditCardBlockAction(),
+    language="auto",  # Auto-detect language
+    language_identify_model="gpt-4",  # Custom model for language detection
+    base_model="gpt-4",  # Custom model for base operations
+    text_finder_model="gpt-3.5-turbo"  # Custom model for text finding
+)
+```
+
+### Best Practices for Custom Policies
+
+1. **Start Simple**: Begin with regex-based rules for performance, then enhance with LLM detection
+2. **Test Thoroughly**: Validate your policies with diverse test cases
+3. **Consider Performance**: Balance accuracy with processing speed
+4. **Document Clearly**: Provide clear descriptions for policy maintenance
+5. **Handle Edge Cases**: Account for various input formats and languages
+6. **Monitor Effectiveness**: Track policy performance and adjust confidence thresholds
+
+### Choosing the Right Action Type
+
+Select the appropriate action based on your security requirements and use case:
+
+| Action Type | Use Case | Security Level | Content Preservation |
+|-------------|----------|----------------|---------------------|
+| **Allow** | Low-risk content, testing | Low | Full |
+| **Replace** | Moderate risk, content flow needed | Medium | Partial (placeholder) |
+| **Anonymize** | High risk, unique replacements needed | High | Partial (anonymized) |
+| **Block** | Critical security, complete prevention | Very High | None |
+| **Exception** | Compliance, audit trails | Very High | None |
+
+
+
 Need more advanced features? The Safety Engine supports many powerful configuration options including:
 
 - **Multiple Policy Types**: Combine blocking, anonymization, and exception policies  for comprehensive regulatory compliance

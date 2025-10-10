@@ -1,0 +1,186 @@
+---
+title: PgvectorProvider
+sidebarTitle: PgvectorProvider
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Config`                                             | Required   | A validated and immutable Config object containing all necessary parameters for the provider's operation                                                                                                                       |
+
+## Functions
+
+### `connect`
+
+Establishes a connection to the PostgreSQL database with the pgvector extension.
+
+This method uses the connection parameters from `self._config.core` to initialize the PostgreSQL connection and verifies that the 'vector' extension is available.
+
+**Raises:**
+- `VectorDBConnectionError`: If the connection fails.
+
+### `disconnect`
+
+Gracefully terminates the connection to the PostgreSQL database.
+
+### `is_ready`
+
+Performs a health check to ensure the database is responsive.
+
+**Returns:**
+- `bool`: True if the database is connected and responsive, False otherwise.
+
+### `create_collection`
+
+Creates the collection (table) in PostgreSQL with the pgvector extension.
+
+This method creates a table with vector columns and appropriate indexes based on the configuration.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to PostgreSQL before creating a collection.
+- `VectorDBError`: If the collection creation fails.
+
+### `delete_collection`
+
+Permanently deletes the collection (table) from PostgreSQL.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to PostgreSQL before deleting a collection.
+- `VectorDBError`: If the collection deletion fails.
+
+### `collection_exists`
+
+Checks if the collection (table) specified in the config already exists.
+
+**Returns:**
+- `bool`: True if the collection exists, False otherwise.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to PostgreSQL to check for a collection's existence.
+
+### `upsert`
+
+Adds new data or updates existing data in the table using PostgreSQL's `INSERT ... ON CONFLICT` statement for atomic and efficient upserts.
+
+**Parameters:**
+- `vectors` (List[List[float]]): A list of vector embeddings.
+- `payloads` (List[Dict[str, Any]]): A list of corresponding metadata objects (will be stored in JSONB).
+- `ids` (List[Union[str, int]]): A list of unique identifiers for each vector-payload pair.
+- `chunks` (Optional[List[str]]): A list of text chunks.
+- `**kwargs`: Provider-specific options.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to PostgreSQL before upserting data.
+- `UpsertError`: If the data ingestion fails.
+- `ConfigurationError`: If no `namespace` is provided in the config, as it's required for the `tenant_id` column.
+
+### `delete`
+
+Removes data from the collection by their unique identifiers, scoped to the provider's configured tenant.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of specific IDs to remove.
+- `**kwargs`: Provider-specific options.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to PostgreSQL before deleting data.
+- `ConfigurationError`: If no `namespace` is provided in the config for multi-tenancy.
+- `VectorDBError`: If the deletion fails.
+
+### `fetch`
+
+Retrieves full records (payload and vector) by their IDs, scoped to the provider's configured tenant.
+
+**Parameters:**
+- `ids` (List[Union[str, int]]): A list of IDs to retrieve the full records for.
+- `**kwargs`: Provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects containing the fetched data.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to PostgreSQL before fetching data.
+- `ConfigurationError`: If no `namespace` is provided in the config for multi-tenancy.
+- `VectorDBError`: If the fetch operation fails.
+
+### `search`
+
+A master search method that dispatches to the appropriate specialized search function.
+
+**Parameters:**
+- `top_k` (Optional[int]): The number of results to return. If None, falls back to the default in the Config.
+- `query_vector` (Optional[List[float]]): The vector for dense or hybrid search.
+- `query_text` (Optional[str]): The text for full-text or hybrid search.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weighting factor for hybrid search. If None, falls back to the default in the Config.
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): The algorithm to use for hybrid search ('rrf' or 'weighted').
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects.
+
+**Raises:**
+- `ConfigurationError`: If the requested search is disabled or the wrong combination of arguments is provided.
+- `SearchError`: If any underlying search operation fails.
+
+### `dense_search`
+
+Performs a pure dense vector similarity search using PostgreSQL's vector operators.
+
+**Parameters:**
+- `query_vector` (List[float]): The vector embedding to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): A metadata filter to apply. Defaults to None.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of the most similar results.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to PostgreSQL before searching.
+- `ConfigurationError`: If no `namespace` is provided for multi-tenancy.
+- `ConfigurationError`: If the distance metric is unsupported for dense search.
+- `SearchError`: If the search operation fails.
+
+### `full_text_search`
+
+Performs a full-text search using PostgreSQL's text search capabilities.
+
+**Parameters:**
+- `query_text` (str): The text string to search for.
+- `top_k` (int): The number of top results to return.
+- `filter` (Optional[Dict[str, Any]]): A metadata filter to apply. Defaults to None.
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. Defaults to None.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of matching results.
+
+**Raises:**
+- `VectorDBConnectionError`: If not connected to PostgreSQL before searching.
+- `ConfigurationError`: If no `namespace` is provided for multi-tenancy.
+- `ConfigurationError`: If `fts_field` is not provided in kwargs for full_text_search.
+- `SearchError`: If the search operation fails.
+
+### `hybrid_search`
+
+Performs a hybrid search by fetching results from dense and full-text searches and fusing them using a Reciprocal Rank Fusion (RRF) algorithm.
+
+**Parameters:**
+- `query_vector` (List[float]): The dense vector for the semantic part of the search.
+- `query_text` (str): The raw text for the keyword/sparse part of the search.
+- `top_k` (int): The number of final results to return.
+- `filter` (Optional[Dict[str, Any]]): An optional metadata filter.
+- `alpha` (Optional[float]): The weight for combining scores. If None, falls back to the default in the Config.
+- `fusion_method` (Optional[Literal['rrf', 'weighted']]): The algorithm to use for fusing results ('rrf' or 'weighted').
+- `similarity_threshold` (Optional[float]): The minimum similarity score for results. If None, falls back to the default in the Config.
+- `**kwargs`: Additional provider-specific options.
+
+**Returns:**
+- `List[VectorSearchResult]`: A list of VectorSearchResult objects, ordered by the combined hybrid score.
+
+**Raises:**
+- `SearchError`: If the search operation fails.

@@ -1,0 +1,118 @@
+---
+title: BaseChunker
+sidebarTitle: BaseChunker
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Optional[ConfigType]`                                     | `None`     | A Pydantic model instance inheriting from `BaseChunkingConfig`. If None, a default configuration will be instantiated.                                                                                                                                                                                                      |
+
+## Functions
+
+### `chunk`
+
+Splits a list of documents into chunks (synchronous).
+
+**Parameters:**
+
+- `documents` (List[Document]): A list of `Document` objects to be chunked.
+
+**Returns:**
+
+- `List[Chunk]`: A single list containing all `Chunk` objects from all documents.
+
+### `achunk`
+
+Splits a list of documents into chunks (asynchronous).
+
+**Parameters:**
+
+- `documents` (List[Document]): A list of `Document` objects to be chunked.
+
+**Returns:**
+
+- `List[Chunk]`: A single list containing all `Chunk` objects from all documents.
+
+### `batch`
+
+Alias for the `chunk` method for API consistency.
+
+**Parameters:**
+
+- `documents` (List[Document]): A list of `Document` objects to be chunked.
+- `**kwargs` (Any): Additional keyword arguments.
+
+**Returns:**
+
+- `List[Chunk]`: A single list containing all `Chunk` objects from all documents.
+
+### `abatch`
+
+Splits a list of documents into chunks concurrently (asynchronous).
+
+**Parameters:**
+
+- `documents` (List[Document]): A list of `Document` objects to be chunked.
+- `**kwargs` (Any): Additional keyword arguments.
+
+**Returns:**
+
+- `List[Chunk]`: A single list containing all `Chunk` objects from all documents.
+
+### `_chunk_document`
+
+The core chunking logic for a single document (synchronous).
+
+**Parameters:**
+
+- `document` (Document): The `Document` to be chunked.
+
+**Returns:**
+
+- `List[Chunk]`: A list of `Chunk` objects derived from the document.
+
+### `_achunk_document`
+
+The core chunking logic for a single document (asynchronous).
+
+**Parameters:**
+
+- `document` (Document): The `Document` to be chunked.
+
+**Returns:**
+
+- `List[Chunk]`: A list of `Chunk` objects derived from the document.
+
+### `_create_chunk`
+
+A robust factory for creating `Chunk` objects.
+
+**Parameters:**
+
+- `parent_document` (Document): The source `Document` object.
+- `text_content` (str): The text content for this specific chunk.
+- `start_index` (int): The starting character index of the chunk within the original document's content.
+- `end_index` (int): The ending character index of the chunk.
+- `extra_metadata` (Optional[Dict[str, Any]]): An optional dictionary of chunk-specific metadata to add.
+
+**Returns:**
+
+- `Chunk`: A fully-formed `Chunk` object.
+
+### `_get_effective_min_chunk_size`
+
+Get the effective minimum chunk size, deriving from chunk_size if not explicitly set.
+
+**Returns:**
+
+- `int`: The minimum chunk size to use for chunking decisions.
+
+### `_get_default_config`
+
+A helper to get the default config. This is designed to be overridden by subclasses if their config has required fields.
+
+**Returns:**
+
+- `ConfigType`: The default configuration instance.

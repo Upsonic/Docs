@@ -1,0 +1,97 @@
+---
+title: StreamedResponse
+sidebarTitle: StreamedResponse
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_request_parameters`         | `ModelRequestParameters`                              | Required   | Configuration for the model request                                                                                                                                                                                             |
+| `final_result_event`               | `FinalResultEvent | None`                              | `None`     | Event indicating the final result is complete                                                                                                                                                                                   |
+| `provider_response_id`             | `str | None`                                         | `None`     | Provider-specific response ID                                                                                                                                                                                                    |
+| `provider_details`                 | `dict[str, Any] | None`                               | `None`     | Additional provider-specific details                                                                                                                                                                                            |
+| `finish_reason`                     | `FinishReason | None`                               | `None`     | Reason why the response finished                                                                                                                                                                                                 |
+| `_parts_manager`                   | `ModelResponsePartsManager`                          | `ModelResponsePartsManager()` | Manager for handling response parts                                                                                                                                                                                              |
+| `_event_iterator`                  | `AsyncIterator[ModelResponseStreamEvent] | None`      | `None`     | Iterator for streaming events                                                                                                                                                                                                    |
+| `_usage`                           | `RequestUsage`                                       | `RequestUsage()` | Usage information for the request                                                                                                                                                                                               |
+
+## Functions
+
+### `__aiter__`
+
+Stream the response as an async iterable of [`ModelResponseStreamEvent`][upsonic.messages.ModelResponseStreamEvent]s.
+
+This proxies the `_event_iterator()` and emits all events. When a part is identified as containing the final result, all events for that part are yielded first, followed by a [`FinalResultEvent`][upsonic.messages.FinalResultEvent] to indicate the result is complete.
+
+**Returns:**
+
+- `AsyncIterator[ModelResponseStreamEvent]`: An async iterator of model response stream events
+
+### `_get_event_iterator`
+
+Return an async iterator of [`ModelResponseStreamEvent`][upsonic.messages.ModelResponseStreamEvent]s.
+
+This method should be implemented by subclasses to translate the vendor-specific stream of events into upsonic format events.
+
+It should use the `_parts_manager` to handle deltas, and should update the `_usage` attributes as it goes.
+
+**Returns:**
+
+- `AsyncIterator[ModelResponseStreamEvent]`: An async iterator of model response stream events
+
+**Raises:**
+
+- `NotImplementedError`: If not implemented by subclass
+
+### `get`
+
+Build a [`ModelResponse`][upsonic.messages.ModelResponse] from the data received from the stream so far.
+
+**Returns:**
+
+- `ModelResponse`: The complete model response
+
+### `usage`
+
+Get the usage of the response so far. This will not be the final usage until the stream is exhausted.
+
+**Returns:**
+
+- `RequestUsage`: The usage information
+
+### `model_name`
+
+Get the model name of the response.
+
+**Returns:**
+
+- `str`: The model name
+
+**Raises:**
+
+- `NotImplementedError`: If not implemented by subclass
+
+### `provider_name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str | None`: The provider name
+
+**Raises:**
+
+- `NotImplementedError`: If not implemented by subclass
+
+### `timestamp`
+
+Get the timestamp of the response.
+
+**Returns:**
+
+- `datetime`: The timestamp of the response
+
+**Raises:**
+
+- `NotImplementedError`: If not implemented by subclass

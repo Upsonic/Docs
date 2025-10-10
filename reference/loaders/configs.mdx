@@ -1,0 +1,291 @@
+---
+title: Loader Configuration Classes
+sidebarTitle: Loader Configs
+---
+
+## Base Configuration
+
+### `LoaderConfig`
+
+Base configuration class for all document loaders.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `encoding`                         | `Optional[str]`                                       | `None`     | File encoding (auto-detected if None)                                                                                                                                                                                           |
+| `error_handling`                   | `Literal["ignore", "warn", "raise"]`                  | `"warn"`   | How to handle loading errors                                                                                                                                                                                                    |
+| `include_metadata`                  | `bool`                                                | `True`     | Whether to include file metadata                                                                                                                                                                                                |
+| `custom_metadata`                   | `Dict[str, Any]`                                      | `{}`       | Additional metadata to include                                                                                                                                                                                                  |
+| `max_file_size`                    | `Optional[int]`                                       | `None`     | Maximum file size in bytes                                                                                                                                                                                                      |
+| `skip_empty_content`               | `bool`                                                | `True`     | Skip documents with empty content                                                                                                                                                                                               |
+
+## Text Loader Configuration
+
+### `TextLoaderConfig`
+
+An enhanced configuration for loading and processing plain text files.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `strip_whitespace`                 | `bool`                                                | `True`     | If True, removes leading/trailing whitespace from each chunk                                                                                                                                                                    |
+| `min_chunk_length`                 | `int`                                                 | `1`        | The minimum character length for a chunk to be kept after cleaning                                                                                                                                                              |
+
+## CSV Loader Configuration
+
+### `CSVLoaderConfig`
+
+Configuration for CSV file loading.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content_synthesis_mode`           | `Literal["concatenated", "json"]`                     | `"concatenated"` | How to create document content from rows                                                                                                                                                                                    |
+| `split_mode`                       | `Literal["single_document", "per_row", "per_chunk"]` | `"single_document"` | How to split CSV into documents                                                                                                                                                                                             |
+| `rows_per_chunk`                   | `int`                                                 | `100`      | Number of rows per document when split_mode='per_chunk'                                                                                                                                                                        |
+| `include_columns`                  | `Optional[List[str]]`                                 | `None`     | Only include these columns                                                                                                                                                                                                      |
+| `exclude_columns`                  | `Optional[List[str]]`                                 | `None`     | Exclude these columns                                                                                                                                                                                                           |
+| `delimiter`                        | `str`                                                 | `","`      | CSV delimiter                                                                                                                                                                                                                   |
+| `quotechar`                        | `str`                                                 | `'"'`      | CSV quote character                                                                                                                                                                                                             |
+| `has_header`                       | `bool`                                                | `True`     | Whether CSV has a header row                                                                                                                                                                                                    |
+
+## PDF Loader Configuration
+
+### `PdfLoaderConfig`
+
+An advanced configuration model for loading and processing PDF documents.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `extraction_mode`                  | `Literal["hybrid", "text_only", "ocr_only"]`         | `"hybrid"` | The core strategy for content extraction                                                                                                                                                                                        |
+| `start_page`                       | `Optional[int]`                                       | `None`     | The first page number to process (1-indexed)                                                                                                                                                                                    |
+| `end_page`                         | `Optional[int]`                                       | `None`     | The last page number to process (inclusive)                                                                                                                                                                                     |
+| `clean_page_numbers`               | `bool`                                                | `True`     | If True, intelligently identifies and removes page numbers                                                                                                                                                                      |
+| `page_num_start_format`            | `Optional[str]`                                       | `None`     | A Python f-string to prepend to each page's content if page numbers are cleaned                                                                                                                                                |
+| `page_num_end_format`              | `Optional[str]`                                       | `None`     | A Python f-string to append to each page's content if page numbers are cleaned                                                                                                                                                 |
+| `extra_whitespace_removal`         | `bool`                                                | `True`     | If True, normalizes whitespace by collapsing multiple newlines and spaces                                                                                                                                                      |
+| `pdf_password`                     | `Optional[str]`                                       | `None`     | Password to use for decrypting protected PDF files                                                                                                                                                                             |
+
+## PyMuPDF Loader Configuration
+
+### `PyMuPDFLoaderConfig`
+
+Advanced configuration for PyMuPDF-based PDF document loading.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `extraction_mode`                  | `Literal["hybrid", "text_only", "ocr_only"]`         | `"hybrid"` | The core strategy for content extraction                                                                                                                                                                                        |
+| `start_page`                       | `Optional[int]`                                       | `None`     | The first page number to process (1-indexed)                                                                                                                                                                                    |
+| `end_page`                         | `Optional[int]`                                       | `None`     | The last page number to process (inclusive)                                                                                                                                                                                     |
+| `clean_page_numbers`               | `bool`                                                | `True`     | If True, intelligently identifies and removes page numbers                                                                                                                                                                      |
+| `page_num_start_format`            | `Optional[str]`                                       | `None`     | A Python f-string to prepend to each page's content if page numbers are cleaned                                                                                                                                                |
+| `page_num_end_format`              | `Optional[str]`                                       | `None`     | A Python f-string to append to each page's content if page numbers are cleaned                                                                                                                                                 |
+| `extra_whitespace_removal`         | `bool`                                                | `True`     | If True, normalizes whitespace by collapsing multiple newlines and spaces                                                                                                                                                      |
+| `pdf_password`                     | `Optional[str]`                                       | `None`     | Password to use for decrypting protected PDF files                                                                                                                                                                             |
+| `text_extraction_method`           | `Literal["text", "dict", "html", "xml"]`             | `"text"`   | Method for text extraction from pages                                                                                                                                                                                           |
+| `include_images`                   | `bool`                                                | `False`    | If True, extracts and includes image information in metadata                                                                                                                                                                    |
+| `image_dpi`                        | `int`                                                 | `150`      | DPI for image rendering when performing OCR                                                                                                                                                                                     |
+| `preserve_layout`                  | `bool`                                                | `True`     | If True, preserves text layout and positioning information                                                                                                                                                                      |
+| `extract_annotations`              | `bool`                                                | `False`    | If True, extracts annotations and comments from the PDF                                                                                                                                                                        |
+| `annotation_format`                | `Literal["text", "json"]`                            | `"text"`   | Format for extracted annotations                                                                                                                                                                                                |
+
+## DOCX Loader Configuration
+
+### `DOCXLoaderConfig`
+
+Configuration for DOCX file loading.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `include_tables`                   | `bool`                                                | `True`     | Include table content                                                                                                                                                                                                            |
+| `include_headers`                  | `bool`                                                | `True`     | Include header content                                                                                                                                                                                                           |
+| `include_footers`                  | `bool`                                                | `True`     | Include footer content                                                                                                                                                                                                           |
+| `table_format`                     | `Literal["text", "markdown", "html"]`                | `"text"`   | How to format tables                                                                                                                                                                                                             |
+
+## JSON Loader Configuration
+
+### `JSONLoaderConfig`
+
+Advanced configuration for loading and mapping structured JSON and JSONL files.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mode`                             | `Literal["single", "multi"]`                          | `"single"` | Processing mode: 'single' for one document per file, 'multi' to extract multiple documents from records within a file                                                                                                         |
+| `record_selector`                  | `Optional[str]`                                       | `None`     | A JQ query to select a list of records from the JSON object                                                                                                                                                                     |
+| `content_mapper`                   | `str`                                                 | `"."`      | A JQ query to extract the content from a single record                                                                                                                                                                          |
+| `metadata_mapper`                  | `Optional[Dict[str, str]]`                            | `None`     | A dictionary mapping metadata keys to JQ queries for extracting metadata from each record                                                                                                                                        |
+| `content_synthesis_mode`           | `Literal["json", "text"]`                            | `"json"`   | How to format the extracted content                                                                                                                                                                                             |
+| `json_lines`                       | `bool`                                                | `False`    | Set to True if the file is in JSON Lines format (.jsonl)                                                                                                                                                                        |
+
+## XML Loader Configuration
+
+### `XMLLoaderConfig`
+
+An advanced configuration for parsing and structuring XML files.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `split_by_xpath`                   | `str`                                                 | `"//*[not(*)] \| //item \| //product \| //book"` | An XPath expression that identifies the elements to be treated as individual documents                                                                                                                                      |
+| `content_xpath`                    | `Optional[str]`                                       | `None`     | An optional, relative XPath from a split element to select the specific content                                                                                                                                                 |
+| `content_synthesis_mode`           | `Literal["smart_text", "xml_snippet"]`               | `"smart_text"` | Defines the content for the Document                                                                                                                                                                                         |
+| `include_attributes`               | `bool`                                                | `True`     | If True, automatically includes the attributes of the split element in the metadata                                                                                                                                             |
+| `metadata_xpaths`                  | `Optional[Dict[str, str]]`                            | `None`     | A dictionary mapping metadata keys to XPath expressions to extract targeted metadata                                                                                                                                             |
+| `strip_namespaces`                 | `bool`                                                | `True`     | If True, removes all XML namespaces from the document                                                                                                                                                                           |
+| `recover_mode`                     | `bool`                                                | `False`    | If True, attempts to parse malformed or broken XML files instead of raising an error                                                                                                                                            |
+
+## YAML Loader Configuration
+
+### `YAMLLoaderConfig`
+
+An advanced configuration for parsing and structuring YAML files.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `split_by_jq_query`                | `str`                                                 | `"."`      | A jq-style query to select objects to be treated as individual documents                                                                                                                                                         |
+| `handle_multiple_docs`             | `bool`                                                | `True`     | If True, processes YAML files containing multiple documents separated by '---'                                                                                                                                                  |
+| `content_synthesis_mode`           | `Literal["canonical_yaml", "json", "smart_text"]`     | `"canonical_yaml"` | Defines the content for the Document                                                                                                                                                                                         |
+| `yaml_indent`                      | `int`                                                 | `2`        | The indentation level to use when content_synthesis_mode is 'canonical_yaml'                                                                                                                                                   |
+| `json_indent`                      | `Optional[int]`                                       | `2`        | The indentation level for JSON output                                                                                                                                                                                           |
+| `flatten_metadata`                 | `bool`                                                | `True`     | If True, flattens the nested structure of the selected YAML object into the metadata                                                                                                                                            |
+| `metadata_jq_queries`              | `Optional[Dict[str, str]]`                            | `None`     | A dictionary mapping metadata keys to jq queries to extract targeted metadata                                                                                                                                                    |
+
+## Markdown Loader Configuration
+
+### `MarkdownLoaderConfig`
+
+Configuration for Markdown file loading.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `parse_front_matter`               | `bool`                                                | `True`     | Parse YAML front matter from the top of the file                                                                                                                                                                                |
+| `include_code_blocks`              | `bool`                                                | `True`     | Include code block content in the document                                                                                                                                                                                      |
+| `code_block_language_metadata`    | `bool`                                                | `True`     | Add code block language as metadata                                                                                                                                                                                              |
+| `heading_metadata`                 | `bool`                                                | `True`     | Extract headings and add them to the metadata                                                                                                                                                                                   |
+| `split_by_heading`                 | `Optional[Literal["h1", "h2", "h3"]]`                 | `None`     | If set, splits the file into multiple documents based on the specified heading level                                                                                                                                            |
+
+## HTML Loader Configuration
+
+### `HTMLLoaderConfig`
+
+Configuration for HTML file and URL loading.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `extract_text`                     | `bool`                                                | `True`     | Extract text content from HTML                                                                                                                                                                                                  |
+| `preserve_structure`               | `bool`                                                | `True`     | Preserve document structure in output                                                                                                                                                                                            |
+| `include_links`                    | `bool`                                                | `True`     | Include links in extracted content                                                                                                                                                                                              |
+| `include_images`                   | `bool`                                                | `False`    | Include image information                                                                                                                                                                                                        |
+| `remove_scripts`                   | `bool`                                                | `True`     | Remove script tags                                                                                                                                                                                                               |
+| `remove_styles`                    | `bool`                                                | `True`     | Remove style tags                                                                                                                                                                                                                |
+| `extract_metadata`                 | `bool`                                                | `True`     | Extract metadata from HTML head                                                                                                                                                                                                 |
+| `clean_whitespace`                 | `bool`                                                | `True`     | Clean up whitespace in output                                                                                                                                                                                                   |
+| `extract_headers`                  | `bool`                                                | `True`     | Extract heading elements                                                                                                                                                                                                        |
+| `extract_paragraphs`               | `bool`                                                | `True`     | Extract paragraph content                                                                                                                                                                                                        |
+| `extract_lists`                    | `bool`                                                | `True`     | Extract list content                                                                                                                                                                                                             |
+| `extract_tables`                   | `bool`                                                | `True`     | Extract table content                                                                                                                                                                                                            |
+| `table_format`                     | `Literal["text", "markdown", "html"]`                | `"text"`   | How to format extracted tables                                                                                                                                                                                                   |
+| `user_agent`                       | `str`                                                 | `"Upsonic HTML Loader 1.0"` | User agent for web requests                                                                                                                                                                                                    |
+
+## Docling Loader Configuration
+
+### `DoclingLoaderConfig`
+
+Advanced configuration for Docling-based document loading.
+
+**Parameters:**
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `extraction_mode`                  | `Literal["markdown", "chunks"]`                       | `"chunks"` | Content extraction strategy                                                                                                                                                                                                     |
+| `chunker_type`                     | `Literal["hybrid", "hierarchical"]`                   | `"hybrid"` | Chunking algorithm when extraction_mode='chunks'                                                                                                                                                                               |
+| `allowed_formats`                  | `Optional[List[str]]`                                 | `None`     | Restrict input formats                                                                                                                                                                                                           |
+| `markdown_image_placeholder`       | `str`                                                 | `""`       | Placeholder text for images in markdown export                                                                                                                                                                                  |
+| `ocr_enabled`                      | `bool`                                                | `True`     | Enable OCR for scanned documents and images                                                                                                                                                                                  |
+| `ocr_force_full_page`             | `bool`                                                | `False`    | Force full-page OCR instead of hybrid mode                                                                                                                                                                                      |
+| `ocr_backend`                      | `Literal["rapidocr", "tesseract"]`                    | `"rapidocr"` | OCR engine to use                                                                                                                                                                                                             |
+| `ocr_lang`                         | `List[str]`                                           | `["english"]` | OCR languages                                                                                                                                                                                                                 |
+| `ocr_backend_engine`              | `Literal["onnxruntime", "openvino", "paddle", "torch"]` | `"onnxruntime"` | Backend engine for RapidOCR                                                                                                                                                                                                  |
+| `ocr_text_score`                   | `float`                                               | `0.5`      | Minimum confidence score for OCR text (0.0-1.0)                                                                                                                                                                                |
+| `enable_table_structure`           | `bool`                                                | `True`     | Enable table structure detection and parsing                                                                                                                                                                                    |
+| `table_structure_cell_matching`    | `bool`                                                | `True`     | Enable cell-level matching in tables for better structure preservation                                                                                                                                                         |
+| `max_pages`                        | `Optional[int]`                                       | `None`     | Maximum number of pages to process per document                                                                                                                                                                                 |
+| `page_range`                       | `Optional[tuple[int, int]]`                           | `None`     | Specific page range to process (start, end) - 1-indexed, inclusive                                                                                                                                                             |
+| `parallel_processing`              | `bool`                                                | `True`     | Enable parallel processing for batch operations                                                                                                                                                                                 |
+| `batch_size`                       | `int`                                                 | `10`       | Number of documents to process in parallel during batch operations                                                                                                                                                              |
+| `extract_document_metadata`        | `bool`                                                | `True`     | Extract document properties (title, author, creation date, etc.)                                                                                                                                                                 |
+| `confidence_threshold`             | `float`                                               | `0.5`      | Minimum confidence score for extracted chunks (0.0-1.0)                                                                                                                                                                        |
+| `support_urls`                     | `bool`                                                | `True`     | Allow loading documents from HTTP/HTTPS URLs                                                                                                                                                                                    |
+| `url_timeout`                      | `int`                                                 | `30`       | Timeout in seconds for URL downloads                                                                                                                                                                                            |
+
+## Configuration Factory
+
+### `LoaderConfigFactory`
+
+Factory for creating loader configurations.
+
+**Functions:**
+
+#### `create_config`
+
+Create a configuration for the specified loader type.
+
+**Parameters:**
+
+- `loader_type` (str): Type of loader to create config for
+- `**kwargs`: Additional keyword arguments to pass to config constructor
+
+**Returns:**
+
+- `LoaderConfig`: Configuration object for the specified loader type
+
+#### `get_supported_types`
+
+Get list of supported loader types.
+
+**Returns:**
+
+- `List[str]`: List of supported loader type names
+
+### `simple_config`
+
+Create a simple configuration with defaults.
+
+**Parameters:**
+
+- `loader_type` (str): Type of loader to create config for
+
+**Returns:**
+
+- `LoaderConfig`: Simple configuration with default values
+
+### `advanced_config`
+
+Create an advanced configuration with custom settings.
+
+**Parameters:**
+
+- `loader_type` (str): Type of loader to create config for
+- `**kwargs`: Custom settings to override defaults
+
+**Returns:**
+
+- `LoaderConfig`: Advanced configuration with custom settings

@@ -1,0 +1,108 @@
+---
+title: HTMLChunker
+sidebarTitle: HTMLChunker
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                            | `Optional[HTMLChunkingConfig]`                                     | `None`     | A comprehensive configuration model for the structure-aware HTML Chunker. This config provides fine-grained control over the entire HTML processing pipeline, from parsing and cleaning to semantic segmentation and final text-level chunking.                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initializes the chunker with a specific or default configuration.
+
+**Parameters:**
+
+- `config` (Optional[HTMLChunkingConfig]): Configuration object with all settings.
+
+### `_chunk_document`
+
+The core implementation for chunking a single HTML document.
+
+**Parameters:**
+
+- `document` (Document): The document containing the raw HTML content.
+
+**Returns:**
+
+- `List[Chunk]`: A list of `Chunk` objects derived from the HTML structure.
+
+### `_parse_and_sanitize`
+
+Parse HTML content and sanitize by removing unwanted tags.
+
+**Parameters:**
+
+- `html_content` (str): Raw HTML content to parse and sanitize.
+
+**Returns:**
+
+- `BeautifulSoup`: Parsed and sanitized BeautifulSoup object.
+
+### `_segment_dom`
+
+Segment the DOM into semantic blocks based on HTML structure.
+
+**Parameters:**
+
+- `soup` (BeautifulSoup): Parsed HTML soup object.
+- `raw_html` (str): Original raw HTML content.
+
+**Returns:**
+
+- `List[_SemanticBlock]`: List of semantic blocks identified in the HTML.
+
+### `_calculate_tag_indices`
+
+Calculate start and end indices for HTML tags in the original content.
+
+**Parameters:**
+
+- `start_tag`: The starting HTML tag.
+- `all_nodes_in_block`: All nodes in the semantic block.
+- `raw_html` (str): Original raw HTML content.
+
+**Returns:**
+
+- `tuple[int, int]`: Start and end indices.
+
+### `_merge_small_chunks`
+
+Merge small chunks to reduce over-chunking.
+
+**Parameters:**
+
+- `chunks` (List[Chunk]): List of chunks to potentially merge.
+- `document` (Document): Source document.
+
+**Returns:**
+
+- `List[Chunk]`: List of chunks with small chunks merged.
+
+### `_get_text_from_node`
+
+Extract clean text from an HTML node.
+
+**Parameters:**
+
+- `node` (Tag | NavigableString): HTML node to extract text from.
+
+**Returns:**
+
+- `str`: Extracted text content.
+
+### `_get_html_from_node`
+
+Extract raw HTML from an HTML node.
+
+**Parameters:**
+
+- `node` (Tag | NavigableString): HTML node to extract HTML from.
+
+**Returns:**
+
+- `str`: Raw HTML content.

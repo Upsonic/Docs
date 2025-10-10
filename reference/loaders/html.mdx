@@ -1,0 +1,199 @@
+---
+title: HTMLLoader
+sidebarTitle: HTMLLoader
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                           | `HTMLLoaderConfig`                                    | Required   | Configuration object for HTML loading behavior                                                                                                                                                                                   |
+
+## Functions
+
+### `__init__`
+
+Initializes the HTMLLoader with its specific configuration.
+
+**Parameters:**
+
+- `config` (HTMLLoaderConfig): Configuration object for HTML loading behavior
+
+### `_generate_document_id`
+
+Creates a universal MD5 hash for any source identifier string.
+
+**Parameters:**
+
+- `source_identifier` (str): Source identifier to hash
+
+**Returns:**
+
+- `str`: MD5 hash of the source identifier
+
+### `get_supported_extensions`
+
+Gets the list of supported file extensions for local files.
+
+**Returns:**
+
+- `List[str]`: List of supported file extensions (`.html`, `.htm`, `.xhtml`)
+
+### `can_load`
+
+Checks if this loader can handle a file path or a URL.
+
+**Parameters:**
+
+- `source` (Union[str, Path]): Source to check
+
+**Returns:**
+
+- `bool`: True if the loader can handle the source
+
+### `_format_table`
+
+Formats a BeautifulSoup table object into a string.
+
+**Parameters:**
+
+- `table` (Tag): BeautifulSoup table tag to format
+
+**Returns:**
+
+- `str`: Formatted table string
+
+### `_extract_html_metadata`
+
+Extracts metadata from the HTML `<head>` section.
+
+**Parameters:**
+
+- `soup` (BeautifulSoup): BeautifulSoup object to extract metadata from
+
+**Returns:**
+
+- `Dict[str, Any]`: Extracted metadata dictionary
+
+### `_extract_structured_content`
+
+Extracts and structures content based on config.
+
+**Parameters:**
+
+- `soup` (BeautifulSoup): BeautifulSoup object to extract content from
+
+**Returns:**
+
+- `str`: Structured content string
+
+### `_parse_html`
+
+The central parsing engine for HTML content.
+
+**Parameters:**
+
+- `html_content` (str): HTML content to parse
+- `base_metadata` (Dict[str, Any]): Base metadata dictionary
+- `document_id` (str): Document ID
+
+**Returns:**
+
+- `List[Document]`: List of documents created from HTML content
+
+### `_load_from_file`
+
+Loads and parses a single local HTML file.
+
+**Parameters:**
+
+- `file_path` (Path): Path to the HTML file
+
+**Returns:**
+
+- `List[Document]`: List of documents loaded from the file
+
+### `_load_from_url`
+
+Fetches and parses a single URL.
+
+**Parameters:**
+
+- `url` (str): URL to fetch and parse
+
+**Returns:**
+
+- `List[Document]`: List of documents loaded from the URL
+
+### `load`
+
+Loads HTML from file paths, directories, or URLs.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): HTML source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `_aload_from_file`
+
+Async: Loads and parses a single local HTML file.
+
+**Parameters:**
+
+- `file_path` (Path): Path to the HTML file
+
+**Returns:**
+
+- `List[Document]`: List of documents loaded from the file
+
+### `_aload_from_url`
+
+Async: Fetches and parses a single URL.
+
+**Parameters:**
+
+- `url` (str): URL to fetch and parse
+- `session` (aiohttp.ClientSession): HTTP session to use
+
+**Returns:**
+
+- `List[Document]`: List of documents loaded from the URL
+
+### `aload`
+
+Async: Loads HTML from file paths, directories, or URLs.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): HTML source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `batch`
+
+Loads documents from a list of sources.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of HTML sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `abatch`
+
+Loads documents from a list of sources asynchronously.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of HTML sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents

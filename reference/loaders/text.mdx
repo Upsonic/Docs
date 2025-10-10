@@ -1,0 +1,88 @@
+---
+title: TextLoader
+sidebarTitle: TextLoader
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                           | `TextLoaderConfig`                                    | Required   | Configuration object for text loading behavior                                                                                                                                                                                   |
+
+## Functions
+
+### `__init__`
+
+Initializes the TextLoader with its specific configuration.
+
+**Parameters:**
+
+- `config` (TextLoaderConfig): A TextLoaderConfig object with settings for text processing
+
+### `get_supported_extensions`
+
+Gets a list of file extensions supported by this loader.
+
+**Returns:**
+
+- `List[str]`: List of supported file extensions (`.txt`, `.rst`, `.log`, `.py`, `.js`, `.ts`, `.java`, `.c`, `.cpp`, `.h`, `.cs`, `.go`, `.rs`, `.php`, `.rb`, `.css`, `.ini`)
+
+### `load`
+
+Loads all text documents from the given source synchronously.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): Text source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `aload`
+
+Loads all text documents from the given source asynchronously and concurrently.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): Text source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `batch`
+
+Loads documents from a list of sources, leveraging the core `load` method.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of text sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `abatch`
+
+Loads documents from a list of sources asynchronously, leveraging `aload`.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of text sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `_process_single_file`
+
+Processes a single text file, loading its entire content into one Document.
+
+**Parameters:**
+
+- `path` (Path): Path to the text file
+
+**Returns:**
+
+- `List[Document]`: List of documents created from the text file

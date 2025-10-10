@@ -1,0 +1,25 @@
+---
+title: ModelRequestParameters
+sidebarTitle: ModelRequestParameters
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `function_tools`                   | `list[ToolDefinition]`                                | `[]`       | Function tools available for the model request                                                                                                                                                                                   |
+| `builtin_tools`                    | `list[AbstractBuiltinTool]`                          | `[]`       | Built-in tools available for the model request                                                                                                                                                                                   |
+| `output_mode`                      | `OutputMode`                                         | `'text'`   | The output mode for the request                                                                                                                                                                                                  |
+| `output_object`                    | `OutputObjectDefinition | None`                     | `None`     | Output object definition for structured output                                                                                                                                                                                   |
+| `output_tools`                      | `list[ToolDefinition]`                               | `[]`       | Output tools for the model request                                                                                                                                                                                               |
+| `allow_text_output`                | `bool`                                                | `True`     | Whether to allow text output from the model                                                                                                                                                                                      |
+
+## Functions
+
+### `tool_defs`
+
+Get a dictionary of tool definitions by name.
+
+**Returns:**
+
+- `dict[str, ToolDefinition]`: A dictionary mapping tool names to their definitions

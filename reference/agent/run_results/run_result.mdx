@@ -1,0 +1,84 @@
+---
+title: RunResult
+sidebarTitle: RunResult
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `output`                           | `OutputDataT`                                         | Required  | The actual output/response from the agent execution                                                                                                                                                                             |
+| `_all_messages`                    | `List[ModelMessage]`                                  | `[]`       | Internal storage for all messages across all runs                                                                                                                                                                               |
+| `_run_boundaries`                  | `List[int]`                                           | `[]`       | Indices marking where each run starts in the message list                                                                                                                                                                       |
+
+## Functions
+
+### `all_messages`
+
+Get all messages from all runs of the agent.
+
+**Returns:**
+
+- `List[ModelMessage]`: List of all ModelMessage objects (ModelRequest and ModelResponse) from all agent runs
+
+### `new_messages`
+
+Get messages from the last run only.
+
+A single run may include multiple message exchanges due to tool calls, resulting in sequences like:
+- ModelRequest (user prompt)
+- ModelResponse (with tool calls)
+- ModelRequest (tool results)
+- ModelResponse (final answer)
+
+**Returns:**
+
+- `List[ModelMessage]`: List of all ModelMessage objects from the most recent run, including all intermediate tool call exchanges
+
+### `add_messages`
+
+Add messages to the internal message store.
+
+**Parameters:**
+
+- `messages` (List[ModelMessage]): List of ModelMessage objects to add
+
+### `add_message`
+
+Add a single message to the internal message store.
+
+**Parameters:**
+
+- `message` (ModelMessage): A ModelMessage object to add
+
+### `start_new_run`
+
+Mark the start of a new run in the message history.
+
+This should be called before adding messages from a new agent run to properly track run boundaries for the new_messages() method.
+
+### `__str__`
+
+String representation returns the output as string.
+
+**Returns:**
+
+- `str`: String representation of the output
+
+### `__repr__`
+
+Detailed representation for debugging.
+
+**Returns:**
+
+- `str`: Detailed representation including output and message count
+
+## Features
+
+- **Comprehensive Result Wrapper**: Encapsulates agent execution results with message tracking
+- **Message History Management**: Tracks all messages across multiple agent runs
+- **Run Boundary Tracking**: Distinguishes between different execution runs
+- **Tool Call Support**: Handles complex message sequences from tool calls
+- **Generic Output Support**: Supports any output data type through generics
+- **Memory Efficient**: Efficient storage and retrieval of message history
+- **Debug Support**: Detailed representation for debugging and development

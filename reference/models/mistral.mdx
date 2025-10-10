@@ -1,0 +1,253 @@
+---
+title: MistralModel
+sidebarTitle: MistralModel
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_name`                       | `MistralModelName`                                    | `None`     | The name of the model to use                                                                                                                                                                                                      |
+| `provider`                         | `Literal['mistral'] \| Provider[Mistral]`             | `'mistral'`| The provider to use for authentication and API access. Can be either the string 'mistral' or an instance of `Provider[Mistral]`. If not provided, a new provider will be created using the other parameters                                                                                                                                                                                                      |
+| `profile`                          | `ModelProfileSpec \| None`                            | `None`     | The model profile to use. Defaults to a profile picked by the provider based on the model name                                                                                                                                                                                                      |
+| `json_mode_schema_prompt`          | `str`                                                 | `"Answer in JSON Object, respect the format:\n```\n{schema}\n```\n"` | The prompt to show when the model expects a JSON object as input                                                                                                                                                                                                      |
+| `settings`                         | `ModelSettings \| None`                               | `None`     | Model-specific settings that will be used as defaults for this model                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initialize a Mistral model.
+
+**Parameters:**
+
+- `model_name` (MistralModelName): The name of the model to use
+- `provider` (Literal['mistral'] | Provider[Mistral]): The provider to use for authentication and API access. Can be either the string 'mistral' or an instance of `Provider[Mistral]`. If not provided, a new provider will be created using the other parameters
+- `profile` (ModelProfileSpec | None): The model profile to use. Defaults to a profile picked by the provider based on the model name
+- `json_mode_schema_prompt` (str): The prompt to show when the model expects a JSON object as input
+- `settings` (ModelSettings | None): Model-specific settings that will be used as defaults for this model
+
+### `base_url`
+
+Get the base URL for the provider API.
+
+**Returns:**
+
+- `str`: The base URL for the provider API
+
+### `model_name`
+
+Get the model name.
+
+**Returns:**
+
+- `MistralModelName`: The model name
+
+### `system`
+
+Get the model provider.
+
+**Returns:**
+
+- `str`: The model provider
+
+### `request`
+
+Make a non-streaming request to the model from Upsonic call.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `ModelResponse`: The model response
+
+### `request_stream`
+
+Make a streaming request to the model from Upsonic call.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `AsyncIterator[StreamedResponse]`: An async iterator of streamed responses
+
+### `_completions_create`
+
+Make a non-streaming request to the model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (MistralModelSettings): Mistral-specific model settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `MistralChatCompletionResponse`: The response from Mistral
+
+### `_stream_completions_create`
+
+Create a streaming completion request to the Mistral model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (MistralModelSettings): Mistral-specific model settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `MistralEventStreamAsync[MistralCompletionEvent]`: The streaming response from Mistral
+
+### `_get_tool_choice`
+
+Get tool choice for the model.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `MistralToolChoiceEnum | None`: The tool choice for the model
+
+### `_map_function_and_output_tools_definition`
+
+Map function and output tools to MistralTool format.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `list[MistralTool] | None`: The mapped tools
+
+### `_process_response`
+
+Process a non-streamed response, and prepare a message to return.
+
+**Parameters:**
+
+- `response` (MistralChatCompletionResponse): The response from Mistral
+
+**Returns:**
+
+- `ModelResponse`: The processed model response
+
+### `_process_streamed_response`
+
+Process a streamed response, and prepare a streaming response to return.
+
+**Parameters:**
+
+- `response` (MistralEventStreamAsync[MistralCompletionEvent]): The streamed response from Mistral
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `StreamedResponse`: The processed streamed response
+
+### `_map_mistral_to_upsonic_tool_call`
+
+Maps a MistralToolCall to a ToolCall.
+
+**Parameters:**
+
+- `tool_call` (MistralToolCall): The Mistral tool call to map
+
+**Returns:**
+
+- `ToolCallPart`: The mapped tool call
+
+### `_map_tool_call`
+
+Maps a upsonic ToolCall to a MistralToolCall.
+
+**Parameters:**
+
+- `t` (ToolCallPart): The tool call part to map
+
+**Returns:**
+
+- `MistralToolCall`: The mapped tool call
+
+### `_generate_user_output_format`
+
+Get a message with an example of the expected output format.
+
+**Parameters:**
+
+- `schemas` (list[dict[str, Any]]): The JSON schemas to format
+
+**Returns:**
+
+- `MistralUserMessage`: The formatted user message
+
+### `_get_python_type`
+
+Return a string representation of the Python type for a single JSON schema property.
+
+**Parameters:**
+
+- `value` (dict[str, Any]): The JSON schema property
+
+**Returns:**
+
+- `str`: The Python type representation
+
+### `_get_timeout_ms`
+
+Convert a timeout to milliseconds.
+
+**Parameters:**
+
+- `timeout` (Timeout | float | None): The timeout to convert
+
+**Returns:**
+
+- `int | None`: The timeout in milliseconds
+
+### `_map_user_message`
+
+Map a user message to Mistral format.
+
+**Parameters:**
+
+- `message` (ModelRequest): The user message to map
+
+**Returns:**
+
+- `Iterable[MistralMessages]`: The mapped user message
+
+### `_map_messages`
+
+Map messages to Mistral format.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to map
+
+**Returns:**
+
+- `list[MistralMessages]`: The mapped messages
+
+### `_map_user_prompt`
+
+Map a user prompt to Mistral format.
+
+**Parameters:**
+
+- `part` (UserPromptPart): The user prompt part to map
+
+**Returns:**
+
+- `MistralUserMessage`: The mapped user prompt

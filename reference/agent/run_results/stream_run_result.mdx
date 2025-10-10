@@ -1,0 +1,209 @@
+---
+title: StreamRunResult
+sidebarTitle: StreamRunResult
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_agent`                           | `Any`                                                 | `None`     | Reference to the agent instance for streaming operations                                                                                                                                                                        |
+| `_task`                            | `Optional[Task]`                                      | `None`     | The task being executed                                                                                                                                                                                                         |
+| `_accumulated_text`                | `str`                                                 | `""`       | Text content accumulated during streaming                                                                                                                                                                                        |
+| `_streaming_events`                | `List[ModelResponseStreamEvent]`                      | `[]`       | All streaming events received during execution                                                                                                                                                                                  |
+| `_final_output`                    | `Optional[OutputDataT]`                               | `None`     | The final output after streaming completes                                                                                                                                                                                      |
+| `_all_messages`                    | `List[ModelMessage]`                                  | `[]`       | Internal storage for all messages during streaming                                                                                                                                                                             |
+| `_run_boundaries`                  | `List[int]`                                           | `[0]`      | Indices marking where each run starts in the message list                                                                                                                                                                      |
+| `_is_complete`                     | `bool`                                                | `False`    | Whether the streaming operation has completed                                                                                                                                                                                   |
+| `_context_entered`                 | `bool`                                                | `False`    | Whether we're currently inside the async context manager                                                                                                                                                                        |
+| `_start_time`                      | `Optional[float]`                                     | `None`     | Timestamp when streaming started                                                                                                                                                                                                |
+| `_end_time`                        | `Optional[float]`                                     | `None`     | Timestamp when streaming completed                                                                                                                                                                                              |
+| `_first_token_time`                | `Optional[float]`                                     | `None`     | Timestamp when first token was received                                                                                                                                                                                         |
+| `_model`                           | `Any`                                                 | `None`     | Model override for streaming                                                                                                                                                                                                    |
+| `_debug`                           | `bool`                                                | `False`    | Debug mode for streaming                                                                                                                                                                                                        |
+| `_retry`                           | `int`                                                 | `1`        | Number of retries for streaming                                                                                                                                                                                                 |
+
+## Functions
+
+### `stream_output`
+
+Stream text content from the agent response.
+
+**Returns:**
+
+- `AsyncIterator[str]`: Incremental text content as it becomes available
+
+**Example:**
+
+```python
+async with agent.stream(task) as result:
+    async for text_chunk in result.stream_output():
+        print(text_chunk, end='', flush=True)
+    print()  # New line after streaming
+```
+
+### `stream_events`
+
+Stream raw events from the agent response.
+
+This provides access to the full stream events including tool calls, thinking events, and other non-text content.
+
+**Returns:**
+
+- `AsyncIterator[ModelResponseStreamEvent]`: Raw streaming events
+
+**Example:**
+
+```python
+async with agent.run_stream(task) as result:
+    async for event in result.stream_events():
+        if isinstance(event, PartStartEvent):
+            print(f"New part: {type(event.part).__name__}")
+        elif isinstance(event, FinalResultEvent):
+            print("Final result available")
+```
+
+### `get_final_output`
+
+Get the final accumulated output after streaming completes.
+
+**Returns:**
+
+- `Optional[OutputDataT]`: The final output, or None if streaming hasn't completed
+
+### `is_complete`
+
+Check if streaming has completed.
+
+**Returns:**
+
+- `bool`: Whether streaming has completed
+
+### `get_accumulated_text`
+
+Get all text accumulated so far.
+
+**Returns:**
+
+- `str`: All text accumulated during streaming
+
+### `get_streaming_events`
+
+Get all streaming events received so far.
+
+**Returns:**
+
+- `List[ModelResponseStreamEvent]`: Copy of all streaming events
+
+### `get_text_events`
+
+Get only text-related streaming events.
+
+**Returns:**
+
+- `List[ModelResponseStreamEvent]`: Only text-related streaming events
+
+### `get_tool_events`
+
+Get only tool-related streaming events.
+
+**Returns:**
+
+- `List[ModelResponseStreamEvent]`: Only tool-related streaming events
+
+### `get_streaming_stats`
+
+Get detailed statistics about the streaming session.
+
+**Returns:**
+
+- `Dict[str, Any]`: Statistics including:
+  - total_events: Total number of streaming events
+  - text_events: Number of text events
+  - tool_events: Number of tool events
+  - accumulated_chars: Number of accumulated characters
+  - is_complete: Whether streaming is complete
+  - has_final_output: Whether final output is available
+  - event_types: Breakdown of event types
+
+### `get_performance_metrics`
+
+Get detailed performance metrics for the streaming session.
+
+**Returns:**
+
+- `Dict[str, Optional[float]]`: Performance metrics including:
+  - start_time: When streaming started
+  - end_time: When streaming ended
+  - first_token_time: When first token was received
+  - total_duration: Total streaming duration
+  - time_to_first_token: Time to receive first token
+  - tokens_per_second: Estimated tokens per second
+  - characters_per_second: Characters per second
+
+### `all_messages`
+
+Get all messages from the streaming session.
+
+**Returns:**
+
+- `List[ModelMessage]`: List of all ModelMessage objects from the streaming session
+
+### `new_messages`
+
+Get messages from the last run only.
+
+**Returns:**
+
+- `List[ModelMessage]`: List of all ModelMessage objects from the most recent run
+
+### `add_messages`
+
+Add messages to the internal message store.
+
+**Parameters:**
+
+- `messages` (List[ModelMessage]): List of ModelMessage objects to add
+
+### `add_message`
+
+Add a single message to the internal message store.
+
+**Parameters:**
+
+- `message` (ModelMessage): A ModelMessage object to add
+
+### `start_new_run`
+
+Mark the start of a new run in the message history.
+
+This should be called before adding messages from a new streaming run to properly track run boundaries for the new_messages() method.
+
+### `__str__`
+
+String representation returns the accumulated text.
+
+**Returns:**
+
+- `str`: String representation of accumulated text
+
+### `__repr__`
+
+Detailed representation for debugging.
+
+**Returns:**
+
+- `str`: Detailed representation including status, character count, and event count
+
+## Features
+
+- **Async Context Manager**: Full async context manager support for streaming operations
+- **Real-time Streaming**: Stream text content and events as they become available
+- **Event Tracking**: Comprehensive tracking of all streaming events
+- **Performance Metrics**: Detailed timing and performance statistics
+- **Message Management**: Full message history tracking during streaming
+- **Tool Integration**: Support for tool calls and complex event sequences
+- **Error Handling**: Robust error handling with completion state management
+- **Debug Support**: Extensive debugging and monitoring capabilities
+- **Generic Support**: Generic output data type support
+- **State Management**: Complete state tracking for streaming operations

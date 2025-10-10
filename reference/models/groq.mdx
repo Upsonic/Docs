@@ -1,0 +1,214 @@
+---
+title: GroqModel
+sidebarTitle: GroqModel
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_name`                       | `GroqModelName`                                       | `None`     | The name of the Groq model to use. List of model names available [here](https://console.groq.com/docs/models)                                                                                                                                                                                                      |
+| `provider`                         | `Literal['groq'] \| Provider[AsyncGroq]`             | `'groq'`   | The provider to use for authentication and API access. Can be either the string 'groq' or an instance of `Provider[AsyncGroq]`. If not provided, a new provider will be created using the other parameters                                                                                                                                                                                                      |
+| `profile`                          | `ModelProfileSpec \| None`                            | `None`     | The model profile to use. Defaults to a profile picked by the provider based on the model name                                                                                                                                                                                                      |
+| `settings`                         | `ModelSettings \| None`                               | `None`     | Model-specific settings that will be used as defaults for this model                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initialize a Groq model.
+
+**Parameters:**
+
+- `model_name` (GroqModelName): The name of the Groq model to use. List of model names available [here](https://console.groq.com/docs/models)
+- `provider` (Literal['groq'] | Provider[AsyncGroq]): The provider to use for authentication and API access. Can be either the string 'groq' or an instance of `Provider[AsyncGroq]`. If not provided, a new provider will be created using the other parameters
+- `profile` (ModelProfileSpec | None): The model profile to use. Defaults to a profile picked by the provider based on the model name
+- `settings` (ModelSettings | None): Model-specific settings that will be used as defaults for this model
+
+### `base_url`
+
+Get the base URL for the provider API.
+
+**Returns:**
+
+- `str`: The base URL for the provider API
+
+### `model_name`
+
+Get the model name.
+
+**Returns:**
+
+- `GroqModelName`: The model name
+
+### `system`
+
+Get the model provider.
+
+**Returns:**
+
+- `str`: The model provider
+
+### `request`
+
+Make a request to the model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `ModelResponse`: The model response
+
+### `request_stream`
+
+Make a request to the model and return a streaming response.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `AsyncIterator[StreamedResponse]`: An async iterator of streamed responses
+
+### `_completions_create`
+
+Create a completion request to the Groq API.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `stream` (bool): Whether to stream the response
+- `model_settings` (GroqModelSettings): Groq-specific model settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `chat.ChatCompletion | AsyncStream[chat.ChatCompletionChunk]`: The completion response
+
+### `_process_response`
+
+Process a non-streamed response, and prepare a message to return.
+
+**Parameters:**
+
+- `response` (chat.ChatCompletion): The completion response from Groq
+
+**Returns:**
+
+- `ModelResponse`: The processed model response
+
+### `_process_streamed_response`
+
+Process a streamed response, and prepare a streaming response to return.
+
+**Parameters:**
+
+- `response` (AsyncStream[chat.ChatCompletionChunk]): The streamed response from Groq
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `GroqStreamedResponse`: The processed streamed response
+
+### `_get_tools`
+
+Get the tools for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `list[chat.ChatCompletionToolParam]`: The tools for the request
+
+### `_get_builtin_tools`
+
+Get the builtin tools for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `list[chat.ChatCompletionToolParam]`: The builtin tools for the request
+
+### `_map_messages`
+
+Map messages to Groq format.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to map
+
+**Returns:**
+
+- `list[chat.ChatCompletionMessageParam]`: The mapped messages
+
+### `_map_tool_call`
+
+Map a tool call to Groq format.
+
+**Parameters:**
+
+- `t` (ToolCallPart): The tool call part to map
+
+**Returns:**
+
+- `chat.ChatCompletionMessageToolCallParam`: The mapped tool call
+
+### `_map_tool_definition`
+
+Map a tool definition to Groq format.
+
+**Parameters:**
+
+- `f` (ToolDefinition): The tool definition to map
+
+**Returns:**
+
+- `chat.ChatCompletionToolParam`: The mapped tool definition
+
+### `_map_json_schema`
+
+Map a JSON schema to Groq format.
+
+**Parameters:**
+
+- `o` (OutputObjectDefinition): The output object definition to map
+
+**Returns:**
+
+- `chat.completion_create_params.ResponseFormat`: The mapped response format
+
+### `_map_user_message`
+
+Map a user message to Groq format.
+
+**Parameters:**
+
+- `message` (ModelRequest): The user message to map
+
+**Returns:**
+
+- `Iterable[chat.ChatCompletionMessageParam]`: The mapped user message
+
+### `_map_user_prompt`
+
+Map a user prompt to Groq format.
+
+**Parameters:**
+
+- `part` (UserPromptPart): The user prompt part to map
+
+**Returns:**
+
+- `chat.ChatCompletionUserMessageParam`: The mapped user prompt

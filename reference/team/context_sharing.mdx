@@ -1,0 +1,38 @@
+---
+title: ContextSharing
+sidebarTitle: ContextSharing
+---
+
+## Parameters
+
+This class has no initialization parameters as it uses only static methods.
+
+## Functions
+
+### `enhance_task_context`
+
+Enhance a task's context with all relevant information from the workflow.
+
+**Parameters:**
+
+- `current_task` (Task): The task to enhance
+- `all_tasks` (List[Task]): All tasks in the workflow
+- `task_index` (int): Index of the current task
+- `agent_configurations` (List[Any]): Available agent configurations
+- `completed_results` (List[Task]): Previously completed tasks with results
+
+### `build_selection_context`
+
+Build context for agent selection process.
+
+**Parameters:**
+
+- `current_task` (Task): The task for which to select an agent
+- `all_tasks` (List[Task]): All tasks in the workflow
+- `task_index` (int): Index of the current task
+- `agent_configurations` (List[Any]): Available agent configurations
+- `completed_results` (List[Task]): Previously completed tasks with results
+
+**Returns:**
+
+- `List[Any]`: List of context items for agent selection

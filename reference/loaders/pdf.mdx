@@ -1,0 +1,149 @@
+---
+title: PdfLoader
+sidebarTitle: PdfLoader
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`                           | `PdfLoaderConfig`                                     | Required   | Configuration object for PDF loading behavior                                                                                                                                                                                    |
+
+## Functions
+
+### `__init__`
+
+Initializes the PdfLoader with its specific configuration.
+
+**Parameters:**
+
+- `config` (PdfLoaderConfig): A PdfLoaderConfig object with settings for PDF processing
+
+### `get_supported_extensions`
+
+Gets a list of file extensions supported by this loader.
+
+**Returns:**
+
+- `List[str]`: List of supported file extensions (`.pdf`)
+
+### `load`
+
+Loads all PDF documents from the given source synchronously.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): PDF source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `aload`
+
+Loads all PDF documents from the given source asynchronously and concurrently.
+
+**Parameters:**
+
+- `source` (Union[str, Path, List[Union[str, Path]]]): PDF source(s) to load from
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `batch`
+
+Loads documents from a list of sources, leveraging the core `load` method.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of PDF sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `abatch`
+
+Loads documents from a list of sources asynchronously, leveraging the core `aload` method.
+
+**Parameters:**
+
+- `sources` (List[Union[str, Path]]): List of PDF sources to load
+
+**Returns:**
+
+- `List[Document]`: List of loaded documents
+
+### `_process_single_pdf`
+
+Processes a single PDF file, consolidating all page content into a single Document.
+
+**Parameters:**
+
+- `path` (Path): Path to the PDF file
+
+**Returns:**
+
+- `List[Document]`: List of documents created from the PDF
+
+### `_extract_page_content`
+
+Extracts content from a single page based on the `extraction_mode`.
+
+**Parameters:**
+
+- `page` (PageObject): PDF page object to extract content from
+- `page_num` (int): Page number
+
+**Returns:**
+
+- `Tuple[str, int]`: Tuple of extracted content and page number
+
+### `_perform_ocr`
+
+Performs OCR on all images within a single PDF page.
+
+**Parameters:**
+
+- `page` (PageObject): PDF page object to perform OCR on
+
+**Returns:**
+
+- `str`: OCR extracted text
+
+### `_run_single_ocr`
+
+Helper function that runs the synchronous OCR engine.
+
+**Parameters:**
+
+- `image_data` (bytes): Image data to perform OCR on
+
+**Returns:**
+
+- `str`: OCR extracted text
+
+### `_normalize_whitespace`
+
+Collapses multiple spaces/newlines and trims.
+
+**Parameters:**
+
+- `text` (str): Text to normalize
+
+**Returns:**
+
+- `str`: Normalized text
+
+### `_clean_page_numbers`
+
+Identifies and removes sequential page numbers from the top or bottom of pages.
+
+**Parameters:**
+
+- `page_content_list` (List[str]): List of page content strings
+
+**Returns:**
+
+- `Tuple[List[str], Optional[int]]`: Tuple of cleaned page content and best shift value

@@ -1,0 +1,207 @@
+---
+title: GoogleModel
+sidebarTitle: GoogleModel
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_name`                       | `GoogleModelName`                                     | `None`     | The name of the model to use                                                                                                                                                                                                      |
+| `provider`                         | `Literal['google-gla', 'google-vertex'] \| Provider[Client]` | `'google-gla'` | The provider to use for authentication and API access. Can be either the string 'google-gla' or 'google-vertex' or an instance of `Provider[httpx.AsyncClient]`. If not provided, a new provider will be created using the other parameters                                                                                                                                                                                                      |
+| `profile`                          | `ModelProfileSpec \| None`                            | `None`     | The model profile to use. Defaults to a profile picked by the provider based on the model name                                                                                                                                                                                                      |
+| `settings`                         | `ModelSettings \| None`                               | `None`     | The model settings to use. Defaults to None                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initialize a Gemini model.
+
+**Parameters:**
+
+- `model_name` (GoogleModelName): The name of the model to use
+- `provider` (Literal['google-gla', 'google-vertex'] | Provider[Client]): The provider to use for authentication and API access. Can be either the string 'google-gla' or 'google-vertex' or an instance of `Provider[httpx.AsyncClient]`. If not provided, a new provider will be created using the other parameters
+- `profile` (ModelProfileSpec | None): The model profile to use. Defaults to a profile picked by the provider based on the model name
+- `settings` (ModelSettings | None): The model settings to use. Defaults to None
+
+### `base_url`
+
+Get the base URL for the provider API.
+
+**Returns:**
+
+- `str`: The base URL for the provider API
+
+### `model_name`
+
+Get the model name.
+
+**Returns:**
+
+- `GoogleModelName`: The model name
+
+### `system`
+
+Get the model provider.
+
+**Returns:**
+
+- `str`: The model provider
+
+### `request`
+
+Make a request to the model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `ModelResponse`: The model response
+
+### `count_tokens`
+
+Make a request to the model for counting tokens.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `RequestUsage`: The token usage information
+
+### `request_stream`
+
+Make a request to the model and return a streaming response.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `AsyncIterator[StreamedResponse]`: An async iterator of streamed responses
+
+### `_get_tools`
+
+Get the tools for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `list[ToolDict] | None`: The tools for the request
+
+### `_get_tool_config`
+
+Get the tool configuration for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+- `tools` (list[ToolDict] | None): The tools to configure
+
+**Returns:**
+
+- `ToolConfigDict | None`: The tool configuration
+
+### `_generate_content`
+
+Generate content using the Gemini API.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `stream` (bool): Whether to stream the response
+- `model_settings` (GoogleModelSettings): Google-specific model settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `GenerateContentResponse | Awaitable[AsyncIterator[GenerateContentResponse]]`: The response from Gemini
+
+### `_build_content_and_config`
+
+Build content and configuration for the Gemini API.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (GoogleModelSettings): Google-specific model settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `tuple[list[ContentUnionDict], GenerateContentConfigDict]`: The content and configuration
+
+### `_process_response`
+
+Process a non-streamed response, and prepare a message to return.
+
+**Parameters:**
+
+- `response` (GenerateContentResponse): The response from Gemini
+
+**Returns:**
+
+- `ModelResponse`: The processed model response
+
+### `_process_streamed_response`
+
+Process a streamed response, and prepare a streaming response to return.
+
+**Parameters:**
+
+- `response` (AsyncIterator[GenerateContentResponse]): The streamed response from Gemini
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `StreamedResponse`: The processed streamed response
+
+### `_map_messages`
+
+Map messages to Gemini format.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to map
+
+**Returns:**
+
+- `tuple[ContentDict | None, list[ContentUnionDict]]`: The mapped messages
+
+### `_map_user_prompt`
+
+Map a user prompt to Gemini format.
+
+**Parameters:**
+
+- `part` (UserPromptPart): The user prompt part to map
+
+**Returns:**
+
+- `list[PartDict]`: The mapped user prompt
+
+### `_map_response_schema`
+
+Map a response schema to Gemini format.
+
+**Parameters:**
+
+- `o` (OutputObjectDefinition): The output object definition to map
+
+**Returns:**
+
+- `dict[str, Any]`: The mapped response schema

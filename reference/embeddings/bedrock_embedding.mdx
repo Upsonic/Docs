@@ -1,0 +1,193 @@
+---
+title: BedrockEmbedding
+sidebarTitle: BedrockEmbedding
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `aws_access_key_id`                | `Optional[str]`                                       | `None`     | AWS access key ID                                                                                                                                                                                                               |
+| `aws_secret_access_key`            | `Optional[str]`                                       | `None`     | AWS secret access key                                                                                                                                                                                                            |
+| `aws_session_token`                | `Optional[str]`                                       | `None`     | AWS session token                                                                                                                                                                                                                |
+| `region_name`                      | `str`                                                 | `"us-east-1"` | AWS region                                                                                                                                                                                                                      |
+| `profile_name`                     | `Optional[str]`                                       | `None`     | AWS profile name                                                                                                                                                                                                                 |
+| `model_name`                       | `str`                                                 | `"amazon.titan-embed-text-v1"` | Bedrock embedding model                                                                                                                                                                                                        |
+| `model_id`                         | `Optional[str]`                                       | `None`     | Full Bedrock model ID (overrides model_name)                                                                                                                                                                                    |
+| `inference_profile`                | `Optional[str]`                                       | `None`     | Bedrock inference profile                                                                                                                                                                                                        |
+| `enable_guardrails`                | `bool`                                                | `True`     | Enable Bedrock guardrails                                                                                                                                                                                                        |
+| `guardrail_id`                     | `Optional[str]`                                       | `None`     | Custom guardrail ID                                                                                                                                                                                                              |
+| `enable_model_caching`             | `bool`                                                | `True`     | Enable model response caching                                                                                                                                                                                                    |
+| `prefer_provisioned_throughput`    | `bool`                                                | `False`    | Prefer provisioned throughput models                                                                                                                                                                                            |
+| `enable_cloudwatch_logging`        | `bool`                                                | `True`     | Enable CloudWatch logging                                                                                                                                                                                                        |
+| `log_group_name`                   | `Optional[str]`                                       | `None`     | CloudWatch log group name                                                                                                                                                                                                        |
+
+## Functions
+
+### `__init__`
+
+Initialize the BedrockEmbedding provider.
+
+**Parameters:**
+
+- `config` (Optional[BedrockEmbeddingConfig]): Configuration object
+- `**kwargs`: Additional configuration options
+
+### `_setup_aws_session`
+
+Setup AWS session with proper credentials.
+
+### `_setup_bedrock_client`
+
+Setup Bedrock runtime client.
+
+### `supported_modes`
+
+Get supported embedding modes.
+
+**Returns:**
+
+- `List[EmbeddingMode]`: List of supported embedding modes
+
+### `pricing_info`
+
+Get AWS Bedrock embedding pricing.
+
+**Returns:**
+
+- `Dict[str, float]`: Pricing information
+
+### `get_model_info`
+
+Get information about the current Bedrock model.
+
+**Returns:**
+
+- `Dict[str, Any]`: Model information
+
+### `_prepare_titan_request`
+
+Prepare request body for Titan models.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts to embed
+
+**Returns:**
+
+- `Dict[str, Any]`: Request body
+
+### `_prepare_cohere_request`
+
+Prepare request body for Cohere models.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts to embed
+
+**Returns:**
+
+- `Dict[str, Any]`: Request body
+
+### `_prepare_request_body`
+
+Prepare request body based on the model provider.
+
+**Parameters:**
+
+- `texts` (List[str]): List of texts to embed
+- `mode` (EmbeddingMode): Embedding mode
+
+**Returns:**
+
+- `Dict[str, Any]`: Request body
+
+### `_extract_embeddings`
+
+Extract embeddings from response based on model type.
+
+**Parameters:**
+
+- `response_body` (Dict[str, Any]): API response body
+- `num_texts` (int): Number of texts
+
+**Returns:**
+
+- `List[List[float]]`: List of embedding vectors
+
+### `_embed_batch`
+
+Embed a batch of texts using AWS Bedrock.
+
+**Parameters:**
+
+- `texts` (List[str]): List of text strings to embed
+- `mode` (EmbeddingMode): Embedding mode for optimization
+
+**Returns:**
+
+- `List[List[float]]`: List of embedding vectors
+
+### `validate_connection`
+
+Validate Bedrock connection and model access.
+
+**Returns:**
+
+- `bool`: True if connection is valid
+
+### `get_aws_info`
+
+Get AWS-specific configuration information.
+
+**Returns:**
+
+- `Dict[str, Any]`: AWS configuration information
+
+### `get_cost_estimate`
+
+Get detailed cost estimation for current usage.
+
+**Returns:**
+
+- `Dict[str, Any]`: Cost estimation
+
+### `list_available_models`
+
+List available embedding models in Bedrock.
+
+**Returns:**
+
+- `List[Dict[str, Any]]`: List of available models
+
+### `close`
+
+Clean up AWS Bedrock connections and resources.
+
+### `create_titan_embedding`
+
+Create AWS Titan embedding provider.
+
+**Parameters:**
+
+- `region_name` (str): AWS region
+- `model_version` (str): Model version
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `BedrockEmbedding`: Configured BedrockEmbedding instance
+
+### `create_cohere_embedding`
+
+Create Cohere embedding provider.
+
+**Parameters:**
+
+- `language` (str): Language for embedding
+- `region_name` (str): AWS region
+- `**kwargs`: Additional configuration options
+
+**Returns:**
+
+- `BedrockEmbedding`: Configured BedrockEmbedding instance

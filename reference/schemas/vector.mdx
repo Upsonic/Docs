@@ -1,0 +1,20 @@
+---
+title: Vector Schemas
+sidebarTitle: Vector Schemas
+---
+
+## Classes
+
+### VectorSearchResult
+
+A standardized data structure for a single search result. All provider implementations must return a list of these objects.
+
+#### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                               | `Union[str, int]`                                     | -          | The unique identifier for this search result                                                                                                                                                                                     |
+| `score`                            | `float`                                               | -          | The similarity score for this search result                                                                                                                                                                                      |
+| `payload`                          | `Optional[Dict[str, Any]]`                            | `None`     | Additional payload data associated with this result                                                                                                                                                                              |
+| `vector`                           | `Optional[List[float]]`                               | `None`     | The vector representation of this result                                                                                                                                                                                         |
+| `text`                             | `Optional[str]`                                       | `None`     | The text content of this result                                                                                                                                                                                                  |

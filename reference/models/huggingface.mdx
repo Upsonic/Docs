@@ -1,0 +1,262 @@
+---
+title: HuggingFaceModel
+sidebarTitle: HuggingFaceModel
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_name`                       | `str`                                                 | Required   | The name of the Model to use. You can browse available models [here](https://huggingface.co/models?pipeline_tag=text-generation&inference_provider=all&sort=trending).                                                                                                                                                                                                      |
+| `provider`                        | `Literal['huggingface'] \| Provider[AsyncInferenceClient]` | `'huggingface'` | The provider to use for Hugging Face Inference Providers. Can be either the string 'huggingface' or an instance of `Provider[AsyncInferenceClient]`. If not provided, the other parameters will be used.                                                                                                                                                                                                      |
+| `profile`                          | `ModelProfileSpec \| None`                           | `None`     | The model profile to use. Defaults to a profile picked by the provider based on the model name.                                                                                                                                                                                                      |
+| `settings`                         | `ModelSettings \| None`                              | `None`     | Model-specific settings that will be used as defaults for this model.                                                                                                                                                                                                      |
+
+## Properties
+
+| Property                          | Type                                                  | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client`                          | `AsyncInferenceClient`                                | The Hugging Face client instance                                                                                                                                                                                                      |
+| `model_name`                      | `HuggingFaceModelName`                               | The model name                                                                                                                                                                                                      |
+| `system`                          | `str`                                                 | The system / model provider                                                                                                                                                                                                      |
+
+## Functions
+
+### `__init__`
+
+Initialize a Hugging Face model.
+
+**Parameters:**
+
+- `model_name` (str): The name of the Model to use. You can browse available models [here](https://huggingface.co/models?pipeline_tag=text-generation&inference_provider=all&sort=trending).
+- `provider` (Literal['huggingface'] | Provider[AsyncInferenceClient]): The provider to use for Hugging Face Inference Providers. Can be either the string 'huggingface' or an instance of `Provider[AsyncInferenceClient]`. If not provided, the other parameters will be used.
+- `profile` (ModelProfileSpec | None): The model profile to use. Defaults to a profile picked by the provider based on the model name.
+- `settings` (ModelSettings | None): Model-specific settings that will be used as defaults for this model.
+
+### `request`
+
+Make a request to the Hugging Face model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `ModelResponse`: The model response
+
+### `request_stream`
+
+Make a streaming request to the Hugging Face model.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send to the model
+- `model_settings` (ModelSettings | None): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `AsyncIterator[StreamedResponse]`: An async iterator of streamed responses
+
+### `_completions_create`
+
+Create completions for the Hugging Face API.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to send
+- `stream` (bool): Whether to stream the response
+- `model_settings` (HuggingFaceModelSettings): Model-specific settings
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `ChatCompletionOutput | AsyncIterable[ChatCompletionStreamOutput]`: Either a single completion or a stream of completions
+
+### `_process_response`
+
+Process a non-streamed response and prepare a message to return.
+
+**Parameters:**
+
+- `response` (ChatCompletionOutput): The response from the Hugging Face API
+
+**Returns:**
+
+- `ModelResponse`: The processed model response
+
+### `_process_streamed_response`
+
+Process a streamed response and prepare a streaming response to return.
+
+**Parameters:**
+
+- `response` (AsyncIterable[ChatCompletionStreamOutput]): The streamed response from the Hugging Face API
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `StreamedResponse`: The processed streamed response
+
+### `_get_tools`
+
+Get tools for the model request.
+
+**Parameters:**
+
+- `model_request_parameters` (ModelRequestParameters): Request parameters
+
+**Returns:**
+
+- `list[ChatCompletionInputTool]`: List of tool parameters
+
+### `_map_messages`
+
+Map messages to Hugging Face format.
+
+**Parameters:**
+
+- `messages` (list[ModelMessage]): The messages to map
+
+**Returns:**
+
+- `list[ChatCompletionInputMessage | ChatCompletionOutputMessage]`: List of Hugging Face messages
+
+### `_map_tool_call`
+
+Map tool call to Hugging Face format.
+
+**Parameters:**
+
+- `t` (ToolCallPart): The tool call part to map
+
+**Returns:**
+
+- `ChatCompletionInputToolCall`: The mapped tool call
+
+### `_map_tool_definition`
+
+Map tool definition to Hugging Face format.
+
+**Parameters:**
+
+- `f` (ToolDefinition): The tool definition to map
+
+**Returns:**
+
+- `ChatCompletionInputTool`: The mapped tool parameter
+
+### `_map_user_message`
+
+Map user message to Hugging Face format.
+
+**Parameters:**
+
+- `message` (ModelRequest): The user message to map
+
+**Returns:**
+
+- `AsyncIterable[ChatCompletionInputMessage | ChatCompletionOutputMessage]`: Async generator of Hugging Face messages
+
+### `_map_user_prompt`
+
+Map user prompt to Hugging Face format.
+
+**Parameters:**
+
+- `part` (UserPromptPart): The user prompt part to map
+
+**Returns:**
+
+- `ChatCompletionInputMessage`: The mapped user prompt
+
+---
+
+## HuggingFaceModelSettings
+
+Settings used for a Hugging Face model request.
+
+### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `huggingface_*`                    | `Any`                                                | `None`     | This class is a placeholder for any future huggingface-specific settings                                                                                                                                                                                                      |
+
+---
+
+## HuggingFaceStreamedResponse
+
+Implementation of `StreamedResponse` for Hugging Face models.
+
+### Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_model_name`                      | `str`                                                 | Required   | The model name                                                                                                                                                                                                      |
+| `_model_profile`                   | `ModelProfile`                                        | Required   | The model profile                                                                                                                                                                                                      |
+| `_response`                        | `AsyncIterable[ChatCompletionStreamOutput]`          | Required   | The streamed response from Hugging Face                                                                                                                                                                                                      |
+| `_timestamp`                       | `datetime`                                           | Required   | The timestamp of the response                                                                                                                                                                                                      |
+| `_provider_name`                   | `str`                                                | Required   | The provider name                                                                                                                                                                                                      |
+
+### Functions
+
+### `_get_event_iterator`
+
+Get an async iterator of model response stream events.
+
+**Returns:**
+
+- `AsyncIterator[ModelResponseStreamEvent]`: Async iterator of stream events
+
+### Properties
+
+### `model_name`
+
+Get the model name of the response.
+
+**Returns:**
+
+- `str`: The model name
+
+### `provider_name`
+
+Get the provider name.
+
+**Returns:**
+
+- `str`: The provider name
+
+### `timestamp`
+
+Get the timestamp of the response.
+
+**Returns:**
+
+- `datetime`: The timestamp
+
+---
+
+## Type Definitions
+
+### `LatestHuggingFaceModelNames`
+
+Latest Hugging Face model names.
+
+**Type:** `Literal['deepseek-ai/DeepSeek-R1', 'meta-llama/Llama-3.3-70B-Instruct', 'meta-llama/Llama-4-Maverick-17B-128E-Instruct', 'meta-llama/Llama-4-Scout-17B-16E-Instruct', 'Qwen/QwQ-32B', 'Qwen/Qwen2.5-72B-Instruct', 'Qwen/Qwen3-235B-A22B', 'Qwen/Qwen3-32B']`
+
+### `HuggingFaceModelName`
+
+Possible Hugging Face model names.
+
+**Type:** `str | LatestHuggingFaceModelNames`
+
+You can browse available models [here](https://huggingface.co/models?pipeline_tag=text-generation&inference_provider=all&sort=trending).
+
+### `HFSystemPromptRole`
+
+System prompt role for Hugging Face.
+
+**Type:** `Literal['system', 'user']`

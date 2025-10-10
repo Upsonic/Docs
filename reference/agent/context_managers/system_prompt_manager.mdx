@@ -1,0 +1,53 @@
+---
+title: SystemPromptManager
+sidebarTitle: SystemPromptManager
+---
+
+## Parameters
+
+| Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent`                            | `Agent`                                               | Required  | The agent instance                                                                                                                                                                                                               |
+| `task`                             | `Task`                                                | Required  | The task being executed                                                                                                                                                                                                         |
+
+## Functions
+
+### `get_system_prompt`
+
+Public getter to retrieve the constructed system prompt.
+
+**Returns:**
+
+- `str`: The final system prompt string
+
+### `manage_system_prompt`
+
+Asynchronous context manager for building the system prompt.
+
+**Parameters:**
+
+- `memory_handler` (Optional[MemoryManager]): Memory manager for system prompt injection
+
+**Returns:**
+
+- `AsyncContextManager`: Context manager that handles system prompt building
+
+**Usage:**
+
+```python
+async with system_prompt_manager.manage_system_prompt(memory_handler) as manager:
+    system_prompt = manager.get_system_prompt()
+    # Use the system prompt
+```
+
+**Features:**
+
+- **Dynamic Prompt Building**: Constructs system prompts from multiple sources
+- **Thinking Tool Integration**: Handles orchestrated thinking with Thought and AnalysisResult schemas
+- **Reasoning Tool Support**: Supports both simple and advanced reasoning modes
+- **Memory Integration**: Integrates with MemoryManager for system prompt injection
+- **Agent Context**: Includes agent role, goal, instructions, education, and work experience
+- **Default Prompt Fallback**: Uses default prompt when no agent information is provided
+- **Task Context**: Handles agent context from task context items
+- **Schema Integration**: Provides JSON schemas for structured thinking tools
+- **Reflective Instructions**: Generates comprehensive mission briefing for thinking tools
