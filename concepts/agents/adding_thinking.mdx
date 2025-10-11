@@ -1,14 +1,14 @@
 
-Reflection capabilities enable your agent to think through problems step-by-step, providing more structured and thoughtful responses. This feature is essential for complex financial analysis, risk assessment, and multi-step problem solving.
+Thinking capabilities enable your agent to think through problems step-by-step, providing more structured and thoughtful responses. This feature is essential for complex financial analysis, risk assessment, and multi-step problem solving.
 
-## Enabling Reflection
+## Enabling Thinking
 
-To enable reflection capabilities, set `enable_thinking_tool=True` when creating your agent:
+To enable thinking capabilities, set `enable_thinking_tool=True` when creating your agent:
 
 ```python
 from upsonic import Agent
 
-# Enable reflection for financial analysis
+# Enable thinking for financial analysis
 agent = Agent(
     name="FinancialAnalyst",
     enable_thinking_tool=True,
@@ -16,36 +16,36 @@ agent = Agent(
 )
 ```
 
-## How Reflection Works
+## How Thinking Works
 
-When reflection is enabled, the agent follows a structured "blueprint" approach:
+When thinking is enabled, the agent follows a structured "blueprint" approach:
 
 1. **Strategic Planning**: The agent creates a complete, sequential plan of tool calls
 2. **Automated Execution**: An orchestrator executes the plan step-by-step
 3. **Final Synthesis**: The agent synthesizes results into a comprehensive answer
 
-### Reflection vs. Basic Mode
+### Thinking vs. Basic Mode
 
-| Feature | Basic Mode | Reflection Mode |
+| Feature | Basic Mode | Thinking Mode |
 |---------|------------|-----------------|
 | **Planning** | Ad-hoc tool calls | Structured blueprint creation |
 | **Execution** | Direct tool execution | Orchestrated step-by-step execution |
 | **Analysis** | Immediate responses | Thoughtful synthesis of results |
 | **Use Cases** | Simple queries | Complex multi-step analysis |
 
-## Reflection Configuration
+## Thinking Configuration
 
-### Agent-Level Reflection
+### Agent-Level Thinking
 
 ```python
-# Enable reflection for all tasks
+# Enable thinking for all tasks
 agent = Agent(
     name="RiskAnalyst",
     enable_thinking_tool=True
 )
 ```
 
-### Task-Level Reflection
+### Task-Level Thinking
 
 ```python
 from upsonic import Task
@@ -53,7 +53,7 @@ from upsonic import Task
 # Override agent settings for specific task
 task = Task(
     description="Analyze market volatility and provide investment recommendations",
-    enable_thinking_tool=True  # Enable reflection for this specific task
+    enable_thinking_tool=True  # Enable thinking for this specific task
 )
 
 result = agent.print_do(task)
@@ -62,28 +62,28 @@ result = agent.print_do(task)
 ### Mixed Configuration
 
 ```python
-# Agent with reflection enabled
+# Agent with thinking enabled
 agent = Agent(
     name="BankingAgent",
     enable_thinking_tool=True
 )
 
-# Simple task without reflection
+# Simple task without thinking
 simple_task = Task(
     description="What is the current interest rate?",
-    enable_thinking_tool=False  # Disable reflection for simple queries
+    enable_thinking_tool=False  # Disable thinking for simple queries
 )
 
-# Complex task with reflection
+# Complex task with thinking
 complex_task = Task(
     description="Analyze portfolio risk and recommend rebalancing strategy",
-    enable_thinking_tool=True  # Keep reflection for complex analysis
+    enable_thinking_tool=True  # Keep thinking for complex analysis
 )
 ```
 
-## Reflection Use Cases
+## Thinking Use Cases
 
-Reflection is ideal for:
+Thinking is ideal for:
 
 - **Financial Analysis**: Multi-step investment analysis and risk assessment
 - **Regulatory Compliance**: Complex compliance checking and documentation
@@ -96,7 +96,7 @@ Reflection is ideal for:
 ```python
 from upsonic import Agent, Task
 
-# Create agent with reflection capabilities
+# Create agent with thinking capabilities
 agent = Agent(
     name="RiskAssessmentAgent",
     enable_thinking_tool=True,
@@ -120,7 +120,7 @@ task = Task(
     enable_thinking_tool=True
 )
 
-# Execute with reflection
+# Execute with thinking
 result = agent.print_do(task)
 ```
 
@@ -148,16 +148,16 @@ task = Task(
 result = agent.print_do(task)
 ```
 
-## Reflection Output Structure
+## Thinking Output Structure
 
-When reflection is enabled, the agent provides:
+When thinking is enabled, the agent provides:
 
 1. **Strategic Analysis**: Detailed reasoning about the problem
 2. **Execution Plan**: Step-by-step tool call sequence
 3. **Risk Assessment**: Identification of potential issues
 4. **Final Synthesis**: Comprehensive answer based on all gathered information
 
-### Example Reflection Flow
+### Example Thinking Flow
 
 ```
 1. Agent analyzes the request and creates a plan
@@ -167,7 +167,7 @@ When reflection is enabled, the agent provides:
 
 ## Performance Considerations
 
-**Important**: Reflection capabilities consume more tokens and processing time than basic mode. Monitor your usage and costs when using reflection for production applications.
+**Important**: Thinking capabilities consume more tokens and processing time than basic mode. Monitor your usage and costs when using thinking for production applications.
 
 ```python
 # Monitor performance with debug mode
@@ -180,12 +180,12 @@ agent = Agent(
 
 ## Best Practices
 
-1. **Use for Complex Tasks**: Enable reflection for multi-step financial analysis
+1. **Use for Complex Tasks**: Enable thinking for multi-step financial analysis
 2. **Disable for Simple Queries**: Use basic mode for straightforward questions
-3. **Monitor Costs**: Track token usage with reflection enabled
+3. **Monitor Costs**: Track token usage with thinking enabled
 4. **Debug Mode**: Use debug mode during development to understand the process
 5. **Task-Specific Control**: Override agent settings for specific tasks when needed
 6. **Clear Instructions**: Provide detailed, specific instructions for better planning
 7. **Tool Availability**: Ensure all required tools are available for the planned sequence
 
-Reflection provides a powerful way to handle complex financial scenarios that require structured thinking and comprehensive analysis, making it essential for sophisticated banking and fintec
+Thinking provides a powerful way to handle complex financial scenarios that require structured thinking and comprehensive analysis, making it essential for sophisticated banking and fintec

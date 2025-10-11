@@ -1,0 +1,358 @@
+---
+title: Automatic Model Selection
+sidebarTitle: Model Selection
+description: Intelligent model recommendation system for optimal task performance
+hideToc: false
+---
+
+The Upsonic Agent Framework includes an intelligent model selection system that automatically recommends the most appropriate AI model for your specific task. This feature helps you optimize performance, cost, and speed by selecting the best model based on task requirements and constraints.
+
+## Overview
+
+The automatic model selection system analyzes your task description and selection criteria to recommend the most suitable model from a comprehensive registry of leading AI models including OpenAI, Anthropic, Google, Meta, DeepSeek, Qwen, Mistral, Cohere, and Grok models.
+
+### Key Features
+
+- **Intelligent Analysis**: Automatically detects task requirements (reasoning, coding, math, vision, etc.)
+- **Dual Selection Methods**: Choose between fast rule-based or advanced LLM-based selection
+- **Comprehensive Model Registry**: Access to 15+ top-tier AI models with detailed metadata
+- **Flexible Criteria**: Specify constraints like cost, speed, context window, and capabilities
+- **Confidence Scoring**: Get confidence scores and alternative recommendations
+- **Seamless Integration**: Use recommendations directly with your agent
+
+## Selection Methods
+
+The framework provides two approaches to model selection:
+
+### Rule-Based Selection (Default)
+
+Fast, deterministic selection using keyword analysis and scoring algorithms. Ideal for most use cases.
+
+- ✅ **Fast**: No additional API calls required
+- ✅ **Cost-Effective**: No LLM usage for selection
+- ✅ **Predictable**: Consistent results based on rules
+- ❌ **Limited Context**: May miss nuanced requirements
+
+### LLM-Based Selection (Advanced)
+
+Uses GPT-4o to analyze your task and intelligently select the best model. Recommended for complex or ambiguous tasks.
+
+- ✅ **Intelligent**: Deep understanding of task nuances
+- ✅ **Context-Aware**: Considers subtle requirements
+- ✅ **Adaptive**: Better handling of complex scenarios
+- ❌ **Slower**: Requires additional API call
+- ❌ **Cost**: Uses tokens for selection process
+
+## Basic Usage
+
+### Simple Recommendation
+
+Get a model recommendation for any task description:
+
+```python
+from upsonic import Agent
+
+agent = Agent()
+
+# Get recommendation (rule-based by default)
+recommendation = agent.recommend_model_for_task(
+    "Write a complex sorting algorithm in Python with detailed explanations"
+)
+
+print(f"Recommended: {recommendation.model_name}")
+print(f"Reason: {recommendation.reason}")
+print(f"Confidence: {recommendation.confidence_score:.2f}")
+print(f"Alternatives: {recommendation.alternative_models}")
+```
+
+### Using the Recommendation
+
+Once you have a recommendation, use it to execute your task:
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent()
+task = Task("Solve this complex mathematical proof...")
+
+# Get recommendation
+recommendation = agent.recommend_model_for_task(task)
+
+# Use recommended model
+result = agent.do(task, model=recommendation.model_name)
+```
+
+## Advanced Usage with Criteria
+
+### Specifying Selection Criteria
+
+Use `SelectionCriteria` to define specific requirements and constraints:
+
+```python
+from upsonic import Agent
+
+agent = Agent()
+
+# Define specific criteria
+criteria = {
+    "requires_code_generation": True,
+    "requires_math": True,
+    "prioritize_quality": True,
+    "max_cost_tier": 7,
+    "min_context_window": 100000
+}
+
+recommendation = agent.recommend_model_for_task(
+    task="Implement a machine learning algorithm with mathematical proofs",
+    criteria=criteria
+)
+
+print(f"Selected: {recommendation.model_name}")
+print(f"Cost Tier: {recommendation.estimated_cost_tier}/10")
+print(f"Speed Tier: {recommendation.estimated_speed_tier}/10")
+```
+
+### LLM-Based Selection
+
+Enable LLM-based selection for more intelligent recommendations:
+
+```python
+from upsonic import Agent
+
+agent = Agent()
+
+# Use LLM for intelligent selection
+recommendation = agent.recommend_model_for_task(
+    task="Analyze customer sentiment in multilingual support tickets",
+    use_llm=True  # Enable LLM-based selection
+)
+
+print(f"Method: {recommendation.selection_method}")  # "llm"
+print(f"Selected: {recommendation.model_name}")
+```
+
+### Async Model Recommendation
+
+For async workflows, use the async version:
+
+```python
+from upsonic import Agent
+import asyncio
+
+async def main():
+    agent = Agent()
+    
+    recommendation = await agent.recommend_model_for_task_async(
+        task="Process and analyze 500 page legal document",
+        criteria={"requires_long_context": True, "min_context_window": 200000}
+    )
+    
+    print(f"For long documents: {recommendation.model_name}")
+
+asyncio.run(main())
+```
+
+## Selection Criteria Reference
+
+Configure model selection with these criteria parameters:
+
+| Criteria                    | Type           | Default | Description                                         |
+| --------------------------- | -------------- | ------- | --------------------------------------------------- |
+| requires\_reasoning         | bool \| None   | None    | Task needs advanced reasoning capabilities          |
+| requires\_code\_generation  | bool \| None   | None    | Task involves writing or analyzing code             |
+| requires\_math              | bool \| None   | None    | Task requires mathematical problem solving          |
+| requires\_creative\_writing | bool \| None   | None    | Task needs creative content generation              |
+| requires\_vision            | bool \| None   | None    | Task processes images or visual content             |
+| requires\_audio             | bool \| None   | None    | Task processes audio content                        |
+| requires\_long\_context     | bool \| None   | None    | Task needs large context window                     |
+| prioritize\_speed           | bool           | False   | Optimize for fast inference                         |
+| prioritize\_cost            | bool           | False   | Optimize for cost-effectiveness                     |
+| prioritize\_quality         | bool           | False   | Optimize for output quality                         |
+| max\_cost\_tier             | int \| None    | None    | Maximum acceptable cost (1-10, where 10=expensive)  |
+| min\_context\_window        | int \| None    | None    | Minimum required context window in tokens           |
+| preferred\_provider         | str \| None    | None    | Preferred provider (e.g., "openai", "anthropic")    |
+| require\_open\_source       | bool           | False   | Require open-source model                           |
+| require\_production\_ready  | bool           | False   | Require production-ready model                      |
+
+## Model Recommendation Output
+
+The `ModelRecommendation` object provides comprehensive information:
+
+```python
+recommendation = agent.recommend_model_for_task("Your task here")
+
+# Access recommendation properties
+print(recommendation.model_name)           # e.g., "openai/gpt-4o"
+print(recommendation.reason)               # Explanation for selection
+print(recommendation.confidence_score)     # 0.0 to 1.0
+print(recommendation.alternative_models)   # List of alternatives
+print(recommendation.estimated_cost_tier)  # 1-10 scale
+print(recommendation.estimated_speed_tier) # 1-10 scale
+print(recommendation.selection_method)     # "rule_based" or "llm"
+```
+
+## Complete Example: Multi-Task Workflow
+
+Here's a comprehensive example showing model selection for different task types:
+
+```python
+from upsonic import Agent, Task
+
+# Create agent with default model selection settings
+agent = Agent(
+    model="openai/gpt-4o-mini",  # Default model
+    debug=True
+)
+
+# Task 1: Complex reasoning task
+reasoning_task = Task(
+    "Analyze this complex business scenario and provide strategic recommendations..."
+)
+
+reasoning_rec = agent.recommend_model_for_task(
+    reasoning_task,
+    criteria={
+        "requires_reasoning": True,
+        "prioritize_quality": True
+    }
+)
+print(f"For reasoning: {reasoning_rec.model_name}")
+result1 = agent.do(reasoning_task, model=reasoning_rec.model_name)
+
+# Task 2: Cost-sensitive chatbot
+chatbot_task = Task("Generate a friendly greeting for our banking app users")
+
+chatbot_rec = agent.recommend_model_for_task(
+    chatbot_task,
+    criteria={
+        "prioritize_cost": True,
+        "prioritize_speed": True,
+        "max_cost_tier": 3
+    }
+)
+print(f"For chatbot: {chatbot_rec.model_name}")
+result2 = agent.do(chatbot_task, model=chatbot_rec.model_name)
+
+# Task 3: Code generation
+code_task = Task("Write a high-performance sorting algorithm in Python")
+
+code_rec = agent.recommend_model_for_task(
+    code_task,
+    criteria={"requires_code_generation": True},
+    use_llm=True  # Use LLM for better understanding
+)
+print(f"For coding: {code_rec.model_name}")
+result3 = agent.do(code_task, model=code_rec.model_name)
+
+# Task 4: Long document analysis
+document_task = Task("Analyze and summarize this 300-page financial report")
+
+document_rec = agent.recommend_model_for_task(
+    document_task,
+    criteria={
+        "requires_long_context": True,
+        "min_context_window": 200000,
+        "requires_reasoning": True
+    }
+)
+print(f"For documents: {document_rec.model_name}")
+print(f"Context window: {document_rec.estimated_cost_tier}")
+```
+
+## Agent-Level Configuration
+
+Configure default selection behavior at agent initialization:
+
+```python
+from upsonic import Agent
+
+# Agent with default selection criteria
+agent = Agent(
+    model="openai/gpt-4o",
+    model_selection_criteria={
+        "prioritize_cost": True,
+        "max_cost_tier": 5,
+        "require_production_ready": True
+    },
+    use_llm_for_selection=False  # Use rule-based by default
+)
+
+# Now recommendations use these defaults
+recommendation = agent.recommend_model_for_task("Any task here")
+# Will automatically apply cost constraints
+```
+
+## Best Practices
+
+1. **Start with Rule-Based**: Use rule-based selection for most tasks - it's fast and effective
+2. **Use LLM for Ambiguity**: Enable LLM-based selection for complex or ambiguous requirements
+3. **Set Cost Limits**: Always specify `max_cost_tier` for production applications
+4. **Check Alternatives**: Review alternative models for flexibility and fallback options
+5. **Monitor Confidence**: Low confidence scores (<0.7) suggest reviewing criteria or task description
+6. **Context Windows**: For long documents, always check `min_context_window` requirements
+7. **Production Safety**: Use `require_production_ready=True` for business-critical applications
+8. **Provider Preferences**: Specify `preferred_provider` if you have existing infrastructure
+9. **Test Recommendations**: Validate model performance with your specific use cases
+10. **Cache Recommendations**: Store recommendations for similar tasks to avoid repeated selection
+
+## Supported Models
+
+The framework includes comprehensive metadata for:
+
+- **OpenAI**: GPT-4o, GPT-4o-mini, O1-Pro, O1-mini
+- **Anthropic**: Claude 4 Opus, Claude 3.7 Sonnet, Claude 3.5 Haiku
+- **Google**: Gemini 2.5 Pro, Gemini 2.5 Flash
+- **Meta**: Llama 3.3 70B
+- **DeepSeek**: DeepSeek-Reasoner, DeepSeek-Chat
+- **Qwen**: Qwen 3 235B
+- **Mistral**: Mistral Large, Mistral Small
+- **Cohere**: Command R+
+- **Grok**: Grok 4
+
+Each model includes benchmark scores (MMLU, HumanEval, MATH, etc.), capabilities, cost/speed tiers, and use case recommendations.
+
+## Common Use Cases
+
+### Banking & Finance
+
+```python
+recommendation = agent.recommend_model_for_task(
+    "Perform risk assessment and regulatory compliance analysis",
+    criteria={
+        "requires_reasoning": True,
+        "requires_math": True,
+        "prioritize_quality": True,
+        "require_production_ready": True
+    }
+)
+```
+
+### Customer Support
+
+```python
+recommendation = agent.recommend_model_for_task(
+    "Handle customer inquiries in real-time chat",
+    criteria={
+        "prioritize_speed": True,
+        "prioritize_cost": True,
+        "max_cost_tier": 3
+    }
+)
+```
+
+### Research & Development
+
+```python
+recommendation = agent.recommend_model_for_task(
+    "Solve complex mathematical proofs",
+    criteria={
+        "requires_reasoning": True,
+        "requires_math": True,
+        "prioritize_quality": True
+    },
+    use_llm=True
+)
+```
+
+The automatic model selection system empowers your AI agent framework to dynamically optimize model usage based on task requirements, delivering the best balance of performance, cost, and speed for your specific banking and fintech applications.
+

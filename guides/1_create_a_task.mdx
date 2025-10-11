@@ -106,6 +106,56 @@ print(final_result)
 
 ```
 
+## Adding Files and Documents to Tasks
+
+The `context` attribute is the comprehensive way to provide any contextual information to your tasks. This includes files, images, documents, other tasks, knowledge bases, or any other relevant data.
+
+### Adding Files to Tasks
+
+```python
+# Task with file attachments
+task_with_files = Task(
+    description="Analyze the attached documents and extract key information",
+    context=["report.pdf", "data.csv", "image.png"],
+    tools=[WebRead]  # If you need web tools for additional research
+)
+
+# Task with mixed context (files + other tasks + text)
+task_with_mixed_context = Task(
+    description="Compare the uploaded data with the previous analysis results",
+    context=[
+        "new_data.xlsx",           # File attachment
+        previous_analysis_task,   # Previous task result
+        "Focus on Q4 trends",     # Text context
+        knowledge_base            # Knowledge base
+    ]
+)
+```
+
+### Supported File Types
+
+The framework automatically handles various file formats:
+
+- **Images**: PNG, JPEG, GIF, BMP, TIFF
+- **Documents**: PDF, Word (.docx), Text (.txt), Markdown (.md)
+- **Data**: CSV, JSON, XML, Excel (.xlsx)
+- **Code**: Python (.py), JavaScript (.js), etc.
+
+```python
+# Example with multiple file types
+comprehensive_task = Task(
+    description="Create a comprehensive analysis report",
+    context=[
+        "financial_data.xlsx",    # Excel data
+        "charts.png",            # Image
+        "market_report.pdf",     # PDF document
+        "raw_data.json",         # JSON data
+        previous_research_task,  # Previous task
+        "Additional context: Focus on emerging markets"  # Text context
+    ]
+)
+```
+
 
 ## Need more advanced features?
 
@@ -123,7 +173,7 @@ The Task system offers several advanced configurations to enhance task managemen
 
 - **External Execution**: Configure tasks to pause for external tool execution, enabling integration with external systems and human-in-the-loop workflows.
 
-- **Attachment Support**: Include file attachments (images, documents) in tasks for multimodal processing capabilities.
+- **Comprehensive Context**: Include any contextual information in the `context` attribute - files, images, documents, other tasks, knowledge bases, or any other relevant data for multimodal processing capabilities.
 
 - **Context Integration**: Leverage knowledge bases and RAG systems to provide rich contextual information for task execution.
 

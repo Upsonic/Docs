@@ -1,136 +1,1042 @@
 ---
 title: "Team"
-description: "Generate an agent team for your tasks."
-
+description: "Build teams of AI agents that work together"
 ---
 
-## Overview
+# Teams
 
-LLMs excel at characterization. That's why we use agents and continually refine their system prompts. This also creates new opportunities for agent teams: since our tasks are split among specialized agents, we must manage the process ourselves—assigning each task to the right agent and enabling effective collaboration.
+Create teams of specialized AI agents that collaborate to solve complex problems. One agent researches, another writes, a third edits - all working together seamlessly.
 
-In Upsonic, we have a `Team` class for this purpose. It automatically performs these operations.
+## Why Use Teams?
 
-## Creating an Team, Agents and Tasks
+Complex tasks often need multiple skills. Instead of building one super-agent that does everything, create a team where each agent is an expert at one thing:
 
-The `Team` class is a backend component that incorporates multiple automated systems. It facilitates matching and executing the right tasks with the appropriate agents and enables active collaboration.
+- **Better Results** - Specialists outperform generalists
+- **Clear Roles** - Each agent has a defined responsibility
+- **Natural Workflow** - Tasks flow from one expert to the next
+- **Easy to Scale** - Add more specialists as needed
+
+## Three Ways to Collaborate
+
+Choose how your team works together:
+
+| Mode           | How It Works                                      | When to Use                                    |
+| -------------- | ------------------------------------------------- | ---------------------------------------------- |
+| **sequential** | Tasks go from one agent to the next automatically | Workflows, pipelines, step-by-step processes   |
+| **coordinate** | A leader agent plans and delegates to team members | Complex projects, strategic work               |
+| **route**      | A router picks the best expert for the job        | Routing queries to specialists                 |
+
+Start with **sequential** mode - it's the simplest and works great for most use cases.
+
+## What's Inside a Team?
+
+Teams handle all the complexity automatically:
+
+- **Smart Assignment** - Picks the right agent for each task
+- **Context Sharing** - Agents see what previous agents did
+- **Result Combining** - Combines all outputs into one final answer
+- **Coordination** (in coordinate mode) - A leader plans and delegates
+- **Routing** (in route mode) - Intelligent expert selection
+
+You just define your agents and tasks - the team handles the rest.
+
+## Quick Start
+
+### Your First Team
 
 ```python
 from upsonic import Agent, Task, Team
 
-# My Agents
-travel_agent = Agent(name="My Travel Agent")
-history_agent = Agent(name="My History Agent")
-
-# My Tasks
-task = Task("Generate a plan to visit cities in Canada")
-task2 = Task("Write historical information about the cities")
-
-# My team 
-team = Team(
-	agents=[travel_agent, history_agent], # Adding Agents
-	tasks=[task, task2] # Adding Tasks
-)
-```
-
-## Getting Final Answer
-
-After instantiating the `Team` class, you can easily run tasks on it—just as you would with the `Agent` and `Direct` classes—by using the `do` and `print_do` functions.
-
-```python
-from upsonic import Agent, Task, Team
-
-# My Agents
-travel_agent = Agent(name="My Travel Agent")
-history_agent = Agent(name="My History Agent")
-
-# My Tasks
-task = Task("Generate a plan to visit cities in Canada")
-task2 = Task("Write historical information about the cities")
-
-# My team 
-team = Team(
-	agents=[travel_agent, history_agent], # Adding Agents
-	tasks=[task, task2] # Adding Tasks
+# Create specialized agents
+researcher = Agent(
+    model="openai/gpt-4o",
+    name="Researcher",
+    role="Research Specialist",
+    goal="Find accurate information and data"
 )
 
+writer = Agent(
+    model="openai/gpt-4o",
+    name="Writer",
+    role="Content Writer",
+    goal="Create clear and engaging content"
+)
 
+# Create team
+team = Team(
+    agents=[researcher, writer],
+    mode="sequential"
+)
 
-# Run the task and get the answer
-result = team.complete() 
+# Define tasks
+tasks = [
+    Task(description="Research the latest developments in quantum computing"),
+    Task(description="Write a blog post about quantum computing for general audience")
+]
 
-print("Summerized result")
+# Execute team workflow
+result = team.do(tasks)
 print(result)
 ```
 
-## Adding Response Format to The Team
-
-Teams are well but sometimes we need some specific answers from them. To do that you can use `response format` params and a `BaseModel`.
-
-```python
-from upsonic import Agent, Task, Team
-from pydantic import BaseModel
-
-# My Agents
-travel_agent = Agent(name="My Travel Agent")
-history_agent = Agent(name="My History Agent")
-
-# My Tasks
-task = Task("Generate a plan to visit cities in Canada")
-task2 = Task("Write historical information about the cities")
-
-# Response Format
-class City(BaseModel):
-	name: str
-	history: str
-class TravelGuide(BaseModel):
-	cities: list[City]
-
-# My team 
-team = Team(
-	agents=[travel_agent, history_agent], # Adding Agents
-	tasks=[task, task2], # Adding Tasks,
-	response_format=TravelGuide # Adding Response Format
-)
-
-
-
-# Run the task and get the answer
-result = team.complete() 
-
-print("Summerized result")
-print(result)
-```
-
-## Automatic Task Assignment
-
-By default, the Team class uses automatic task assignment. This means that the system intelligently analyzes each task and selects the most appropriate agent from your team to handle it. You don't need to do anything special to enable this feature—it's the default behavior that works automatically when you create tasks without specifying an agent.
-
-The automatic assignment process considers the task description, context, and available agents to make the best match, ensuring optimal task distribution across your team.
-
-## Manual Task Assignment
-
-Sometimes you want to have direct control over which agent handles which task. You can achieve this by specifying the `agent` parameter when creating your tasks. When a task has a predefined agent, the team will skip the automatic assignment process and use your specified agent directly.
+### Adding a Leader (Coordinate Mode)
 
 ```python
 from upsonic import Agent, Task, Team
 
-# My Agents
-travel_agent = Agent(name="My Travel Agent")
-history_agent = Agent(name="My History Agent")
-
-# My Tasks with manual agent assignment
-task = Task("Generate a plan to visit cities in Canada", agent=travel_agent)
-task2 = Task("Write historical information about the cities", agent=history_agent)
-
-# My team 
-team = Team(
-	agents=[travel_agent, history_agent], # Adding Agents
-	tasks=[task, task2] # Adding Tasks with predefined agents
+# Create specialized agents
+data_analyst = Agent(
+    model="openai/gpt-4o",
+    name="Data Analyst",
+    role="Data Analysis Expert",
+    goal="Analyze data and extract insights",
+    tools=[analyze_data, create_chart]
 )
 
-# Run the task and get the answer
-result = team.complete() 
+report_writer = Agent(
+    model="openai/gpt-4o",
+    name="Report Writer",
+    role="Business Report Specialist",
+    goal="Create professional business reports"
+)
 
-print("Summerized result")
+# Create team with coordination
+team = Team(
+    agents=[data_analyst, report_writer],
+    mode="coordinate",
+    model_provider="openai/gpt-4o"  # Required for leader agent
+)
+
+# Define tasks
+tasks = [
+    Task(
+        description="Analyze Q4 sales data and identify trends",
+        tools=[analyze_data, create_chart]
+    ),
+    Task(
+        description="Create executive summary of findings"
+    )
+]
+
+# Leader agent coordinates the team
+result = team.do(tasks)
 print(result)
 ```
+
+### Routing to Experts
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create domain specialists
+legal_expert = Agent(
+    model="openai/gpt-4o",
+    name="Legal Expert",
+    role="Legal Advisor",
+    goal="Provide legal guidance and compliance information",
+    system_prompt="You are an expert in corporate law and regulations"
+)
+
+tech_expert = Agent(
+    model="openai/gpt-4o",
+    name="Tech Expert",
+    role="Technology Specialist",
+    goal="Provide technical solutions and architecture advice",
+    system_prompt="You are an expert in software architecture and cloud systems"
+)
+
+financial_expert = Agent(
+    model="openai/gpt-4o",
+    name="Financial Expert",
+    role="Financial Advisor",
+    goal="Provide financial analysis and investment guidance",
+    system_prompt="You are an expert in financial planning and investment strategies"
+)
+
+# Create routing team
+team = Team(
+    agents=[legal_expert, tech_expert, financial_expert],
+    mode="route",
+    model_provider="openai/gpt-4o"  # Required for router agent
+)
+
+# Router selects best expert
+tasks = [
+    Task(description="What are the best practices for implementing OAuth 2.0 in a microservices architecture?")
+]
+
+result = team.do(tasks)  # Automatically routed to tech_expert
+print(result)
+```
+
+## Sequential Mode (Recommended)
+
+Tasks flow from one agent to the next. The team automatically picks the best agent for each task.
+
+### Creating a Workflow
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create specialized agents
+research_agent = Agent(
+    model="openai/gpt-4o",
+    name="Researcher",
+    role="Research Specialist",
+    goal="Conduct thorough research and fact-checking"
+)
+
+analysis_agent = Agent(
+    model="openai/gpt-4o",
+    name="Analyst",
+    role="Data Analyst",
+    goal="Analyze information and identify patterns"
+)
+
+summary_agent = Agent(
+    model="openai/gpt-4o",
+    name="Summarizer",
+    role="Content Summarizer",
+    goal="Create concise summaries of complex information"
+)
+
+# Create sequential team
+team = Team(
+    agents=[research_agent, analysis_agent, summary_agent],
+    mode="sequential"
+)
+
+# Multi-step workflow
+tasks = [
+    Task(description="Research current AI trends in healthcare"),
+    Task(description="Analyze the impact of AI on patient outcomes"),
+    Task(description="Summarize key findings in bullet points")
+]
+
+result = team.do(tasks)
+```
+
+### Assigning Specific Agents
+
+```python
+from upsonic import Agent, Task, Team
+
+writer = Agent(model="openai/gpt-4o", name="Writer")
+editor = Agent(model="openai/gpt-4o", name="Editor")
+
+team = Team(agents=[writer, editor], mode="sequential")
+
+# Explicitly assign agents to tasks
+task1 = Task(description="Write a product description")
+task1.agent = writer  # Force this task to use writer
+
+task2 = Task(description="Edit and polish the description")
+task2.agent = editor  # Force this task to use editor
+
+result = team.do([task1, task2])
+```
+
+### Automatic Context Passing
+
+```python
+from upsonic import Agent, Task, Team
+
+# Agents automatically receive context from previous tasks
+data_fetcher = Agent(
+    model="openai/gpt-4o",
+    name="Data Fetcher",
+    tools=[fetch_user_data]
+)
+
+processor = Agent(
+    model="openai/gpt-4o",
+    name="Processor"
+)
+
+team = Team(agents=[data_fetcher, processor], mode="sequential")
+
+tasks = [
+    Task(
+        description="Fetch user profile for user_id: 12345",
+        tools=[fetch_user_data]
+    ),
+    Task(
+        description="Analyze the user's purchase history and create recommendations"
+        # This task automatically receives results from previous task as context
+    )
+]
+
+result = team.do(tasks)
+```
+
+## Coordinate Mode (Advanced)
+
+A leader agent takes charge, analyzes all tasks, creates a plan, and delegates work strategically. Great for complex projects.
+
+### Setting Up a Leader
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.storage import Memory, InMemoryStorage
+
+# Create specialized agents
+researcher = Agent(
+    model="openai/gpt-4o",
+    name="Researcher",
+    role="Information Gatherer",
+    goal="Find comprehensive and accurate information"
+)
+
+analyst = Agent(
+    model="openai/gpt-4o",
+    name="Analyst",
+    role="Data Analyst",
+    goal="Extract insights and identify patterns"
+)
+
+writer = Agent(
+    model="openai/gpt-4o",
+    name="Writer",
+    role="Report Writer",
+    goal="Create professional reports"
+)
+
+# Create team with coordination
+team = Team(
+    agents=[researcher, analyst, writer],
+    mode="coordinate",
+    model_provider="openai/gpt-4o"
+)
+
+# Leader agent will strategically delegate these tasks
+tasks = [
+    Task(description="Research market trends for electric vehicles"),
+    Task(description="Analyze competitive landscape"),
+    Task(description="Write market entry strategy report")
+]
+
+result = team.do(tasks)
+```
+
+### Coordination with Shared Memory
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.storage import Memory, SqliteStorage
+
+# Create persistent storage for team memory
+storage = SqliteStorage(
+    sessions_table_name="team_sessions",
+    profiles_table_name="team_profiles",
+    db_file="./team_memory.db"
+)
+
+# Create shared memory
+team_memory = Memory(
+    storage=storage,
+    session_id="project_alpha_session",
+    full_session_memory=True
+)
+
+# Create team with shared memory
+team = Team(
+    agents=[researcher, analyst, writer],
+    mode="coordinate",
+    model_provider="openai/gpt-4o",
+    memory=team_memory  # All agents share this memory during coordination
+)
+
+tasks = [
+    Task(description="Research competitors"),
+    Task(description="Analyze our competitive advantages"),
+    Task(description="Create competitive positioning strategy")
+]
+
+result = team.do(tasks)
+# All delegation conversations are preserved in shared memory
+```
+
+### Leader Delegates Tools
+
+```python
+from upsonic import Agent, Task, Team
+
+def search_web(query: str) -> str:
+    """Search the web for information"""
+    # Implementation
+    return f"Search results for: {query}"
+
+def analyze_data(data: dict) -> dict:
+    """Analyze data and return insights"""
+    # Implementation
+    return {"insights": "Key findings..."}
+
+# Create agents
+researcher = Agent(model="openai/gpt-4o", name="Researcher")
+analyst = Agent(model="openai/gpt-4o", name="Analyst")
+
+# Create team
+team = Team(
+    agents=[researcher, analyst],
+    mode="coordinate",
+    model_provider="openai/gpt-4o"
+)
+
+# Tasks with tools - leader delegates with appropriate tools
+tasks = [
+    Task(
+        description="Search for recent AI breakthroughs",
+        tools=[search_web]
+    ),
+    Task(
+        description="Analyze the impact of these breakthroughs",
+        tools=[analyze_data]
+    )
+]
+
+result = team.do(tasks)
+# Leader intelligently assigns tools to the right agents
+```
+
+## Route Mode (Expert Selection)
+
+Perfect when you have specialists and need to route each request to the right expert quickly.
+
+### Creating Expert Routing
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create domain specialists
+python_expert = Agent(
+    model="openai/gpt-4o",
+    name="Python Expert",
+    role="Python Development Specialist",
+    goal="Provide expert Python programming solutions",
+    system_prompt="You are a senior Python developer with 10+ years experience"
+)
+
+javascript_expert = Agent(
+    model="openai/gpt-4o",
+    name="JavaScript Expert",
+    role="JavaScript Development Specialist",
+    goal="Provide expert JavaScript programming solutions",
+    system_prompt="You are a senior JavaScript developer specializing in React and Node.js"
+)
+
+devops_expert = Agent(
+    model="openai/gpt-4o",
+    name="DevOps Expert",
+    role="DevOps Specialist",
+    goal="Provide infrastructure and deployment solutions",
+    system_prompt="You are a DevOps expert specializing in Kubernetes and CI/CD"
+)
+
+# Create routing team
+team = Team(
+    agents=[python_expert, javascript_expert, devops_expert],
+    mode="route",
+    model_provider="openai/gpt-4o"
+)
+
+# Router intelligently selects best expert
+task = Task(description="How do I implement async/await in Python for web scraping?")
+result = team.do(task)  # Routes to python_expert
+```
+
+### Multi-Task Routing
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create specialists
+medical_expert = Agent(
+    model="openai/gpt-4o",
+    name="Medical Expert",
+    role="Medical Information Specialist",
+    goal="Provide accurate medical information",
+    system_prompt="You are a medical professional with expertise in general medicine"
+)
+
+fitness_expert = Agent(
+    model="openai/gpt-4o",
+    name="Fitness Expert",
+    role="Fitness and Nutrition Specialist",
+    goal="Provide fitness and nutrition guidance",
+    system_prompt="You are a certified fitness trainer and nutritionist"
+)
+
+# Create routing team
+team = Team(
+    agents=[medical_expert, fitness_expert],
+    mode="route",
+    model_provider="openai/gpt-4o"
+)
+
+# Multiple related tasks routed to single best expert
+tasks = [
+    Task(description="What are the benefits of regular exercise?"),
+    Task(description="Create a beginner workout plan for weight loss"),
+    Task(description="Suggest healthy meal options for post-workout recovery")
+]
+
+result = team.do(tasks)  # All routed to fitness_expert
+```
+
+## Getting Structured Results
+
+### Define Your Output Format
+
+```python
+from upsonic import Agent, Task, Team
+from pydantic import BaseModel, Field
+from typing import List
+
+# Define response schema
+class MarketAnalysis(BaseModel):
+    market_size: str = Field(..., description="Total addressable market size")
+    growth_rate: str = Field(..., description="Annual growth rate")
+    key_players: List[str] = Field(..., description="Major competitors")
+    opportunities: List[str] = Field(..., description="Market opportunities")
+    threats: List[str] = Field(..., description="Market threats")
+
+# Create team
+team = Team(
+    agents=[researcher, analyst],
+    mode="sequential",
+    response_format=MarketAnalysis  # Final output structured
+)
+
+tasks = [
+    Task(description="Research the cloud computing market"),
+    Task(description="Analyze market dynamics and competition")
+]
+
+result = team.do(tasks)  # Returns MarketAnalysis instance
+print(result.market_size)
+print(result.key_players)
+```
+
+## Let Agents Talk to Each Other
+
+### Enable Inter-Agent Communication
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create agents
+developer = Agent(model="openai/gpt-4o", name="Developer")
+architect = Agent(model="openai/gpt-4o", name="Architect")
+tester = Agent(model="openai/gpt-4o", name="Tester")
+
+# Enable inter-agent communication
+team = Team(
+    agents=[developer, architect, tester],
+    mode="sequential",
+    ask_other_team_members=True  # Agents can consult each other
+)
+
+tasks = [
+    Task(description="Design the system architecture"),
+    Task(description="Implement the core features"),
+    Task(description="Create comprehensive test cases")
+]
+
+result = team.do(tasks)
+# Agents can call each other as tools during execution
+```
+
+## Real-World Examples
+
+### Building a Content Team
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create content team
+researcher = Agent(
+    model="openai/gpt-4o",
+    name="Content Researcher",
+    role="Research Specialist",
+    goal="Find accurate and comprehensive information"
+)
+
+writer = Agent(
+    model="openai/gpt-4o",
+    name="Content Writer",
+    role="Writer",
+    goal="Create engaging and clear content"
+)
+
+editor = Agent(
+    model="openai/gpt-4o",
+    name="Editor",
+    role="Editor",
+    goal="Polish content and ensure quality"
+)
+
+seo_specialist = Agent(
+    model="openai/gpt-4o",
+    name="SEO Specialist",
+    role="SEO Expert",
+    goal="Optimize content for search engines"
+)
+
+# Create sequential content pipeline
+team = Team(
+    agents=[researcher, writer, editor, seo_specialist],
+    mode="sequential"
+)
+
+# Content creation workflow
+tasks = [
+    Task(description="Research 'AI in healthcare' - find latest trends, statistics, and case studies"),
+    Task(description="Write a 1000-word blog post about AI in healthcare for general audience"),
+    Task(description="Edit the blog post for clarity, grammar, and engagement"),
+    Task(description="Add SEO optimization - keywords, meta description, and headings")
+]
+
+final_article = team.do(tasks)
+print(final_article)
+```
+
+### Software Development Team
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.storage import Memory, InMemoryStorage
+
+# Create dev team
+architect = Agent(
+    model="openai/gpt-4o",
+    name="System Architect",
+    role="Software Architect",
+    goal="Design scalable and maintainable systems"
+)
+
+backend_dev = Agent(
+    model="openai/gpt-4o",
+    name="Backend Developer",
+    role="Backend Engineer",
+    goal="Implement robust backend services"
+)
+
+frontend_dev = Agent(
+    model="openai/gpt-4o",
+    name="Frontend Developer",
+    role="Frontend Engineer",
+    goal="Create responsive user interfaces"
+)
+
+qa_engineer = Agent(
+    model="openai/gpt-4o",
+    name="QA Engineer",
+    role="Quality Assurance Specialist",
+    goal="Ensure software quality through testing"
+)
+
+# Create coordinated development team
+team = Team(
+    agents=[architect, backend_dev, frontend_dev, qa_engineer],
+    mode="coordinate",
+    model_provider="openai/gpt-4o"
+)
+
+# Project tasks
+tasks = [
+    Task(description="Design architecture for e-commerce platform with microservices"),
+    Task(description="Implement user authentication and product catalog APIs"),
+    Task(description="Create shopping cart UI with React"),
+    Task(description="Create test plan and identify edge cases")
+]
+
+project_output = team.do(tasks)
+print(project_output)
+```
+
+### Customer Support Routing
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create support specialists
+billing_specialist = Agent(
+    model="openai/gpt-4o",
+    name="Billing Specialist",
+    role="Billing Support Expert",
+    goal="Resolve billing and payment issues",
+    system_prompt="You are an expert in billing, invoices, and payment processing"
+)
+
+technical_specialist = Agent(
+    model="openai/gpt-4o",
+    name="Technical Support",
+    role="Technical Support Engineer",
+    goal="Resolve technical issues and bugs",
+    system_prompt="You are an expert in troubleshooting software issues"
+)
+
+account_specialist = Agent(
+    model="openai/gpt-4o",
+    name="Account Specialist",
+    role="Account Management Expert",
+    goal="Handle account settings and access issues",
+    system_prompt="You are an expert in account management and security"
+)
+
+# Create routing team
+support_team = Team(
+    agents=[billing_specialist, technical_specialist, account_specialist],
+    mode="route",
+    model_provider="openai/gpt-4o"
+)
+
+# Customer inquiry
+customer_query = Task(
+    description="I was charged twice for my subscription this month. Can you help me get a refund?"
+)
+
+response = support_team.do(customer_query)  # Routes to billing_specialist
+print(response)
+```
+
+### Research and Analysis Workflow
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create research team
+data_collector = Agent(
+    model="openai/gpt-4o",
+    name="Data Collector",
+    role="Data Collection Specialist",
+    goal="Gather comprehensive data from multiple sources",
+    tools=[search_database, fetch_api_data]
+)
+
+statistician = Agent(
+    model="openai/gpt-4o",
+    name="Statistician",
+    role="Statistical Analyst",
+    goal="Perform statistical analysis and hypothesis testing",
+    tools=[analyze_statistics, create_visualization]
+)
+
+research_writer = Agent(
+    model="openai/gpt-4o",
+    name="Research Writer",
+    role="Academic Writer",
+    goal="Write clear research reports with proper citations"
+)
+
+# Create sequential research pipeline
+team = Team(
+    agents=[data_collector, statistician, research_writer],
+    mode="sequential"
+)
+
+# Research workflow
+tasks = [
+    Task(
+        description="Collect data on customer satisfaction scores for Q1-Q4 2024",
+        tools=[search_database, fetch_api_data]
+    ),
+    Task(
+        description="Perform statistical analysis: calculate means, standard deviations, and trends",
+        tools=[analyze_statistics, create_visualization]
+    ),
+    Task(
+        description="Write executive summary with key findings and actionable recommendations"
+    )
+]
+
+research_report = team.do(tasks)
+```
+
+### Multi-Language Translation Pipeline
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create translation team
+english_expert = Agent(
+    model="openai/gpt-4o",
+    name="English Expert",
+    role="English Language Specialist",
+    goal="Create clear English content"
+)
+
+spanish_translator = Agent(
+    model="openai/gpt-4o",
+    name="Spanish Translator",
+    role="Spanish Translation Expert",
+    goal="Translate to Spanish maintaining context and nuance"
+)
+
+french_translator = Agent(
+    model="openai/gpt-4o",
+    name="French Translator",
+    role="French Translation Expert",
+    goal="Translate to French maintaining context and nuance"
+)
+
+german_translator = Agent(
+    model="openai/gpt-4o",
+    name="German Translator",
+    role="German Translation Expert",
+    goal="Translate to German maintaining context and nuance"
+)
+
+# Sequential translation pipeline
+team = Team(
+    agents=[english_expert, spanish_translator, french_translator, german_translator],
+    mode="sequential"
+)
+
+tasks = [
+    Task(description="Write a product announcement about our new AI-powered analytics tool"),
+    Task(description="Translate the announcement to Spanish"),
+    Task(description="Translate the announcement to French"),
+    Task(description="Translate the announcement to German")
+]
+
+translations = team.do(tasks)
+```
+
+### Business Intelligence Team
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.storage import Memory, PostgresStorage
+
+# Production storage
+storage = PostgresStorage(
+    sessions_table_name="bi_sessions",
+    profiles_table_name="bi_profiles",
+    db_url="postgresql://user:pass@localhost:5432/bi_db"
+)
+
+# Shared team memory
+team_memory = Memory(
+    storage=storage,
+    session_id="bi_project_001",
+    full_session_memory=True,
+    summary_memory=True,
+    model_provider="openai/gpt-4o"
+)
+
+# Create BI team
+data_engineer = Agent(
+    model="openai/gpt-4o",
+    name="Data Engineer",
+    role="Data Pipeline Specialist",
+    goal="Extract, transform, and load data efficiently"
+)
+
+data_analyst = Agent(
+    model="openai/gpt-4o",
+    name="Data Analyst",
+    role="Data Analysis Expert",
+    goal="Analyze data and extract actionable insights"
+)
+
+visualization_expert = Agent(
+    model="openai/gpt-4o",
+    name="Visualization Expert",
+    role="Data Visualization Specialist",
+    goal="Create compelling visual representations of data"
+)
+
+# Coordinated BI team
+team = Team(
+    agents=[data_engineer, data_analyst, visualization_expert],
+    mode="coordinate",
+    model_provider="openai/gpt-4o",
+    memory=team_memory
+)
+
+tasks = [
+    Task(description="Extract sales data from last 12 months"),
+    Task(description="Analyze revenue trends and identify growth opportunities"),
+    Task(description="Create dashboard with key metrics and visualizations")
+]
+
+bi_report = team.do(tasks)
+```
+
+## Which Mode Should I Use?
+
+### Choose Sequential When...
+
+✅ You have a clear sequence of steps  
+✅ Each step needs a different skill  
+✅ Tasks build on previous results  
+✅ You want simple, automatic collaboration  
+
+**Example:** Research → Write → Edit → Publish
+
+### Choose Coordinate When...
+
+✅ Tasks are complex and interconnected  
+✅ You need strategic planning  
+✅ The workflow isn't linear  
+✅ You want a leader making decisions  
+
+**Example:** Building a complete software project with architecture, development, testing, and deployment
+
+### Choose Route When...
+
+✅ You have specialized experts  
+✅ Each request goes to ONE expert  
+✅ You need fast routing decisions  
+✅ No multi-step collaboration needed  
+
+**Example:** Customer support routing (billing → billing expert, technical → tech support)
+
+## Tips and Best Practices
+
+### Designing Your Team
+
+**Give Agents Clear Roles**
+- Each agent should be an expert at ONE thing
+- Write specific role descriptions
+- Avoid overlapping responsibilities
+- Example: "Research Specialist" not just "Helper"
+
+**Write Good Task Descriptions**
+- Be specific about what you want
+- Break big tasks into smaller steps
+- Order tasks logically for sequential mode
+- Example: "Research AI trends in 2024" not "Look up AI stuff"
+
+**Keep Teams Small**
+- 3-5 agents is optimal
+- More agents = more complexity
+- Add agents only when needed
+- Better to have focused experts than many generalists
+
+### Choosing the Right Mode
+
+- **New to teams?** Start with sequential mode
+- **Need planning?** Use coordinate mode
+- **Have specialists?** Use route mode
+- **Not sure?** Sequential works for 80% of cases
+
+### Performance Tips
+
+- Keep task lists reasonable (5-10 tasks max)
+- Use faster models for simple agents
+- Save expensive models for critical agents
+- In coordinate mode, always set `model_provider` for the leader
+
+### Cost Management
+
+- Sequential mode is most cost-effective
+- Coordinate mode costs more (leader makes extra calls)
+- Route mode is cheapest (only routing + one agent)
+- Consider using cheaper models for non-critical agents
+
+## Complete Production Example
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.storage import Memory, PostgresStorage
+from pydantic import BaseModel, Field
+from typing import List
+
+# Define structured output
+class ProjectDeliverable(BaseModel):
+    architecture_design: str = Field(..., description="System architecture overview")
+    implementation_plan: str = Field(..., description="Implementation roadmap")
+    testing_strategy: str = Field(..., description="Quality assurance approach")
+    deployment_plan: str = Field(..., description="Deployment and rollout plan")
+    risk_assessment: str = Field(..., description="Identified risks and mitigation")
+
+# Production storage
+storage = PostgresStorage(
+    sessions_table_name="project_sessions",
+    profiles_table_name="project_profiles",
+    db_url="postgresql://prod_user:secure_pass@db.example.com:5432/projects",
+    schema="production"
+)
+
+# Shared memory for team
+team_memory = Memory(
+    storage=storage,
+    session_id="project_new_platform",
+    full_session_memory=True,
+    summary_memory=True,
+    model_provider="openai/gpt-4o"
+)
+
+# Create production team
+system_architect = Agent(
+    model="openai/gpt-4o",
+    name="System Architect",
+    role="Senior System Architect",
+    goal="Design scalable, secure, and maintainable architectures",
+    system_prompt="You are a senior system architect with expertise in cloud-native applications"
+)
+
+tech_lead = Agent(
+    model="openai/gpt-4o",
+    name="Technical Lead",
+    role="Technical Leadership",
+    goal="Plan implementation and guide technical decisions",
+    system_prompt="You are a technical leader with experience in agile development"
+)
+
+qa_lead = Agent(
+    model="openai/gpt-4o",
+    name="QA Lead",
+    role="Quality Assurance Leadership",
+    goal="Ensure comprehensive testing and quality standards",
+    system_prompt="You are a QA lead with expertise in test automation and quality processes"
+)
+
+devops_lead = Agent(
+    model="openai/gpt-4o",
+    name="DevOps Lead",
+    role="DevOps and Infrastructure Leadership",
+    goal="Design deployment pipelines and infrastructure",
+    system_prompt="You are a DevOps expert specializing in CI/CD and cloud infrastructure"
+)
+
+risk_manager = Agent(
+    model="openai/gpt-4o",
+    name="Risk Manager",
+    role="Project Risk Management",
+    goal="Identify risks and create mitigation strategies",
+    system_prompt="You are a project manager focused on risk assessment and mitigation"
+)
+
+# Create coordinated team
+team = Team(
+    agents=[system_architect, tech_lead, qa_lead, devops_lead, risk_manager],
+    mode="coordinate",
+    model_provider="openai/gpt-4o",
+    memory=team_memory,
+    response_format=ProjectDeliverable
+)
+
+# Project planning tasks
+tasks = [
+    Task(description="Design microservices architecture for customer portal with authentication, profile management, and notification services"),
+    Task(description="Create implementation plan with sprints, milestones, and resource allocation"),
+    Task(description="Define testing strategy including unit tests, integration tests, and E2E tests"),
+    Task(description="Design CI/CD pipeline and deployment strategy for Kubernetes"),
+    Task(description="Identify project risks and create mitigation strategies")
+]
+
+# Execute team coordination
+project_plan = team.do(tasks)
+
+# Access structured output
+print("=== PROJECT DELIVERABLE ===")
+print(f"Architecture: {project_plan.architecture_design}")
+print(f"Implementation: {project_plan.implementation_plan}")
+print(f"Testing: {project_plan.testing_strategy}")
+print(f"Deployment: {project_plan.deployment_plan}")
+print(f"Risks: {project_plan.risk_assessment}")
+```
+

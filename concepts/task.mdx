@@ -23,8 +23,7 @@ The Task class provides comprehensive configuration options to customize task be
 | **description** | str | A clear, concise statement of what the task entails |
 | **tools** | List[Any] | The tools/resources the agent can use for this task |
 | **response_format** | Union[Type[BaseModel], type[str], None] | The expected output format (string, Pydantic model, or None) |
-| **context** | Any | Other tasks whose outputs will be used as context for this task |
-| **attachments** | Optional[List[str]] | File paths to attach to the task (images, documents, etc.) |
+| **context** | Any | All context for this task - can include other tasks, files, images, documents, knowledge bases, or any other contextual information |
 
 ### Advanced Configuration
 
@@ -294,55 +293,52 @@ task = Task(
 )
 ```
 
-## Putting Images to Tasks
+## Adding Files and Images to Tasks
 
-Tasks can include image attachments for processing. The framework automatically handles image loading and provides them to the model for analysis.
+Tasks can include files, images, and documents through the `context` attribute. The framework automatically handles file loading and provides them to the model for analysis.
 
-### Single Image Attachment
+### Single Image/File
 
 ```python
 # Task with single image
 task = Task(
     description="Describe what you see in the attached image",
-    attachments=["image.png"]
+    context=["image.png"]
 )
 ```
 
-### Multiple Image Attachments
+### Multiple Files and Images
 
 ```python
-# Task with multiple images
+# Task with multiple files
 task = Task(
-    description="Compare the two attached images and identify similarities and differences",
-    attachments=["image1.jpg", "image2.jpg"]
+    description="Compare the two attached images and analyze the document",
+    context=["image1.jpg", "image2.jpg", "document.pdf"]
 )
 ```
 
-### Images with Other Context
+### Files with Other Context
 
 ```python
-# Task with images and other context
+# Task with files and other context
 task = Task(
     description="Analyze the attached chart and provide insights based on the market data",
-    attachments=["chart.png"],
-    context=[market_data_task]
+    context=["chart.png", market_data_task, "additional_data.csv"]
 )
 ```
 
-### Supported Image Formats
+### Supported File Formats
 
-The framework supports various image formats including:
-- PNG (.png)
-- JPEG (.jpg, .jpeg)
-- GIF (.gif)
-- BMP (.bmp)
-- TIFF (.tiff)
+The framework supports various file formats including:
+- Images: PNG (.png), JPEG (.jpg, .jpeg), GIF (.gif), BMP (.bmp), TIFF (.tiff)
+- Documents: PDF (.pdf), Word (.docx), Text (.txt), Markdown (.md)
+- Data: CSV (.csv), JSON (.json), XML (.xml), Excel (.xlsx)
 
 ```python
-# Example with different image formats
+# Example with different file formats
 task = Task(
-    description="Analyze all the attached images",
-    attachments=["photo.jpg", "diagram.png", "chart.tiff"]
+    description="Analyze all the attached files",
+    context=["photo.jpg", "diagram.png", "data.csv", "report.pdf"]
 )
 ```
 
