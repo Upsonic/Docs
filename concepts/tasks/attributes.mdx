@@ -8,8 +8,7 @@ The Task class provides comprehensive configuration options to customize task be
 | **description**      | str                                           | A clear, concise statement of what the task entails             |
 | **tools**            | List\[Any\]                                   | The tools/resources the agent can use for this task             |
 | **response_format**  | Union\[Type\[BaseModel\], type\[str\], None\] | The expected output format (string, Pydantic model, or None)    |
-| **context**          | Any                                           | Other tasks whose outputs will be used as context for this task |
-| **attachments**      | Optional\[List\[str\]\]                       | File paths to attach to the task (images, documents, etc.)      |
+| **context**          | Any                                           | All context for this task - can include other tasks, files, images, documents, knowledge bases, or any other contextual information |
 
 ## Advanced Configuration
 
@@ -62,8 +61,7 @@ task = Task(
     description="Analyze the current market conditions for AAPL and provide investment recommendations",
     tools=[get_market_data],
     response_format=MarketAnalysis,
-    context=["Focus on Q4 performance trends", "Consider recent earnings reports"],
-    attachments=["market_chart.png"],
+    context=["Focus on Q4 performance trends", "Consider recent earnings reports", "market_chart.png"],
     
     # Advanced configuration
     enable_thinking_tool=True,

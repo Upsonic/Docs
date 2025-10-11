@@ -13,7 +13,7 @@ The `Agent` class is the core agent implementation in Upsonic, providing a power
 1. [Creating an Agent](#creating-an-agent)
 2. [Agent Attributes](#agent-attributes)
 3. [Adding a Memory](#adding-a-memory)
-4. [Adding Reflection](#adding-reflection)
+4. [Adding Thinking](#adding-thinking)
 5. [Adding Reasoning](#adding-reasoning)
 
 ---
@@ -150,7 +150,7 @@ agent = Agent(
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `system_prompt` | `str \| None` | `None` | Custom system prompt for the agent |
-| `reflection` | `str \| None` | `None` | Reflection capabilities configuration |
+| `reflection` | `bool` | `False` | Reflection capabilities |
 | `compress_context` | `bool` | `False` | Enable context compression |
 
 **Example:**
@@ -354,13 +354,13 @@ agent.clear_cache()
 
 ---
 
-## Adding Reflection
+## Adding Thinking Tool
 
-Reflection capabilities enable the agent to think through problems step-by-step, analyze its own reasoning, and provide more thoughtful responses. This is particularly useful for complex problem-solving tasks.
+Thinking Tool capabilities enable the agent to think through problems step-by-step, analyze its own reasoning, and provide more thoughtful responses. This is particularly useful for complex problem-solving tasks.
 
-### Enabling Reflection
+### Enabling Thinking Tool
 
-Reflection is controlled by the `enable_thinking_tool` parameter:
+Thinking Tool is controlled by the `enable_thinking_tool` parameter:
 
 ```python
 from upsonic import Agent, Task
@@ -372,26 +372,26 @@ agent = Agent(
     debug=True
 )
 
-# Create a task that benefits from reflection
+# Create a task that benefits from thinking tool
 task = Task(
     description="Analyze this step by step: A customer wants to invest $10,000 with a 5% annual return. Calculate the compound interest over 10 years and provide investment recommendations.",
     enable_thinking_tool=True
 )
 
-# Execute with reflection
+# Execute with thinking tool
 result = agent.print_do(task)
 ```
 
-### How Reflection Works
+### How Thinking Tool Works
 
-When reflection is enabled, the agent:
+When Thinking Tool is enabled, the agent:
 
 1. **Analyzes the problem** before attempting to solve it
 2. **Breaks down complex tasks** into manageable steps
 3. **Evaluates its own reasoning** and adjusts if needed
 4. **Provides detailed explanations** of its thought process
 
-**Example Output with Reflection:**
+**Example Output with Thinking Tool:**
 ```
 The agent will show its thinking process:
 - Financial problem analysis
@@ -400,30 +400,30 @@ The agent will show its thinking process:
 - Investment recommendation with justification
 ```
 
-### Reflection Configuration
+### Thinking Tool Configuration
 
-You can control reflection at both the agent and task level:
+You can control Thinking Tool at both the agent and task level:
 
 ```python
-# Agent-level reflection (applies to all tasks)
+# Agent-level Thinking Tool (applies to all tasks)
 agent = Agent(enable_thinking_tool=True)
 
-# Task-level reflection (overrides agent setting)
+# Task-level Thinking Tool (overrides agent setting)
 task = Task(
     description="Complex loan risk assessment with multiple variables",
-    enable_thinking_tool=True  # Force reflection for this task
+    enable_thinking_tool=True  # Force Thinking Tool for this task
 )
 
-# Task-level reflection (disable for specific task)
+# Task-level Thinking Tool (disable for specific task)
 task = Task(
     description="Simple account balance inquiry",
-    enable_thinking_tool=False  # Disable reflection for this task
+    enable_thinking_tool=False  # Disable Thinking Tool for this task
 )
 ```
 
-### Reflection Use Cases
+### Thinking Tool Use Cases
 
-Reflection is particularly valuable for:
+Thinking Tool is particularly valuable for:
 
 - **Financial calculations and modeling**
 - **Risk assessment and compliance analysis**
@@ -451,7 +451,7 @@ task = Task(
 
 ## Adding Reasoning
 
-Reasoning capabilities build upon reflection to provide even more sophisticated problem-solving abilities. Reasoning enables the agent to use advanced logical analysis and structured thinking approaches.
+Reasoning capabilities build upon Thinking Tool to provide even more sophisticated problem-solving abilities. Reasoning enables the agent to use advanced logical analysis and structured thinking approaches.
 
 ### Enabling Reasoning
 
@@ -490,9 +490,9 @@ result = agent.print_do(task)
 
 **Warning**: `enable_reasoning_tool` cannot be `True` if `enable_thinking_tool` is `False`. This will raise a `ValueError`.
 
-### Reasoning vs. Reflection
+### Reasoning vs. Thinking Tool
 
-| Feature | Reflection (`enable_thinking_tool`) | Reasoning (`enable_reasoning_tool`) |
+| Feature | Thinking Tool (`enable_thinking_tool`) | Reasoning (`enable_reasoning_tool`) |
 |---------|-------------------------------------|-------------------------------------|
 | **Purpose** | Basic step-by-step financial analysis | Advanced risk and compliance analysis |
 | **Complexity** | Simple to moderate financial problems | Complex, multi-faceted banking scenarios |
@@ -572,7 +572,7 @@ When reasoning is enabled, the agent provides:
 
 ### Performance Considerations
 
-**Warning**: Reasoning capabilities consume more tokens and processing time than basic reflection. Monitor your usage and costs when using reasoning for production applications.
+**Warning**: Reasoning capabilities consume more tokens and processing time than basic Thinking Tool. Monitor your usage and costs when using reasoning for production applications.
 
 ```python
 # Monitor performance with debug mode
