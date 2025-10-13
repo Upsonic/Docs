@@ -14,26 +14,27 @@ A task represents a unit of work to be performed by an agent.
 | Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
 | ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `description`                      | `str`                                                 | -          | The task description                                                                                                                                                                                                             |
-| `attachments`                      | `Optional[List[str]]`                                 | `None`     | List of file paths to attach to the task                                                                                                                                                                                         |
+| `attachments`                      | `Optional[List[str]]`                                | `None`     | List of file paths to attach to the task                                                                                                                                                                                        |
 | `tools`                            | `list[Any]`                                           | `[]`       | List of tools available for this task                                                                                                                                                                                            |
 | `response_format`                  | `Union[Type[BaseModel], type[str], None]`            | `str`      | The expected response format                                                                                                                                                                                                      |
 | `response_lang`                    | `Optional[str]`                                       | `"en"`     | The response language                                                                                                                                                                                                             |
-| `_response`                        | `Any`                                                 | `None`     | The task response                                                                                                                                                                                                                 |
+| `response`                         | `Any`                                                 | `None`     | The task response (constructor parameter)                                                                                                                                                                                         |
+| `_response`                        | `Any`                                                 | `None`     | The task response (internal)                                                                                                                                                                                                     |
 | `context`                          | `Any`                                                 | `[]`       | Context information for the task                                                                                                                                                                                                 |
 | `_context_formatted`               | `Optional[str]`                                       | `None`     | Formatted context string                                                                                                                                                                                                          |
 | `price_id_`                        | `Optional[str]`                                       | `None`     | Price ID for cost tracking                                                                                                                                                                                                        |
 | `task_id_`                         | `Optional[str]`                                       | `None`     | Task ID                                                                                                                                                                                                                           |
 | `not_main_task`                    | `bool`                                                | `False`    | Whether this is not the main task                                                                                                                                                                                                 |
-| `start_time`                       | `Optional[int]`                                       | `None`     | Task start time                                                                                                                                                                                                                   |
-| `end_time`                         | `Optional[int]`                                       | `None`     | Task end time                                                                                                                                                                                                                     |
+| `start_time`                       | `Optional[float]`                                     | `None`     | Task start time (timestamp)                                                                                                                                                                                                      |
+| `end_time`                         | `Optional[float]`                                     | `None`     | Task end time (timestamp)                                                                                                                                                                                                        |
 | `agent`                            | `Optional[Any]`                                       | `None`     | The agent assigned to this task                                                                                                                                                                                                   |
 | `enable_thinking_tool`             | `Optional[bool]`                                      | `None`     | Whether to enable thinking tool                                                                                                                                                                                                   |
 | `enable_reasoning_tool`            | `Optional[bool]`                                      | `None`     | Whether to enable reasoning tool                                                                                                                                                                                                  |
-| `_tool_calls`                      | `List[Dict[str, Any]]`                               | `[]`       | List of tool calls made during task execution                                                                                                                                                                                     |
+| `_tool_calls`                      | `List[Dict[str, Any]]`                               | `None`     | List of tool calls made during task execution (initialized to `[]` in constructor)                                                                                                                                               |
 | `guardrail`                        | `Optional[Callable]`                                 | `None`     | Guardrail function for task validation                                                                                                                                                                                            |
 | `guardrail_retries`                | `Optional[int]`                                       | `None`     | Number of guardrail retries                                                                                                                                                                                                       |
 | `is_paused`                        | `bool`                                                | `False`    | Whether the task is paused                                                                                                                                                                                                        |
-| `_tools_awaiting_external_execution` | `List[ExternalToolCall]`                           | `[]`       | Tools awaiting external execution                                                                                                                                                                                                 |
+| `_tools_awaiting_external_execution` | `List[ExternalToolCall]`                           | `None`     | Tools awaiting external execution (initialized to `[]` in constructor)                                                                                                                                                            |
 | `enable_cache`                     | `bool`                                                | `False`    | Whether to enable caching for this task                                                                                                                                                                                           |
 | `cache_method`                     | `Literal["vector_search", "llm_call"]`               | `"vector_search"` | Cache method to use                                                                                                                                                                                                         |
 | `cache_threshold`                  | `float`                                               | `0.7`      | Cache similarity threshold                                                                                                                                                                                                        |
@@ -43,6 +44,58 @@ A task represents a unit of work to be performed by an agent.
 | `_cache_hit`                       | `bool`                                                | `False`    | Whether cache was hit                                                                                                                                                                                                             |
 | `_original_input`                  | `Optional[str]`                                       | `None`     | Original input for caching                                                                                                                                                                                                        |
 | `_last_cache_entry`                | `Optional[Dict[str, Any]]`                          | `None`     | Last cache entry                                                                                                                                                                                                                  |
+
+#### Static Methods
+
+##### `_is_file_path`
+
+Check if an item is a valid file path.
+
+**Parameters:**
+
+- `item` (Any): Any object to check
+
+**Returns:**
+
+- `bool`: True if the item is a string representing an existing file path
+
+##### `_is_folder_path`
+
+Check if an item is a valid folder/directory path.
+
+**Parameters:**
+
+- `item` (Any): Any object to check
+
+**Returns:**
+
+- `bool`: True if the item is a string representing an existing directory
+
+##### `_get_files_from_folder`
+
+Recursively get all file paths from a folder.
+
+**Parameters:**
+
+- `folder_path` (str): Path to the folder
+
+**Returns:**
+
+- `List[str]`: List of all file paths in the folder and subfolders
+
+##### `_extract_files_from_context`
+
+Extract file paths from context and return cleaned context and file list. Also handles folders by extracting all files from them recursively.
+
+**Parameters:**
+
+- `context` (Any): The context parameter (can be a list, dict, or any other type)
+
+**Returns:**
+
+- `tuple[Any, List[str]]`: (cleaned_context, extracted_files)
+  - `cleaned_context`: Context with file/folder paths removed
+  - `extracted_files`: List of file paths found (including files from folders)
 
 #### Functions
 
@@ -56,7 +109,7 @@ Get the task duration.
 
 ##### `validate_tools`
 
-Validates each tool in the tools list.
+Validates each tool in the tools list. If a tool is a class and has a `__control__` method, runs that method to verify it returns True. Raises an exception if the `__control__` method returns False or raises an exception.
 
 ##### `context_formatted`
 
@@ -224,7 +277,7 @@ Builds the input for the agent, using and then clearing the formatted context.
 
 **Returns:**
 
-- `Union[str, List]`: The agent input
+- `Union[str, List[Union[str, BinaryContent]]]`: The agent input (string or list with text and binary content)
 
 ##### `set_cache_manager`
 

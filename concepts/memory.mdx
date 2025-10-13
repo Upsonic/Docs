@@ -3,11 +3,7 @@ title: "Memory"
 description: "Give your agents memory - remember conversations and users"
 ---
 
-# Memory System
-
-Make your AI agents remember previous conversations, learn about your users, and provide personalized experiences that improve over time.
-
-## What is Memory?
+## Overview
 
 Memory gives your agents the ability to remember. Without memory, every conversation starts fresh - your agent doesn't remember what you talked about before or who you are. With memory, your agents can:
 
@@ -40,6 +36,7 @@ Choose where to store your agent's memory:
 | **PostgresStorage** | Production apps, multiple servers          | Production database |
 | **RedisStorage**    | High-performance, distributed systems      | Cache/database |
 | **Mem0Storage**     | Integration with Mem0 platform             | Cloud-based     |
+| **MongoStorage**    | Production apps, scalable systems        | MongoDB database |
 
 Start with `InMemoryStorage` for testing, then upgrade to `SqliteStorage` or `PostgresStorage` for production.
 
@@ -383,7 +380,37 @@ from upsonic.storage import Mem0Storage
 # Mem0 integration
 storage = Mem0Storage(
     api_key="your_mem0_api_key",
-    organization_id="your_org_id"
+    org_id="your_org_id"
+)
+```
+
+### MongoDB Storage
+
+```python
+from upsonic.storage import MongoStorage
+
+# MongoDB storage for scalable systems
+storage = MongoStorage(
+    db_url="mongodb://localhost:27017",
+    database_name="agent_memory",
+    sessions_collection_name="interaction_sessions",
+    profiles_collection_name="user_profiles"
+)
+
+# MongoDB with authentication
+storage = MongoStorage(
+    db_url="mongodb://user:password@localhost:27017/agentdb",
+    database_name="production_memory",
+    sessions_collection_name="sessions",
+    profiles_collection_name="profiles"
+)
+
+# MongoDB with custom configuration
+storage = MongoStorage(
+    db_url="mongodb://cluster.example.com:27017",
+    database_name="distributed_agents",
+    sessions_collection_name="agent_sessions",
+    profiles_collection_name="user_profiles"
 )
 ```
 
@@ -818,7 +845,7 @@ storage.drop()
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory, PostgresStorage
+from upsonic.storage import Memory, MongoStorage
 from pydantic import BaseModel, Field
 from typing import Optional, List
 import asyncio
@@ -833,12 +860,12 @@ class ProductionUserProfile(BaseModel):
     timezone: Optional[str] = Field(None, description="User's timezone")
 
 async def run_production_agent():
-    # Production storage
-    storage = PostgresStorage(
-        sessions_table_name="production_sessions",
-        profiles_table_name="production_profiles",
-        db_url="postgresql://prod_user:secure_pass@db.example.com:5432/prod_db",
-        schema="agent_memory"
+    # Production storage with MongoDB
+    storage = MongoStorage(
+        db_url="mongodb://prod_user:secure_pass@db.example.com:27017/prod_db",
+        database_name="production_memory",
+        sessions_collection_name="production_sessions",
+        profiles_collection_name="production_profiles"
     )
     
     # Connect storage
