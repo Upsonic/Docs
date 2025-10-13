@@ -7,7 +7,7 @@ Tasks can include image attachments for processing. The framework automatically 
 # Task with single image
 task = Task(
     description="Describe what you see in the attached image",
-    attachments=["image.png"]
+    context=["image.png"]
 )
 ```
 
@@ -17,7 +17,7 @@ task = Task(
 # Task with multiple images
 task = Task(
     description="Compare the two attached images and identify similarities and differences",
-    attachments=["image1.jpg", "image2.jpg"]
+    context=["image1.jpg", "image2.jpg"]
 )
 ```
 
@@ -27,7 +27,7 @@ task = Task(
 # Task with images and other context
 task = Task(
     description="Analyze the attached chart and provide insights based on the market data",
-    attachments=["chart.png"],
+    context=["chart.png"],
     context=[market_data_task]
 )
 ```
@@ -46,7 +46,7 @@ The framework supports various image formats including:
 # Example with different image formats
 task = Task(
     description="Analyze all the attached images",
-    attachments=["photo.jpg", "diagram.png", "chart.tiff"]
+    context=["photo.jpg", "diagram.png", "chart.tiff"]
 )
 ```
 
@@ -64,7 +64,7 @@ def image_analyzer(image_path: str) -> str:
 # Task combining image attachments with image analysis tools
 task = Task(
     description="Analyze the attached images using the image analyzer tool",
-    attachments=["image1.jpg", "image2.png"],
+    context=["image1.jpg", "image2.png"],
     tools=[image_analyzer]
 )
 ```
