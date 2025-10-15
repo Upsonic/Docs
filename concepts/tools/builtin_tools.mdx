@@ -37,23 +37,51 @@ Upsonic's built-in tools are pre-configured, production-ready tools that provide
 
 Upsonic provides built-in tools that are ready to use out of the box. These tools include web search, web reading, and model provider-specific tools.
 
+## Model Provider Compatibility
+
+Built-in tools work with specific model providers:
+
+- **WebSearchTool**: ✅ OpenAI Responses API, Anthropic, Google
+- **CodeExecutionTool**: ✅ OpenAI Responses API, Anthropic, Google  
+- **UrlContextTool**: ✅ Google only
+
+**Important**: Use the correct model provider for built-in tools:
+- For OpenAI: Use `openai-responses/gpt-4o` (not `openai/gpt-4o`)
+- For Azure OpenAI: Built-in tools are NOT supported - use custom tools instead
+
+## Azure OpenAI Limitations
+
+**Built-in tools (WebSearchTool, CodeExecutionTool) do NOT work with Azure OpenAI.**
+
+- ❌ Azure OpenAI: Not supported (use custom tools instead)
+- ✅ Standard OpenAI API: Full support with `openai-responses/gpt-4o`
+- ✅ Anthropic: Full support
+- ✅ Google: Full support
+
 ## WebSearch Function
 
 The `WebSearch` function allows you to search the web using DuckDuckGo and return formatted results.
 
 ```python
-from upsonic.tasks.tasks import Task
-from upsonic.agent.agent import Agent
+from upsonic import Agent, Task
 from upsonic.tools.builtin_tools import WebSearch
+from upsonic.models.openai import OpenAIResponsesModel
+
+# Create OpenAIResponsesModel with standard OpenAI provider
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"  # Use standard OpenAI provider
+)
 
 task = Task(
     description="Search for information about Python programming and summarize the results",
     tools=[WebSearch]
 )
 
-agent = Agent(model="openai/gpt-4o", name="Web Search Agent")
+agent = Agent(model=model, name="Web Search Agent", debug=False)
 
-agent.print_do(task)
+result = agent.do(task)
+print(f"Result: {result}")
 ```
 
 ### WebSearch Parameters
@@ -64,6 +92,17 @@ agent.print_do(task)
 ### Example Usage
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.tools.builtin_tools import WebSearch
+from upsonic.models.openai import OpenAIResponsesModel
+
+# Create OpenAIResponsesModel with standard OpenAI provider
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"  # Use standard OpenAI provider
+)
+
 # Search with custom parameters
 @tool
 def custom_web_search(query: str, max_results: int = 5) -> str:
@@ -75,9 +114,10 @@ task = Task(
     tools=[custom_web_search]
 )
 
-agent = Agent(model="openai/gpt-4o", name="Custom Search Agent")
+agent = Agent(model=model, name="Custom Search Agent", debug=False)
 
-agent.print_do(task)
+result = agent.do(task)
+print(f"Result: {result}")
 ```
 
 ## WebRead Function
@@ -85,16 +125,25 @@ agent.print_do(task)
 The `WebRead` function allows you to read and extract text content from web pages.
 
 ```python
+from upsonic import Agent, Task
 from upsonic.tools.builtin_tools import WebRead
+from upsonic.models.openai import OpenAIResponsesModel
+
+# Create OpenAIResponsesModel with standard OpenAI provider
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"  # Use standard OpenAI provider
+)
 
 task = Task(
     description="Read content from https://www.python.org and summarize it",
     tools=[WebRead]
 )
 
-agent = Agent(model="openai/gpt-4o", name="Web Reader Agent")
+agent = Agent(model=model, name="Web Reader Agent", debug=False)
 
-agent.print_do(task)
+result = agent.do(task)
+print(f"Result: {result}")
 ```
 
 ### WebRead Parameters
@@ -104,6 +153,17 @@ agent.print_do(task)
 ### Example Usage
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.tools.builtin_tools import WebRead
+from upsonic.models.openai import OpenAIResponsesModel
+
+# Create OpenAIResponsesModel with standard OpenAI provider
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"  # Use standard OpenAI provider
+)
+
 # Read multiple URLs
 @tool
 def read_multiple_urls(urls: list[str]) -> str:
@@ -119,10 +179,10 @@ task = Task(
     tools=[read_multiple_urls]
 )
 
-# Use OpenAI Responses API for built-in tools support
-agent = Agent(model="openai-responses/gpt-4o", name="Multi-URL Reader Agent")
+agent = Agent(model=model, name="Multi-URL Reader Agent", debug=False)
 
-agent.print_do(task)
+result = agent.do(task)
+print(f"Result: {result}")
 ```
 
 ## Model Provider Built-in Tools
@@ -134,7 +194,15 @@ These tools are designed to work with specific model providers and provide nativ
 A built-in tool that allows models to search the web for information. Supported by Anthropic, OpenAI Responses API, and Google.
 
 ```python
-from upsonic.tools.builtin_tools import WebSearchTool, WebSearchUserLocation
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import WebSearchTool
+from upsonic.models.openai import OpenAIResponsesModel
+
+# Create OpenAIResponsesModel with standard OpenAI provider
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"  # Use standard OpenAI provider
+)
 
 # Basic web search tool
 web_search_tool = WebSearchTool()
@@ -151,15 +219,18 @@ advanced_web_search = WebSearchTool(
     max_uses=10
 )
 
+# Create task focused on web search
 task = Task(
     description="Search for latest AI news using the builtin web search tool",
     tools=[advanced_web_search]
 )
 
-# Use OpenAI Responses API for built-in tools support
-agent = Agent(model="openai-responses/gpt-4o", name="Advanced Search Agent")
+# Create agent with the model
+agent = Agent(model=model, name="Web Search Agent", debug=False)
 
-agent.print_do(task)
+# Execute the task
+result = agent.do(task)
+print(f"Result: {result}")
 ```
 
 ### CodeExecutionTool
@@ -167,19 +238,31 @@ agent.print_do(task)
 A built-in tool that allows models to execute code. Supported by Anthropic, OpenAI Responses API, and Google.
 
 ```python
+from upsonic import Agent, Task
 from upsonic.tools.builtin_tools import CodeExecutionTool
+from upsonic.models.openai import OpenAIResponsesModel
 
-code_tool = CodeExecutionTool()
-
-task = Task(
-    description="Write and execute Python code to calculate the sum of numbers 1 to 10",
-    tools=[code_tool]
+# Create OpenAIResponsesModel with standard OpenAI provider
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"  # Use standard OpenAI provider
 )
 
-# Use OpenAI Responses API for built-in tools support
-agent = Agent(model="openai-responses/gpt-4o", name="Code Execution Agent")
+# Create code execution tool
+code_execution = CodeExecutionTool()
 
-agent.print_do(task)
+# Create task focused on code execution
+task = Task(
+    description="Write a Python function that calculates the factorial of a number and test it with the value 5",
+    tools=[code_execution]
+)
+
+# Create agent with the model
+agent = Agent(model=model, name="Code Execution Agent", debug=False)
+
+# Execute the task
+result = agent.do(task)
+print(f"Result: {result}")
 ```
 
 ### UrlContextTool
@@ -207,23 +290,37 @@ agent.print_do(task)
 You can combine multiple built-in tools in a single task:
 
 ```python
-from upsonic.tools.builtin_tools import WebSearch, WebRead
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import WebSearchTool, CodeExecutionTool
+from upsonic.models.openai import OpenAIResponsesModel
 
-# Create various built-in tools
-web_search_func = WebSearch
-web_read_func = WebRead
-
-task = Task(
-    description="Search for Python tutorials, read a specific tutorial, and write code to demonstrate concepts",
-    tools=[
-        web_search_func,
-        web_read_func,
-    ]
+# Create OpenAIResponsesModel with standard OpenAI provider
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"  # Use standard OpenAI provider
 )
 
-agent = Agent(model="openai/gpt-4o", name="Multi-Builtin Agent")
+# Web search tool with high context size and max uses
+web_search = WebSearchTool(
+    search_context_size='high',
+    max_uses=5
+)
 
-agent.print_do(task)
+# Code execution tool
+code_execution = CodeExecutionTool()
+
+# Create task that combines both tools
+task = Task(
+    description="Search for Python best practices and write a sample function",
+    tools=[web_search, code_execution]
+)
+
+# Create agent with the model
+agent = Agent(model=model, name="Research & Code Agent", debug=False)
+
+# Execute the task
+result = agent.do(task)
+print(f"Result: {result}")
 ```
 
 ## Custom Wrappers for Built-in Tools
@@ -231,8 +328,16 @@ agent.print_do(task)
 You can create custom wrappers around built-in tools to add specific functionality:
 
 ```python
+from upsonic import Agent, Task
 from upsonic.tools import tool
 from upsonic.tools.builtin_tools import WebSearch, WebRead
+from upsonic.models.openai import OpenAIResponsesModel
+
+# Create OpenAIResponsesModel with standard OpenAI provider
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"  # Use standard OpenAI provider
+)
 
 @tool(
     cache_results=True,
@@ -255,9 +360,10 @@ task = Task(
     tools=[cached_web_search, confirmed_web_read]
 )
 
-agent = Agent(model="openai/gpt-4o", name="Custom Builtin Wrapper Agent")
+agent = Agent(model=model, name="Custom Builtin Wrapper Agent", debug=False)
 
-agent.print_do(task)
+result = agent.do(task)
+print(f"Result: {result}")
 ```
 
 ## Best Practices
@@ -303,16 +409,9 @@ def robust_web_search(query: str, max_results: int = 10) -> str:
 - **Timeout**: Provider-managed (not configurable by framework)
 - **Parallel execution**: ❌ Always sequential (executed by model provider)
 
-## Model Provider Compatibility
-
-Built-in tools work with specific model providers:
-
-- **WebSearchTool**: ✅ OpenAI Responses API, Anthropic, Google
-- **CodeExecutionTool**: ✅ OpenAI Responses API, Anthropic, Google  
-- **UrlContextTool**: ✅ Google only
-
-**Important**: Use the correct model provider for built-in tools:
-- For OpenAI: Use `openai-responses/gpt-4o` (not `openai/gpt-4o`)
+### **Azure OpenAI Compatibility**
+- Built-in tools: ❌ Not supported
+- Custom tools: ✅ Full support with `azure/gpt-4o`
 
 ## Key Differences from Custom Function Tools
 
@@ -378,6 +477,9 @@ These are model provider-specific tools executed by the provider's infrastructur
 
 **"WebSearchTool is not supported with OpenAIChatModel"**
 - **Solution**: Use `openai-responses/gpt-4o` instead of `openai/gpt-4o`
+
+**"Unsupported data type" error with Azure OpenAI**
+- **Solution**: Built-in tools don't work with Azure OpenAI. Use custom tools or switch to standard OpenAI API.
 
 **"UrlContextTool is not supported by OpenAIResponsesModel"**
 - **Solution**: Use `google` provider

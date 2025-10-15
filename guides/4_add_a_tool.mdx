@@ -137,6 +137,129 @@ async def well_documented_tool(param: str, option: bool = True) -> Dict[str, Any
     pass
 ```
 
+## User Interaction Features
+
+### Requires Confirmation
+
+Pause execution and require user confirmation before a tool runs. Perfect for sensitive operations like deletions, sending emails, or financial transactions.
+
+```python
+@tool(requires_confirmation=True)
+def delete_file(file_path: str) -> str:
+    """Delete a file from the system."""
+    return f"File '{file_path}' deleted successfully."
+
+task = Task(
+    description="Delete the old_data.txt file",
+    tools=[delete_file]
+)
+
+agent = Agent(model="openai/gpt-4o")
+result = agent.do(task)
+# User will be prompted: "Proceed? (y/n): "
+```
+
+### Requires User Input
+
+Collect specific field values from the user at runtime. Useful for credentials, personal information, or dynamic parameters.
+
+```python
+@tool(
+    requires_user_input=True, 
+    user_input_fields=["api_key", "secret_token"]
+)
+def authenticate_service(service_name: str, api_key: str = "", secret_token: str = "") -> str:
+    """Authenticate with an external service."""
+    return f"Authenticated with {service_name}"
+
+task = Task(
+    description="Authenticate with the payment service",
+    tools=[authenticate_service]
+)
+
+agent = Agent(model="openai/gpt-4o")
+result = agent.do(task)
+# User will be prompted for each field:
+# Enter value for 'api_key': 
+# Enter value for 'secret_token':
+```
+
+### Combined User Interaction
+
+Use both features together for maximum control:
+
+```python
+@tool(
+    requires_user_input=True,
+    user_input_fields=["password"]
+)
+def reset_database(database_name: str, password: str = "") -> str:
+    """Reset a database (requires confirmation and password)."""
+    return f"Database '{database_name}' has been reset."
+```
+
+## External Tool Execution (Human-in-the-Loop)
+
+Execute tools outside the agent's automatic flow, enabling human-in-the-loop workflows for security-sensitive operations, external integrations, and cost control.
+
+### Basic External Execution
+
+```python
+@tool(external_execution=True)
+def execute_shell_command(command: str) -> str:
+    """Execute a shell command externally."""
+    import subprocess
+    return subprocess.check_output(command, shell=True).decode("utf-8")
+
+task = Task(
+    description="List files in the current directory",
+    tools=[execute_shell_command]
+)
+
+agent = Agent(model="openai/gpt-4o")
+
+# Initial execution - agent pauses when tool is needed
+result = agent.do(task)
+
+# Check if execution paused
+if task.is_paused and task.tools_awaiting_external_execution:
+    # Execute each tool externally
+    for tool_call in task.tools_awaiting_external_execution:
+        print(f"Tool: {tool_call.tool_name}")
+        print(f"Args: {tool_call.args}")
+        
+        # Execute the tool yourself
+        external_result = execute_shell_command(**tool_call.args)
+        
+        # Set the result back
+        tool_call.result = external_result
+    
+    # Continue execution with the results
+    final_result = agent.continue_run(task)
+```
+
+### Security-Sensitive Operations
+
+```python
+@tool(external_execution=True)
+def delete_production_data(table_name: str) -> str:
+    """Delete data from production (requires manual execution)."""
+    return f"Deleted data from {table_name}"
+
+# Review before executing
+if task.is_paused:
+    for tool_call in task.tools_awaiting_external_execution:
+        print(f"⚠️  About to delete from: {tool_call.args['table_name']}")
+        confirm = input("Proceed? (yes/no): ")
+        
+        if confirm == "yes":
+            tool_call.result = delete_production_data(**tool_call.args)
+        else:
+            tool_call.result = "Operation cancelled by user"
+    
+    final_result = agent.continue_run(task)
+```
+
 ## Let's Create Custom Tools for a Website Analysis Agent
 
 In this example, we'll create basic tools and show how to add user confirmation for sensitive operations.
@@ -278,6 +401,36 @@ analysis_task = Task(
 result = website_analyzer_agent.do(analysis_task)
 print("Analysis Complete:", result)
 ```
+
+## When to Use Each Feature
+
+**Use `requires_confirmation` for:**
+- Destructive operations (delete, reset, drop)
+- Sensitive actions (send email, publish content)
+- Financial transactions (transfer money, make payment)
+
+**Use `requires_user_input` for:**
+- Credentials (API keys, passwords, tokens)
+- Personal information (name, age, address)
+- Dynamic parameters that change per execution
+- Sensitive data that shouldn't be in code
+
+**Use `external_execution` for:**
+- Security-sensitive operations requiring manual review
+- External integrations with special credentials
+- Hardware or network resources not accessible to the agent
+- Cost control over expensive operations
+- Compliance and audit requirements
+
+## Best Practices Summary
+
+1. **Clear Purpose:** Each tool should have a single, well-defined responsibility
+2. **Type Safety:** All parameters and return values must have explicit type hints
+3. **Documentation:** Comprehensive docstrings explaining usage and expected behavior
+4. **Error Handling:** Graceful failure handling with meaningful error messages
+5. **Security:** Use `requires_user_input` for credentials, never hardcode sensitive data
+6. **Validation:** Always validate inputs before processing
+7. **User Experience:** Provide clear prompts and helpful error messages
 
 **Need more advanced features?** The `@tool` decorator supports many powerful configuration options including:
 

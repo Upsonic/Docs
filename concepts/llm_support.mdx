@@ -315,7 +315,7 @@ agent = Agent(model=model)
 ```python
 from upsonic import Agent
 from upsonic.models.openai import OpenAIChatModelSettings
-from upsonic.profiles import ModelProfile
+from upsonic.profiles import OpenAIModelProfile
 
 # Create settings
 settings = OpenAIChatModelSettings(
@@ -326,9 +326,11 @@ settings = OpenAIChatModelSettings(
 )
 
 # Create profile
-profile = ModelProfile(
+profile = OpenAIModelProfile(
     supports_tools=True,
-    supports_json_object_output=True
+    supports_json_object_output=True,
+    openai_chat_supports_web_search=True,
+    openai_supports_sampling_settings
 )
 
 # Create agent with model, settings, and profile
