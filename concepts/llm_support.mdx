@@ -314,11 +314,11 @@ agent = Agent(model=model)
 
 ```python
 from upsonic import Agent
-from upsonic.models.openai import OpenAIChatModelSettings
+from upsonic.models.openai import OpenAIResponsesModelSettings
 from upsonic.profiles import OpenAIModelProfile
 
 # Create settings
-settings = OpenAIChatModelSettings(
+settings = OpenAIResponsesModelSettings(
     max_tokens=1024,
     temperature=0.5,
     openai_reasoning_effort="high",
@@ -409,16 +409,16 @@ result = agent.do(task)
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+from upsonic.models.openai import OpenAIResponsesModel, OpenAIResponsesModelSettings
 
-settings = OpenAIChatModelSettings(
+settings = OpenAIResponsesModelSettings(
     max_tokens=2048,
     temperature=0.2,
     openai_reasoning_effort="high",
     openai_reasoning_summary="detailed"
 )
 
-model = OpenAIChatModel(
+model = OpenAIResponsesModel(
     model_name="o1-preview",
     settings=settings
 )
