@@ -5,11 +5,11 @@ Knowledge bases can be added to tasks to provide RAG (Retrieval-Augmented Genera
 
 ```python
 from upsonic import KnowledgeBase
-from upsonic.embeddings import OpenAIEmbeddingProvider
+from upsonic.embeddings import OpenAIEmbedding
 from upsonic.vectordb import ChromaVectorDB
 
 # Create knowledge base
-embedding_provider = OpenAIEmbeddingProvider()
+embedding_provider = OpenAIEmbedding()
 vectordb = ChromaVectorDB()
 
 knowledge_base = KnowledgeBase(
