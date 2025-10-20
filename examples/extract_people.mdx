@@ -1,0 +1,224 @@
+# Extract People
+
+This example demonstrates how to build a simple **Upsonic LLM agent** that extracts all person names mentioned in a given text using structured output.
+
+## Overview
+
+The agent takes a paragraph of text as input and returns a list of all people mentioned in it. This is useful for:
+
+- **Named Entity Recognition (NER)** — extracting people from articles, documents, or transcripts
+- **Contact Discovery** — identifying key individuals mentioned in meeting notes or emails
+- **Data Extraction** — parsing unstructured text for specific information
+- **Content Analysis** — understanding who is mentioned in text content
+
+The agent uses a single LLM Task with a structured response format to ensure consistent output.
+
+## Key Features
+
+- **Structured Output**: Uses Pydantic models for type-safe responses
+- **Comprehensive Extraction**: Identifies all person names in text
+- **Flexible Input**: Works with any text content
+- **Easy Integration**: Simple API for text processing
+- **Extensible**: Can be adapted for other entity types
+
+## Code Structure
+
+### Response Model
+
+```python
+class PeopleResponse(BaseModel):
+    people: list[str] = Field(..., description="List of all people mentioned in the text")
+```
+
+### Agent Setup
+
+```python
+extract_people_agent = Agent(name="people_extractor")
+```
+
+### Task Definition
+
+```python
+task = Task(
+    description=f"Extract all the person names mentioned in the following text:\n\n{paragraph}",
+    response_format=PeopleResponse,
+)
+```
+
+## Complete Implementation
+
+```python
+# task_examples/extract_people/extract_people.py
+
+from pydantic import BaseModel, Field
+from upsonic import Agent, Task
+
+# --- Step 1: Define response format ---
+class PeopleResponse(BaseModel):
+    people: list[str] = Field(..., description="List of all people mentioned in the text")
+
+# --- Step 2: Define the agent ---
+extract_people_agent = Agent(name="people_extractor")
+
+# --- Step 3: Example usage ---
+if __name__ == "__main__":
+    paragraph = (
+        "Last week, Elon Musk met with Bill Gates and Jeff Bezos in California to discuss the future of space exploration and AI safety. "
+        "Meanwhile, Taylor Swift and Beyoncé were seen attending a charity event organized by Oprah Winfrey and Barack Obama in New York. "
+        "Mark Zuckerberg and Sundar Pichai joined Tim Cook for a roundtable about responsible technology innovation, while Serena Williams and LeBron James spoke about athlete mental health. "
+        "Later in the evening, Michelle Obama delivered a heartfelt speech, joined by Malala Yousafzai and Greta Thunberg, who emphasized the importance of education and climate action. "
+        "Across the globe, Pope Francis and the Dalai Lama held an interfaith dialogue in Rome, and Lionel Messi congratulated Cristiano Ronaldo on his milestone goal. "
+        "At the same time, Emma Watson and Leonardo DiCaprio discussed sustainable fashion with Natalie Portman and Ryan Reynolds. "
+        "Finally, in a surprising turn, Warren Buffett and Charlie Munger announced new philanthropic initiatives inspired by Melinda Gates and Mackenzie Scott."
+    )
+
+    task = Task(
+        description=f"Extract all the person names mentioned in the following text:\n\n{paragraph}",
+        response_format=PeopleResponse,
+    )
+
+    result = extract_people_agent.do(task)
+    print(result)
+```
+
+## How It Works
+
+1. **Input**: The agent receives a paragraph of text containing mentions of various people
+2. **Processing**: The LLM analyzes the text and identifies all person names
+3. **Output**: Returns a structured `PeopleResponse` object with a list of names in the `people` field
+
+## Usage
+
+### Setup
+
+```bash
+uv sync
+```
+
+### Run the example
+
+```bash
+uv run task_examples/extract_people/extract_people.py
+```
+
+### Example Output
+
+```python
+PeopleResponse(
+    people=[
+        'Elon Musk',
+        'Bill Gates',
+        'Jeff Bezos',
+        'Taylor Swift',
+        'Beyoncé',
+        'Oprah Winfrey',
+        'Barack Obama',
+        'Mark Zuckerberg',
+        'Sundar Pichai',
+        'Tim Cook',
+        'Serena Williams',
+        'LeBron James',
+        'Michelle Obama',
+        'Malala Yousafzai',
+        'Greta Thunberg',
+        'Pope Francis',
+        'Dalai Lama',
+        'Lionel Messi',
+        'Cristiano Ronaldo',
+        'Emma Watson',
+        'Leonardo DiCaprio',
+        'Natalie Portman',
+        'Ryan Reynolds',
+        'Warren Buffett',
+        'Charlie Munger',
+        'Melinda Gates',
+        'Mackenzie Scott'
+    ]
+)
+```
+
+## Advanced Usage
+
+### Custom Text Processing
+
+```python
+def extract_people_from_text(text: str) -> list[str]:
+    """Extract people from any text input."""
+    task = Task(
+        description=f"Extract all person names from: {text}",
+        response_format=PeopleResponse
+    )
+    result = extract_people_agent.do(task)
+    return result.people
+
+# Usage
+text = "John met with Sarah and Mike at the conference."
+people = extract_people_from_text(text)
+print(people)  # ['John', 'Sarah', 'Mike']
+```
+
+### Batch Processing
+
+```python
+def process_multiple_texts(texts: list[str]) -> list[list[str]]:
+    """Process multiple texts and extract people from each."""
+    results = []
+    for text in texts:
+        task = Task(
+            description=f"Extract people from: {text}",
+            response_format=PeopleResponse
+        )
+        result = extract_people_agent.do(task)
+        results.append(result.people)
+    return results
+```
+
+### Enhanced Entity Extraction
+
+```python
+class EnhancedPeopleResponse(BaseModel):
+    people: list[str] = Field(..., description="List of all people mentioned")
+    first_names: list[str] = Field(..., description="List of first names only")
+    last_names: list[str] = Field(..., description="List of last names only")
+    titles: list[str] = Field(..., description="List of titles (Dr., Mr., etc.)")
+
+task = Task(
+    description="Extract people with detailed breakdown",
+    response_format=EnhancedPeopleResponse
+)
+```
+
+## Use Cases
+
+- **Meeting Notes**: Extract attendees and mentioned people from meeting transcripts
+- **News Analysis**: Identify people mentioned in news articles
+- **Social Media**: Extract people from social media posts and comments
+- **Legal Documents**: Identify parties mentioned in legal texts
+- **Academic Papers**: Extract authors and cited researchers
+- **Customer Support**: Identify people mentioned in support tickets
+
+## File Structure
+
+```bash
+task_examples/extract_people/
+├── extract_people.py      # Main people extraction agent
+└── README.md              # Documentation
+```
+
+## Performance Considerations
+
+- **Text Length**: Works best with paragraphs up to 2000 words
+- **Name Variations**: Handles nicknames, titles, and formal names
+- **Context Awareness**: Uses surrounding text to identify people
+- **Accuracy**: High accuracy for well-known names, may vary for uncommon names
+
+## Notes
+
+- **Fully autonomous**: The LLM performs all reasoning — no manual logic or regex
+- **Minimal architecture**: One Task, one prompt, one result
+- **Extendable**: Easily add new entity types or modify extraction logic
+- **Use case**: Ideal for content analysis, data extraction, and information processing
+
+## Repository
+
+View the complete example: [Extract People Example](https://github.com/Upsonic/Examples/tree/master/task_examples/extract_people)

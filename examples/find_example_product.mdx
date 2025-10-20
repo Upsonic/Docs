@@ -1,0 +1,324 @@
+# Find Example Product
+
+This example demonstrates how to build **Upsonic LLM agents** that autonomously explore ecommerce websites and extract structured product data — powered by the Serper API for web scraping and LLM-driven reasoning for intelligent navigation.
+
+## Overview
+
+In this task, the agent:
+
+1. **Finds** the official website of a company using the `find_company_website` agent
+2. **Explores** the site intelligently using a `website_scraping` tool (Serper API)
+3. **Extracts** structured product information — including name, price, brand, availability, and URL — from one of the product pages
+
+Unlike traditional scrapers, this agent uses **LLM reasoning** to decide which pages to explore, how to navigate the site, and when to retry.
+
+## Key Features
+
+- **Autonomous Exploration**: LLM handles all website navigation and product discovery
+- **Intelligent Navigation**: Dynamically explores product pages without hardcoded paths
+- **Structured Extraction**: Returns validated product data in Pydantic models
+- **Serper Integration**: Uses Serper API for reliable web scraping
+- **Error Handling**: Graceful handling of failed requests and invalid pages
+
+## Code Structure
+
+### Response Model
+
+```python
+class ProductInfo(BaseModel):
+    product_name: str
+    product_price: Optional[str]
+    product_brand: Optional[str]
+    availability: Optional[str]
+    url: Optional[str]
+```
+
+### Website Scraping Tool
+
+```python
+def website_scraping(url: str) -> dict:
+    """
+    Use Serper API to fetch website content.
+    Returns a dict with {url, content}.
+    """
+    endpoint = "https://google.serper.dev/scrape"
+    headers = {"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"}
+    payload = {"url": url}
+
+    try:
+        resp = requests.post(endpoint, headers=headers, json=payload, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        return {"url": url, "content": data.get("text", "")}
+    except Exception as e:
+        print(f"Serper scraping failed for {url}: {e}")
+        return {"url": url, "content": ""}
+```
+
+## Complete Implementation
+
+```python
+import os
+import sys
+import json
+import requests
+from typing import Optional
+from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# Ensure repo root path for Upsonic imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from upsonic import Agent, Task
+from task_examples.find_company_website.find_company_website import find_company_website
+
+# --- Config ---
+load_dotenv()
+SERPER_API_KEY = os.getenv("SERPER_API_KEY")
+
+if not SERPER_API_KEY:
+    raise ValueError("SERPER_API_KEY missing in .env file.")
+
+
+# --- Response Model ---
+class ProductInfo(BaseModel):
+    product_name: str
+    product_price: Optional[str]
+    product_brand: Optional[str]
+    availability: Optional[str]
+    url: Optional[str]
+
+
+# --- Website Scraping Tool using Serper ---
+def website_scraping(url: str) -> dict:
+    """
+    Use Serper API to fetch website content.
+    Returns a dict with {url, content}.
+    """
+    endpoint = "https://google.serper.dev/scrape"
+    headers = {"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"}
+    payload = {"url": url}
+
+    try:
+        resp = requests.post(endpoint, headers=headers, json=payload, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        return {"url": url, "content": data.get("text", "")}
+    except Exception as e:
+        print(f"Serper scraping failed for {url}: {e}")
+        return {"url": url, "content": ""}
+
+
+# --- Agent Setup ---
+example_product_agent = Agent(name="example_product_agent")
+
+
+# --- CLI + Task definition ---
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Find an example product from a company's website using Serper & LLM.")
+    parser.add_argument("--company", required=True, help="Company name, e.g. 'Nike', 'Adidas', 'Mavi'")
+    args = parser.parse_args()
+
+    # Define Task prompt
+    task_prompt = f"""
+You are an intelligent agent tasked with finding an example product from {args.company}'s website.
+
+Steps:
+1. Use the `find_company_website` tool to get the official company website.
+2. Then use `website_scraping` to read the website content.
+3. Identify relevant sublinks or sections that likely contain product information (e.g., products, shop, catalog, collections, items).
+4. Use `website_scraping` again to fetch those subpages as needed.
+5. If you find a valid product page, extract:
+   - product_name
+   - product_price
+   - product_brand
+   - availability
+   - url (the product page link)
+6. Return the structured data as `ProductInfo`.
+If you cannot find a product, retry with different relevant sublinks before giving up.
+    """
+
+    task = Task(
+        description=task_prompt.strip(),
+        tools=[website_scraping, find_company_website],
+        response_format=ProductInfo,
+    )
+
+    result = example_product_agent.do(task)
+    print("\n" + "="*60)
+    print("📦 FINAL RESULT")
+    print("="*60)
+    print(result.model_dump_json(indent=2))
+    print("="*60)
+```
+
+## How It Works
+
+### 1. Website Discovery
+
+- Uses `find_company_website` to locate and validate the company's official homepage
+- Ensures the website is legitimate and belongs to the specified company
+
+### 2. Intelligent Exploration
+
+- The LLM agent uses the `website_scraping` tool (Serper API) to fetch page content
+- It identifies product-related sublinks such as `/shop`, `/products`, `/collections`, etc.
+- It navigates autonomously through relevant subpages until it finds a valid product
+
+### 3. Product Extraction
+
+Once a product page is found, the LLM extracts:
+- `product_name`: The name of the product
+- `product_price`: Current price (if available)
+- `product_brand`: Brand name
+- `availability`: Stock status
+- `url`: Direct link to the product page
+
+The extracted data is returned in a validated `ProductInfo` Pydantic model.
+
+## Usage
+
+### Setup
+
+1. Install dependencies:
+
+```bash
+uv sync
+```
+
+2. Configure your Serper API key:
+
+Copy `.env.example` to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` and add your API key:
+
+```ini
+SERPER_API_KEY=your_serper_api_key_here
+```
+
+You can get a free key from [https://serper.dev](https://serper.dev).
+
+### Run the Agent
+
+Run the agent for any company name:
+
+```bash
+uv run task_examples/find_example_product/find_example_product.py --company "Mavi"
+```
+
+**Example output:**
+
+```json
+{
+  "product_name": "STEVE ATHLETIC FIT JEANS IN DARK INK SUPERMOVE",
+  "product_price": "$128.00",
+  "product_brand": "Mavi",
+  "availability": "In Stock",
+  "url": "https://us.mavi.com/products/steve-dark-ink-supermove"
+}
+```
+
+Try it with other companies:
+
+```bash
+uv run task_examples/find_example_product/find_example_product.py --company "Nike"
+uv run task_examples/find_example_product/find_example_product.py --company "Adidas"
+uv run task_examples/find_example_product/find_example_product.py --company "Apple"
+```
+
+## Advanced Usage
+
+### Custom Product Extraction
+
+```python
+def find_products_by_category(company: str, category: str) -> list[ProductInfo]:
+    """Find products in a specific category."""
+    task_prompt = f"""
+    Find products in the {category} category from {company}'s website.
+    Extract multiple products if available.
+    """
+    
+    task = Task(
+        description=task_prompt,
+        tools=[website_scraping, find_company_website],
+        response_format=ProductInfo
+    )
+    
+    return agent.do(task)
+```
+
+### Batch Company Processing
+
+```python
+def find_products_for_multiple_companies(companies: list[str]) -> dict:
+    """Find example products for multiple companies."""
+    results = {}
+    for company in companies:
+        task = Task(
+            description=f"Find an example product from {company}",
+            tools=[website_scraping, find_company_website],
+            response_format=ProductInfo
+        )
+        result = agent.do(task)
+        results[company] = result
+    return results
+```
+
+### Enhanced Product Information
+
+```python
+class EnhancedProductInfo(BaseModel):
+    product_name: str
+    product_price: Optional[str]
+    product_brand: Optional[str]
+    availability: Optional[str]
+    url: Optional[str]
+    description: Optional[str]
+    image_url: Optional[str]
+    category: Optional[str]
+    rating: Optional[float]
+    reviews_count: Optional[int]
+```
+
+## Use Cases
+
+- **Competitive Analysis**: Extract product information from competitor websites
+- **Price Monitoring**: Track product prices across different companies
+- **Product Research**: Gather product data for market analysis
+- **E-commerce Intelligence**: Understand product offerings and pricing strategies
+- **Market Research**: Analyze product categories and availability
+
+## File Structure
+
+```bash
+task_examples/find_example_product/
+├── find_example_product.py      # Main LLM agent script
+└── README.md                    # Documentation
+
+.env.example                     # Example environment file (root)
+```
+
+## Notes
+
+- **No custom scraping** — all content retrieval uses Serper's API
+- **No path or subdomain restrictions** — the LLM determines navigation dynamically
+- **Unified Task design**: website discovery → exploration → extraction handled within one Task object
+- **Type-safe output** using the Pydantic `ProductInfo` model
+- Requires the `find_company_website` example for website lookup
+
+## Dependencies
+
+This example depends on:
+- **Serper API**: For web scraping functionality
+- **Find Company Website**: For website discovery and validation
+- **Upsonic Framework**: For LLM agent orchestration
+
+## Repository
+
+View the complete example: [Find Example Product Example](https://github.com/Upsonic/Examples/tree/master/task_examples/find_example_product)

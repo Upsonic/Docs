@@ -1,0 +1,416 @@
+# Find Agreement Links
+
+This example demonstrates how to build an **Upsonic LLM agent** that can autonomously find and verify agreement or policy pages on a company's ecommerce website — such as Privacy Policy, Terms of Use, or Cookie Policy — using web scraping and LLM reasoning for exploration and validation.
+
+## Overview
+
+In this task, the agent:
+
+1. **Explores** the website intelligently using a single `website_scraping` tool
+2. **Identifies** links that are likely related to agreements or policies (e.g., privacy, terms, refund, cookie, legal)
+3. **Follows** those links autonomously and determines whether each page is a valid agreement or policy document
+4. **Returns** structured results, including link availability and verification
+
+Unlike traditional scripts, this task delegates all exploration and reasoning to the LLM agent — keeping the implementation lightweight and adaptable.
+
+## Key Features
+
+- **Autonomous Exploration**: LLM handles all website navigation and link discovery
+- **Intelligent Verification**: Determines if pages contain actual policy content
+- **Structured Output**: Returns verified agreement links with metadata
+- **Flexible Architecture**: Works with any website structure
+- **No Hardcoded Logic**: All reasoning is handled by the LLM
+
+## Code Structure
+
+### Response Models
+
+```python
+class AgreementLink(BaseModel):
+    url: str
+    is_available: bool
+    is_agreement_page: bool
+
+class AgreementLinksResponse(BaseModel):
+    company_name: str
+    website: str
+    agreements: List[AgreementLink]
+```
+
+### Web Scraping Tool
+
+```python
+def website_scraping(url: str) -> dict:
+    """
+    Scrape a webpage using MarkItDown and convert to markdown.
+    
+    Args:
+        url: The URL to scrape
+        
+    Returns:
+        A dictionary with:
+        - url: The scraped URL
+        - content: The markdown content of the page
+        - links: A list of links found on the page
+    """
+    try:
+        # Use MarkItDown to fetch and convert the page
+        md = MarkItDown()
+        result = md.convert(url)
+        markdown_content = result.text_content
+        
+        # Extract links from the markdown content using regex
+        links = []
+        
+        # Find markdown-style links
+        markdown_links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', markdown_content)
+        for _, link_url in markdown_links:
+            # Convert relative URLs to absolute
+            absolute_url = urljoin(url, link_url)
+            # Only include http/https links
+            if absolute_url.startswith(('http://', 'https://')):
+                links.append(absolute_url)
+        
+        return {
+            "url": url,
+            "content": markdown_content,
+            "links": list(set(links))  # Deduplicate links
+        }
+        
+    except Exception as e:
+        print(f"Error scraping {url}: {str(e)}")
+        return {
+            "url": url,
+            "content": f"Error scraping: {str(e)}",
+            "links": []
+        }
+```
+
+## Complete Implementation
+
+```python
+import os
+import sys
+from typing import List
+from pydantic import BaseModel
+from markitdown import MarkItDown
+from urllib.parse import urljoin, urlparse
+import re
+
+# --- Config ---
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+# --- Pydantic Models ---
+class AgreementLink(BaseModel):
+    url: str
+    is_available: bool
+    is_agreement_page: bool
+
+class AgreementLinksResponse(BaseModel):
+    company_name: str
+    website: str
+    agreements: List[AgreementLink]
+
+# --- Single Tool: Website Scraping with MarkItDown ---
+def website_scraping(url: str) -> dict:
+    """
+    Scrape a webpage using MarkItDown and convert to markdown.
+
+    Args:
+        url: The URL to scrape
+
+    Returns:
+        A dictionary with:
+        - url: The scraped URL
+        - content: The markdown content of the page
+        - links: A list of links found on the page
+    """
+    try:
+        # Use MarkItDown to fetch and convert the page
+        md = MarkItDown()
+        result = md.convert(url)
+        markdown_content = result.text_content
+
+        # Extract links from the markdown content using regex
+        # Look for markdown links [text](url) and HTML links
+        links = []
+
+        # Find markdown-style links
+        markdown_links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', markdown_content)
+        for _, link_url in markdown_links:
+            # Convert relative URLs to absolute
+            absolute_url = urljoin(url, link_url)
+            # Only include http/https links
+            if absolute_url.startswith(('http://', 'https://')):
+                links.append(absolute_url)
+
+        return {
+            "url": url,
+            "content": markdown_content,
+            "links": list(set(links))  # Deduplicate links
+        }
+
+    except Exception as e:
+        print(f"Error scraping {url}: {str(e)}")
+        return {
+            "url": url,
+            "content": f"Error scraping: {str(e)}",
+            "links": []
+        }
+
+# --- Main Execution ---
+if __name__ == "__main__":
+    import argparse
+    from upsonic import Agent, Task
+
+    parser = argparse.ArgumentParser(
+        description="Find agreement/policy links for a company using only LLM reasoning."
+    )
+    parser.add_argument(
+        "--website",
+        required=True,
+        help="Company website URL (e.g., 'https://www.nike.com')"
+    )
+    args = parser.parse_args()
+
+    website = args.website.strip().rstrip("/")
+    # Extract company name from domain for display
+    from urllib.parse import urlparse
+    domain = urlparse(website).netloc.replace("www.", "")
+    company_name = domain.split(".")[0].title()
+
+    print(f"\n🚀 Running Agreement Links Finder for: {website}\n")
+
+    # --- Task Prompt: All logic is handled by the LLM ---
+    task_prompt = f"""
+You are a web exploration agent. Your task is to find agreement/policy pages on {website}.
+
+TOOL AVAILABLE:
+- website_scraping(url) → returns {{"url": str, "content": str, "links": [str, ...]}}
+
+YOUR WORKFLOW (MANDATORY STEPS):
+
+STEP 1: Scrape the homepage
+→ Call website_scraping("{website}")
+→ You'll receive a dictionary with "links" array
+
+STEP 2: Search through the links array
+→ Look for URLs containing: "privacy", "terms", "policy", "legal", "cookie", "return", "shipping"
+→ Identify at least 3-5 candidate URLs
+
+STEP 3: Verify EACH candidate URL
+→ For EACH promising URL, call website_scraping(candidate_url)
+→ Check if the content contains policy/legal text
+→ Keep a list of verified policy pages
+
+STEP 4: If you find fewer than 2 policies
+→ Look for additional links (e.g., "/legal", "/policies", "/help")
+→ Try common policy URLs like: "{website}/privacy-policy" or "{website}/terms"
+→ Scrape and verify those too
+
+STEP 5: Return your findings
+→ Only include URLs you actually scraped and confirmed contain policy content
+
+---
+
+EXAMPLE WORKFLOW:
+
+Call 1: website_scraping("{website}")
+→ Response shows links array with 50+ links
+→ You spot: "/privacy-policy", "/terms-of-use", "/cookie-policy"
+
+Call 2: website_scraping("{website}/privacy-policy")
+→ Content contains "Privacy Policy... we collect data..."
+→ VERIFIED ✓ Add to results
+
+Call 3: website_scraping("{website}/terms-of-use")  
+→ Content contains "Terms of Service... by using..."
+→ VERIFIED ✓ Add to results
+
+Call 4: website_scraping("{website}/cookie-policy")
+→ Content contains "Cookie Policy... we use cookies..."
+→ VERIFIED ✓ Add to results
+
+Return: 3 verified policy URLs
+
+---
+
+CRITICAL RULES:
+
+You MUST make at least 5-8 tool calls (explore multiple links)
+Do NOT return a result until you've verified at least 2-3 policy pages
+Do NOT skip verification - always scrape each candidate URL
+Do NOT make up URLs - only use discovered links or standard patterns
+If first attempt fails, try alternative approaches (search footer links, try common paths)
+
+---
+
+EXPECTED OUTPUT JSON:
+
+{{
+  "company_name": "{company_name}",
+  "website": "{website}",
+  "agreements": [
+    {{"url": "verified_url_1", "is_available": true, "is_agreement_page": true}},
+    {{"url": "verified_url_2", "is_available": true, "is_agreement_page": true}}
+  ]
+}}
+
+---
+
+BEGIN EXPLORATION:
+Start by calling website_scraping("{website}") and begin your multi-step exploration process.
+Do not stop until you've found and verified at least 2 policy pages.
+"""
+
+    # --- Create Agent and Task ---
+    agent = Agent(name="agreement_finder_agent")
+    task = Task(
+        description=task_prompt.strip(),
+        tools=[website_scraping],
+        response_format=AgreementLinksResponse,
+    )
+
+    # --- Execute: Let the LLM handle all reasoning ---
+    print("🤖 Agent is working...\n")
+    result = agent.do(task)
+
+    # --- Display Results ---
+    print("\n" + "=" * 70)
+    print("📋 AGREEMENT LINKS RESULT")
+    print("=" * 70)
+    print(f"\nCompany:  {result.company_name}")
+    print(f"Website:  {result.website}")
+    print(f"\nAgreements found: {len(result.agreements)}\n")
+
+    if result.agreements:
+        for i, link in enumerate(result.agreements, 1):
+            print(f"{i}. {link.url}")
+            print(f"   ✓ Available: {link.is_available}")
+            print(f"   ✓ Is Agreement Page: {link.is_agreement_page}\n")
+    else:
+        print("No agreement/policy links found.\n")
+
+    print("=" * 70)
+```
+
+## How It Works
+
+### 1. Website Discovery
+- The LLM uses the `website_scraping` tool to analyze the main site content
+- It identifies subpages likely to contain legal or policy-related text
+
+### 2. Intelligent Exploration
+- The agent autonomously follows links and checks accessibility
+- It looks for URLs containing keywords like "privacy", "terms", "policy", "legal", "cookie"
+
+### 3. Agreement Verification
+- The LLM determines whether each reachable page is an agreement/policy page
+- It analyzes content for mentions of user data, consent, cookies, terms, etc.
+- Results are returned as structured Pydantic models
+
+## Usage
+
+### Setup
+
+```bash
+uv sync
+```
+
+### Run the agent
+
+```bash
+uv run task_examples/find_agreement_links/find_agreement_links.py --website "https://www.nike.com"
+```
+
+**Example output:**
+
+```json
+{
+  "company_name": "Nike",
+  "website": "https://www.nike.com/",
+  "agreements": [
+    {
+      "url": "https://www.nike.com/legal/privacy-policy",
+      "is_available": true,
+      "is_agreement_page": true
+    },
+    {
+      "url": "https://www.nike.com/legal/terms-of-use",
+      "is_available": true,
+      "is_agreement_page": true
+    }
+  ]
+}
+```
+
+### Try with other companies
+
+```bash
+uv run task_examples/find_agreement_links/find_agreement_links.py --website "https://www.adidas.com"
+uv run task_examples/find_agreement_links/find_agreement_links.py --website "https://www.mavi.com"
+uv run task_examples/find_agreement_links/find_agreement_links.py --website "https://www.zara.com"
+```
+
+## Use Cases
+
+- **Compliance Audits**: Automatically find and verify policy pages for compliance
+- **Legal Research**: Identify legal documents on company websites
+- **Due Diligence**: Verify policy availability during business evaluations
+- **Content Monitoring**: Track changes in company policies over time
+- **Regulatory Compliance**: Ensure required policies are publicly available
+
+## File Structure
+
+```bash
+task_examples/find_agreement_links/
+├── find_agreement_links.py      # Main LLM agent script
+└── README.md                    # Documentation
+```
+
+## Advanced Features
+
+### Custom Policy Detection
+
+```python
+# Modify the task prompt to look for specific policy types
+task_prompt = f"""
+Find the following specific policies on {website}:
+1. Privacy Policy
+2. Terms of Service
+3. Cookie Policy
+4. Refund Policy
+5. Shipping Policy
+
+Use the website_scraping tool to explore and verify each policy.
+"""
+```
+
+### Batch Processing
+
+```python
+def find_policies_for_multiple_sites(websites: list[str]) -> dict:
+    """Find policies for multiple websites."""
+    results = {}
+    for website in websites:
+        task = Task(
+            description=f"Find agreement pages on {website}",
+            tools=[website_scraping],
+            response_format=AgreementLinksResponse
+        )
+        result = agent.do(task)
+        results[website] = result
+    return results
+```
+
+## Notes
+
+- **Lightweight architecture**: The entire process is handled within one Task; Python only defines the tools
+- **No hardcoded logic**: The LLM autonomously explores and verifies
+- **Structured output**: Type-safe Pydantic schema (`AgreementLinksResponse`)
+- **Flexible**: Works with any website structure and design
+- **Autonomous**: Requires minimal human intervention
+
+## Repository
+
+View the complete example: [Find Agreement Links Example](https://github.com/Upsonic/Examples/tree/master/task_examples/find_agreement_links)
