@@ -1,68 +1,153 @@
 ---
 title: "Canvas"
-description: "Allow your agent to perform high-quality text operations."
-
+description: "Create and manage persistent text documents with AI-powered editing"
 ---
 
 ## Overview
 
-Agents working on text-based tasks are highly prone to rewriting the text unnecessarily, editing parts that shouldn't be modified, and introducing errors. This creates a process where developers must manually make adjustments and continuously implement checkpoints, especially when handling text-based use cases.
+Canvas provides a persistent text document system that allows you to create, edit, and manage text content with AI assistance. Without Canvas, text editing requires manual file management and lacks intelligent content organization. With Canvas, you can:
 
-Within the Upsonic framework, we have a Canvas feature specifically designed to address this issue and provide a direct solution. This feature includes specialized and sensitive functions tailored for creating and editing a text canvas.
+* **Create persistent documents** - Build and maintain text documents that persist across sessions
+* **Intelligent editing** - Use AI to intelligently update and modify document sections
+* **Automatic organization** - Let AI handle content placement and document structure
+* **Clean formatting** - Automatically remove code blocks and maintain clean text
+* **Flexible content management** - Add, update, or replace sections as needed
 
-## Creating an Canvas
+## Quick Start
 
-A Canvas is created with a specific name and can be assigned to a Task or class as a tool. This enables Agents or Direct operations to easily perform text edits.
-
-```python
-from upsonic import Canvas
-
-my_travel_guide_canvas = Canvas("Travel Guide") # Creating an canvas with an uniqe name
-```
-
-## Putting Canvas to Agent
-
-You can add them directly as elements within the `canvas` parameter of a Agent, configuring your task to utilize this Canvas.
+### Your First Canvas
 
 ```python
-from upsonic import Agent
-from upsonic import Canvas
+from upsonic import Canvas, Task, Agent
 
-my_travel_guide_canvas = Canvas("Travel Guide") # Creating an canvas with an uniqe name
+# Create a canvas with a name
+canvas = Canvas("My Project Notes")
 
-agent = Agent(
-	name="My Travel Agent",
-	canvas=my_travel_guide_canvas # Adding canvas
+# Get current state (starts empty)
+current_content = canvas.get_current_state_of_canvas()
+print(current_content)  # "Empty Canvas"
+
+# Add initial content
+await canvas.change_in_canvas(
+    new_text_of_part="# Project Overview\nThis is my project documentation",
+    part_definition="overview"
 )
 ```
 
-## Running the canvas
-Once your tasks are executed by the agent, the canvas retains all modifications in a consistent state. This enables you to query or display the final version of the text after all edits have been applied. By decoupling text state from the agent logic, you gain better control over the output, making it easier to debug, review, or pass the final content into downstream systems like editors, emails, or publishing pipelines.
+### Using Canvas with Agent and Task
 
 ```python
-from upsonic import Task, Agent, Canvas
+from upsonic import Canvas, Task, Agent
 
+# Create canvas and agent
+canvas = Canvas("Meeting Notes")
+agent = Agent("openai/gpt-4o")
 
-# My Agent with Canvas
-my_travel_guide_canvas = Canvas("Travel Guide") # Creating an canvas with an uniqe name
-agent = Agent(
-	name="My Travel Agent",
-	canvas=my_travel_guide_canvas # Adding canvas
+# Task to create meeting notes
+task = Task("""
+Create comprehensive meeting notes for our weekly team standup including:
+- Attendees and their roles
+- Key discussion points
+- Action items with owners
+- Next meeting agenda
+""")
+
+# Execute task and update canvas
+result = agent.do(task)
+await canvas.change_in_canvas(
+    new_text_of_part=result,
+    part_definition="weekly standup"
 )
-
-
-# My Tasks
-task = Task("Generate a plan to visit cities in Canad")
-task2 = Task("Edit the canvas first section with Hi guys")
-
-# Completing my Tasks
-agent.do(task)
-agent.do(task2)
-
-
-# Getting canvas final state
-print(my_travel_guide_canvas.get_current_state_of_canvas())
-
 ```
 
+### Document Updates with AI
 
+```python
+from upsonic import Canvas, Task, Agent
+
+canvas = Canvas("Project Documentation")
+agent = Agent("openai/gpt-4o")
+
+# Update existing document
+task = Task("""
+Review and update the project documentation with:
+- Latest technical specifications
+- Updated API endpoints
+- New deployment procedures
+- Security best practices
+""")
+
+result = agent.do(task)
+await canvas.change_in_canvas(
+    new_text_of_part=result,
+    part_definition="technical updates"
+)
+```
+
+## Configuration Guide
+
+### Basic Canvas Setup
+
+```python
+from upsonic import Canvas, Task, Agent
+
+# Simple canvas with default model
+canvas = Canvas("My Document")
+
+# Canvas with custom model
+canvas = Canvas("Technical Notes", model_provider="openai/gpt-4o")
+
+# Using canvas with agent
+agent = Agent("openai/gpt-4o")
+task = Task("Create a project summary document")
+result = agent.do(task)
+await canvas.change_in_canvas(result, "project summary")
+```
+
+## Real-World Examples
+
+### Meeting Notes with Agent
+
+```python
+from upsonic import Canvas, Task, Agent
+
+canvas = Canvas("Weekly Standup")
+agent = Agent("openai/gpt-4o")
+
+task = Task("""
+Create meeting notes for our weekly standup including:
+- Team updates and blockers
+- Action items with owners
+- Next week priorities
+""")
+
+result = agent.do(task)
+await canvas.change_in_canvas(result, "weekly standup")
+```
+
+### Technical Documentation
+
+```python
+from upsonic import Canvas, Task, Agent
+
+canvas = Canvas("API Documentation")
+agent = Agent("openai/gpt-4o")
+
+task = Task("""
+Create comprehensive API documentation for our user management endpoints:
+- Authentication methods
+- Request/response examples
+- Error handling
+- Rate limiting
+""")
+
+result = agent.do(task)
+await canvas.change_in_canvas(result, "API docs")
+```
+
+## Tips and Best Practices
+
+- **Use descriptive canvas names** - "Project Documentation" vs "Doc1"
+- **Structure content logically** - Use clear section headers
+- **Update incrementally** - Build documents progressively
+- **Use appropriate models** - Choose models that fit your content complexity

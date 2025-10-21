@@ -1,0 +1,481 @@
+---
+title: "Deep Agent"
+description: "Give your agents advanced capabilities for complex, multi-step tasks"
+---
+
+## Overview
+
+Deep Agent extends the base Agent with powerful capabilities for handling complex, multi-step tasks that require planning, file management, and task delegation. Without Deep Agent, complex tasks can become overwhelming and disorganized. With Deep Agent, your agents can:
+
+* **Plan complex tasks** - Break down multi-step objectives into manageable todos
+* **Manage virtual files** - Create, read, edit, and organize files in an isolated filesystem
+* **Delegate to subagents** - Spawn specialized agents for focused, isolated work
+* **Track progress** - Maintain todo lists and ensure all tasks are completed
+* **Persist state** - Maintain context and files across complex workflows
+
+## Three Core Capabilities
+
+Choose the capabilities that fit your needs:
+
+| Capability | What It Does | Best For |
+|------------|--------------|----------|
+| **Todo Management** | Creates and tracks structured task lists | Complex multi-step projects, planning workflows |
+| **Virtual Filesystem** | Manages files in an isolated environment | File-based tasks, document creation, code projects |
+| **Subagent System** | Spawns specialized agents for focused work | Parallel processing, specialized expertise, context isolation |
+
+You can use one capability or combine all three for the most powerful deep reasoning system.
+
+## Quick Start
+
+### Your First Deep Agent
+
+```python
+from upsonic import DeepAgent, Task
+
+# Create a Deep Agent
+agent = DeepAgent("openai/gpt-4o")
+
+# Complex task that benefits from planning
+task = Task("Analyze the codebase and create a comprehensive report with recommendations")
+result = agent.do(task)
+
+# The agent will automatically:
+# 1. Create a todo list to plan the work
+# 2. Use virtual files to organize findings
+# 3. Complete all tasks before finishing
+```
+
+### Planning Complex Tasks
+
+```python
+from upsonic import DeepAgent, Task
+
+agent = DeepAgent("openai/gpt-4o")
+task = Task("""
+Create a complete web application with:
+- User authentication system
+- Product catalog with search
+- Shopping cart functionality
+- Payment processing
+- Admin dashboard
+""")
+
+result = agent.do(task)
+# Agent creates todos, builds files, and ensures everything is completed
+```
+
+### Working with Files
+
+```python
+from upsonic import DeepAgent, Task
+
+agent = DeepAgent("openai/gpt-4o")
+
+# Add initial files
+agent.add_file("/app/main.py", "print('Hello World')")
+agent.add_file("/app/requirements.txt", "flask==2.0.1")
+
+task = Task("Review the code and add error handling")
+result = agent.do(task)
+
+# Agent can read, edit, and create files in the virtual filesystem
+```
+
+### Using Subagents
+
+```python
+from upsonic import DeepAgent, Task, Agent
+
+# Create specialized subagents
+researcher = Agent(
+    "openai/gpt-4o", 
+    name="researcher",
+    system_prompt="You are a research expert focused on gathering information"
+)
+
+code_reviewer = Agent(
+    "openai/gpt-4o", 
+    name="code-reviewer", 
+    system_prompt="You are a code review expert focused on quality and best practices"
+)
+
+# Create Deep Agent with subagents
+agent = DeepAgent(
+    "openai/gpt-4o",
+    subagents=[researcher, code_reviewer]
+)
+
+task = Task("Research AI trends and create a technical report with code examples")
+result = agent.do(task)
+# Agent can delegate research to researcher and code review to code-reviewer
+```
+
+## Configuration Guide
+
+### Basic Deep Agent Setup
+
+```python
+from upsonic import DeepAgent, Task
+
+# Basic configuration
+agent = DeepAgent(
+    model="openai/gpt-4o",
+    instructions="You are a software development expert"
+)
+
+task = Task("Build a REST API with authentication")
+result = agent.do(task)
+```
+
+### With Custom Instructions
+
+```python
+from upsonic import DeepAgent, Task
+
+agent = DeepAgent(
+    model="openai/gpt-4o",
+    instructions="""
+    You are a senior software architect. When working on projects:
+    1. Always create a detailed plan first
+    2. Focus on clean, maintainable code
+    3. Include comprehensive error handling
+    4. Write tests for all functionality
+    """
+)
+
+task = Task("Design a microservices architecture for an e-commerce platform")
+result = agent.do(task)
+```
+
+### With Specialized Subagents
+
+```python
+from upsonic import DeepAgent, Task, Agent
+
+# Create specialized agents
+frontend_expert = Agent(
+    "openai/gpt-4o",
+    name="frontend-expert",
+    system_prompt="You are a frontend development expert specializing in React and modern web technologies"
+)
+
+backend_expert = Agent(
+    "openai/gpt-4o", 
+    name="backend-expert",
+    system_prompt="You are a backend development expert specializing in Node.js, Python, and database design"
+)
+
+devops_expert = Agent(
+    "openai/gpt-4o",
+    name="devops-expert", 
+    system_prompt="You are a DevOps expert specializing in deployment, monitoring, and infrastructure"
+)
+
+# Create Deep Agent with team
+agent = DeepAgent(
+    "openai/gpt-4o",
+    subagents=[frontend_expert, backend_expert, devops_expert]
+)
+
+task = Task("Build a full-stack application with deployment pipeline")
+result = agent.do(task)
+```
+
+### File Management
+
+```python
+from upsonic import DeepAgent, Task
+
+agent = DeepAgent("openai/gpt-4o")
+
+# Add multiple files
+agent.set_files({
+    "/project/README.md": "# My Project\nA sample project",
+    "/project/src/main.py": "def main():\n    print('Hello')",
+    "/project/requirements.txt": "requests==2.28.0"
+})
+
+# Or add files individually
+agent.add_file("/project/config.json", '{"debug": true}')
+
+task = Task("Review and improve the project structure")
+result = agent.do(task)
+```
+
+## How Deep Agent Works
+
+Deep Agent operates with an automatic completion loop that ensures all tasks are finished:
+
+### Before Each Task
+1. Sets up todo management tools
+2. Initializes virtual filesystem
+3. Prepares subagent delegation system
+4. Loads any existing state
+
+### During Task Execution
+1. Agent creates todos for complex tasks
+2. Works through todos systematically
+3. Uses virtual files to organize work
+4. Delegates to subagents when beneficial
+5. Updates todo status in real-time
+
+### After Task Execution
+1. Checks if all todos are completed
+2. If incomplete, creates continuation tasks
+3. Repeats until all work is finished
+4. Ensures all deliverables are created
+
+## Todo Management
+
+### When Deep Agent Creates Todos
+
+Deep Agent automatically creates todos for:
+- **Complex multi-step tasks** (3+ distinct steps)
+- **Non-trivial projects** requiring careful planning
+- **User-requested planning** when explicitly asked
+- **Multiple related tasks** provided by the user
+- **Projects requiring revision** based on intermediate results
+
+### Todo States
+
+| State | Description | When to Use |
+|-------|-------------|-------------|
+| **pending** | Task not yet started | Initial state for planned tasks |
+| **in_progress** | Currently working on | Mark before starting work |
+| **completed** | Task finished successfully | Mark immediately after completion |
+
+### Todo Management Rules
+
+1. **Update constantly** - Mark todos as "in_progress" before starting, "completed" after finishing
+2. **Never stop until complete** - Continue working until ALL todos show "completed"
+3. **Create deliverables** - Use virtual files to create requested outputs
+4. **Verify completion** - Check that all todos are done before finishing
+
+## Virtual Filesystem
+
+### File Operations
+
+```python
+# Deep Agent provides these tools automatically:
+# - ls: List all files
+# - read_file: Read file content with line numbers
+# - write_file: Create or overwrite files
+# - edit_file: Perform exact string replacements
+```
+
+### File Management Best Practices
+
+- **Use absolute paths** - Always specify full file paths
+- **Read before editing** - Always read files before making changes
+- **Preserve formatting** - Maintain exact indentation and structure
+- **Organize logically** - Use clear directory structures
+
+## Subagent System
+
+### Available Subagent Types
+
+| Type | Description | Best For |
+|------|-------------|----------|
+| **general-purpose** | Full-featured agent with all tools | Research, analysis, complex tasks |
+| **Custom agents** | Specialized agents you define | Specific expertise, focused work |
+
+### When to Use Subagents
+
+- **Complex independent tasks** that can be fully delegated
+- **Parallel processing** of multiple related tasks
+- **Specialized expertise** requiring focused knowledge
+- **Context isolation** for heavy token usage
+- **Quality assurance** with review and validation
+
+### Subagent Lifecycle
+
+1. **Spawn** - Provide clear role, instructions, and expected output
+2. **Run** - Subagent completes task autonomously
+3. **Return** - Subagent provides single structured result
+4. **Reconcile** - Main agent incorporates results
+
+## Real-World Examples
+
+### Software Development Project
+
+```python
+from upsonic import DeepAgent, Task, Agent
+
+# Create development team
+frontend_dev = Agent("openai/gpt-4o", name="frontend", 
+                    system_prompt="React and TypeScript expert")
+backend_dev = Agent("openai/gpt-4o", name="backend",
+                   system_prompt="Node.js and database expert") 
+tester = Agent("openai/gpt-4o", name="tester",
+              system_prompt="QA and testing expert")
+
+agent = DeepAgent("openai/gpt-4o", subagents=[frontend_dev, backend_dev, tester])
+
+task = Task("""
+Build a complete task management application:
+- User authentication and authorization
+- Task CRUD operations
+- Real-time updates
+- Mobile-responsive design
+- Unit and integration tests
+- Deployment configuration
+""")
+
+result = agent.do(task)
+```
+
+### Research and Analysis
+
+```python
+from upsonic import DeepAgent, Task, Agent
+
+# Create research team
+data_analyst = Agent("openai/gpt-4o", name="data-analyst",
+                    system_prompt="Data analysis and statistics expert")
+researcher = Agent("openai/gpt-4o", name="researcher", 
+                 system_prompt="Research and information gathering expert")
+writer = Agent("openai/gpt-4o", name="writer",
+              system_prompt="Technical writing and report creation expert")
+
+agent = DeepAgent("openai/gpt-4o", subagents=[data_analyst, researcher, writer])
+
+task = Task("""
+Conduct comprehensive market research on AI tools:
+- Analyze market trends and competitors
+- Gather data on user preferences
+- Create detailed report with recommendations
+- Include charts and visualizations
+""")
+
+result = agent.do(task)
+```
+
+### Content Creation Workflow
+
+```python
+from upsonic import DeepAgent, Task, Agent
+
+# Create content team
+researcher = Agent("openai/gpt-4o", name="researcher",
+                 system_prompt="Research and fact-checking expert")
+writer = Agent("openai/gpt-4o", name="writer",
+              system_prompt="Content writing and editing expert")
+reviewer = Agent("openai/gpt-4o", name="reviewer",
+               system_prompt="Content review and quality assurance expert")
+
+agent = DeepAgent("openai/gpt-4o", subagents=[researcher, writer, reviewer])
+
+task = Task("""
+Create a comprehensive blog post series about machine learning:
+- Research latest trends and developments
+- Write 5 detailed articles with examples
+- Include code samples and tutorials
+- Review for accuracy and clarity
+- Format for web publication
+""")
+
+result = agent.do(task)
+```
+
+## Tips and Best Practices
+
+### Choosing Deep Agent
+
+- **Use for complex tasks** requiring 3+ steps or careful planning
+- **Use for file-based work** where organization matters
+- **Use for parallel processing** with multiple specialized agents
+- **Use for quality assurance** with review and validation workflows
+
+### Planning and Organization
+
+- **Start with clear objectives** - Define what success looks like
+- **Break down complex tasks** - Use todos to track progress
+- **Use virtual files** - Organize work in logical file structures
+- **Delegate appropriately** - Use subagents for specialized work
+
+### Performance Optimization
+
+- **Parallelize when possible** - Run independent tasks simultaneously
+- **Use appropriate models** - Choose models that fit your task complexity
+- **Monitor progress** - Check todo status regularly
+- **Complete thoroughly** - Ensure all deliverables are created
+
+### Quality Assurance
+
+- **Review subagent work** - Validate results from delegated tasks
+- **Test implementations** - Verify code and solutions work
+- **Document thoroughly** - Include clear explanations and comments
+- **Iterate and improve** - Refine based on intermediate results
+
+## Complete Production Example
+
+```python
+from upsonic import DeepAgent, Task, Agent
+import asyncio
+
+async def run_production_workflow():
+    # Create specialized team
+    architect = Agent(
+        "openai/gpt-4o",
+        name="architect", 
+        system_prompt="Software architecture and system design expert"
+    )
+    
+    developer = Agent(
+        "openai/gpt-4o",
+        name="developer",
+        system_prompt="Full-stack development expert with focus on clean code"
+    )
+    
+    devops = Agent(
+        "openai/gpt-4o", 
+        name="devops",
+        system_prompt="DevOps and infrastructure expert"
+    )
+    
+    tester = Agent(
+        "openai/gpt-4o",
+        name="tester",
+        system_prompt="QA and testing expert with focus on automation"
+    )
+    
+    # Create Deep Agent with team
+    agent = DeepAgent(
+        "openai/gpt-4o",
+        subagents=[architect, developer, devops, tester],
+        instructions="You are a senior technical lead managing a development project"
+    )
+    
+    # Add initial project files
+    agent.add_file("/project/README.md", "# Production Project\nA comprehensive application")
+    agent.add_file("/project/package.json", '{"name": "production-app", "version": "1.0.0"}')
+    
+    # Execute complex project
+    task = Task("""
+    Build a production-ready microservices application:
+    
+    1. Design the architecture with proper service boundaries
+    2. Implement core services with authentication and authorization
+    3. Add comprehensive testing and monitoring
+    4. Create deployment pipeline with CI/CD
+    5. Set up monitoring and logging
+    6. Write complete documentation
+    7. Ensure security best practices
+    8. Optimize for performance and scalability
+    
+    Deliverables:
+    - Complete codebase with all services
+    - Docker configuration and deployment scripts
+    - Test suite with high coverage
+    - Documentation and README files
+    - Security and performance analysis
+    """)
+    
+    result = await agent.do_async(task)
+    return result
+
+# Run the production workflow
+asyncio.run(run_production_workflow())
+```
+
+This example demonstrates a complete production workflow using Deep Agent with specialized subagents to build a comprehensive microservices application, ensuring all aspects from architecture to deployment are properly handled.

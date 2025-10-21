@@ -1,0 +1,465 @@
+# Find Company Website
+
+This example shows how to build **Upsonic LLM agents** that can:
+
+1. **Find** the official website of a company using the Serper API
+2. **Validate** whether a given website belongs to that company
+
+## Overview
+
+The Find Company Website example demonstrates how to use Upsonic agents with external APIs to perform intelligent web research. It consists of two main components:
+
+- **Website Finder**: Searches for and validates company websites
+- **Website Validator**: Verifies if a given URL belongs to a specific company
+
+Both agents use the Serper API for web search and HTML parsing for validation, showcasing how Upsonic can integrate with external services for real-world applications.
+
+## Key Features
+
+- **Intelligent Search**: Uses Serper API to find company websites
+- **Smart Validation**: Analyzes website content to verify authenticity
+- **Structured Output**: Returns validated results with confidence scores
+- **Error Handling**: Graceful handling of API failures and invalid URLs
+- **Domain Filtering**: Excludes irrelevant domains (social media, directories)
+
+## Code Structure
+
+### Response Models
+
+```python
+class WebsiteResponse(BaseModel):
+    company: str
+    website: Optional[HttpUrl] = None
+    validated: bool = False
+    score: float = 0.0
+    reason: Optional[str] = None
+
+class ValidationResult(BaseModel):
+    company: str
+    website: Optional[HttpUrl] = None
+    validated: bool = False
+    score: float = 0.0
+    reason: Optional[str] = None
+```
+
+### Serper API Client
+
+```python
+def search_company(query: str) -> dict:
+    """Search for the company using Serper API."""
+    if not SERPER_API_KEY:
+        raise ValueError("Missing SERPER_API_KEY in .env")
+    headers = {"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"}
+    resp = requests.post(SERPER_URL, headers=headers, json={"q": query})
+    resp.raise_for_status()
+    return resp.json()
+
+def find_company_candidates(company_name: str, top_k: int = 5) -> list[str]:
+    """Return top candidate links, skipping known irrelevant domains."""
+    results = search_company(company_name)
+    raw_links = [r["link"] for r in results.get("organic", []) if "link" in r]
+
+    candidates = []
+    for url in raw_links:
+        if any(bad in url for bad in BAD_DOMAINS):
+            continue
+        candidates.append(url)
+        if len(candidates) >= top_k:
+            break
+
+    return candidates
+```
+
+### HTML Utilities
+
+```python
+def fetch(url: str, timeout: int = 10) -> str:
+    """Fetch HTML text for a given URL."""
+    resp = requests.get(url, headers=DEFAULT_HEADERS, timeout=timeout)
+    resp.raise_for_status()
+    return resp.text
+
+def extract_text_signals(html: str) -> dict:
+    """Extract simple signals: title and h1 tags."""
+    soup = BeautifulSoup(html, "lxml")
+    title = soup.title.string.strip() if soup.title else ""
+    h1s = [h.get_text(" ", strip=True) for h in soup.find_all("h1")]
+    return {"title": title, "h1": h1s}
+```
+
+## Complete Implementation
+
+### find_company_website.py
+
+```python
+# task_examples/find_company_website/find_company_website.py
+
+import sys
+import os
+import argparse
+
+# Add the project root to the path for absolute imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from upsonic import Agent, Task
+from pydantic import BaseModel, HttpUrl
+from typing import Optional
+
+try:
+    from serper_client import find_company_candidates
+except ImportError:
+    from task_examples.find_company_website.serper_client import find_company_candidates
+from task_examples.find_company_website.validate_company_website import validate_candidate, ValidationResult
+
+
+class WebsiteResponse(BaseModel):
+    company: str
+    website: Optional[HttpUrl] = None
+    validated: bool = False
+    score: float = 0.0
+    reason: Optional[str] = None
+
+
+def find_company_website(company: str) -> WebsiteResponse:
+    """
+    Find the official website for a company using Serper search + validation.
+    - Validate all candidates and return the one with the highest score.
+    """
+    try:
+        candidates = find_company_candidates(company, top_k=5)
+
+        best_result: Optional[ValidationResult] = None
+        for url in candidates:
+            result: ValidationResult = validate_candidate(company, url)
+            if not best_result or result.score > best_result.score:
+                best_result = result
+
+        if best_result:
+            return WebsiteResponse(
+                company=company,
+                website=best_result.website,
+                validated=best_result.validated,
+                score=best_result.score,
+                reason=best_result.reason,
+            )
+
+        return WebsiteResponse(company=company, website=None, validated=False, reason="No valid site found")
+
+    except Exception as e:
+        return WebsiteResponse(company=company, website=None, validated=False, reason=str(e))
+
+
+def find_tool(company: str) -> WebsiteResponse:
+    """Tool: Find the official website for a company using Serper + validation."""
+    return find_company_website(company)
+
+
+agent = Agent(name="website_finder")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Find a company's official website.")
+    parser.add_argument("--company", required=True, help="Company name, e.g. 'Amazon Inc'")
+    args = parser.parse_args()
+
+    task = Task(
+        description=f"Find the official website of {args.company}",
+        tools=[find_tool],
+        response_format=WebsiteResponse,
+    )
+
+    result = agent.do(task)
+    print(result.model_dump_json(indent=2))
+```
+
+### serper_client.py
+
+```python
+# task_examples/find_company_website/serper_client.py
+
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SERPER_API_KEY = os.getenv("SERPER_API_KEY")
+SERPER_URL = "https://google.serper.dev/search"
+
+# Common junk domains we don't want to consider as "official websites"
+BAD_DOMAINS = [
+    "wikipedia.org",
+    "linkedin.com",
+    "crunchbase.com",
+    "facebook.com",
+    "twitter.com",
+    "x.com",
+    "youtube.com",
+    "instagram.com",
+    "glassdoor.com",
+    "indeed.com",
+]
+
+
+def search_company(query: str) -> dict:
+    """Search for the company using Serper API."""
+    if not SERPER_API_KEY:
+        raise ValueError("Missing SERPER_API_KEY in .env")
+    headers = {"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"}
+    resp = requests.post(SERPER_URL, headers=headers, json={"q": query})
+    resp.raise_for_status()
+    return resp.json()
+
+
+def find_company_candidates(company_name: str, top_k: int = 5) -> list[str]:
+    """Return top candidate links, skipping known irrelevant domains."""
+    results = search_company(company_name)
+    raw_links = [r["link"] for r in results.get("organic", []) if "link" in r]
+
+    candidates = []
+    for url in raw_links:
+        if any(bad in url for bad in BAD_DOMAINS):
+            continue
+        candidates.append(url)
+        if len(candidates) >= top_k:
+            break
+
+    return candidates
+```
+
+### html_utils.py
+
+```python
+# task_examples/find_company_website/html_utils.py
+
+import requests
+from bs4 import BeautifulSoup
+
+
+DEFAULT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; UpsonicExamples/1.0)",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+}
+
+def fetch(url: str, timeout: int = 10) -> str:
+    """Fetch HTML text for a given URL."""
+    resp = requests.get(url, headers=DEFAULT_HEADERS, timeout=timeout)
+    resp.raise_for_status()
+    return resp.text
+
+
+def extract_text_signals(html: str) -> dict:
+    """Extract simple signals: title and h1 tags."""
+    soup = BeautifulSoup(html, "lxml")
+    title = soup.title.string.strip() if soup.title else ""
+    h1s = [h.get_text(" ", strip=True) for h in soup.find_all("h1")]
+    return {"title": title, "h1": h1s}
+```
+
+### validate_company_website.py
+
+```python
+# task_examples/find_company_website/validate_company_website.py
+
+import argparse
+from upsonic import Agent, Task
+from pydantic import BaseModel, HttpUrl
+from typing import Optional
+from urllib.parse import urlparse
+
+try:
+    from html_utils import fetch, extract_text_signals
+except ImportError:
+    from task_examples.find_company_website.html_utils import fetch, extract_text_signals
+from bs4 import BeautifulSoup
+
+
+class ValidationResult(BaseModel):
+    company: str
+    website: Optional[HttpUrl] = None
+    validated: bool = False
+    score: float = 0.0
+    reason: Optional[str] = None
+
+
+def validate_candidate(company: str, url: str) -> ValidationResult:
+    """
+    Validate whether the given URL belongs to the specified company.
+    - Strongly prefer domains that contain the brand token.
+    - Accept matches in title, h1, or footer text.
+    """
+    try:
+        html = fetch(url, timeout=10)
+        signals = extract_text_signals(html)
+
+        company_upper = company.upper()
+        brand = company_upper.split()[0] 
+        title = signals.get("title", "").upper()
+        h1s = " ".join(signals.get("h1", [])).upper()
+
+        # Footer text
+        soup = BeautifulSoup(html, "lxml")
+        footer = soup.find("footer")
+        footer_text = footer.get_text(" ", strip=True).upper() if footer else ""
+
+        domain = urlparse(url).netloc.lower()
+
+        # Strong signal: brand in domain
+        if brand.lower() in domain:
+            return ValidationResult(company=company, website=url, validated=True, score=0.9, reason="Brand in domain")
+
+        # Full company name in title, h1, or footer
+        if company_upper in title or company_upper in h1s or company_upper in footer_text:
+            return ValidationResult(company=company, website=url, validated=True, score=0.8, reason="Full name match in title/h1/footer")
+
+        # Brand token in title, h1, or footer
+        if brand in title or brand in h1s or brand in footer_text:
+            return ValidationResult(company=company, website=url, validated=True, score=0.6, reason="Brand match in title/h1/footer")
+
+        return ValidationResult(company=company, website=url, validated=False, score=0.0, reason="No match in title/h1/footer")
+    except Exception as e:
+        return ValidationResult(company=company, website=url, validated=False, score=0.0, reason=str(e))
+
+
+def validate_tool(company: str, url: str) -> ValidationResult:
+    """Tool: Validate if the given URL is the official website of the company."""
+    return validate_candidate(company, url)
+
+
+agent = Agent(name="website_validator")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Validate a company website.")
+    parser.add_argument("--company", required=True, help="Company name, e.g. 'Amazon Inc'")
+    parser.add_argument("--url", required=True, help="Website URL, e.g. 'https://www.amazon.com/'")
+    args = parser.parse_args()
+
+    task = Task(
+        description=f"Validate if {args.url} belongs to {args.company}",
+        tools=[validate_tool],
+        response_format=ValidationResult,
+    )
+
+    result = agent.do(task)
+    print(result.model_dump_json(indent=2))
+```
+
+## How It Works
+
+### 1. Website Discovery Process
+
+1. **Search**: Uses Serper API to search for the company name
+2. **Filter**: Removes irrelevant domains (social media, directories)
+3. **Validate**: Analyzes each candidate website's content
+4. **Score**: Assigns confidence scores based on brand matches
+5. **Return**: Returns the highest-scoring validated website
+
+### 2. Validation Logic
+
+The validation process checks for:
+
+- **Brand in Domain**: Highest score (0.9) when company brand appears in URL
+- **Full Name Match**: High score (0.8) when full company name appears in title/h1/footer
+- **Brand Match**: Medium score (0.6) when brand token appears in content
+- **No Match**: Score 0.0 when no relevant content is found
+
+### 3. Content Analysis
+
+The system analyzes:
+- **Page Title**: Company name in HTML title tag
+- **H1 Headers**: Main headings on the page
+- **Footer Text**: Company information in footer
+- **Domain Name**: Brand presence in URL structure
+
+## Usage
+
+### Setup
+
+1. Install dependencies:
+
+```bash
+uv sync
+```
+
+2. Copy `.env.example` to `.env` and add your Serper API key:
+
+```bash
+cp .env.example .env
+```
+
+3. Edit `.env` and replace the placeholder with your real key:
+
+```ini
+SERPER_API_KEY=your_api_key_here
+```
+
+You can get a free API key at https://serper.dev.
+
+### Find a Company Website
+
+```bash
+uv run python task_examples/find_company_website/find_company_website.py --company "Amazon Inc"
+```
+
+**Example output:**
+
+```json
+{
+  "company": "Amazon Inc",
+  "website": "https://www.amazon.com/",
+  "validated": true,
+  "score": 0.9,
+  "reason": "Brand in domain"
+}
+```
+
+### Validate a Company Website
+
+```bash
+uv run python task_examples/find_company_website/validate_company_website.py --company "Amazon Inc" --url "https://www.amazon.com/"
+```
+
+**Example output:**
+
+```json
+{
+  "company": "Amazon Inc",
+  "website": "https://www.amazon.com/",
+  "validated": true,
+  "score": 0.9,
+  "reason": "Brand in domain"
+}
+```
+
+## Use Cases
+
+- **Business Research**: Find official websites for companies
+- **Due Diligence**: Verify company website authenticity
+- **Competitive Analysis**: Identify competitor websites
+- **Lead Generation**: Validate business contact information
+- **Brand Monitoring**: Track official company web presence
+
+## File Structure
+
+```bash
+task_examples/find_company_website/
+├── find_company_website.py      # Agent: find websites
+├── validate_company_website.py  # Agent: validate websites
+├── serper_client.py             # Serper API client
+├── html_utils.py                # HTML fetch + signals
+└── README.md                    # Documentation
+
+# Root directory
+.env.example                     # Example env file for API keys (in root)
+```
+
+## Notes
+
+- **Finder**: takes a company name, searches with Serper, validates candidates, and returns the best match
+- **Validator**: checks if a given URL belongs to a company
+- Both use Upsonic agents with external API integration
+- **Domain Filtering**: Automatically excludes social media and directory sites
+- **Confidence Scoring**: Provides reliability metrics for validation results
+
+## Repository
+
+View the complete example: [Find Company Website Example](https://github.com/Upsonic/Examples/tree/master/task_examples/find_company_website)

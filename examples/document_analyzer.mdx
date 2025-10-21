@@ -1,0 +1,184 @@
+# Document Analyzer
+
+This example demonstrates how to use the **Upsonic** framework to extract the company name from a Turkish Tax Certificate (Vergi Levhası) using computer vision and LLM reasoning.
+
+## Overview
+
+The Document Analyzer showcases Upsonic's ability to process visual documents and extract structured information. In this example, the agent:
+
+1. **Processes** a Turkish Tax Certificate image
+2. **Extracts** the company name from the "TICARET UNVANI" field
+3. **Returns** structured data using Pydantic models
+
+This demonstrates how Upsonic can handle multimodal inputs (text + images) and provide reliable document processing capabilities.
+
+## Key Features
+
+- **Multimodal Processing**: Handles both text and image inputs
+- **Structured Output**: Uses Pydantic models for type-safe responses
+- **Document OCR**: Automatically extracts text from images
+- **Precise Extraction**: Focuses on specific document fields
+- **Error Handling**: Robust processing of document variations
+
+## Code Structure
+
+### Response Model
+
+```python
+class CompanyResponse(BaseModel):
+    company_name: str
+```
+
+### Agent Setup
+
+```python
+doc_agent = Agent(name="document_reader")
+```
+
+### Task Definition
+
+```python
+task = Task(
+    description=(
+        "Read the attached Turkish tax certificate (Vergi Levhası) and return the company name "
+        "exactly as it appears in the field 'TICARET UNVANI'. "
+        "Do not invent, shorten, or replace words. "
+        "Return only the full legal company name, nothing else."
+    ),
+    attachements=["task_examples/document_analyzer/assets/vergi_levhasi.png"],
+    response_format=CompanyResponse
+)
+```
+
+## Complete Implementation
+
+```python
+# task_examples/document_analyzer/extract_company_name.py
+
+from upsonic import Task, Agent
+from pydantic import BaseModel
+
+# Define the response format
+class CompanyResponse(BaseModel):
+    company_name: str
+
+# Create the agent
+doc_agent = Agent(name="document_reader")
+
+# Create the task
+task = Task(
+    description=(
+        "Read the attached Turkish tax certificate (Vergi Levhası) and return the company name "
+        "exactly as it appears in the field 'TICARET UNVANI'. "
+        "Do not invent, shorten, or replace words. "
+        "Return only the full legal company name, nothing else."
+    ),
+    attachements=["task_examples/document_analyzer/assets/vergi_levhasi.png"],
+    response_format=CompanyResponse
+)
+
+# Run the task
+result = doc_agent.do(task)
+
+# Print the result
+print("Extracted Company Name:", result.company_name)
+```
+
+## How It Works
+
+1. **Document Input**: The agent receives a Turkish Tax Certificate image
+2. **OCR Processing**: Upsonic automatically extracts text from the image
+3. **Field Identification**: The LLM identifies the "TICARET UNVANI" field
+4. **Name Extraction**: Extracts the company name exactly as it appears
+5. **Structured Output**: Returns the result in a structured Pydantic model
+
+## Usage
+
+### Setup
+
+```bash
+uv sync
+```
+
+### Run the example
+
+```bash
+python task_examples/document_analyzer/extract_company_name.py
+```
+
+### Expected Output
+
+```yaml
+Extracted Company Name: UPSONIC TEKNOLOJİ ANONİM ŞİRKETİ
+```
+
+**Note**: Output may vary slightly depending on Upsonic version and OCR results.
+
+## File Structure
+
+```bash
+task_examples/document_analyzer/
+├── extract_company_name.py      # Main document analysis script
+├── assets/
+│   └── vergi_levhasi.png       # Sample tax certificate
+└── README.md                    # Documentation
+```
+
+## Use Cases
+
+- **Document Processing**: Extract information from official documents
+- **Form Processing**: Automate data extraction from forms and certificates
+- **Compliance**: Process regulatory documents and certificates
+- **Data Entry**: Automate manual data extraction tasks
+- **Multilingual Documents**: Handle documents in various languages
+
+## Advanced Features
+
+### Multiple Document Types
+
+You can extend this example to handle various document types:
+
+```python
+# Process multiple document types
+documents = [
+    "invoice.pdf",
+    "contract.docx", 
+    "certificate.png"
+]
+
+for doc in documents:
+    task = Task(
+        description=f"Extract key information from {doc}",
+        attachments=[doc],
+        response_format=DocumentInfo
+    )
+    result = agent.do(task)
+```
+
+### Custom Field Extraction
+
+```python
+class DocumentFields(BaseModel):
+    company_name: str
+    tax_number: str
+    address: str
+    registration_date: str
+
+task = Task(
+    description="Extract all key fields from the tax certificate",
+    attachments=["vergi_levhasi.png"],
+    response_format=DocumentFields
+)
+```
+
+## Notes
+
+- **Tested with**: upsonic==0.61.1a1758720414
+- **Image Formats**: Supports PNG, JPG, PDF, and other common formats
+- **OCR Quality**: Results depend on image quality and text clarity
+- **Language Support**: Works with documents in various languages
+- **Error Handling**: Gracefully handles unclear or damaged documents
+
+## Repository
+
+View the complete example: [Document Analyzer Example](https://github.com/Upsonic/Examples/tree/master/task_examples/document_analyzer)
