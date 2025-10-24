@@ -129,6 +129,120 @@ for i in range(10):
 # Summary is automatically maintained and injected into context
 ```
 
+## Using the Memory Class
+
+The `Memory` class is the core component that orchestrates all memory functionality. It works seamlessly with any storage backend and provides three types of memory management.
+
+### Core Parameters
+
+```python
+from upsonic.storage import Memory, InMemoryStorage
+
+memory = Memory(
+    storage=storage,                    # Required: Storage backend
+    session_id="session_123",          # Optional: For conversation/summary memory
+    user_id="user_456",                # Optional: For user analysis memory
+    full_session_memory=True,         # Enable complete chat history
+    summary_memory=True,               # Enable conversation summaries
+    user_analysis_memory=True,        # Enable user learning
+    num_last_messages=10,             # Limit history to last N turns
+    model="openai/gpt-4o",            # Model for analysis/summaries
+    debug=True                        # Enable debug logging
+)
+```
+
+### Memory Types Explained
+
+**Full Session Memory** (`full_session_memory=True`)
+- Stores complete conversation history
+- Requires `session_id`
+- Best for: Customer support, tutoring, detailed conversations
+
+**Summary Memory** (`summary_memory=True`) 
+- Maintains evolving conversation summaries
+- Requires `session_id` and `model`
+- Best for: Long conversations, cost reduction
+
+**User Analysis Memory** (`user_analysis_memory=True`)
+- Learns about users across all sessions
+- Requires `user_id` and `model`
+- Best for: Personalization, user preferences
+
+### Simple Setup Patterns
+
+```python
+# Basic conversation memory
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="chat_001",
+    full_session_memory=True
+)
+
+# User learning with custom schema
+from pydantic import BaseModel, Field
+from typing import Optional
+
+class UserProfile(BaseModel):
+    name: Optional[str] = Field(None, description="User's name")
+    expertise: Optional[str] = Field(None, description="Technical expertise level")
+    interests: Optional[list] = Field(None, description="Areas of interest")
+
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_001",
+    user_id="user_001",
+    user_analysis_memory=True,
+    user_profile_schema=UserProfile,
+    model="openai/gpt-4o"
+)
+
+# Dynamic user learning (agent decides what to remember)
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_001", 
+    user_id="user_001",
+    user_analysis_memory=True,
+    dynamic_user_profile=True,  # Agent creates custom fields
+    model="openai/gpt-4o"
+)
+```
+
+### Memory Update Modes
+
+```python
+# Update mode (default) - merges new information
+memory = Memory(
+    storage=storage,
+    user_analysis_memory=True,
+    user_memory_mode='update'  # Accumulates knowledge over time
+)
+
+# Replace mode - overwrites profile each time  
+memory = Memory(
+    storage=storage,
+    user_analysis_memory=True,
+    user_memory_mode='replace'  # Session-specific analysis
+)
+```
+
+### Advanced Configuration
+
+```python
+# Production-ready memory with all features
+memory = Memory(
+    storage=PostgresStorage(db_url="postgresql://..."),
+    session_id="prod_session_001",
+    user_id="user_12345",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    num_last_messages=15,           # Keep last 15 conversation turns
+    model="openai/gpt-4o",
+    feed_tool_call_results=False,   # Exclude tool calls from memory
+    debug=False
+)
+```
+
 ## Configuration Guide
 
 ### Conversation Memory Options
