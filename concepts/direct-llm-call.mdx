@@ -1,38 +1,240 @@
 ---
-title: "Direct LLM Call"
-description: "Dont wait for reasoning for basic jobs."
-
+description: "High-speed, streamlined interface for direct LLM interactions without memory or tool complexity"
 ---
 
-## What is Direct LLM Call
+## Overview
 
-As the capacity of LLMs increases, the scope of what they can accomplish in a single request also expands significantly. Previously, LLMs were limited to making just a few tool calls, but now they can engage in deep thinking and perform hundreds of tool calls. In the Upsonic framework, we assess this situation as follows:
+`Direct` is a simplified, high-speed interface for LLM interactions that provides streamlined access to language models without the complexity of memory, knowledge base, or tool calls. It focuses on maximum speed and direct data retrieval.
 
-- Agents are LLMs that are specifically characterized and focused on a particular domain.
-- Should use agents when they need to know the organization's objective, goals, and rules.
+## Core Attributes
 
-However, apart from these two cases, there are many other cases that can be handled by an LLM. For this reason, we added a feature called Direct LLM Call.
+| Attribute      | Type                    | Description                                                   |
+| -------------- | ----------------------- | ------------------------------------------------------------- |
+| **model**      | Union[str, Any, None]   | Model name, Model instance, or None (defaults to "openai/gpt-4o") |
+| **settings**   | Optional[ModelSettings] | Model-specific settings and parameters                        |
+| **profile**    | Optional[ModelProfileSpec] | Model profile configuration                                |
+| **provider**   | Optional[Union[str, Provider]] | Provider name or Provider instance                      |
 
-## Making a Direct LLM Call
-
-To send a task directly to an LLM without any layers in between, you should use the Direct object. It works with the same interface as agents, making it easy to switch or design according to your needs.
+## Creating a Direct Instance
 
 ```python
-from upsonic import Task, Direct
+from upsonic import Direct, Task
+from pydantic import BaseModel
 
-task = Task("Create History paper of LLMs")
+# Basic creation
+direct = Direct(model="openai/gpt-4o")
 
-
-direct = Direct()
-direct.print_do(task)
+# With custom settings
+from upsonic.models.settings import ModelSettings
+settings = ModelSettings(temperature=0.7, max_tokens=1000)
+direct = Direct(model="openai/gpt-4o", settings=settings)
 ```
 
-## Changing LLM Model
-
-You can set the `model` as you want via model parameter of  `do` and `print_do` commands.
+## Fluent Interface Methods
 
 ```python
-direct = Direct(model="azure/gpt-4o")
+# Create new instances with different configurations
+gpt4_direct = direct.with_model("openai/gpt-4o")
+cooler_direct = direct.with_settings(ModelSettings(temperature=0.3))
 
-direct.print_do(task)
+# Chain configurations
+custom_direct = (direct
+    .with_model("openai/gpt-4o")
+    .with_settings(ModelSettings(temperature=0.5)))
+```
+
+## Task Execution Methods
+
+### Synchronous Execution
+
+```python
+# Simple task
+task = Task("What is the capital of France?")
+result = direct.do(task)
+print(result)  # "The capital of France is Paris."
+
+# Structured response
+class CountryInfo(BaseModel):
+    capital: str
+    population: int
+
+task = Task(
+    description="Get information about France",
+    response_format=CountryInfo
+)
+result = direct.do(task)
+print(result.capital)  # "Paris"
+```
+
+### Asynchronous Execution
+
+```python
+import asyncio
+
+async def main():
+    task = Task("Explain quantum computing")
+    result = await direct.do_async(task)
+    print(result)
+
+asyncio.run(main())
+```
+
+### Visual Output Methods
+
+```python
+# Execute with visual output (default)
+result = direct.print_do(task)
+
+# Execute without visual output
+result = direct.do(task, show_output=False)
+```
+
+## Task Configuration
+
+### Basic Tasks
+
+```python
+# Simple text task
+task = Task("Write a haiku about programming")
+
+# Task with attachments
+task = Task(
+    description="Analyze this document",
+    attachments=["document.pdf", "data.csv"]
+)
+
+# Task with context
+task = Task(
+    description="Summarize the key points",
+    context=["meeting_notes.txt"]
+)
+```
+
+### Structured Response Tasks
+
+```python
+from pydantic import BaseModel
+
+class AnalysisResult(BaseModel):
+    summary: str
+    key_points: list[str]
+    confidence: float
+
+task = Task(
+    description="Analyze the business proposal",
+    attachments=["proposal.pdf"],
+    response_format=AnalysisResult
+)
+
+result = direct.do(task)
+print(f"Summary: {result.summary}")
+print(f"Key points: {result.key_points}")
+```
+
+## Response Formatting
+
+### String Responses
+
+```python
+task = Task("What is 2+2?")
+result = direct.do(task)  # Returns: "4"
+```
+
+### Pydantic Model Responses
+
+```python
+class ProgrammingLanguage(BaseModel):
+    name: str
+    popularity: int
+
+class LanguageAnalysis(BaseModel):
+    languages: list[ProgrammingLanguage]
+    most_popular: str
+
+task = Task(
+    description="Analyze programming language trends",
+    response_format=LanguageAnalysis
+)
+
+result = direct.do(task)
+print(result.most_popular)  # "Python"
+```
+
+## Practical Examples
+
+### Document Analysis
+
+```python
+class DocumentAnalysis(BaseModel):
+    title: str
+    summary: str
+    key_entities: list[str]
+
+task = Task(
+    description="Analyze this document",
+    attachments=["research_paper.pdf"],
+    response_format=DocumentAnalysis
+)
+
+analysis = direct.do(task)
+print(f"Title: {analysis.title}")
+print(f"Summary: {analysis.summary}")
+```
+
+### Data Extraction
+
+```python
+class ContactInfo(BaseModel):
+    name: str
+    email: str
+    phone: str
+
+task = Task(
+    description="Extract contact information from this business card",
+    attachments=["business_card.jpg"],
+    response_format=ContactInfo
+)
+
+contact = direct.do(task)
+print(f"Name: {contact.name}")
+print(f"Email: {contact.email}")
+```
+
+
+## Complete Example
+
+```python
+import asyncio
+from upsonic import Direct, Task
+from pydantic import BaseModel
+
+class DocumentSummary(BaseModel):
+    title: str
+    main_topics: list[str]
+    key_insights: list[str]
+
+async def main():
+    direct = Direct(model="openai/gpt-4o")
+    
+    task = Task(
+        description="Analyze this business report",
+        attachments=["quarterly_report.pdf"],
+        response_format=DocumentSummary
+    )
+    
+    result = await direct.print_do_async(task)
+    print(f"Title: {result.title}")
+    print(f"Topics: {', '.join(result.main_topics)}")
+
+asyncio.run(main())
+```
+
+## Property Access
+
+```python
+# Access current configuration
+print(f"Model: {direct.model}")
+print(f"Settings: {direct.settings}")
+print(f"Profile: {direct.profile}")
+print(f"Provider: {direct.provider}")
 ```
