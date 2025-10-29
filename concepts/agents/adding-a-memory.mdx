@@ -20,7 +20,7 @@ Here's how to set up memory with SQLite storage:
 ```python
 from upsonic import Agent, Memory
 from upsonic.storage.providers.sqlite import SqliteStorage
-from upsonic.models.providers import OpenAI
+from upsonic.models.openai import OpenAIChatModel
 
 # Create storage backend
 storage = SqliteStorage("sessions", "profiles", "agent_memory.db")
@@ -33,7 +33,7 @@ memory = Memory(
     full_session_memory=True,
     summary_memory=True,
     user_analysis_memory=True,
-    model_provider=OpenAI(model_name="gpt-4o-mini")
+    model=OpenAIChatModel("gpt-4o-mini")
 )
 
 # Create agent with memory
@@ -69,7 +69,7 @@ memory = Memory(
     user_profile_schema=None,        # Custom user profile schema
     dynamic_user_profile=False,      # Use dynamic profile generation
     num_last_messages=None,          # Limit conversation history
-    model_provider=model_provider,   # LLM for analysis tasks
+    model=model,                     # LLM for analysis tasks
     debug=False,                     # Enable debug logging
     feed_tool_call_results=False,    # Include tool results in memory
     user_memory_mode='update'        # 'update' or 'replace' user profiles
@@ -97,7 +97,7 @@ memory = Memory(
     storage=storage,
     session_id="session_001",
     summary_memory=True,
-    model_provider=OpenAI(model_name="gpt-4o-mini")
+    model=OpenAIChatModel("gpt-4o-mini")
 )
 ```
 
@@ -110,7 +110,7 @@ memory = Memory(
     session_id="session_001",
     user_id="user_001",
     user_analysis_memory=True,
-    model_provider=OpenAI(model_name="gpt-4o-mini")
+    model=OpenAIChatModel("gpt-4o-mini")
 )
 ```
 
@@ -177,7 +177,7 @@ memory = Memory(
     user_id="user_001",
     user_analysis_memory=True,
     user_profile_schema=CustomUserTraits,
-    model_provider=model_provider
+    model=model
 )
 ```
 
@@ -190,7 +190,7 @@ memory = Memory(
     user_id="user_001",
     user_analysis_memory=True,
     dynamic_user_profile=True,  # Automatically generate profile schema
-    model_provider=model_provider
+    model=model
 )
 ```
 

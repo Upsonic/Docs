@@ -100,7 +100,7 @@ report_writer = Agent(
 team = Team(
     agents=[data_analyst, report_writer],
     mode="coordinate",
-    model_provider="openai/gpt-4o"  # Required for leader agent
+    model="openai/gpt-4o"  # Required for leader agent
 )
 
 # Define tasks
@@ -153,7 +153,7 @@ financial_expert = Agent(
 team = Team(
     agents=[legal_expert, tech_expert, financial_expert],
     mode="route",
-    model_provider="openai/gpt-4o"  # Required for router agent
+    model="openai/gpt-4o"  # Required for router agent
 )
 
 # Router selects best expert
@@ -301,7 +301,7 @@ writer = Agent(
 team = Team(
     agents=[researcher, analyst, writer],
     mode="coordinate",
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # Leader agent will strategically delegate these tasks
@@ -338,7 +338,7 @@ team_memory = Memory(
 team = Team(
     agents=[researcher, analyst, writer],
     mode="coordinate",
-    model_provider="openai/gpt-4o",
+    model="openai/gpt-4o",
     memory=team_memory  # All agents share this memory during coordination
 )
 
@@ -375,7 +375,7 @@ analyst = Agent(model="openai/gpt-4o", name="Analyst")
 team = Team(
     agents=[researcher, analyst],
     mode="coordinate",
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # Tasks with tools - leader delegates with appropriate tools
@@ -432,7 +432,7 @@ devops_expert = Agent(
 team = Team(
     agents=[python_expert, javascript_expert, devops_expert],
     mode="route",
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # Router intelligently selects best expert
@@ -466,7 +466,7 @@ fitness_expert = Agent(
 team = Team(
     agents=[medical_expert, fitness_expert],
     mode="route",
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # Multiple related tasks routed to single best expert
@@ -635,7 +635,7 @@ qa_engineer = Agent(
 team = Team(
     agents=[architect, backend_dev, frontend_dev, qa_engineer],
     mode="coordinate",
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # Project tasks
@@ -684,7 +684,7 @@ account_specialist = Agent(
 support_team = Team(
     agents=[billing_specialist, technical_specialist, account_specialist],
     mode="route",
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # Customer inquiry
@@ -818,7 +818,7 @@ team_memory = Memory(
     session_id="bi_project_001",
     full_session_memory=True,
     summary_memory=True,
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # Create BI team
@@ -847,7 +847,7 @@ visualization_expert = Agent(
 team = Team(
     agents=[data_engineer, data_analyst, visualization_expert],
     mode="coordinate",
-    model_provider="openai/gpt-4o",
+    model="openai/gpt-4o",
     memory=team_memory
 )
 
@@ -923,7 +923,7 @@ bi_report = team.do(tasks)
 - Keep task lists reasonable (5-10 tasks max)
 - Use faster models for simple agents
 - Save expensive models for critical agents
-- In coordinate mode, always set `model_provider` for the leader
+- In coordinate mode, always set `model` for the leader
 
 ### Cost Management
 
@@ -962,7 +962,7 @@ team_memory = Memory(
     session_id="project_new_platform",
     full_session_memory=True,
     summary_memory=True,
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # Create production team
@@ -1010,7 +1010,7 @@ risk_manager = Agent(
 team = Team(
     agents=[system_architect, tech_lead, qa_lead, devops_lead, risk_manager],
     mode="coordinate",
-    model_provider="openai/gpt-4o",
+    model="openai/gpt-4o",
     memory=team_memory,
     response_format=ProjectDeliverable
 )

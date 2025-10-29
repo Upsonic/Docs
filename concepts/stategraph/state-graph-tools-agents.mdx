@@ -1,0 +1,654 @@
+---
+title: "Building AI Agents"
+description: "Create intelligent agents with tools and agentic workflows"
+---
+
+## Overview
+
+StateGraph is perfect for building AI agents - systems that can reason, use tools, and make decisions autonomously. An agent workflow typically follows this pattern:
+
+```
+User Input → [LLM Reasoning] → [Tool Calls] → [Tool Results] → [LLM Processing] → Response
+                    ↓                                                      ↑
+                    └──────────────── Loop if more tools needed ─────────┘
+```
+
+This is known as the **ReAct pattern** (Reasoning + Acting).
+
+## Basic Agent Pattern
+
+Here's the simplest agent structure:
+
+```python
+from typing import Annotated, List
+from typing_extensions import TypedDict
+import operator
+
+from upsonic.graphv2 import StateGraph, START, END
+from upsonic.models import infer_model
+from upsonic.messages import ModelRequest, UserPromptPart, SystemPromptPart
+from upsonic.tools import tool
+
+# Define state
+class AgentState(TypedDict):
+    messages: Annotated[List, operator.add]
+    iterations: Annotated[int, lambda a, b: a + b]
+
+# Define tools
+@tool
+def calculator(a: float, b: float, operation: str) -> float:
+    """Perform basic math operations."""
+    if operation == "add":
+        return a + b
+    elif operation == "multiply":
+        return a * b
+    elif operation == "divide":
+        return a / b if b != 0 else 0
+    return 0
+
+# LLM node
+def llm_node(state: AgentState) -> dict:
+    """Let the LLM reason and use tools."""
+    model = infer_model("openai/gpt-4o-mini")
+    
+    # Bind tools to the model
+    model_with_tools = model.bind_tools([calculator])
+    
+    # Invoke (Upsonic automatically handles tool execution)
+    response = model_with_tools.invoke(state["messages"])
+    
+    return {
+        "messages": [response],
+        "iterations": 1
+    }
+
+# Build graph
+builder = StateGraph(AgentState)
+builder.add_node("llm", llm_node)
+builder.add_edge(START, "llm")
+builder.add_edge("llm", END)
+
+graph = builder.compile()
+
+# Execute
+result = graph.invoke({
+    "messages": [
+        UserPromptPart(content="What is 23 multiplied by 17, then add 150?")
+    ],
+    "iterations": 0
+})
+
+print(result["messages"][-1])  # Final answer
+```
+
+<Info>
+**Automatic Tool Execution:** When you use `model.bind_tools()`, Upsonic automatically executes tool calls and feeds results back to the LLM. The final response is already processed.
+</Info>
+
+## Complete Agent Example
+
+Let's build a more sophisticated agent with multiple tools:
+
+```python
+from typing import Annotated, List
+from typing_extensions import TypedDict
+import operator
+
+from upsonic.graphv2 import StateGraph, START, END, MemorySaver
+from upsonic.models import infer_model
+from upsonic.messages import (
+    ModelRequest, ModelResponse,
+    UserPromptPart, SystemPromptPart
+)
+from upsonic.tools import tool
+
+# Define tools
+@tool
+def search_web(query: str) -> str:
+    """Search the web for information."""
+    # Simulate web search
+    return f"Search results for '{query}': Python is a high-level programming language..."
+
+@tool
+def calculator(expression: str) -> str:
+    """Evaluate a mathematical expression."""
+    try:
+        result = eval(expression)
+        return f"Result: {result}"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+@tool
+def get_weather(location: str) -> str:
+    """Get current weather for a location."""
+    # Simulate weather API
+    return f"Weather in {location}: Sunny, 72°F"
+
+# Define state
+class AgentState(TypedDict):
+    messages: Annotated[List[ModelRequest | ModelResponse], operator.add]
+    iterations: Annotated[int, lambda a, b: a + b]
+    max_iterations: int
+
+# Agent node
+def agent_node(state: AgentState) -> dict:
+    """Main agent reasoning loop."""
+    print(f"\n[Agent] Iteration {state['iterations'] + 1}")
+    
+    # Get model with tools
+    model = infer_model("openai/gpt-4o-mini")
+    tools = [search_web, calculator, get_weather]
+    model_with_tools = model.bind_tools(tools)
+    
+    # Invoke with message history
+    response = model_with_tools.invoke(state["messages"])
+    
+    # Create response object
+    from upsonic.messages import ModelResponse, TextPart
+    model_response = ModelResponse(
+        parts=[TextPart(content=response)],
+        usage=None,
+        model_name="openai/gpt-4o-mini",
+        timestamp=None,
+        provider_response_id=None,
+        provider_name="openai",
+        finish_reason=None,
+        provider_details=None
+    )
+    
+    return {
+        "messages": [model_response],
+        "iterations": 1
+    }
+
+# Build agent
+builder = StateGraph(AgentState)
+builder.add_node("agent", agent_node)
+builder.add_edge(START, "agent")
+builder.add_edge("agent", END)
+
+checkpointer = MemorySaver()
+graph = builder.compile(checkpointer=checkpointer)
+
+# Test queries
+queries = [
+    "What's the weather in San Francisco?",
+    "Calculate 15% of 240",
+    "Search for information about Python decorators"
+]
+
+for i, query in enumerate(queries, 1):
+    print(f"\n{'='*60}")
+    print(f"Query {i}: {query}")
+    print('='*60)
+    
+    config = {"configurable": {"thread_id": f"agent-{i}"}}
+    
+    initial_request = ModelRequest(parts=[
+        SystemPromptPart(content="You are a helpful AI assistant with access to tools. Use them when needed."),
+        UserPromptPart(content=query)
+    ])
+    
+    result = graph.invoke({
+        "messages": [initial_request],
+        "iterations": 0,
+        "max_iterations": 5
+    }, config=config)
+    
+    # Extract response
+    for msg in result["messages"]:
+        if isinstance(msg, ModelResponse):
+            for part in msg.parts:
+                if hasattr(part, 'content'):
+                    print(f"\n✓ Response: {part.content}")
+```
+
+## Multi-Step Agentic Workflow
+
+For complex tasks, create a multi-node agent with explicit reasoning stages:
+
+```python
+from typing import Annotated, List, Literal
+from typing_extensions import TypedDict
+import operator
+
+from upsonic.graphv2 import StateGraph, START, END, Command
+
+class ResearchState(TypedDict):
+    query: str
+    research_plan: str
+    gathered_info: Annotated[List[str], operator.add]
+    synthesis: str
+    final_answer: str
+
+def plan_research(state: ResearchState) -> dict:
+    """Plan the research strategy."""
+    model = infer_model("openai/gpt-4o-mini")
+    
+    prompt = f"Create a research plan to answer: {state['query']}"
+    plan = model.invoke(prompt)
+    
+    return {"research_plan": plan}
+
+def gather_information(state: ResearchState) -> dict:
+    """Gather information based on the plan."""
+    model = infer_model("openai/gpt-4o-mini")
+    
+    # Use tools to gather info
+    search_tool = tool(lambda q: f"Info about {q}")
+    model_with_tools = model.bind_tools([search_tool])
+    
+    info = model_with_tools.invoke(
+        f"Research plan: {state['research_plan']}\nQuery: {state['query']}"
+    )
+    
+    return {"gathered_info": [info]}
+
+def synthesize_answer(state: ResearchState) -> dict:
+    """Synthesize final answer."""
+    model = infer_model("openai/gpt-4o-mini")
+    
+    prompt = f"""
+    Query: {state['query']}
+    Information gathered: {' '.join(state['gathered_info'])}
+    
+    Synthesize a comprehensive answer.
+    """
+    
+    answer = model.invoke(prompt)
+    
+    return {"final_answer": answer}
+
+# Build research agent
+builder = StateGraph(ResearchState)
+builder.add_node("plan", plan_research)
+builder.add_node("gather", gather_information)
+builder.add_node("synthesize", synthesize_answer)
+
+builder.add_edge(START, "plan")
+builder.add_edge("plan", "gather")
+builder.add_edge("gather", "synthesize")
+builder.add_edge("synthesize", END)
+
+research_agent = builder.compile()
+
+# Use it
+result = research_agent.invoke({
+    "query": "What are the benefits of using Python for data science?",
+    "research_plan": "",
+    "gathered_info": [],
+    "synthesis": "",
+    "final_answer": ""
+})
+
+print(result["final_answer"])
+```
+
+## Agentic Loop with Conditional Exit
+
+Create agents that loop until they complete the task:
+
+```python
+from upsonic.graphv2 import Command, END
+
+class LoopingAgentState(TypedDict):
+    task: str
+    steps_completed: Annotated[List[str], operator.add]
+    iterations: Annotated[int, lambda a, b: a + b]
+    max_iterations: int
+    status: str
+
+def agent_loop(state: LoopingAgentState) -> Command[Literal["agent_loop", END]]:
+    """Agent that loops until task is complete."""
+    model = infer_model("openai/gpt-4o-mini")
+    tools = [search_web, calculator]
+    model_with_tools = model.bind_tools(tools)
+    
+    # Check if we should continue
+    if state["iterations"] >= state["max_iterations"]:
+        return Command(
+            update={"status": "max_iterations_reached"},
+            goto=END
+        )
+    
+    # Perform reasoning
+    prompt = f"""
+    Task: {state['task']}
+    Steps completed: {state['steps_completed']}
+    
+    What's the next step? If task is complete, respond with "COMPLETE".
+    """
+    
+    response = model_with_tools.invoke(prompt)
+    
+    if "COMPLETE" in response:
+        return Command(
+            update={"status": "completed", "steps_completed": [response]},
+            goto=END
+        )
+    else:
+        return Command(
+            update={"steps_completed": [response], "iterations": 1},
+            goto="agent_loop"  # Continue looping
+        )
+
+# Build
+builder = StateGraph(LoopingAgentState)
+builder.add_node("agent_loop", agent_loop)
+builder.add_edge(START, "agent_loop")
+
+graph = builder.compile()
+
+result = graph.invoke(
+    {
+        "task": "Research Python web frameworks and recommend one",
+        "steps_completed": [],
+        "iterations": 0,
+        "max_iterations": 5,
+        "status": ""
+    },
+    config={"recursion_limit": 10}
+)
+
+print(f"Status: {result['status']}")
+print(f"Steps: {result['steps_completed']}")
+```
+
+<Warning>
+Always set `max_iterations` and `recursion_limit` to prevent infinite loops in agentic workflows.
+</Warning>
+
+## Tool-Calling Patterns
+
+### Pattern 1: Sequential Tool Use
+
+Agent uses tools one at a time:
+
+```python
+@tool
+def step1_tool(input: str) -> str:
+    return f"Processed: {input}"
+
+@tool
+def step2_tool(data: str) -> str:
+    return f"Refined: {data}"
+
+def sequential_agent(state: AgentState) -> dict:
+    model = infer_model("openai/gpt-4o-mini")
+    
+    # Bind all tools
+    model_with_tools = model.bind_tools([step1_tool, step2_tool])
+    
+    # Model will call tools in sequence as needed
+    response = model_with_tools.invoke(state["messages"])
+    
+    return {"messages": [response]}
+```
+
+### Pattern 2: Parallel Tool Use
+
+Execute multiple tools simultaneously:
+
+```python
+from upsonic.graphv2 import Send
+
+@tool
+def fetch_data_a(source: str) -> dict:
+    return {"source": source, "data": "..."}
+
+@tool
+def fetch_data_b(source: str) -> dict:
+    return {"source": source, "data": "..."}
+
+def parallel_fetch(state: AgentState) -> List[Send]:
+    """Fan out to multiple data sources."""
+    sources = ["api_1", "api_2", "api_3"]
+    
+    return [
+        Send("fetch_worker", {"source": source})
+        for source in sources
+    ]
+
+def fetch_worker(state: dict) -> dict:
+    """Worker that fetches from one source."""
+    source = state["source"]
+    data = fetch_data_a(source) if "api_1" in source else fetch_data_b(source)
+    return {"results": [data]}
+
+# Build with Send API
+builder.add_conditional_edges("orchestrator", parallel_fetch, ["fetch_worker"])
+```
+
+### Pattern 3: Tool Error Handling
+
+Gracefully handle tool failures:
+
+```python
+@tool
+def unreliable_tool(data: str) -> str:
+    """A tool that might fail."""
+    if some_condition:
+        raise Exception("Tool failed")
+    return f"Success: {data}"
+
+def robust_agent(state: AgentState) -> dict:
+    model = infer_model("openai/gpt-4o-mini")
+    
+    try:
+        model_with_tools = model.bind_tools([unreliable_tool])
+        response = model_with_tools.invoke(state["messages"])
+        return {"messages": [response], "status": "success"}
+    except Exception as e:
+        # Fallback behavior
+        return {
+            "messages": [f"Tool failed: {str(e)}. Using fallback."],
+            "status": "fallback"
+        }
+```
+
+## Memory and Context
+
+Agents need memory to maintain context:
+
+```python
+from typing import Annotated, List, Dict
+import operator
+
+class AgentWithMemory(TypedDict):
+    # Conversation history
+    messages: Annotated[List, operator.add]
+    
+    # Short-term memory (current session)
+    working_memory: Dict[str, any]
+    
+    # Long-term memory (facts learned)
+    knowledge: Annotated[List[str], operator.add]
+
+def agent_with_memory(state: AgentWithMemory) -> dict:
+    model = infer_model("openai/gpt-4o-mini")
+    
+    # Include memory in context
+    context = f"""
+    Previous knowledge: {state['knowledge']}
+    Current context: {state['working_memory']}
+    """
+    
+    prompt = f"{context}\n\nUser: {state['messages'][-1]}"
+    response = model.invoke(prompt)
+    
+    # Extract new knowledge (simplified)
+    new_knowledge = []
+    if "learned:" in response.lower():
+        new_knowledge = [response.split("learned:")[1].strip()]
+    
+    return {
+        "messages": [response],
+        "knowledge": new_knowledge
+    }
+```
+
+## Agent Delegation
+
+Create specialized agents that delegate to sub-agents:
+
+```python
+class MainAgentState(TypedDict):
+    task: str
+    specialist_needed: str
+    result: str
+
+def router_agent(state: MainAgentState) -> Command:
+    """Route to specialist based on task."""
+    task_lower = state["task"].lower()
+    
+    if "math" in task_lower or "calculate" in task_lower:
+        return Command(
+            update={"specialist_needed": "math"},
+            goto="math_specialist"
+        )
+    elif "research" in task_lower or "information" in task_lower:
+        return Command(
+            update={"specialist_needed": "research"},
+            goto="research_specialist"
+        )
+    else:
+        return Command(
+            update={"specialist_needed": "general"},
+            goto="general_agent"
+        )
+
+def math_specialist(state: MainAgentState) -> dict:
+    """Specialized in mathematical tasks."""
+    model = infer_model("openai/gpt-4o-mini")
+    model_with_tools = model.bind_tools([calculator])
+    
+    result = model_with_tools.invoke(
+        f"Solve this math problem: {state['task']}"
+    )
+    
+    return {"result": result}
+
+def research_specialist(state: MainAgentState) -> dict:
+    """Specialized in research tasks."""
+    model = infer_model("openai/gpt-4o-mini")
+    model_with_tools = model.bind_tools([search_web])
+    
+    result = model_with_tools.invoke(
+        f"Research this topic: {state['task']}"
+    )
+    
+    return {"result": result}
+
+def general_agent(state: MainAgentState) -> dict:
+    """General purpose agent."""
+    model = infer_model("openai/gpt-4o-mini")
+    result = model.invoke(state['task'])
+    return {"result": result}
+
+# Build delegation system
+builder = StateGraph(MainAgentState)
+builder.add_node("router", router_agent)
+builder.add_node("math_specialist", math_specialist)
+builder.add_node("research_specialist", research_specialist)
+builder.add_node("general_agent", general_agent)
+
+builder.add_edge(START, "router")
+builder.add_edge("math_specialist", END)
+builder.add_edge("research_specialist", END)
+builder.add_edge("general_agent", END)
+
+delegation_agent = builder.compile()
+```
+
+## Best Practices
+
+### 1. Clear System Prompts
+
+Give agents clear instructions:
+
+```python
+# ✅ Good - specific instructions
+SystemPromptPart(content="""
+You are a research assistant. Your goal is to:
+1. Break down complex questions into sub-questions
+2. Use the search tool to find information
+3. Synthesize findings into a clear answer
+4. Cite your sources
+
+Always think step-by-step and use tools when needed.
+""")
+
+# ❌ Bad - vague
+SystemPromptPart(content="You are helpful.")
+```
+
+### 2. Limit Tool Sets
+
+Only provide relevant tools:
+
+```python
+# ✅ Good - focused tools
+if task_type == "math":
+    tools = [calculator, statistics_tool]
+elif task_type == "research":
+    tools = [search_web, summarize_tool]
+
+# ❌ Bad - overwhelming
+tools = [all_100_tools]  # Agent gets confused
+```
+
+### 3. Add Observability
+
+Track what your agent is doing:
+
+```python
+def agent_with_logging(state: AgentState, config: dict) -> dict:
+    print(f"[Agent] Iteration {state['iterations']}")
+    print(f"[Agent] Current task: {state.get('current_task')}")
+    
+    model = infer_model("openai/gpt-4o-mini")
+    response = model.invoke(state["messages"])
+    
+    print(f"[Agent] Response: {response[:100]}...")
+    
+    return {"messages": [response], "iterations": 1}
+```
+
+### 4. Set Guardrails
+
+Protect against runaway agents:
+
+```python
+class SafeAgentState(TypedDict):
+    messages: Annotated[List, operator.add]
+    iterations: int
+    max_iterations: int
+    tool_calls_count: int
+    max_tool_calls: int
+
+def safe_agent(state: SafeAgentState) -> dict:
+    # Check limits
+    if state["iterations"] >= state["max_iterations"]:
+        return {"messages": ["Max iterations reached"], "status": "stopped"}
+    
+    if state["tool_calls_count"] >= state["max_tool_calls"]:
+        return {"messages": ["Max tool calls reached"], "status": "stopped"}
+    
+    # Continue normally
+    ...
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Advanced Features" icon="star" href="/state-graph-advanced">
+    Explore Send API and parallel patterns
+  </Card>
+  <Card title="Reliability" icon="shield" href="/state-graph-reliability">
+    Add retry and cache policies
+  </Card>
+  <Card title="Human-in-Loop" icon="user-check" href="/state-graph-human-in-loop">
+    Add human oversight
+  </Card>
+</CardGroup>
+

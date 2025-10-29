@@ -7,7 +7,6 @@ The `Agent` exposes numerous attributes that control its behavior and capabiliti
 | --------------- | ------------------------- | ---------------- | ---------------------------------------- |
 | name            | str \| None               | None             | Human-readable name for the agent        |
 | agent\_id\_     | str \| None               | None             | Unique identifier for the agent instance |
-| model\_provider | BaseModelProvider \| None | OpenAI("gpt-4o") | The underlying LLM provider              |
 
 **Example:**
 
@@ -23,7 +22,7 @@ print(f"Agent: {agent.name}, ID: {agent.agent_id}")
 
 | Attribute | Type                            | Default         | Description                                       |
 | --------- | ------------------------------- | --------------- | ------------------------------------------------- |
-| model     | Union\[str, BaseModelProvider\] | "openai/gpt-4o" | Model specification (string or provider instance) |
+| model     | Union\[str, Model\] | "openai/gpt-4o" | Model specification (string or Model instance) |
 | retry     | int                             | 1               | Number of retry attempts for failed calls         |
 | mode      | RetryMode                       | "raise"         | Retry behavior: "raise" or "return\_false"        |
 | debug     | bool                            | False           | Enable debug mode for detailed logging            |
