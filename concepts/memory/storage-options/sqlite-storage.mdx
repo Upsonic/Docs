@@ -1,0 +1,30 @@
+---
+title: "SqliteStorage"
+description: "Lightweight SQLite database storage"
+---
+
+## Usage
+
+```python
+from upsonic.storage import SqliteStorage
+
+# In-memory SQLite (temporary)
+storage = SqliteStorage(
+    sessions_table_name="sessions",
+    profiles_table_name="profiles",
+    db_file=None  # Use in-memory database
+)
+
+# Persistent SQLite
+storage = SqliteStorage(
+    sessions_table_name="sessions",
+    profiles_table_name="user_profiles",
+    db_file="./data/memory.db"
+)
+```
+
+## Params
+
+- `sessions_table_name: str` - Name of sessions table
+- `profiles_table_name: str` - Name of profiles table
+- `db_file: str` - Path to SQLite file (None for in-memory)

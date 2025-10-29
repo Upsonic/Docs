@@ -1,0 +1,28 @@
+---
+title: "Memory Attributes"
+description: "Configuration options for the Memory class"
+---
+
+## Attributes
+
+The `Memory` class provides the following key attributes:
+
+```python
+from upsonic.storage import Memory, InMemoryStorage
+
+memory = Memory(
+    storage=storage,                    # Required: Storage backend
+    session_id="session_123",          # Optional: For conversation/summary memory
+    user_id="user_456",                # Optional: For user analysis memory
+    full_session_memory=True,         # Enable complete chat history
+    summary_memory=True,               # Enable conversation summaries
+    user_analysis_memory=True,        # Enable user learning
+    num_last_messages=10,             # Limit history to last N turns
+    model="openai/gpt-4o",            # Model for analysis/summaries
+    user_profile_schema=UserProfile,  # Custom user profile schema
+    dynamic_user_profile=True,        # Let agent create custom fields
+    user_memory_mode='update',        # 'update' or 'replace' mode
+    feed_tool_call_results=False,     # Include tool calls in memory
+    debug=True                        # Enable debug logging
+)
+```

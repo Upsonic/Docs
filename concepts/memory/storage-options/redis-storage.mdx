@@ -1,0 +1,38 @@
+---
+title: "RedisStorage"
+description: "Redis storage for distributed and high-performance systems"
+---
+
+## Usage
+
+```python
+from upsonic.storage import RedisStorage
+
+# Redis storage for distributed systems
+storage = RedisStorage(
+    host="localhost",
+    port=6379,
+    db=0,
+    password="your_password",
+    prefix="upsonic:"
+)
+
+# Redis with custom configuration
+storage = RedisStorage(
+    host="redis.example.com",
+    port=6379,
+    db=1,
+    ssl=True,
+    prefix="prod:memory:"
+)
+```
+
+## Params
+
+- `prefix: str` - Key prefix for namespacing
+- `host: str` - Redis server hostname (default: "localhost")
+- `port: int` - Redis server port (default: 6379)
+- `db: int` - Redis database number (default: 0)
+- `password: str` - Optional password for authentication
+- `ssl: bool` - Use SSL connection (default: False)
+- `expire: int` - Optional TTL in seconds for keys

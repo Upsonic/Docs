@@ -1,0 +1,37 @@
+---
+title: "Summary Memory"
+description: "Maintain condensed conversation summaries for cost efficiency"
+---
+
+## What is Summary Memory?
+
+Summary Memory maintains an evolving, condensed summary of key conversation points, reducing costs while preserving important context.
+
+## Usage
+
+```python
+from upsonic.storage import Memory, SqliteStorage
+
+# Summary memory with model
+memory = Memory(
+    storage=SqliteStorage(sessions_table_name="sessions", profiles_table_name="profiles"),
+    session_id="session_002",
+    summary_memory=True,
+    model="openai/gpt-4o-mini"  # Model for generating summaries
+)
+
+# Combined with conversation memory
+memory = Memory(
+    storage=SqliteStorage(sessions_table_name="sessions", profiles_table_name="profiles"),
+    session_id="session_002",
+    full_session_memory=True,
+    summary_memory=True,
+    model="openai/gpt-4o-mini"
+)
+```
+
+## Params
+
+- `summary_memory: bool` - Enable/disable summary generation
+- `session_id: str` - Required identifier for the session
+- `model: str` - Required model for generating summaries
