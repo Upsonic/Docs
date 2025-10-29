@@ -312,7 +312,7 @@ async def fetch_website_content(url: str) -> Dict[str, Any]:
         }
 
 # Tool 2: SEO Analysis Tool with Human-in-the-Loop via Hooks
-from upsonic.tools.tool import ToolHooks
+from upsonic import ToolHooks
 
 def before_analysis_hook(html_content: str):
     """Hook that runs before SEO analysis to get user confirmation."""

@@ -176,10 +176,6 @@ memory_with_custom_schema = Memory(
 ### Memory with Model Provider
 
 ```python
-from upsonic.models.factory import ModelFactory
-
-# Get a model provider for memory operations
-model_provider = ModelFactory.create("gpt-4o")
 
 memory_with_model = Memory(
     storage=storage,
@@ -187,7 +183,7 @@ memory_with_model = Memory(
     user_id="user_789",
     summary_memory=True,
     user_analysis_memory=True,
-    model_provider=model_provider,  # For generating summaries and analyzing traits
+    model="openai/gpt-4o",  # For generating summaries and analyzing traits
     debug=True
 )
 ```
@@ -250,7 +246,7 @@ shared_memory = Memory(
     user_id="user_456",
     full_session_memory=True,
     summary_memory=True,
-    model_provider=model_provider  # Required for summary generation
+    model="openai/gpt-4o"  # Required for summary generation
 )
 
 # Create agents with shared memory

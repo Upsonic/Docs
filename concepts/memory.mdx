@@ -115,7 +115,7 @@ memory = Memory(
     storage=storage,
     session_id="session_789",
     summary_memory=True,
-    model_provider="openai/gpt-4o-mini"  # Model for generating summaries
+    model="openai/gpt-4o-mini"  # Model for generating summaries
 )
 
 # Agent with summary memory
@@ -291,7 +291,7 @@ memory = Memory(
     storage=storage,
     session_id="session_002",
     summary_memory=True,
-    model_provider="openai/gpt-4o-mini",  # Model for summary generation
+    model="openai/gpt-4o-mini",  # Model for summary generation
     debug=True  # Enable debug logging
 )
 
@@ -301,7 +301,7 @@ memory = Memory(
     session_id="session_002",
     full_session_memory=True,
     summary_memory=True,
-    model_provider="openai/gpt-4o-mini"
+    model="openai/gpt-4o-mini"
 )
 ```
 
@@ -323,7 +323,7 @@ memory = Memory(
     session_id="session_003",
     user_id="user_456",
     user_analysis_memory=True,
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # With custom user profile schema
@@ -342,7 +342,7 @@ memory = Memory(
     user_id="user_456",
     user_analysis_memory=True,
     user_profile_schema=CustomUserProfile,
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 ```
 
@@ -360,7 +360,7 @@ memory = Memory(
     user_id="user_789",
     user_analysis_memory=True,
     dynamic_user_profile=True,  # Agent creates custom profile fields
-    model_provider="openai/gpt-4o",
+    model="openai/gpt-4o",
     debug=True
 )
 
@@ -382,7 +382,7 @@ memory_replace = Memory(
     user_id="user_001",
     user_analysis_memory=True,
     user_memory_mode='replace',  # Replace entire profile
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # Update mode - merges new information with existing profile
@@ -392,7 +392,7 @@ memory_update = Memory(
     user_id="user_001",
     user_analysis_memory=True,
     user_memory_mode='update',  # Default: merge new traits
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 ```
 
@@ -565,7 +565,7 @@ memory = Memory(
     full_session_memory=True,
     user_analysis_memory=True,
     num_last_messages=10,  # Keep last 10 turns for context
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # Support agent
@@ -590,7 +590,7 @@ memory_new_session = Memory(
     user_id="customer_123",  # Same customer
     full_session_memory=True,
     user_analysis_memory=True,
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 agent_new = Agent(model="openai/gpt-4o", memory=memory_new_session)
@@ -627,7 +627,7 @@ memory = Memory(
     summary_memory=True,
     user_analysis_memory=True,
     user_profile_schema=StudentProfile,
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 # Tutor agent
@@ -653,7 +653,7 @@ memory_lesson2 = Memory(
     summary_memory=True,
     user_analysis_memory=True,
     user_profile_schema=StudentProfile,
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 tutor2 = Agent(model="openai/gpt-4o", memory=memory_lesson2)
@@ -685,7 +685,7 @@ memory = Memory(
     user_analysis_memory=True,
     dynamic_user_profile=True,  # Learn custom traits
     num_last_messages=20,
-    model_provider="openai/gpt-4o",
+    model="openai/gpt-4o",
     debug=False
 )
 
@@ -728,7 +728,7 @@ memory1 = Memory(
     user_id="analyst_001",
     full_session_memory=True,
     user_analysis_memory=True,
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 agent1 = Agent(model="openai/gpt-4o", memory=memory1)
@@ -742,7 +742,7 @@ memory2 = Memory(
     user_id="analyst_001",  # Same user
     full_session_memory=True,
     user_analysis_memory=True,  # Loads existing profile
-    model_provider="openai/gpt-4o"
+    model="openai/gpt-4o"
 )
 
 agent2 = Agent(model="openai/gpt-4o", memory=memory2)
@@ -775,7 +775,7 @@ async def main():
         user_id="async_user_001",
         full_session_memory=True,
         user_analysis_memory=True,
-        model_provider="openai/gpt-4o"
+        model="openai/gpt-4o"
     )
     
     # Create agent
@@ -996,7 +996,7 @@ async def run_production_agent():
         user_profile_schema=ProductionUserProfile,
         user_memory_mode='update',
         num_last_messages=15,
-        model_provider="openai/gpt-4o",
+        model="openai/gpt-4o",
         feed_tool_call_results=False,
         debug=False
     )

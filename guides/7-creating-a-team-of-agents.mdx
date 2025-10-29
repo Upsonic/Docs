@@ -97,7 +97,7 @@ A leader agent delegates tasks to specialized team members:
 team = Team(
     agents=[research_agent, analysis_agent, reporting_agent],
     tasks=[comprehensive_task],
-    model_provider=model_provider,
+    model=model,
     mode="coordinate",
     response_format=MarketReport
 )
@@ -111,7 +111,7 @@ An intelligent router selects the best agent for the entire task:
 team = Team(
     agents=[research_agent, analysis_agent, reporting_agent],
     tasks=[task],
-    model_provider=model_provider,
+    model=model,
     mode="route",
     response_format=MarketReport
 )
