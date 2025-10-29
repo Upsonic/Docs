@@ -4,237 +4,148 @@ description: "High-speed, streamlined interface for direct LLM interactions with
 
 ## Overview
 
-`Direct` is a simplified, high-speed interface for LLM interactions that provides streamlined access to language models without the complexity of memory, knowledge base, or tool calls. It focuses on maximum speed and direct data retrieval.
+### What is Direct LLM Call?
 
-## Core Attributes
+`Direct` is a simplified, high-speed interface for LLM interactions in the Upsonic AI Agent Framework. It provides a streamlined way to communicate with language models without the overhead of memory management, knowledge bases, or tool orchestration. This component is designed for scenarios where you need fast, direct responses from an LLM with minimal configuration.
 
-| Attribute      | Type                    | Description                                                   |
-| -------------- | ----------------------- | ------------------------------------------------------------- |
-| **model**      | Union[str, Any, None]   | Model name, Model instance, or None (defaults to "openai/gpt-4o") |
-| **settings**   | Optional[ModelSettings] | Model-specific settings and parameters                        |
-| **profile**    | Optional[ModelProfileSpec] | Model profile configuration                                |
-| **provider**   | Optional[Union[str, Provider]] | Provider name or Provider instance                      |
+### How Direct LLM Call Works
 
-## Creating a Direct Instance
+The Direct LLM Call mechanism operates through a straightforward pipeline:
+
+1. **Initialization**: Create a `Direct` instance with your preferred model and optional configuration (settings, profile, provider)
+2. **Task Definition**: Define your task using the `Task` object, which includes the description, optional attachments, context, and response format
+3. **Execution**: Execute the task using `do()` for synchronous or `do_async()` for asynchronous operations
+4. **Response Processing**: The system automatically processes the LLM response based on your specified response format (string or Pydantic model)
+
+The Direct class handles all the underlying complexity including:
+- Model instantiation and configuration
+- Message construction from task descriptions and attachments
+- Request parameter building based on response format requirements
+- Automatic parsing of structured outputs
+- Usage metrics tracking
+
+### Why We Need Direct LLM Call
+
+Direct LLM Call addresses specific needs in AI agent development:
+
+- **Performance**: Eliminates overhead from memory, context management, and tool orchestration when these features are unnecessary
+- **Simplicity**: Provides a clean API for straightforward LLM interactions without learning complex agent patterns
+- **Structured Outputs**: Built-in support for Pydantic models ensures type-safe, validated responses
+- **Flexibility**: Fluent interface allows easy configuration switching (different models, settings, profiles)
+- **Document Processing**: Native support for attachments (PDFs, images) with automatic MIME type detection
+- **Async Support**: Full async/await support for high-concurrency scenarios
+
+## Attributes
+
+The `Direct` class accepts the following attributes during initialization:
+
+| Attribute | Type | Description | Default |
+|-----------|------|-------------|---------|
+| **model** | `Union[str, Any, None]` | Model identifier (e.g., "openai/gpt-4o"), Model instance, or None | `"openai/gpt-4o"` (when None) |
+| **settings** | `Optional[ModelSettings]` | Model-specific configuration including temperature, max_tokens, etc. | `None` |
+| **profile** | `Optional[ModelProfileSpec]` | Model profile configuration for advanced customization | `None` |
+| **provider** | `Optional[Union[str, Provider]]` | Provider name or Provider instance for custom provider integration | `None` |
+
+### Fluent Interface Methods
+
+The Direct class provides immutable configuration methods that return new instances:
+
+- `with_model(model)`: Create new instance with specified model
+- `with_settings(settings)`: Create new instance with specified settings
+- `with_profile(profile)`: Create new instance with specified profile
+- `with_provider(provider)`: Create new instance with specified provider
+
+### Execution Methods
+
+- `do(task, show_output=True)`: Execute task synchronously
+- `do_async(task, show_output=True)`: Execute task asynchronously
+- `print_do(task)`: Execute task synchronously with visual output
+- `print_do_async(task)`: Execute task asynchronously with visual output
+
+## Example
+
+### Basic Direct LLM Call Example
+
+#### About Example Scenario
+
+This example demonstrates a practical use case for Direct LLM Call: extracting structured information from a business document. We have a PDF invoice and need to extract key financial information in a type-safe, validated format. This scenario showcases:
+
+- Document processing with attachments
+- Structured output using Pydantic models
+- Simple, direct execution without agent complexity
+- Type-safe data extraction
+
+#### Direct LLM Call Configuration
+
+**Model Selection**: We use `"openai/gpt-4o"` for its strong vision and reasoning capabilities, essential for document understanding.
+
+**Task Configuration**:
+- **Description**: Clear instruction for the LLM
+- **Attachments**: PDF document passed as attachment for processing
+- **Response Format**: Pydantic model (`InvoiceData`) ensures validated, structured output with required fields
+
+**Pydantic Model**: Defines the expected structure with field types, ensuring runtime validation and type safety. The model includes:
+- Invoice number (string)
+- Total amount (float)
+- Issue date (string)
+- List of line items with name and amount
+
+#### Full Code
 
 ```python
 from upsonic import Direct, Task
 from pydantic import BaseModel
 
-# Basic creation
+
+# Define the structured response format
+class LineItem(BaseModel):
+    name: str
+    amount: float
+
+
+class InvoiceData(BaseModel):
+    invoice_number: str
+    total_amount: float
+    issue_date: str
+    line_items: list[LineItem]
+
+
+# Initialize Direct with GPT-4o
 direct = Direct(model="openai/gpt-4o")
 
-# With custom settings
-from upsonic.models.settings import ModelSettings
-settings = ModelSettings(temperature=0.7, max_tokens=1000)
-direct = Direct(model="openai/gpt-4o", settings=settings)
-```
+# Create task with document attachment and structured response
+task = Task(
+    description="Extract invoice data from this document including invoice number, total amount, issue date, and all line items with their amounts.",
+    attachments=["invoice.pdf"],
+    response_format=InvoiceData
+)
 
-## Fluent Interface Methods
-
-```python
-# Create new instances with different configurations
-gpt4_direct = direct.with_model("openai/gpt-4o")
-cooler_direct = direct.with_settings(ModelSettings(temperature=0.3))
-
-# Chain configurations
-custom_direct = (direct
-    .with_model("openai/gpt-4o")
-    .with_settings(ModelSettings(temperature=0.5)))
-```
-
-## Task Execution Methods
-
-### Synchronous Execution
-
-```python
-# Simple task
-task = Task("What is the capital of France?")
+# Execute and get structured result
 result = direct.do(task)
-print(result)  # "The capital of France is Paris."
 
-# Structured response
-class CountryInfo(BaseModel):
-    capital: str
-    population: int
-
-task = Task(
-    description="Get information about France",
-    response_format=CountryInfo
-)
-result = direct.do(task)
-print(result.capital)  # "Paris"
+# Access structured data with type safety
+print(f"Invoice: {result.invoice_number}")
+print(f"Total: ${result.total_amount}")
+print(f"Date: {result.issue_date}")
+print(f"\nLine Items:")
+for item in result.line_items:
+    print(f"  - {item.name}: ${item.amount}")
 ```
 
-### Asynchronous Execution
+**Expected Output Structure**:
+```
+Invoice: INV-2024-001
+Total: $1250.50
+Date: 2024-10-29
 
-```python
-import asyncio
-
-async def main():
-    task = Task("Explain quantum computing")
-    result = await direct.do_async(task)
-    print(result)
-
-asyncio.run(main())
+Line Items:
+  - Consulting Services: $1000.00
+  - Software License: $250.50
 ```
 
-### Visual Output Methods
-
-```python
-# Execute with visual output (default)
-result = direct.print_do(task)
-
-# Execute without visual output
-result = direct.do(task, show_output=False)
-```
-
-## Task Configuration
-
-### Basic Tasks
-
-```python
-# Simple text task
-task = Task("Write a haiku about programming")
-
-# Task with attachments
-task = Task(
-    description="Analyze this document",
-    attachments=["document.pdf", "data.csv"]
-)
-
-# Task with context
-task = Task(
-    description="Summarize the key points",
-    context=["meeting_notes.txt"]
-)
-```
-
-### Structured Response Tasks
-
-```python
-from pydantic import BaseModel
-
-class AnalysisResult(BaseModel):
-    summary: str
-    key_points: list[str]
-    confidence: float
-
-task = Task(
-    description="Analyze the business proposal",
-    attachments=["proposal.pdf"],
-    response_format=AnalysisResult
-)
-
-result = direct.do(task)
-print(f"Summary: {result.summary}")
-print(f"Key points: {result.key_points}")
-```
-
-## Response Formatting
-
-### String Responses
-
-```python
-task = Task("What is 2+2?")
-result = direct.do(task)  # Returns: "4"
-```
-
-### Pydantic Model Responses
-
-```python
-class ProgrammingLanguage(BaseModel):
-    name: str
-    popularity: int
-
-class LanguageAnalysis(BaseModel):
-    languages: list[ProgrammingLanguage]
-    most_popular: str
-
-task = Task(
-    description="Analyze programming language trends",
-    response_format=LanguageAnalysis
-)
-
-result = direct.do(task)
-print(result.most_popular)  # "Python"
-```
-
-## Practical Examples
-
-### Document Analysis
-
-```python
-class DocumentAnalysis(BaseModel):
-    title: str
-    summary: str
-    key_entities: list[str]
-
-task = Task(
-    description="Analyze this document",
-    attachments=["research_paper.pdf"],
-    response_format=DocumentAnalysis
-)
-
-analysis = direct.do(task)
-print(f"Title: {analysis.title}")
-print(f"Summary: {analysis.summary}")
-```
-
-### Data Extraction
-
-```python
-class ContactInfo(BaseModel):
-    name: str
-    email: str
-    phone: str
-
-task = Task(
-    description="Extract contact information from this business card",
-    attachments=["business_card.jpg"],
-    response_format=ContactInfo
-)
-
-contact = direct.do(task)
-print(f"Name: {contact.name}")
-print(f"Email: {contact.email}")
-```
-
-
-## Complete Example
-
-```python
-import asyncio
-from upsonic import Direct, Task
-from pydantic import BaseModel
-
-class DocumentSummary(BaseModel):
-    title: str
-    main_topics: list[str]
-    key_insights: list[str]
-
-async def main():
-    direct = Direct(model="openai/gpt-4o")
-    
-    task = Task(
-        description="Analyze this business report",
-        attachments=["quarterly_report.pdf"],
-        response_format=DocumentSummary
-    )
-    
-    result = await direct.print_do_async(task)
-    print(f"Title: {result.title}")
-    print(f"Topics: {', '.join(result.main_topics)}")
-
-asyncio.run(main())
-```
-
-## Property Access
-
-```python
-# Access current configuration
-print(f"Model: {direct.model}")
-print(f"Settings: {direct.settings}")
-print(f"Profile: {direct.profile}")
-print(f"Provider: {direct.provider}")
-```
+**Key Features Demonstrated**:
+- Automatic PDF processing through attachments
+- Type-safe structured output with Pydantic validation
+- Clean, synchronous API for straightforward use cases
+- Zero configuration for memory or tools
+- Automatic MIME type detection for attachments

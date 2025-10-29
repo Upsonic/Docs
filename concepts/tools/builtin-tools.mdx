@@ -1,497 +1,520 @@
 ---
-title: "Builtin Tools"
-description: "Framework-integrated tools providing core functionality for AI agent operations"
+title: "Model Provider Tools"
+description: "Native tools provided by AI model providers"
 ---
 
 ## Overview
 
-Upsonic's built-in tools are pre-configured, production-ready tools that provide essential capabilities for AI agents without requiring custom development. These tools are designed to work seamlessly with the framework and offer both general-purpose functionality and model provider-specific optimizations.
+Model provider tools are native capabilities provided directly by AI model providers (OpenAI, Anthropic, Google). These tools are executed by the provider's infrastructure rather than the Upsonic framework, offering provider-optimized performance and specialized features.
 
-### Key Features
+### Key Characteristics
 
-- **Zero Configuration**: Ready to use out of the box with sensible defaults
-- **Provider Integration**: Native support for model provider-specific tools (OpenAI, Anthropic, Google)
-- **Web Capabilities**: Built-in web search and content reading functionality
-- **Code Execution**: Native code execution capabilities through model providers
-- **Error Handling**: Robust error handling and retry mechanisms
-- **Performance Optimized**: Optimized for speed and reliability
+- **Provider-Executed**: Run on model provider infrastructure, not in your code
+- **Native Integration**: Deep integration with model capabilities
+- **Specialized Features**: Provider-specific optimizations and configurations
+- **Automatic Rate Limiting**: Provider-managed execution and rate limiting
+- **Sequential Execution**: Always executed sequentially by the provider
 
-### Tool Categories
+### Differences from Custom Tools
 
-1. **Function-Based Tools**: General-purpose tools executed by the Upsonic framework
-   - `WebSearch`: DuckDuckGo-powered web search
-   - `WebRead`: Web content extraction and reading
+| Feature | Custom Tools | Model Provider Tools |
+|---------|--------------|---------------------|
+| **Execution** | Upsonic Framework | Provider Infrastructure |
+| **Configuration** | Full Support | Provider-Specific Only |
+| **Parallelization** | ✅ Supported | ❌ Always Sequential |
+| **Caching** | ✅ Configurable | ❌ Provider-Managed |
+| **Retries** | ✅ Configurable | ❌ Provider-Managed |
+| **Hooks** | ✅ Supported | ❌ Not Supported |
 
-2. **Model Provider Tools**: Native tools executed by model provider infrastructure
-   - `WebSearchTool`: Advanced web search with provider-specific features
-   - `CodeExecutionTool`: Sandboxed code execution
-   - `UrlContextTool`: Direct URL content access (Google only)
+## Supported Providers
 
-### When to Use Built-in Tools
+Model provider tools are supported by specific AI providers:
 
-- **Quick Prototyping**: Get started immediately without tool development
-- **Web Research**: Search and read web content for information gathering
-- **Code Execution**: Run code snippets and calculations
-- **Production Applications**: Use proven, tested tools for critical functionality
-- **Cross-Platform Compatibility**: Ensure consistent behavior across different environments
+### Provider Compatibility
 
-Upsonic provides built-in tools that are ready to use out of the box. These tools include web search, web reading, and model provider-specific tools.
+| Tool | OpenAI Responses | Anthropic | Google | Azure OpenAI |
+|------|------------------|-----------|--------|--------------|
+| **WebSearchTool** | ✅ | ✅ | ✅ | ❌ |
+| **CodeExecutionTool** | ✅ | ✅ | ✅ | ❌ |
+| **UrlContextTool** | ❌ | ❌ | ✅ | ❌ |
 
-## Model Provider Compatibility
+### Important Notes
 
-Built-in tools work with specific model providers:
+**For OpenAI:**
+- ✅ Use `openai-responses/gpt-4o` for model provider tools
+- ❌ Do NOT use `openai/gpt-4o` (standard chat completion model)
 
-- **WebSearchTool**: ✅ OpenAI Responses API, Anthropic, Google
-- **CodeExecutionTool**: ✅ OpenAI Responses API, Anthropic, Google  
-- **UrlContextTool**: ✅ Google only
+**For Azure OpenAI:**
+- ❌ Model provider tools are NOT supported
+- ✅ Use custom tools instead with `azure/gpt-4o`
 
-**Important**: Use the correct model provider for built-in tools:
-- For OpenAI: Use `openai-responses/gpt-4o` (not `openai/gpt-4o`)
-- For Azure OpenAI: Built-in tools are NOT supported - use custom tools instead
+**For Anthropic:**
+- ✅ Full support for WebSearchTool and CodeExecutionTool
 
-## Azure OpenAI Limitations
+**For Google:**
+- ✅ Full support including exclusive UrlContextTool
 
-**Built-in tools (WebSearchTool, CodeExecutionTool) do NOT work with Azure OpenAI.**
-
-- ❌ Azure OpenAI: Not supported (use custom tools instead)
-- ✅ Standard OpenAI API: Full support with `openai-responses/gpt-4o`
-- ✅ Anthropic: Full support
-- ✅ Google: Full support
-
-## WebSearch Function
-
-The `WebSearch` function allows you to search the web using DuckDuckGo and return formatted results.
-
-```python
-from upsonic import Agent, Task
-from upsonic.tools.builtin_tools import WebSearch
-from upsonic.models.openai import OpenAIResponsesModel
-
-# Create OpenAIResponsesModel with standard OpenAI provider
-model = OpenAIResponsesModel(
-    model_name="gpt-4o",
-    provider="openai"  # Use standard OpenAI provider
-)
-
-task = Task(
-    description="Search for information about Python programming and summarize the results",
-    tools=[WebSearch]
-)
-
-agent = Agent(model=model, name="Web Search Agent", debug=False)
-
-result = agent.do(task)
-print(f"Result: {result}")
-```
-
-### WebSearch Parameters
-
-- `query`: The search query string
-- `max_results`: Maximum number of results to return (default: 10)
-
-### Example Usage
-
-```python
-from upsonic import Agent, Task
-from upsonic.tools import tool
-from upsonic.tools.builtin_tools import WebSearch
-from upsonic.models.openai import OpenAIResponsesModel
-
-# Create OpenAIResponsesModel with standard OpenAI provider
-model = OpenAIResponsesModel(
-    model_name="gpt-4o",
-    provider="openai"  # Use standard OpenAI provider
-)
-
-# Search with custom parameters
-@tool
-def custom_web_search(query: str, max_results: int = 5) -> str:
-    """Custom web search with limited results."""
-    return WebSearch(query, max_results)
-
-task = Task(
-    description="Search for 'artificial intelligence trends 2024' with 5 results",
-    tools=[custom_web_search]
-)
-
-agent = Agent(model=model, name="Custom Search Agent", debug=False)
-
-result = agent.do(task)
-print(f"Result: {result}")
-```
-
-## WebRead Function
-
-The `WebRead` function allows you to read and extract text content from web pages.
-
-```python
-from upsonic import Agent, Task
-from upsonic.tools.builtin_tools import WebRead
-from upsonic.models.openai import OpenAIResponsesModel
-
-# Create OpenAIResponsesModel with standard OpenAI provider
-model = OpenAIResponsesModel(
-    model_name="gpt-4o",
-    provider="openai"  # Use standard OpenAI provider
-)
-
-task = Task(
-    description="Read content from https://www.python.org and summarize it",
-    tools=[WebRead]
-)
-
-agent = Agent(model=model, name="Web Reader Agent", debug=False)
-
-result = agent.do(task)
-print(f"Result: {result}")
-```
-
-### WebRead Parameters
-
-- `url`: The URL to read from
-
-### Example Usage
-
-```python
-from upsonic import Agent, Task
-from upsonic.tools import tool
-from upsonic.tools.builtin_tools import WebRead
-from upsonic.models.openai import OpenAIResponsesModel
-
-# Create OpenAIResponsesModel with standard OpenAI provider
-model = OpenAIResponsesModel(
-    model_name="gpt-4o",
-    provider="openai"  # Use standard OpenAI provider
-)
-
-# Read multiple URLs
-@tool
-def read_multiple_urls(urls: list[str]) -> str:
-    """Read content from multiple URLs."""
-    results = []
-    for url in urls:
-        content = WebRead(url)
-        results.append(f"Content from {url}:\n{content}\n")
-    return "\n".join(results)
-
-task = Task(
-    description="Read content from Python.org and GitHub.com",
-    tools=[read_multiple_urls]
-)
-
-agent = Agent(model=model, name="Multi-URL Reader Agent", debug=False)
-
-result = agent.do(task)
-print(f"Result: {result}")
-```
-
-## Model Provider Built-in Tools
-
-These tools are designed to work with specific model providers and provide native capabilities.
+## Tools
 
 ### WebSearchTool
 
-A built-in tool that allows models to search the web for information. Supported by Anthropic, OpenAI Responses API, and Google.
+A built-in tool that allows models to search the web for information.
+
+**Usage:**
 
 ```python
 from upsonic import Agent, Task
 from upsonic.tools.builtin_tools import WebSearchTool
 from upsonic.models.openai import OpenAIResponsesModel
 
-# Create OpenAIResponsesModel with standard OpenAI provider
+# Create model with OpenAI Responses API
 model = OpenAIResponsesModel(
     model_name="gpt-4o",
-    provider="openai"  # Use standard OpenAI provider
+    provider="openai"
 )
 
 # Basic web search tool
-web_search_tool = WebSearchTool()
+web_search = WebSearchTool()
 
-# Advanced web search tool with configuration
-advanced_web_search = WebSearchTool(
-    search_context_size="high",
-    user_location=WebSearchUserLocation(
-        city="San Francisco",
-        country="US",
-        region="CA"
-    ),
-    blocked_domains=["example.com", "test.com"],
-    max_uses=10
-)
-
-# Create task focused on web search
+# Create task
 task = Task(
-    description="Search for latest AI news using the builtin web search tool",
-    tools=[advanced_web_search]
+    description="Search for latest AI news and summarize the findings",
+    tools=[web_search]
 )
 
-# Create agent with the model
-agent = Agent(model=model, name="Web Search Agent", debug=False)
+# Create agent
+agent = Agent(model=model, name="Web Search Agent")
 
-# Execute the task
+# Execute
 result = agent.do(task)
 print(f"Result: {result}")
 ```
 
+**Advanced Configuration:**
+
+```python
+from upsonic.tools.builtin_tools import WebSearchTool, WebSearchUserLocation
+
+# Advanced web search with configuration
+advanced_search = WebSearchTool(
+    search_context_size="high",  # 'low', 'medium', or 'high'
+    user_location=WebSearchUserLocation(
+        city="San Francisco",
+        country="US",
+        region="CA",
+        timezone="America/Los_Angeles"
+    ),
+    blocked_domains=["example.com", "spam-site.com"],
+    max_uses=10
+)
+
+task = Task(
+    description="Search for AI trends with high context and location filtering",
+    tools=[advanced_search]
+)
+
+agent = Agent(model=model, name="Advanced Search Agent")
+agent.print_do(task)
+```
+
+**Parameters:**
+
+- `search_context_size` (str): Context amount - 'low', 'medium', or 'high' (default: 'medium')
+  - Supported by: OpenAI Responses
+- `user_location` (WebSearchUserLocation, optional): Localize search results
+  - Supported by: Anthropic, OpenAI Responses
+- `blocked_domains` (List[str], optional): Domains to exclude from results
+  - Supported by: Anthropic, Groq
+- `allowed_domains` (List[str], optional): Only include these domains
+  - Supported by: Anthropic, Groq
+  - Note: Cannot use both blocked_domains and allowed_domains with Anthropic
+- `max_uses` (int, optional): Maximum number of searches allowed
+  - Supported by: Anthropic
+
+### WebSearchUserLocation
+
+User location information for localizing web search results.
+
+**Usage:**
+
+```python
+from upsonic.tools.builtin_tools import WebSearchTool, WebSearchUserLocation
+
+# Create location configuration
+user_location = WebSearchUserLocation(
+    city="New York",
+    country="US",
+    region="NY",
+    timezone="America/New_York"
+)
+
+# Apply to web search
+web_search = WebSearchTool(user_location=user_location)
+
+task = Task(
+    description="Search for local news and events",
+    tools=[web_search]
+)
+
+agent = Agent(model=model, name="Local Search Agent")
+agent.print_do(task)
+```
+
+**Parameters:**
+
+- `city` (str): The city where the user is located
+- `country` (str): Country code (e.g., 'US', 'GB', 'DE')
+  - For OpenAI: Must be 2-letter country code
+- `region` (str): Region or state code (e.g., 'CA', 'NY', 'TX')
+- `timezone` (str): Timezone identifier (e.g., 'America/New_York')
+
+**Provider Support:**
+- Anthropic: ✅ Full support
+- OpenAI Responses: ✅ Full support
+
 ### CodeExecutionTool
 
-A built-in tool that allows models to execute code. Supported by Anthropic, OpenAI Responses API, and Google.
+A built-in tool that allows models to execute code in a sandboxed environment.
+
+**Usage:**
 
 ```python
 from upsonic import Agent, Task
 from upsonic.tools.builtin_tools import CodeExecutionTool
 from upsonic.models.openai import OpenAIResponsesModel
 
-# Create OpenAIResponsesModel with standard OpenAI provider
+# Create model
 model = OpenAIResponsesModel(
     model_name="gpt-4o",
-    provider="openai"  # Use standard OpenAI provider
+    provider="openai"
 )
 
 # Create code execution tool
-code_execution = CodeExecutionTool()
+code_exec = CodeExecutionTool()
 
-# Create task focused on code execution
+# Create task
 task = Task(
-    description="Write a Python function that calculates the factorial of a number and test it with the value 5",
-    tools=[code_execution]
+    description="Write a Python function to calculate factorial and test it with 5",
+    tools=[code_exec]
 )
 
-# Create agent with the model
-agent = Agent(model=model, name="Code Execution Agent", debug=False)
+# Create agent
+agent = Agent(model=model, name="Code Execution Agent")
 
-# Execute the task
+# Execute
 result = agent.do(task)
 print(f"Result: {result}")
 ```
 
+**Advanced Example:**
+
+```python
+from upsonic.tools.builtin_tools import CodeExecutionTool
+
+code_exec = CodeExecutionTool()
+
+# Complex computation task
+task = Task(
+    description="""
+    Write and execute Python code to:
+    1. Calculate Fibonacci sequence up to 10 terms
+    2. Find prime numbers up to 50
+    3. Create a simple data visualization (if matplotlib available)
+    """,
+    tools=[code_exec]
+)
+
+agent = Agent(model=model, name="Computational Agent")
+agent.print_do(task)
+```
+
+**Parameters:**
+
+- No configuration parameters (provider-managed execution)
+
+**Provider Support:**
+- Anthropic: ✅ Full support
+- OpenAI Responses: ✅ Full support
+- Google: ✅ Full support
+
+**Characteristics:**
+- Sandboxed execution environment
+- Python code support
+- Provider-managed security and isolation
+- Automatic timeout and resource limits
+
 ### UrlContextTool
 
-Allows models to access contents from URLs. Supported by Google only.
+Allows models to access and read contents from URLs directly.
+
+**Usage:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import UrlContextTool
+
+# Create URL context tool
+url_tool = UrlContextTool()
+
+# Create task
+task = Task(
+    description="Read content from https://docs.python.org and explain Python basics",
+    tools=[url_tool]
+)
+
+# Create agent with Google model (required for UrlContextTool)
+agent = Agent(
+    model="google/gemini-1.5-pro",
+    name="URL Context Agent"
+)
+
+# Execute
+agent.print_do(task)
+```
+
+**Advanced Example:**
 
 ```python
 from upsonic.tools.builtin_tools import UrlContextTool
 
 url_tool = UrlContextTool()
 
+# Multiple URL access task
 task = Task(
-    description="Access content from https://docs.python.org and explain Python basics",
+    description="""
+    Access and analyze these documentation pages:
+    1. https://docs.python.org
+    2. https://www.python.org/dev/peps/
+    
+    Provide a summary of Python's key features and recent PEPs
+    """,
     tools=[url_tool]
 )
 
-# Use Google model for UrlContextTool support
-agent = Agent(model="google/gemini-1.5-pro", name="URL Context Agent")
-
+agent = Agent(model="google/gemini-1.5-pro", name="Multi-URL Agent")
 agent.print_do(task)
 ```
 
-## Combining Built-in Tools
+**Parameters:**
 
-You can combine multiple built-in tools in a single task:
+- No configuration parameters (provider-managed)
+
+**Provider Support:**
+- Google: ✅ Exclusive support
+- Other providers: ❌ Not supported
+
+**Characteristics:**
+- Direct URL content access
+- Provider-managed fetching and parsing
+- Automatic handling of different content types
+- Built-in security and validation
+
+## Combining Model Provider Tools
+
+Combine multiple model provider tools for comprehensive capabilities:
 
 ```python
 from upsonic import Agent, Task
 from upsonic.tools.builtin_tools import WebSearchTool, CodeExecutionTool
 from upsonic.models.openai import OpenAIResponsesModel
 
-# Create OpenAIResponsesModel with standard OpenAI provider
+# Create model
 model = OpenAIResponsesModel(
     model_name="gpt-4o",
-    provider="openai"  # Use standard OpenAI provider
+    provider="openai"
 )
 
-# Web search tool with high context size and max uses
-web_search = WebSearchTool(
-    search_context_size='high',
-    max_uses=5
-)
+# Create multiple tools
+web_search = WebSearchTool(search_context_size='high')
+code_exec = CodeExecutionTool()
 
-# Code execution tool
-code_execution = CodeExecutionTool()
-
-# Create task that combines both tools
+# Create task combining both
 task = Task(
-    description="Search for Python best practices and write a sample function",
-    tools=[web_search, code_execution]
+    description="""
+    1. Search for current Python best practices
+    2. Write example code demonstrating these practices
+    3. Execute the code to verify it works
+    """,
+    tools=[web_search, code_exec]
 )
 
-# Create agent with the model
-agent = Agent(model=model, name="Research & Code Agent", debug=False)
+# Create agent
+agent = Agent(model=model, name="Research & Code Agent")
 
-# Execute the task
+# Execute
 result = agent.do(task)
 print(f"Result: {result}")
 ```
 
-## Custom Wrappers for Built-in Tools
+## Best Practices
 
-You can create custom wrappers around built-in tools to add specific functionality:
+### Choosing the Right Model
+
+1. **For WebSearchTool and CodeExecutionTool:**
+   - ✅ Use `openai-responses/gpt-4o` (not `openai/gpt-4o`)
+   - ✅ Use Anthropic models
+   - ✅ Use Google models
+
+2. **For UrlContextTool:**
+   - ✅ Use Google models only
+   - ❌ Not available on other providers
+
+3. **For Azure OpenAI:**
+   - ❌ Model provider tools not supported
+   - ✅ Use custom tools instead
+
+### Configuration Tips
+
+1. **WebSearchTool:**
+   - Use `search_context_size='high'` for detailed research
+   - Set `max_uses` to limit search operations
+   - Use `blocked_domains` to filter unreliable sources
+   - Add `user_location` for localized results
+
+2. **CodeExecutionTool:**
+   - Keep code simple and focused
+   - Provider handles timeouts automatically
+   - Sandboxed environment limits available packages
+
+3. **UrlContextTool:**
+   - Only works with Google models
+   - Provider handles content fetching and parsing
+   - Suitable for documentation and article reading
+
+### Error Handling
+
+Model provider tools have built-in error handling:
 
 ```python
 from upsonic import Agent, Task
-from upsonic.tools import tool
-from upsonic.tools.builtin_tools import WebSearch, WebRead
-from upsonic.models.openai import OpenAIResponsesModel
+from upsonic.tools.builtin_tools import WebSearchTool
 
-# Create OpenAIResponsesModel with standard OpenAI provider
-model = OpenAIResponsesModel(
-    model_name="gpt-4o",
-    provider="openai"  # Use standard OpenAI provider
-)
-
-@tool(
-    cache_results=True,
-    cache_ttl=3600  # Cache for 1 hour
-)
-def cached_web_search(query: str, max_results: int = 10) -> str:
-    """Cached web search to avoid repeated API calls."""
-    return WebSearch(query, max_results)
-
-@tool(
-    requires_confirmation=True,
-    show_result=True
-)
-def confirmed_web_read(url: str) -> str:
-    """Web read with user confirmation."""
-    return WebRead(url)
+web_search = WebSearchTool()
 
 task = Task(
-    description="Search for information and read specific URLs with caching and confirmation",
-    tools=[cached_web_search, confirmed_web_read]
+    description="Search for information, handle any errors gracefully",
+    tools=[web_search]
 )
 
-agent = Agent(model=model, name="Custom Builtin Wrapper Agent", debug=False)
+agent = Agent(model=model, name="Robust Agent")
 
-result = agent.do(task)
-print(f"Result: {result}")
+try:
+    result = agent.do(task)
+    print(f"Success: {result}")
+except Exception as e:
+    print(f"Error occurred: {e}")
 ```
-
-## Best Practices
-
-1. **Choose the right tool**: Use function-based tools (WebSearch, WebRead) for general use, and model provider tools for specific capabilities
-2. **Handle rate limits**: Use caching for frequently accessed content
-3. **Configure appropriately**: Set appropriate limits and filters for web search tools
-4. **Error handling**: Built-in tools handle errors gracefully, but you can add custom error handling in wrappers
-
-## Error Handling
-
-Built-in tools include built-in error handling:
-
-```python
-# WebSearch handles network errors and returns formatted error messages
-# WebRead handles invalid URLs and network timeouts
-# Model provider tools handle API-specific errors
-
-# Example of custom error handling wrapper
-@tool
-def robust_web_search(query: str, max_results: int = 10) -> str:
-    """Web search with custom error handling."""
-    try:
-        result = WebSearch(query, max_results)
-        if "Error" in result:
-            return f"Search failed for '{query}': {result}"
-        return result
-    except Exception as e:
-        return f"Unexpected error during search: {str(e)}"
-```
-
-## Performance Considerations
-
-### **Built-in Function Tools** (WebSearch, WebRead)
-- **Caching**: Use `cache_results=True` for frequently accessed content
-- **Rate limiting**: Manual implementation required (no automatic rate limiting)
-- **Timeout**: Configurable via `timeout` parameter (default: 30 seconds)
-- **Parallel execution**: ✅ Supported (can run in parallel with other tools)
-
-### **Built-in Model Provider Tools** (WebSearchTool, CodeExecutionTool, UrlContextTool)
-- **Caching**: Provider-managed (not configurable by framework)
-- **Rate limiting**: Automatic (handled by model providers)
-- **Timeout**: Provider-managed (not configurable by framework)
-- **Parallel execution**: ❌ Always sequential (executed by model provider)
-
-### **Azure OpenAI Compatibility**
-- Built-in tools: ❌ Not supported
-- Custom tools: ✅ Full support with `azure/gpt-4o`
-
-## Key Differences from Custom Function Tools
-
-Built-in tools come in two types, each with different characteristics:
-
-### **Type 1: Built-in Function Tools** (WebSearch, WebRead)
-These are regular Python functions executed by the Upsonic framework:
-
-- **Execution Model**: Executed by the Upsonic framework (like custom function tools)
-- **Configuration Options**: Full configuration support (caching, hooks, retries, etc.)
-- **Performance Characteristics**: Can be parallelized, framework-managed retries and caching
-- **Error Handling**: Framework-managed error handling with configurable retries
-
-### **Type 2: Built-in Model Provider Tools** (WebSearchTool, CodeExecutionTool, UrlContextTool)
-These are model provider-specific tools executed by the provider's infrastructure:
-
-- **Execution Model**: Executed by the model provider's infrastructure
-- **Configuration Options**: Limited configuration (provider-specific parameters only)
-- **Performance Characteristics**: Always sequential, provider-managed rate limiting
-- **Error Handling**: Provider-managed error handling and retries
-
-### **Comparison Table**
-
-| Feature | Custom Function Tools | Built-in Function Tools | Built-in Model Provider Tools |
-|---------|----------------------|------------------------|------------------------------|
-| **Execution** | Upsonic Framework | Upsonic Framework | Model Provider Infrastructure |
-| **Configuration** | Full Support | Full Support | Limited (Provider-specific) |
-| **Parallelization** | ✅ Supported | ✅ Supported | ❌ Always Sequential |
-| **Caching** | ✅ Configurable | ✅ Configurable | ❌ Provider-managed |
-| **Retries** | ✅ Configurable | ✅ Configurable | ❌ Provider-managed |
-| **Hooks** | ✅ Supported | ✅ Supported | ❌ Not Supported |
-| **Rate Limiting** | ❌ Manual | ❌ Manual | ✅ Automatic |
-
-## Best Practices
-
-### **When to Use Each Type**
-
-1. **Use Built-in Function Tools** (WebSearch, WebRead) for:
-   - Simple web operations that need framework features (caching, retries, hooks)
-   - When you want full control over execution and error handling
-   - Cross-provider compatibility (works with any model)
-
-2. **Use Built-in Model Provider Tools** (WebSearchTool, CodeExecutionTool, UrlContextTool) for:
-   - Advanced web search with provider-specific features (location, domain filtering)
-   - Code execution with provider-managed sandboxing
-   - URL context access (Google only)
-   - When you want provider-optimized performance
-
-3. **Use Custom Function Tools** for:
-   - Custom business logic and data processing
-   - External API integrations
-   - Complex workflows requiring framework features
-
-### **Combination Strategies**
-
-- **Hybrid Approach**: Use model provider tools for core capabilities and custom tools for business logic
-- **Fallback Strategy**: Use built-in function tools as fallbacks when model provider tools aren't supported
-- **Model Selection**: Always use the correct model provider for model provider tools
 
 ## Troubleshooting
 
 ### Common Issues
 
 **"WebSearchTool is not supported with OpenAIChatModel"**
+- **Problem**: Using wrong model type
 - **Solution**: Use `openai-responses/gpt-4o` instead of `openai/gpt-4o`
 
-**"Unsupported data type" error with Azure OpenAI**
-- **Solution**: Built-in tools don't work with Azure OpenAI. Use custom tools or switch to standard OpenAI API.
+**"Unsupported data type" with Azure OpenAI**
+- **Problem**: Azure OpenAI doesn't support model provider tools
+- **Solution**: Use custom tools or switch to standard OpenAI API
 
 **"UrlContextTool is not supported by OpenAIResponsesModel"**
-- **Solution**: Use `google` provider
+- **Problem**: UrlContextTool only works with Google
+- **Solution**: Switch to Google model (`google/gemini-1.5-pro`)
 
-**Built-in tools not being called**
-- **Check**: Ensure you're using the correct model provider
-- **Check**: Verify the tool is properly imported and added to the task
-- **Check**: Built-in tools are now properly supported (as of the latest framework update)
+**Tools not being called by agent**
+- **Check**: Verify correct model provider
+- **Check**: Ensure tool is properly imported
+- **Check**: Review task description for clarity
 
-### Debugging Tips
+### Debugging
 
-1. **Enable debug mode**: Use `debug=True` in agent calls to see detailed execution logs
-2. **Check tool registration**: Built-in tools should appear in the tool usage summary
-3. **Verify model compatibility**: Each built-in tool has specific model provider requirements
-4. **Test with simple examples**: Start with basic configurations before adding advanced parameters
+1. **Enable Debug Mode:**
+   ```python
+   agent = Agent(model=model, name="Agent", debug=True)
+   result = agent.do(task)
+   ```
+
+2. **Check Tool Registration:**
+   - Tools should appear in execution logs
+   - Verify provider compatibility
+
+3. **Test Simple Cases First:**
+   ```python
+   # Start with basic configuration
+   tool = WebSearchTool()
+   task = Task(description="Simple search query", tools=[tool])
+   ```
+
+4. **Verify Model Configuration:**
+   ```python
+   # Correct for OpenAI Responses
+   model = OpenAIResponsesModel(model_name="gpt-4o", provider="openai")
+   
+   # Wrong - will not work
+   # model = OpenAIChatModel(model_name="gpt-4o")
+   ```
+
+## Performance Considerations
+
+### Sequential Execution
+
+Model provider tools always execute sequentially:
+- No parallel execution
+- Provider manages execution order
+- Cannot configure parallel behavior
+
+### Rate Limiting
+
+Rate limiting is provider-managed:
+- Automatic rate limit handling
+- No configuration needed
+- Retries handled by provider
+
+### Caching
+
+Caching is provider-managed:
+- Cannot configure framework-level caching
+- Provider may cache internally
+- No control over cache TTL
+
+### Timeouts
+
+Timeouts are provider-managed:
+- No configuration parameter
+- Provider sets reasonable defaults
+- Automatic timeout handling
+
+## Migration from Custom Tools
+
+If you're using custom tools and want to switch to model provider tools:
+
+**Before (Custom Tool):**
+```python
+from upsonic.tools import tool
+
+@tool
+def web_search(query: str) -> str:
+    """Custom web search implementation."""
+    # Your implementation
+    return results
+```
+
+**After (Model Provider Tool):**
+```python
+from upsonic.tools.builtin_tools import WebSearchTool
+
+# Use provider's native implementation
+web_search = WebSearchTool()
+```
+
+**Benefits of Migration:**
+- Provider-optimized performance
+- No maintenance required
+- Automatic updates and improvements
+- Built-in rate limiting and error handling
+
+**Trade-offs:**
+- Less configuration control
+- Provider-specific availability
+- Sequential execution only
+- No custom caching or hooks

@@ -1,82 +1,54 @@
 ---
-title: "Common Tools"
-description: "Domain-specific tool implementations for standard AI agent workflows"
+title: "Ready to Use Tools"
+description: "Pre-built tools for common AI agent tasks"
 ---
 
 ## Overview
 
-Upsonic's common tools are specialized, domain-specific tools that provide ready-to-use functionality for common AI agent use cases. These tools are designed to handle complex integrations and provide rich, structured data for your agents without requiring extensive setup or configuration.
+Ready-to-use tools are pre-built, production-ready tools that provide specialized functionality for common AI agent use cases. These tools handle complex integrations and provide rich, structured data without requiring extensive setup.
 
-### Key Features
+### Key Benefits
 
-- **Domain Expertise**: Specialized tools for specific domains (finance, search, etc.)
-- **Rich Data Integration**: Access to real-time data from external APIs and services
-- **Configurable Functionality**: Enable/disable specific tools based on your needs
-- **Error Resilience**: Built-in error handling and fallback mechanisms
-- **Performance Optimized**: Efficient data fetching and caching strategies
-- **Production Ready**: Battle-tested tools used in real-world applications
-
-### Tool Categories
-
-1. **Financial Tools**: Comprehensive financial data and analysis
-   - `YFinanceTools`: Yahoo Finance integration for stock data, company info, and market analysis
-
-2. **Search Tools**: Advanced web search capabilities
-   - `duckduckgo_search_tool`: DuckDuckGo-powered web search
-   - `tavily_search_tool`: Advanced search with Tavily API
-
-3. **Utility Tools**: General-purpose utilities for common tasks
-   - Various specialized tools for data processing and analysis
-
-### When to Use Common Tools
-
-- **Financial Applications**: Stock analysis, market research, investment decisions
-- **Research Tasks**: Web search, data gathering, information synthesis
-- **Business Intelligence**: Market analysis, competitive research, trend analysis
-- **Data-Driven Decisions**: Access to real-time data for informed decision making
-- **Rapid Development**: Skip complex API integrations and focus on your core logic
-
-### Integration Benefits
-
-- **Reduced Development Time**: No need to build complex API integrations
-- **Reliable Data Sources**: Access to established, reliable data providers
-- **Consistent Interface**: Unified tool interface across different data sources
-- **Maintenance-Free**: Framework handles API changes and updates
-- **Scalable**: Built to handle production workloads and rate limits
-
-Upsonic provides a collection of common tools that are frequently used in AI agent applications. These include financial data tools, search tools, and other utilities.
+- **Zero Development**: Use immediately without custom code
+- **Rich Data Access**: Real-time data from established providers
+- **Production Ready**: Battle-tested in real-world applications
+- **Configurable**: Enable/disable features based on your needs
 
 ## YFinanceTools
 
-The `YFinanceTools` class provides comprehensive financial data access using Yahoo Finance.
+Comprehensive financial data toolkit using Yahoo Finance API.
 
 ### Basic Usage
 
 ```python
-from upsonic.tasks.tasks import Task
-from upsonic.agent.agent import Agent
+from upsonic import Agent, Task
 from upsonic.tools.common_tools import YFinanceTools
 
 # Create finance tools instance
 finance_tools = YFinanceTools()
 finance_tools.enable_all_tools()
 
+# Create task
 task = Task(
     description="Get the current stock price for Apple (AAPL)",
-    tools=[finance_tools]  # Use instance directly, not functions()
+    tools=[finance_tools]
 )
 
+# Create agent
 agent = Agent(model="openai/gpt-4o", name="Finance Agent")
 
+# Execute
 agent.print_do(task)
 ```
 
 ### Selective Tool Configuration
 
-You can enable specific tools instead of all tools:
+Enable only specific financial capabilities:
 
 ```python
-# Enable only specific financial tools
+from upsonic.tools.common_tools import YFinanceTools
+
+# Enable specific tools
 finance_tools = YFinanceTools(
     stock_price=True,
     company_info=True,
@@ -90,87 +62,109 @@ task = Task(
 )
 
 agent = Agent(model="openai/gpt-4o", name="Selective Finance Agent")
-
 agent.print_do(task)
 ```
 
-### Available Financial Tools
+### Available Tools
 
-When using `enable_all_tools()`, the following tools are available:
+When using `enable_all_tools()`, the following methods are available:
 
-1. **get_current_stock_price**: Get current stock price
-2. **get_company_info**: Get comprehensive company information
-3. **get_analyst_recommendations**: Get analyst recommendations
-4. **get_company_news**: Get recent company news
-5. **get_stock_fundamentals**: Get key financial fundamentals
-6. **get_income_statements**: Get income statement data
-7. **get_key_financial_ratios**: Get key financial ratios
-8. **get_historical_stock_prices**: Get historical stock price data
-9. **get_technical_indicators**: Get technical indicator data
+1. **get_current_stock_price(symbol: str)**: Get current stock price
+2. **get_company_info(symbol: str)**: Get comprehensive company information
+3. **get_analyst_recommendations(symbol: str)**: Get analyst recommendations
+4. **get_company_news(symbol: str, num_stories: int)**: Get recent company news
+5. **get_stock_fundamentals(symbol: str)**: Get key financial fundamentals
+6. **get_income_statements(symbol: str)**: Get income statement data
+7. **get_key_financial_ratios(symbol: str)**: Get key financial ratios
+8. **get_historical_stock_prices(symbol: str, period: str, interval: str)**: Get historical price data
+9. **get_technical_indicators(symbol: str, period: str)**: Get technical indicators
 
-### Example: Comprehensive Financial Analysis
+### Parameters
+
+**Constructor Parameters:**
+- `stock_price` (bool): Enable stock price retrieval (default: True)
+- `company_info` (bool): Enable company information (default: False)
+- `analyst_recommendations` (bool): Enable analyst recommendations (default: False)
+- `company_news` (bool): Enable company news (default: False)
+- `enable_all` (bool): Enable all available tools (default: False)
+
+**Historical Data Parameters:**
+- `period` (str): Time period - '1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max'
+- `interval` (str): Data interval - '1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo'
+
+### Complete Example
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools.common_tools import YFinanceTools
+
+# Enable all financial tools
 finance_tools = YFinanceTools()
 finance_tools.enable_all_tools()
 
+# Comprehensive analysis task
 task = Task(
-    description="Perform comprehensive financial analysis of Tesla (TSLA) including current price, fundamentals, and recent news",
+    description="""
+    Perform comprehensive financial analysis of Tesla (TSLA):
+    1. Get current stock price
+    2. Get company fundamentals
+    3. Get recent news
+    4. Provide investment recommendation
+    """,
     tools=[finance_tools]
 )
 
-agent = Agent(model="openai/gpt-4o", name="Financial Analyst Agent")
+# Create agent
+agent = Agent(model="openai/gpt-4o", name="Financial Analyst")
 
+# Execute
 agent.print_do(task)
 ```
 
-### Example: Historical Data Analysis
+### Installation
 
-```python
-finance_tools = YFinanceTools()
-finance_tools.enable_all_tools()
-
-task = Task(
-    description="Get historical stock prices for Apple (AAPL) for the last 3 months and analyze the trend",
-    tools=[finance_tools]
-)
-
-agent = Agent(model="openai/gpt-4o", name="Historical Analysis Agent")
-
-agent.print_do(task)
+```bash
+pip install yfinance pandas
 ```
 
-## DuckDuckGo Search Tool
+## DuckDuckGo
 
-The `duckduckgo_search_tool` provides web search capabilities using DuckDuckGo.
+Web search tool using DuckDuckGo's search engine.
 
 ### Basic Usage
 
 ```python
+from upsonic import Agent, Task
 from upsonic.tools.common_tools import duckduckgo_search_tool
 
 # Create DuckDuckGo search tool
 ddg_search = duckduckgo_search_tool(max_results=5)
 
+# Create task
 task = Task(
-    description="Search for 'artificial intelligence trends 2024' using DuckDuckGo",
+    description="Search for 'artificial intelligence trends 2024'",
     tools=[ddg_search]
 )
 
-agent = Agent(model="openai/gpt-4o", name="DuckDuckGo Search Agent")
+# Create agent
+agent = Agent(model="openai/gpt-4o", name="Search Agent")
 
+# Execute
 agent.print_do(task)
 ```
 
-### Configuration Options
+### Custom Configuration
 
 ```python
-# Custom DuckDuckGo client with specific configuration
+from upsonic.tools.common_tools import duckduckgo_search_tool
 from ddgs import DDGS
 
-custom_ddg_client = DDGS()
+# Create custom client
+custom_client = DDGS()
+
+# Configure search tool
 ddg_search = duckduckgo_search_tool(
-    duckduckgo_client=custom_ddg_client,
+    duckduckgo_client=custom_client,
     max_results=10
 )
 
@@ -179,291 +173,222 @@ task = Task(
     tools=[ddg_search]
 )
 
-agent = Agent(model="openai/gpt-4o", name="Custom DDG Agent")
-
+agent = Agent(model="openai/gpt-4o", name="Custom Search Agent")
 agent.print_do(task)
 ```
 
-### Search Result Format
+### Parameters
 
-DuckDuckGo search returns structured results:
+**Function Parameters:**
+- `duckduckgo_client` (DDGS, optional): Custom DuckDuckGo client instance
+- `max_results` (int, optional): Maximum number of results to return
+
+**Tool Parameters:**
+- `query` (str): The search query string
+
+### Result Format
+
+Search results are returned as a list of dictionaries:
 
 ```python
-# Example of search results structure
 [
     {
-        "title": "Search Result Title",
+        "title": "Result Title",
         "href": "https://example.com",
-        "body": "Description of the search result"
+        "body": "Description of the result"
     },
     # ... more results
 ]
 ```
 
-## Tavily Search Tool
+### Installation
 
-The `tavily_search_tool` provides advanced web search capabilities using the Tavily API.
+```bash
+pip install duckduckgo-search
+```
+
+## Tavily
+
+Advanced web search using the Tavily API.
 
 ### Basic Usage
 
 ```python
+from upsonic import Agent, Task
 from upsonic.tools.common_tools import tavily_search_tool
 
 # Create Tavily search tool (requires API key)
 tavily_search = tavily_search_tool(api_key="your_tavily_api_key_here")
 
+# Create task
 task = Task(
-    description="Search for 'machine learning news' using Tavily",
+    description="Search for 'machine learning news'",
     tools=[tavily_search]
 )
 
+# Create agent
 agent = Agent(model="openai/gpt-4o", name="Tavily Search Agent")
 
+# Execute
 agent.print_do(task)
 ```
 
-### Tavily Configuration Options
+### Advanced Search
 
 ```python
-# Tavily search with advanced options
+from upsonic import Agent, Task
+from upsonic.tools.common_tools import tavily_search_tool
+
+# Create Tavily search with API key
 tavily_search = tavily_search_tool(api_key="your_api_key")
 
-# The tool supports these parameters:
-# - query: Search query
-# - search_deep: 'basic' or 'advanced'
-# - topic: 'general' or 'news'
-# - time_range: 'day', 'week', 'month', 'year', 'd', 'w', 'm', 'y'
+# Advanced search task
+task = Task(
+    description="""
+    Search for recent AI developments using these parameters:
+    - Search depth: advanced
+    - Topic: news
+    - Time range: week
+    """,
+    tools=[tavily_search]
+)
+
+agent = Agent(model="openai/gpt-4o", name="Advanced Search Agent")
+agent.print_do(task)
 ```
 
-### Getting Tavily API Key
+### Parameters
+
+**Function Parameters:**
+- `api_key` (str): Your Tavily API key (required)
+
+**Tool Parameters:**
+- `query` (str): The search query
+- `search_deep` (str): Search depth - 'basic' or 'advanced' (default: 'basic')
+- `topic` (str): Search category - 'general' or 'news' (default: 'general')
+- `time_range` (str): Time filter - 'day', 'week', 'month', 'year', 'd', 'w', 'm', 'y' (optional)
+
+### Result Format
+
+Search results are returned as a list of dictionaries:
+
+```python
+[
+    {
+        "title": "Article Title",
+        "url": "https://example.com/article",
+        "content": "Article excerpt or description",
+        "score": 0.95  # Relevance score
+    },
+    # ... more results
+]
+```
+
+### Getting an API Key
 
 1. Sign up at [https://app.tavily.com/home](https://app.tavily.com/home)
 2. Get your API key from the dashboard
 3. Use it in the `tavily_search_tool` function
 
-## Combining Common Tools
+### Installation
 
-You can combine multiple common tools in a single task:
+```bash
+pip install tavily-python
+```
+
+## Combining Ready-to-Use Tools
+
+Combine multiple ready-to-use tools for comprehensive agent capabilities:
 
 ```python
-from upsonic.tools.common_tools import YFinanceTools, duckduckgo_search_tool, tavily_search_tool
+from upsonic import Agent, Task
+from upsonic.tools.common_tools import (
+    YFinanceTools,
+    duckduckgo_search_tool,
+    tavily_search_tool
+)
 
 # Create multiple tools
 finance_tools = YFinanceTools()
 finance_tools.enable_all_tools()
 
 ddg_search = duckduckgo_search_tool(max_results=5)
+tavily_search = tavily_search_tool(api_key="your_api_key")
 
-# Tavily search (if you have API key)
-try:
-    tavily_search = tavily_search_tool(api_key="your_tavily_api_key")
-    tools = [finance_tools, ddg_search, tavily_search]
-except:
-    tools = [finance_tools, ddg_search]
-
+# Create comprehensive task
 task = Task(
-    description="Search for Tesla stock information, get current price, and find recent news",
-    tools=tools
+    description="""
+    Research Tesla:
+    1. Get current stock price and fundamentals
+    2. Search for recent news using DuckDuckGo
+    3. Search for analyst opinions using Tavily
+    4. Provide investment recommendation
+    """,
+    tools=[finance_tools, ddg_search, tavily_search]
 )
 
-agent = Agent(model="openai/gpt-4o", name="Multi-Tool Research Agent")
+# Create agent
+agent = Agent(model="openai/gpt-4o", name="Research Agent")
 
+# Execute
 agent.print_do(task)
 ```
 
-## Custom Wrappers for Common Tools
+## Best Practices
 
-You can create custom wrappers around common tools:
+1. **API Keys**: Store API keys securely using environment variables
+2. **Rate Limiting**: Be mindful of API rate limits, especially for financial data
+3. **Caching**: Consider caching frequently accessed data
+4. **Error Handling**: Tools include built-in error handling for network issues
+5. **Selective Tools**: Enable only the tools you need for better performance
+6. **Testing**: Test tools individually before combining them
+
+## Performance Optimization
+
+### Caching Example
 
 ```python
 from upsonic.tools import tool
-from upsonic.tools.common_tools import YFinanceTools, duckduckgo_search_tool
+from upsonic.tools.common_tools import YFinanceTools
 
 @tool(
     cache_results=True,
     cache_ttl=1800  # Cache for 30 minutes
 )
 def cached_stock_analysis(symbol: str) -> str:
-    """Get comprehensive stock analysis with caching."""
+    """Get stock analysis with caching."""
     finance_tools = YFinanceTools()
     finance_tools.enable_all_tools()
     
-    # Get multiple financial metrics
     price = finance_tools.get_current_stock_price(symbol)
     info = finance_tools.get_company_info(symbol)
-    fundamentals = finance_tools.get_stock_fundamentals(symbol)
     
-    return f"Stock Analysis for {symbol}:\nPrice: {price}\nInfo: {info[:200]}...\nFundamentals: {fundamentals[:200]}..."
-
-@tool(
-    requires_confirmation=True,
-    show_result=True
-)
-def confirmed_web_search(query: str, max_results: int = 5) -> str:
-    """Web search with user confirmation."""
-    ddg_search = duckduckgo_search_tool(max_results=max_results)
-    return ddg_search(query)
+    return f"Stock Analysis for {symbol}:\nPrice: {price}\nInfo: {info[:200]}..."
 
 task = Task(
-    description="Get stock analysis for Apple and search for related news",
-    tools=[cached_stock_analysis, confirmed_web_search]
+    description="Analyze Apple stock",
+    tools=[cached_stock_analysis]
 )
 
-agent = Agent(model="openai/gpt-4o", name="Custom Wrapper Agent")
-
+agent = Agent(model="openai/gpt-4o")
 agent.print_do(task)
 ```
 
-## Error Handling
+## Troubleshooting
 
-Common tools include built-in error handling:
+### Common Issues
 
-```python
-# YFinanceTools handles API errors and returns formatted error messages
-# DuckDuckGo search handles network errors gracefully
-# Tavily search handles API authentication and rate limiting
+**Import Errors**
+- Solution: Install required packages using pip
 
-# Example of custom error handling
-@tool
-def robust_financial_analysis(symbol: str) -> str:
-    """Financial analysis with custom error handling."""
-    try:
-        finance_tools = YFinanceTools()
-        finance_tools.enable_all_tools()
-        
-        price = finance_tools.get_current_stock_price(symbol)
-        if "Error" in price or "Could not fetch" in price:
-            return f"Unable to fetch price for {symbol}: {price}"
-        
-        return f"Successfully retrieved price for {symbol}: {price}"
-    except Exception as e:
-        return f"Unexpected error analyzing {symbol}: {str(e)}"
-```
+**API Key Issues** (Tavily)
+- Solution: Verify API key is correct and active
 
-## Performance Optimization
+**Network Errors**
+- Solution: Check internet connection and firewall settings
 
-### Caching Strategies
+**Rate Limiting**
+- Solution: Implement caching and reduce request frequency
 
-```python
-from upsonic.tools import tool
-
-@tool(
-    cache_results=True,
-    cache_ttl=3600  # Cache financial data for 1 hour
-)
-def cached_financial_data(symbol: str) -> str:
-    """Cached financial data to reduce API calls."""
-    finance_tools = YFinanceTools()
-    finance_tools.enable_all_tools()
-    
-    return finance_tools.get_current_stock_price(symbol)
-
-@tool(
-    cache_results=True,
-    cache_ttl=1800  # Cache search results for 30 minutes
-)
-def cached_web_search(query: str) -> str:
-    """Cached web search to avoid repeated queries."""
-    ddg_search = duckduckgo_search_tool(max_results=5)
-    return ddg_search(query)
-```
-
-### Rate Limiting
-
-```python
-import time
-from upsonic.tools import tool
-
-@tool(
-    sequential=True,  # Ensure sequential execution
-    max_retries=3
-)
-def rate_limited_financial_queries(symbols: list[str]) -> str:
-    """Process multiple financial queries with rate limiting."""
-    finance_tools = YFinanceTools()
-    finance_tools.enable_all_tools()
-    
-    results = []
-    for symbol in symbols:
-        try:
-            price = finance_tools.get_current_stock_price(symbol)
-            results.append(f"{symbol}: {price}")
-            time.sleep(1)  # Rate limiting delay
-        except Exception as e:
-            results.append(f"{symbol}: Error - {str(e)}")
-    
-    return "\n".join(results)
-```
-
-## Best Practices
-
-1. **Use enable_all_tools()**: For YFinanceTools, use `enable_all_tools()` to access all financial capabilities
-2. **Use instance directly**: Pass the YFinanceTools instance directly to tools list, not `functions()`
-3. **Handle API keys**: Ensure you have proper API keys for services like Tavily
-4. **Cache frequently accessed data**: Use caching for financial data and search results
-5. **Error handling**: Implement proper error handling for network requests
-6. **Rate limiting**: Be mindful of API rate limits, especially for financial data
-7. **Selective tools**: Use selective tool configuration when you don't need all capabilities
-
-## Installation Requirements
-
-Make sure you have the required dependencies:
-
-```bash
-# For YFinanceTools
-pip install yfinance pandas
-
-# For DuckDuckGo search
-pip install ddgs
-
-# For Tavily search
-pip install tavily-python
-```
-
-## Example: Complete Financial Research Agent
-
-```python
-from upsonic.tasks.tasks import Task
-from upsonic.agent.agent import Agent
-from upsonic.tools.common_tools import YFinanceTools, duckduckgo_search_tool
-from upsonic.tools import tool
-
-# Create tools
-finance_tools = YFinanceTools()
-finance_tools.enable_all_tools()
-
-ddg_search = duckduckgo_search_tool(max_results=5)
-
-@tool(
-    cache_results=True,
-    cache_ttl=1800
-)
-def comprehensive_stock_research(symbol: str) -> str:
-    """Comprehensive stock research combining multiple data sources."""
-    # Get financial data
-    price = finance_tools.get_current_stock_price(symbol)
-    fundamentals = finance_tools.get_stock_fundamentals(symbol)
-    news = finance_tools.get_company_news(symbol, num_stories=3)
-    
-    # Search for additional information
-    search_query = f"{symbol} stock analysis 2024"
-    search_results = ddg_search(search_query)
-    
-    return f"""
-    Stock Research for {symbol}:
-    
-    Current Price: {price}
-    Fundamentals: {fundamentals[:300]}...
-    Recent News: {news[:300]}...
-    Web Search Results: {str(search_results)[:300]}...
-    """
-
-task = Task(
-    description="Perform comprehensive research on Apple (AAPL) stock",
-    tools=[comprehensive_stock_research]
-)
-
-agent = Agent(model="openai/gpt-4o", name="Financial Research Agent")
-
-agent.print_do(task)
-```
+**Missing Data**
+- Solution: Verify stock symbols and search queries are correct
