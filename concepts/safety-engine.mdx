@@ -5,102 +5,42 @@ description: "Content safety and policy enforcement for AI agents"
 
 ## Overview
 
-The Safety Engine lets you control what goes into your agents (user input) and what comes out (agent responses). Add policies to automatically detect and handle sensitive content like PII, prohibited topics, or custom safety rules—all with just a few lines of code.
+### What is Safety Engine?
 
-### How It Works
+Safety Engine is a comprehensive content filtering and policy enforcement system for AI agents. It allows you to control what goes into your agents (user input) and what comes out (agent responses) by applying policies that automatically detect and handle sensitive content like PII, prohibited topics, adult content, hate speech, or custom safety rules.
 
-Safety Engine operates at two key points:
-- **Before**: Filter user input with `user_policy`
-- **After**: Sanitize agent output with `agent_policy`
+### How Safety Engine Works
 
-## Quick Start
+Safety Engine operates at two key points in your agent's lifecycle:
 
-### Your First Safe Agent
+1. **Before Processing (user_policy)**: Filters and validates user input before it reaches your agent
+2. **After Processing (agent_policy)**: Sanitizes and validates agent output before it's returned to the user
 
-```python
-from upsonic import Agent, Task
-from upsonic.safety_engine.policies import PIIAnonymizePolicy
+Each policy consists of two components:
+- **Rule**: Detects specific content (e.g., "Does this text contain credit card numbers?")
+- **Action**: Decides what to do when content is detected (e.g., "Block it", "Anonymize it", "Replace it")
 
-# Create an agent that automatically anonymizes PII
-agent = Agent(
-    model="openai/gpt-4o",
-    agent_policy=PIIAnonymizePolicy  # Protect sensitive data in responses
-)
+### Why Safety Engine is Important
 
-task = Task("My email is john@example.com")
-result = agent.do(task)
-# Output has email anonymized automatically!
-```
+- **Compliance**: Meet regulatory requirements (GDPR, HIPAA, PCI-DSS, etc.)
+- **Privacy Protection**: Automatically detect and protect sensitive personal information
+- **Content Moderation**: Block inappropriate, harmful, or prohibited content
+- **Risk Mitigation**: Prevent your AI from exposing sensitive data or violating policies
+- **Multi-language Support**: Automatically adapts to user's language
+- **Flexibility**: Use pre-built policies or create custom ones for your specific needs
 
-## Understanding Policies
+## Prebuilt Policies
 
-Every policy has two parts that work together:
+### Cryptocurrency Policies
 
-| Part | What It Does | Example |
-|------|--------------|---------|
-| **Rule** | Finds specific content | "Does this text contain credit card numbers?" |
-| **Action** | Decides what to do | "Yes → anonymize them" |
+**What is Crypto Policy?**
 
-### When Policies Run
+Cryptocurrency policies detect and handle crypto-related content. Designed for financial institutions that need to block or control cryptocurrency discussions, trading advice, or wallet addresses.
 
-```
-User Input → user_policy checks → Agent thinks → agent_policy checks → Final Output
-```
-
-## Using Policies with Your Agents
-
-### Protect Both Input and Output
+**Usage**
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import CryptoBlockPolicy, PIIAnonymizePolicy
-
-# Double protection: filter what comes in, sanitize what goes out
-agent = Agent(
-    model="openai/gpt-4o",
-    name="Safe Assistant",
-    user_policy=CryptoBlockPolicy,      # Block crypto questions
-    agent_policy=PIIAnonymizePolicy     # Hide sensitive data in responses
-)
-
-task = Task("Tell me about Bitcoin investments")
-result = agent.do(task)
-# Blocked before the agent even processes it!
-```
-
-### Input Filtering Only
-
-```python
-from upsonic.safety_engine.policies import PIIBlockPolicy
-
-# Stop sensitive data from being processed
-agent = Agent(
-    model="openai/gpt-4o",
-    user_policy=PIIBlockPolicy  # Block PII in user questions
-)
-```
-
-### Output Sanitization Only
-
-```python
-from upsonic.safety_engine.policies import PIIAnonymizePolicy
-
-# Let questions through, but protect responses
-agent = Agent(
-    model="openai/gpt-4o",
-    agent_policy=PIIAnonymizePolicy  # Clean up PII in agent responses
-)
-```
-
-## Ready-to-Use Policies
-
-Upsonic comes with policies you can use right away. Just import and add to your agent.
-
-### Cryptocurrency Content
-
-Perfect for financial services that need to avoid crypto discussions:
-
-```python
 from upsonic.safety_engine.policies import CryptoBlockPolicy
 
 # Block any crypto-related questions
@@ -108,19 +48,53 @@ agent = Agent(
     model="openai/gpt-4o",
     user_policy=CryptoBlockPolicy
 )
+
+task = Task("Tell me about Bitcoin investments")
+result = agent.do(task)
+# Blocked before processing
 ```
 
-**Other crypto policy options:**
-- `CryptoBlockPolicy_LLM_Block` - Smarter detection, better error messages
-- `CryptoBlockPolicy_LLM_Finder` - AI-powered detection for edge cases
-- `CryptoReplacePolicy` - Replace crypto terms instead of blocking
-- `CryptoRaiseExceptionPolicy` - Stop execution immediately (strict mode)
+**Available Variants**
 
-### Personal Information (PII)
+- `CryptoBlockPolicy`: Static keyword detection with blocking
+- `CryptoBlockPolicy_LLM_Block`: Static detection with LLM-generated block messages
+- `CryptoBlockPolicy_LLM_Finder`: LLM-powered detection for better accuracy
+- `CryptoReplace`: Replaces crypto keywords with placeholder text
+- `CryptoRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `CryptoRaiseExceptionPolicy_LLM_Raise`: LLM-generated exception messages
 
-Protect emails, phone numbers, SSNs, addresses, and more:
+**Params**
+
+When creating custom crypto policies, you can pass options:
 
 ```python
+from upsonic.safety_engine.base import Policy
+from upsonic.safety_engine.policies.crypto_policies import CryptoRule, CryptoBlockAction
+
+custom_rule = CryptoRule(options={
+    "keywords": ["NFT", "DeFi", "Web3", "token", "staking"]
+})
+
+policy = Policy(
+    name="Extended Crypto Policy",
+    description="Extra Web3 keywords included",
+    rule=custom_rule,
+    action=CryptoBlockAction()
+)
+```
+
+---
+
+### PII (Personal Identifiable Information) Policies
+
+**What is PII Policy?**
+
+PII policies detect and protect personal identifiable information including emails, phone numbers, SSN, addresses, credit cards, driver's licenses, passports, IP addresses, and other sensitive personal data.
+
+**Usage**
+
+```python
+from upsonic import Agent, Task
 from upsonic.safety_engine.policies import PIIAnonymizePolicy
 
 # Automatically hide sensitive info in responses
@@ -134,17 +108,50 @@ result = agent.do(task)
 # Output: "My email is xxxx@xxxxxxx.xxx and phone is XXX-XXXX"
 ```
 
-**Other PII policy options:**
-- `PIIBlockPolicy` - Block any content with PII
-- `PIIBlockPolicy_LLM` - Smarter PII detection with AI
-- `PIIReplacePolicy` - Replace PII with `[REDACTED]`
-- `PIIRaiseExceptionPolicy` - Stop execution when PII detected
+**Available Variants**
 
-### Phone Numbers
+- `PIIBlockPolicy`: Blocks any content with PII
+- `PIIBlockPolicy_LLM`: LLM-powered block messages
+- `PIIBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `PIIAnonymizePolicy`: Anonymizes PII with unique replacements
+- `PIIReplacePolicy`: Replaces PII with `[PII_REDACTED]`
+- `PIIRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `PIIRaiseExceptionPolicy_LLM`: LLM-generated exception messages
 
-Specifically for phone number protection:
+**Params**
 
 ```python
+from upsonic.safety_engine.policies.pii_policies import PIIRule, PIIBlockAction
+
+custom_rule = PIIRule(options={
+    "custom_patterns": {
+        "phone": [r'\b\d{3}-\d{4}\b'],  # Custom phone pattern
+        "credit_card": [r'\b\d{4}\s\d{4}\s\d{4}\s\d{4}\b'],
+        "address": [r'\b\d+\s+Main St\b']
+    },
+    "custom_keywords": ["employee id", "badge number", "internal code"]
+})
+
+policy = Policy(
+    name="Extended PII Policy",
+    description="With custom patterns",
+    rule=custom_rule,
+    action=PIIBlockAction()
+)
+```
+
+---
+
+### Phone Number Policies
+
+**What is Phone Number Policy?**
+
+Phone number policies specifically detect and anonymize phone numbers in various formats (US, international, etc.).
+
+**Usage**
+
+```python
+from upsonic import Agent, Task
 from upsonic.safety_engine.policies import AnonymizePhoneNumbersPolicy
 
 # Anonymize just phone numbers
@@ -158,397 +165,788 @@ result = agent.do(task)
 # Phone number gets randomized but keeps the format
 ```
 
-**Also available:** `AnonymizePhoneNumbersPolicy_LLM_Finder` for better detection
+**Available Variants**
 
-## What Actions Can Do
+- `AnonymizePhoneNumbersPolicy`: Pattern-based detection and anonymization
+- `AnonymizePhoneNumbersPolicy_LLM_Finder`: LLM-powered detection for better accuracy
 
-When a policy detects something, it can handle it in different ways:
+**Params**
 
-| Action | What Happens | When to Use |
-|--------|--------------|-------------|
-| **BLOCK** | Shows a message, stops the task | "Sorry, I can't help with that" |
-| **ALLOW** | Lets it through | Content is safe |
-| **REPLACE** | Swaps keywords with placeholder text | Remove but keep working |
-| **ANONYMIZE** | Randomizes but keeps format | Hide data, preserve structure |
-| **RAISE_EXCEPTION** | Throws error, stops everything | Critical violations only |
+No custom parameters. Uses built-in phone number patterns.
 
-### See Actions in Practice
+---
+
+### Adult Content Policies
+
+**What is Adult Content Policy?**
+
+Adult content policies detect explicit sexual content, adult themes, age-restricted material, and inappropriate content for general audiences.
+
+**Usage**
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import (
-    CryptoBlockPolicy,
-    PIIAnonymizePolicy
+from upsonic.safety_engine.policies import AdultContentBlockPolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=AdultContentBlockPolicy
 )
 
-# BLOCK: Returns a message, task stops
-agent = Agent(user_policy=CryptoBlockPolicy)
-result = agent.do(Task("Tell me about Bitcoin"))
-# "Cryptocurrency related content detected and blocked."
-
-# ANONYMIZE: Hides sensitive data, task continues
-agent = Agent(agent_policy=PIIAnonymizePolicy)
-result = agent.do(Task("My ID is AB123456"))
-# "My ID is XY987654" (randomized but same format)
+task = Task("Show me adult videos")
+result = agent.do(task)
+# Blocked with appropriate message
 ```
 
-## Build Your Own Policies
+**Available Variants**
 
-Need something specific? Create custom policies for your unique requirements.
+- `AdultContentBlockPolicy`: Keyword and pattern detection with blocking
+- `AdultContentBlockPolicy_LLM`: LLM-powered block messages
+- `AdultContentBlockPolicy_LLM_Finder`: LLM detection for context awareness
+- `AdultContentRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `AdultContentRaiseExceptionPolicy_LLM`: LLM-generated exception messages
 
-### Simple Keyword Blocker
-
-```python
-from upsonic.safety_engine.base import RuleBase, ActionBase, Policy
-from upsonic.safety_engine.models import PolicyInput, RuleOutput, PolicyOutput
-
-# Step 1: Define what to detect
-class CompanySecretRule(RuleBase):
-    def __init__(self):
-        super().__init__()
-        self.blocked_words = ["confidential", "trade secret", "internal only"]
-    
-    def process(self, policy_input: PolicyInput) -> RuleOutput:
-        text = " ".join(policy_input.input_texts or []).lower()
-        found = [word for word in self.blocked_words if word in text]
-        
-        if found:
-            return RuleOutput(
-                confidence=1.0,
-                content_type="COMPANY_SECRET",
-                details=f"Found: {', '.join(found)}",
-                triggered_keywords=found
-            )
-        return RuleOutput(confidence=0.0, content_type="SAFE", details="OK")
-
-# Step 2: Define what to do
-class CompanySecretAction(ActionBase):
-    def action(self, rule_result: RuleOutput) -> PolicyOutput:
-        if rule_result.confidence >= 0.8:
-            return self.raise_block_error("Cannot share company secrets")
-        return self.allow_content()
-
-# Step 3: Combine and use
-my_policy = Policy(
-    name="Company Secrets Protection",
-    description="Block confidential company info",
-    rule=CompanySecretRule(),
-    action=CompanySecretAction()
-)
-
-agent = Agent(model="openai/gpt-4o", user_policy=my_policy)
-```
-
-## Smarter Detection with AI
-
-Use LLM-powered policies for better accuracy and context understanding.
-
-### Why Use LLM Detection?
-
-- **Catches edge cases**: Understands context, not just keywords
-- **Better messages**: Generates natural explanations
-- **Handles variations**: Detects intent, not just exact matches
-
-### Smart Detection Example
+**Params**
 
 ```python
-from upsonic.safety_engine.base import RuleBase, ActionBase, Policy
-from upsonic.safety_engine.models import PolicyInput, RuleOutput, PolicyOutput
+from upsonic.safety_engine.policies.adult_content_policies import AdultContentRule, AdultContentBlockAction
 
-class SmartToxicityRule(RuleBase):
-    def process(self, policy_input: PolicyInput) -> RuleOutput:
-        # Built-in LLM helper finds toxic content
-        toxic_items = self._llm_find_keywords_with_input(
-            "toxic_or_abusive_language",
-            policy_input
-        )
-        
-        if toxic_items:
-            return RuleOutput(
-                confidence=1.0,
-                content_type="TOXIC",
-                details=f"Found {len(toxic_items)} toxic phrases",
-                triggered_keywords=toxic_items
-            )
-        return RuleOutput(confidence=0.0, content_type="SAFE", details="OK")
-
-class SmartBlockAction(ActionBase):
-    def action(self, rule_result: RuleOutput) -> PolicyOutput:
-        if rule_result.confidence >= 0.8:
-            # LLM generates a natural, context-aware message
-            return self.llm_raise_block_error(
-                reason="Content violates community guidelines"
-            )
-        return self.allow_content()
-
-# Use it
-toxicity_policy = Policy(
-    name="Smart Toxicity Filter",
-    description="AI-powered toxicity detection",
-    rule=SmartToxicityRule(),
-    action=SmartBlockAction()
-)
-
-agent = Agent(model="openai/gpt-4o", user_policy=toxicity_policy)
-```
-
-## Works in Any Language
-
-Policies automatically adapt to the user's language.
-
-```python
-from upsonic.safety_engine.base import Policy
-from upsonic.safety_engine.policies import CryptoBlockPolicy
-
-# Auto-detects language and responds accordingly
-policy = Policy(
-    name="Global Crypto Policy",
-    description="Works in any language",
-    rule=CryptoBlockPolicy.rule,
-    action=CryptoBlockPolicy.action,
-    language="auto"  # Magic happens here
-)
-
-agent = Agent(model="openai/gpt-4o", user_policy=policy)
-
-# All these work automatically:
-# English: "Tell me about Bitcoin" → blocked in English
-# Turkish: "Bana Bitcoin hakkında bilgi ver" → blocked in Turkish  
-# Spanish: "Cuéntame sobre Bitcoin" → blocked in Spanish
-```
-
-**Set specific language:** Use `language="tr"` for Turkish, `language="es"` for Spanish, etc.
-
-## Advanced Options
-
-### Use Different Models for Different Tasks
-
-```python
-from upsonic.safety_engine.base import Policy
-from upsonic.safety_engine.policies.crypto_policies import (
-    CryptoRule_LLM_Finder,
-    CryptoBlockAction_LLM
-)
-
-# Fine-tune which model does what
-policy = Policy(
-    name="Cost-Optimized Policy",
-    description="GPT-4 for detection, GPT-3.5 for messages",
-    rule=CryptoRule_LLM_Finder(),
-    action=CryptoBlockAction_LLM(),
-    language="auto",
-    text_finder_model="gpt-4",      # Better detection
-    base_model="gpt-3.5-turbo"      # Cheaper for simple tasks
-)
-```
-
-### Add Custom Keywords
-
-```python
-from upsonic.safety_engine.policies.crypto_policies import CryptoRule, CryptoBlockAction
-from upsonic.safety_engine.base import Policy
-
-# Extend existing rules with your own keywords
-custom_rule = CryptoRule(options={
-    "keywords": ["NFT", "DeFi", "Web3", "token", "staking"]
+custom_rule = AdultContentRule(options={
+    "explicit_keywords": ["custom_term1", "custom_term2"],
+    "adult_patterns": [r'\bcustom\s+pattern\b'],
+    "suggestive_keywords": ["suggestive_term"],
+    "age_verification_keywords": ["custom age term"]
 })
 
 policy = Policy(
-    name="Extended Crypto Policy",
-    description="Extra Web3 keywords included",
+    name="Custom Adult Content Policy",
+    description="With additional keywords",
     rule=custom_rule,
-    action=CryptoBlockAction()
+    action=AdultContentBlockAction()
 )
 ```
 
-### Works with Async
+---
+
+### Sensitive Social Policies
+
+**What is Sensitive Social Policy?**
+
+Sensitive social policies detect racism, hate speech, discriminatory language, and other sensitive social issues to maintain respectful and inclusive communication.
+
+**Usage**
 
 ```python
-import asyncio
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import PIIBlockPolicy
+from upsonic.safety_engine.policies import SensitiveSocialBlockPolicy
 
-agent = Agent(model="openai/gpt-4o", user_policy=PIIBlockPolicy)
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=SensitiveSocialBlockPolicy
+)
 
-async def main():
-    result = await agent.do_async(Task("My SSN is 123-45-6789"))
-    print(result)
-
-asyncio.run(main())
+task = Task("Inappropriate hate speech content")
+result = agent.do(task)
+# Blocked with educational message
 ```
 
-### Exception Handling
+**Available Variants**
+
+- `SensitiveSocialBlockPolicy`: Keyword and pattern detection with blocking
+- `SensitiveSocialBlockPolicy_LLM`: LLM-powered block messages
+- `SensitiveSocialBlockPolicy_LLM_Finder`: LLM detection for context awareness
+- `SensitiveSocialRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `SensitiveSocialRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+**Params**
+
+```python
+from upsonic.safety_engine.policies.sensitive_social_policies import SensitiveSocialRule, SensitiveSocialBlockAction
+
+custom_rule = SensitiveSocialRule(options={
+    "hate_speech_keywords": ["custom_term"],
+    "hate_patterns": [r'\bcustom\s+pattern\b'],
+    "discriminatory_keywords": ["custom discrimination term"]
+})
+
+policy = Policy(
+    name="Custom Sensitive Social Policy",
+    description="With additional terms",
+    rule=custom_rule,
+    action=SensitiveSocialBlockAction()
+)
+```
+
+---
+
+### Financial Information Policies
+
+**What is Financial Info Policy?**
+
+Financial information policies detect and protect credit cards, bank accounts, SSN, routing numbers, IBAN, SWIFT codes, tax IDs, investment accounts, cryptocurrency wallets, and other sensitive financial data.
+
+**Usage**
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import CryptoRaiseExceptionPolicy
-from upsonic.safety_engine.exceptions import DisallowedOperation
+from upsonic.safety_engine.policies import FinancialInfoBlockPolicy
 
-agent = Agent(model="openai/gpt-4o", user_policy=CryptoRaiseExceptionPolicy)
+agent = Agent(
+    model="openai/gpt-4o",
+    agent_policy=FinancialInfoAnonymizePolicy
+)
+
+task = Task("My credit card is 4532-1234-5678-9010")
+result = agent.do(task)
+# Credit card number is anonymized
+```
+
+**Available Variants**
+
+- `FinancialInfoBlockPolicy`: Pattern detection with blocking
+- `FinancialInfoBlockPolicy_LLM`: LLM-powered block messages
+- `FinancialInfoBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `FinancialInfoAnonymizePolicy`: Anonymizes financial data
+- `FinancialInfoReplacePolicy`: Replaces with `[FINANCIAL_INFO_REDACTED]`
+- `FinancialInfoRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `FinancialInfoRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+**Params**
+
+```python
+from upsonic.safety_engine.policies.financial_policies import FinancialInfoRule, FinancialInfoBlockAction
+
+custom_rule = FinancialInfoRule(options={
+    "custom_patterns": {
+        "credit_card": [r'\bcustom\s+card\s+pattern\b'],
+        "bank_account": [r'\bcustom\s+account\s+pattern\b'],
+        "crypto": [r'\bcustom\s+wallet\s+pattern\b']
+    },
+    "custom_keywords": ["custom financial term", "proprietary account type"]
+})
+
+policy = Policy(
+    name="Custom Financial Info Policy",
+    description="With custom patterns",
+    rule=custom_rule,
+    action=FinancialInfoBlockAction()
+)
+```
+
+---
+
+### Medical Information Policies
+
+**What is Medical Info Policy?**
+
+Medical information policies detect and protect health records, diagnoses, prescriptions, medical IDs, insurance information, and other Protected Health Information (PHI) for HIPAA compliance.
+
+**Usage**
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import MedicalInfoRaiseExceptionPolicy
+
+# Zero tolerance for PHI
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=MedicalInfoRaiseExceptionPolicy,
+    agent_policy=MedicalInfoRaiseExceptionPolicy
+)
 
 try:
-    result = agent.do(Task("How do I buy Bitcoin?"))
-except DisallowedOperation as e:
-    print(f"Blocked: {e.message}")
-    # Log, notify, or handle however you need
-```
-
-## Real-World Examples
-
-### Financial Advisor Bot
-
-```python
-from upsonic import Agent, Task
-from upsonic.safety_engine.policies import CryptoBlockPolicy, PIIAnonymizePolicy
-
-# Block crypto questions, protect customer data
-agent = Agent(
-    model="openai/gpt-4o",
-    name="Financial Advisor",
-    user_policy=CryptoBlockPolicy,      # No crypto advice
-    agent_policy=PIIAnonymizePolicy     # Hide account numbers in responses
-)
-
-task = Task("Should I invest in Bitcoin? My account is 1234-5678-9012")
-result = agent.do(task)
-# Blocked before processing!
-```
-
-### Customer Support Bot
-
-```python
-from upsonic import Agent, Task
-from upsonic.safety_engine.policies import PIIAnonymizePolicy
-
-# Protect customer info in logs and responses
-agent = Agent(
-    model="openai/gpt-4o",
-    name="Support Bot",
-    agent_policy=PIIAnonymizePolicy  # Auto-hide PII
-)
-
-task = Task("Help with my account. Email: customer@email.com, Phone: 555-123-4567")
-result = agent.do(task)
-# Response has anonymized PII - safe to log!
-```
-
-### Healthcare Bot (HIPAA Compliant)
-
-```python
-from upsonic import Agent, Task
-from upsonic.safety_engine.base import Policy
-from upsonic.safety_engine.policies.pii_policies import PIIRule, PIIRaiseExceptionAction
-
-# Zero tolerance for PHI/PII
-hipaa_policy = Policy(
-    name="HIPAA Policy",
-    description="Strict PHI protection",
-    rule=PIIRule(),
-    action=PIIRaiseExceptionAction()  # Stops everything if PII found
-)
-
-agent = Agent(
-    model="openai/gpt-4o",
-    user_policy=hipaa_policy,
-    agent_policy=hipaa_policy
-)
-
-try:
-    result = agent.do(Task("Patient John Doe, DOB 01/15/1980, needs help"))
+    result = agent.do(Task("Patient John Doe has diabetes"))
 except Exception as e:
     print(f"Protected: {e}")  # HIPAA violation prevented
 ```
 
-## Tips & Best Practices
+**Available Variants**
 
-### When to Use Which Policy
+- `MedicalInfoBlockPolicy`: Pattern detection with blocking
+- `MedicalInfoBlockPolicy_LLM`: LLM-powered block messages
+- `MedicalInfoBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `MedicalInfoAnonymizePolicy`: Anonymizes medical data
+- `MedicalInfoReplacePolicy`: Replaces with `[MEDICAL_INFO_REDACTED]`
+- `MedicalInfoRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `MedicalInfoRaiseExceptionPolicy_LLM`: LLM-generated exception messages
 
-- **user_policy**: Filter what comes IN (block bad user input)
-- **agent_policy**: Clean what goes OUT (protect sensitive data in responses)
-- **Both**: Maximum protection for critical applications
+---
 
-### Choosing Actions
+### Legal Information Policies
 
-- **BLOCK**: Say "no" clearly → best for prohibited content
-- **ANONYMIZE**: Hide but keep working → best for PII in customer support
-- **REPLACE**: Swap keywords → best for sanitizing specific terms
-- **RAISE_EXCEPTION**: Stop immediately → best for compliance violations
+**What is Legal Info Policy?**
 
-### Performance Tips
+Legal information policies detect and protect case numbers, legal IDs, court documents, attorney-client privileged information, and other sensitive legal data.
 
-- **Static rules are fast**: Keyword matching is instant
-- **LLM rules are smart**: Better accuracy but slower
-- **Mix both**: Use static rules first, LLM for edge cases
-- **Use async**: `do_async()` works great with policies
+**Available Variants**
 
-### Security Recommendations
+- `LegalInfoBlockPolicy`: Pattern detection with blocking
+- `LegalInfoBlockPolicy_LLM`: LLM-powered block messages
+- `LegalInfoBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `LegalInfoAnonymizePolicy`: Anonymizes legal data
+- `LegalInfoReplacePolicy`: Replaces with placeholder
+- `LegalInfoRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `LegalInfoRaiseExceptionPolicy_LLM`: LLM-generated exception messages
 
-- **Layer your defenses**: Use multiple policies for critical systems
-- **Test thoroughly**: Make sure policies catch what you want without false positives
-- **Monitor triggers**: Log when policies activate to improve them
-- **Keep updated**: Add new keywords and patterns as threats evolve
+---
 
-## Putting It All Together
+### Technical Security Policies
 
-Here's a complete custom policy in action:
+**What is Technical Security Policy?**
+
+Technical security policies detect and protect API keys, access tokens, passwords, private keys, database credentials, encryption keys, and other technical security credentials.
+
+**Available Variants**
+
+- `TechnicalSecurityBlockPolicy`: Pattern detection with blocking
+- `TechnicalSecurityBlockPolicy_LLM`: LLM-powered block messages
+- `TechnicalSecurityBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `TechnicalSecurityAnonymizePolicy`: Anonymizes security credentials
+- `TechnicalSecurityReplacePolicy`: Replaces with placeholder
+- `TechnicalSecurityRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `TechnicalSecurityRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+---
+
+### Cybersecurity Policies
+
+**What is Cybersecurity Policy?**
+
+Cybersecurity policies detect vulnerability disclosures, exploit code, attack vectors, malware signatures, hacking techniques, and other cybersecurity threats.
+
+**Available Variants**
+
+- `CybersecurityBlockPolicy`: Pattern detection with blocking
+- `CybersecurityBlockPolicy_LLM`: LLM-powered block messages
+- `CybersecurityBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `CybersecurityAnonymizePolicy`: Anonymizes threat data
+- `CybersecurityReplacePolicy`: Replaces with placeholder
+- `CybersecurityRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `CybersecurityRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+---
+
+### Data Privacy Policies
+
+**What is Data Privacy Policy?**
+
+Data privacy policies detect user tracking, cookie data, privacy violations, consent issues, and data retention concerns for GDPR and privacy compliance.
+
+**Available Variants**
+
+- `DataPrivacyBlockPolicy`: Pattern detection with blocking
+- `DataPrivacyBlockPolicy_LLM`: LLM-powered block messages
+- `DataPrivacyBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `DataPrivacyAnonymizePolicy`: Anonymizes privacy data
+- `DataPrivacyReplacePolicy`: Replaces with placeholder
+- `DataPrivacyRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `DataPrivacyRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+---
+
+### Fraud Detection Policies
+
+**What is Fraud Detection Policy?**
+
+Fraud detection policies identify phishing attempts, scam indicators, fraudulent schemes, identity theft, and suspicious financial activities.
+
+**Available Variants**
+
+- `FraudDetectionBlockPolicy`: Pattern detection with blocking
+- `FraudDetectionBlockPolicy_LLM`: LLM-powered block messages
+- `FraudDetectionBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `FraudDetectionAnonymizePolicy`: Anonymizes fraud indicators
+- `FraudDetectionReplacePolicy`: Replaces with placeholder
+- `FraudDetectionRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `FraudDetectionRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+---
+
+### Phishing Policies
+
+**What is Phishing Policy?**
+
+Phishing policies detect suspicious links, credential harvesting attempts, spoofed domains, social engineering tactics, and email phishing patterns.
+
+**Available Variants**
+
+- `PhishingBlockPolicy`: Pattern detection with blocking
+- `PhishingBlockPolicy_LLM`: LLM-powered block messages
+- `PhishingBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `PhishingAnonymizePolicy`: Anonymizes phishing indicators
+- `PhishingReplacePolicy`: Replaces with placeholder
+- `PhishingRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `PhishingRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+---
+
+### Insider Threat Policies
+
+**What is Insider Threat Policy?**
+
+Insider threat policies detect data exfiltration, unauthorized access, policy violations, suspicious behavior, and insider risk indicators.
+
+**Available Variants**
+
+- `InsiderThreatBlockPolicy`: Pattern detection with blocking
+- `InsiderThreatBlockPolicy_LLM`: LLM-powered block messages
+- `InsiderThreatBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `InsiderThreatAnonymizePolicy`: Anonymizes threat indicators
+- `InsiderThreatReplacePolicy`: Replaces with placeholder
+- `InsiderThreatRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `InsiderThreatRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+---
+
+## Custom Policy
+
+Creating custom policies allows you to define your own content detection and handling logic specific to your application's needs.
+
+### Creating Rule
+
+**Overall Class Structure**
+
+Rules inherit from `RuleBase` and must implement the `process` method. They detect specific content and return a `RuleOutput` with confidence score and detected keywords.
 
 ```python
-from upsonic import Agent, Task
-from upsonic.safety_engine.base import RuleBase, ActionBase, Policy
-from upsonic.safety_engine.models import PolicyInput, RuleOutput, PolicyOutput
+from upsonic.safety_engine.base import RuleBase
+from upsonic.safety_engine.models import PolicyInput, RuleOutput
+from typing import Optional, Dict, Any
 
-# 1. Define your rule
-class CompanySecurityRule(RuleBase):
-    def __init__(self):
-        super().__init__()
-        self.forbidden = ["competitor", "confidential", "internal only"]
+class MyCustomRule(RuleBase):
+    """Rule description"""
+    
+    name = "My Custom Rule"
+    description = "Detects specific content in text"
+    language = "en"  # Default language
+    
+    def __init__(self, options: Optional[Dict[str, Any]] = None):
+        super().__init__(options)
+        # Initialize your detection logic
+        self.keywords = ["keyword1", "keyword2"]
     
     def process(self, policy_input: PolicyInput) -> RuleOutput:
-        text = " ".join(policy_input.input_texts or []).lower()
-        found = [word for word in self.forbidden if word in text]
+        """Process the input and return detection results"""
+        # Combine input texts
+        combined_text = " ".join(policy_input.input_texts or []).lower()
         
-        if found:
+        # Find matches
+        triggered = []
+        for keyword in self.keywords:
+            if keyword in combined_text:
+                triggered.append(keyword)
+        
+        # Return result
+        if not triggered:
             return RuleOutput(
-                confidence=1.0,
-                content_type="SECURITY_VIOLATION",
-                details=f"Blocked: {', '.join(found)}",
-                triggered_keywords=found
+                confidence=0.0,
+                content_type="SAFE",
+                details="No issues detected"
             )
-        return RuleOutput(confidence=0.0, content_type="SAFE", details="OK")
+        
+        return RuleOutput(
+            confidence=1.0,
+            content_type="DETECTED",
+            details=f"Found {len(triggered)} matches",
+            triggered_keywords=triggered
+        )
+```
 
-# 2. Define your action
-class CompanySecurityAction(ActionBase):
+**Example Rule**
+
+Here's a complete example of a custom rule that detects company-specific confidential terms:
+
+```python
+import re
+from upsonic.safety_engine.base import RuleBase
+from upsonic.safety_engine.models import PolicyInput, RuleOutput
+from typing import Optional, Dict, Any
+
+class CompanySecretRule(RuleBase):
+    """Detects company confidential information"""
+    
+    name = "Company Secret Rule"
+    description = "Detects confidential company terms and code names"
+    language = "en"
+    
+    def __init__(self, options: Optional[Dict[str, Any]] = None):
+        super().__init__(options)
+        
+        # Confidential keywords
+        self.secret_keywords = [
+            "project zeus", "alpha build", "confidential",
+            "internal only", "trade secret", "proprietary"
+        ]
+        
+        # Confidential patterns
+        self.secret_patterns = [
+            r'\b(?:project|operation)\s+[A-Z][a-z]+\b',  # Project names
+            r'\b[A-Z]{3}-\d{4}\b',  # Internal codes like ABC-1234
+        ]
+        
+        # Allow custom keywords from options
+        if options and "keywords" in options:
+            self.secret_keywords.extend(options["keywords"])
+    
+    def process(self, policy_input: PolicyInput) -> RuleOutput:
+        """Process input for confidential content"""
+        combined_text = " ".join(policy_input.input_texts or [])
+        
+        # Find keyword matches
+        triggered_keywords = []
+        for keyword in self.secret_keywords:
+            pattern = r'\b' + re.escape(keyword) + r'\b'
+            if re.search(pattern, combined_text, re.IGNORECASE):
+                triggered_keywords.append(keyword)
+        
+        # Find pattern matches
+        for pattern in self.secret_patterns:
+            matches = re.findall(pattern, combined_text)
+            triggered_keywords.extend(matches)
+        
+        # Calculate confidence
+        if not triggered_keywords:
+            return RuleOutput(
+                confidence=0.0,
+                content_type="SAFE",
+                details="No confidential content detected"
+            )
+        
+        confidence = min(1.0, len(triggered_keywords) * 0.5)
+        
+        return RuleOutput(
+            confidence=confidence,
+            content_type="CONFIDENTIAL",
+            details=f"Detected {len(triggered_keywords)} confidential terms",
+            triggered_keywords=triggered_keywords
+        )
+```
+
+**Using LLM in Rules**
+
+For more intelligent detection, you can use LLM-powered content finding:
+
+```python
+class SmartConfidentialRule(RuleBase):
+    """LLM-powered confidential content detection"""
+    
+    name = "Smart Confidential Rule"
+    description = "Uses LLM to detect confidential content with context"
+    language = "en"
+    
+    def __init__(self, options: Optional[Dict[str, Any]] = None, text_finder_llm=None):
+        super().__init__(options, text_finder_llm)
+    
+    def process(self, policy_input: PolicyInput) -> RuleOutput:
+        """Process using LLM for better accuracy"""
+        if not self.text_finder_llm:
+            # Fallback to keyword detection if no LLM
+            return RuleOutput(
+                confidence=0.0,
+                content_type="SAFE",
+                details="LLM not available"
+            )
+        
+        # Use built-in LLM helper
+        triggered = self._llm_find_keywords_with_input(
+            "confidential company information",
+            policy_input
+        )
+        
+        if not triggered:
+            return RuleOutput(
+                confidence=0.0,
+                content_type="SAFE",
+                details="No confidential content detected"
+            )
+        
+        return RuleOutput(
+            confidence=1.0,
+            content_type="CONFIDENTIAL",
+            details=f"LLM detected {len(triggered)} confidential items",
+            triggered_keywords=triggered
+        )
+```
+
+---
+
+### Creating Action
+
+**Overall Class Structure**
+
+Actions inherit from `ActionBase` and must implement the `action` method. They decide what to do when content is detected (block, allow, replace, anonymize, or raise exception).
+
+```python
+from upsonic.safety_engine.base import ActionBase
+from upsonic.safety_engine.models import RuleOutput, PolicyOutput
+
+class MyCustomAction(ActionBase):
+    """Action description"""
+    
+    name = "My Custom Action"
+    description = "Handles detected content"
+    language = "en"
+    
     def action(self, rule_result: RuleOutput) -> PolicyOutput:
-        if rule_result.confidence >= 0.8:
-            return self.llm_raise_block_error(
-                reason="This violates company security policy"
-            )
-        return self.allow_content()
+        """Execute action based on rule result"""
+        # Check confidence threshold
+        if rule_result.confidence < 0.5:
+            return self.allow_content()
+        
+        # Take appropriate action
+        return self.raise_block_error("Content blocked")
+```
 
-# 3. Create the policy
-security_policy = Policy(
+**Available Action Methods**
+
+- `allow_content()`: Let content pass through
+- `raise_block_error(message)`: Block with a message
+- `replace_triggered_keywords(replacement)`: Replace keywords with text
+- `anonymize_triggered_keywords()`: Anonymize with random values
+- `raise_exception(message)`: Raise DisallowedOperation exception
+- `llm_raise_block_error(reason)`: Generate block message with LLM
+- `llm_raise_exception(reason)`: Generate exception with LLM
+
+**Example Action**
+
+Here's a complete example of a custom action that handles confidential content:
+
+```python
+from upsonic.safety_engine.base import ActionBase
+from upsonic.safety_engine.models import RuleOutput, PolicyOutput
+
+class CompanySecretAction(ActionBase):
+    """Handles company confidential content"""
+    
+    name = "Company Secret Action"
+    description = "Blocks or redacts confidential company information"
+    language = "en"
+    
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        """Execute action for confidential content"""
+        
+        # Allow if low confidence
+        if rule_result.confidence < 0.3:
+            return self.allow_content()
+        
+        # Medium confidence: Redact keywords
+        if rule_result.confidence < 0.7:
+            return self.replace_triggered_keywords("[REDACTED]")
+        
+        # High confidence: Block completely
+        block_message = (
+            "This content has been blocked because it contains "
+            "confidential company information. Please remove any "
+            "internal project names, codes, or proprietary data."
+        )
+        return self.raise_block_error(block_message)
+```
+
+**Using LLM in Actions**
+
+For context-aware messages, use LLM-powered action methods:
+
+```python
+class SmartSecretAction(ActionBase):
+    """LLM-powered action for confidential content"""
+    
+    name = "Smart Secret Action"
+    description = "Uses LLM to generate contextual messages"
+    language = "en"
+    
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        """Execute LLM-powered action"""
+        
+        if rule_result.confidence < 0.5:
+            return self.allow_content()
+        
+        # Generate contextual block message using LLM
+        reason = (
+            f"Content contains confidential information: "
+            f"{rule_result.details}"
+        )
+        return self.llm_raise_block_error(reason)
+```
+
+---
+
+### Creating Policy
+
+**Example Policy**
+
+Combine your custom rule and action into a complete policy:
+
+```python
+from upsonic.safety_engine.base import Policy
+
+# Create the policy
+company_security_policy = Policy(
     name="Company Security Policy",
-    description="Protects company information",
-    rule=CompanySecurityRule(),
-    action=CompanySecurityAction(),
-    language="auto"
+    description="Protects confidential company information",
+    rule=CompanySecretRule(),
+    action=CompanySecretAction(),
+    language="auto"  # Auto-detect user language
 )
 
-# 4. Use it with your agent
+# Use with your agent
+from upsonic import Agent, Task
+
 agent = Agent(
     model="openai/gpt-4o",
     name="Company Assistant",
-    user_policy=security_policy
+    user_policy=company_security_policy
 )
 
-# 5. Try it out
-task = Task("Tell me about our competitor's confidential strategy")
+task = Task("Tell me about Project Zeus")
+result = agent.do(task)
+# Blocked if confidential content detected
+```
+
+**Advanced Policy Configuration**
+
+You can specify different LLM models for different operations:
+
+```python
+# Using model strings
+advanced_policy = Policy(
+    name="Advanced Security Policy",
+    description="Uses different models for different tasks",
+    rule=SmartConfidentialRule(),
+    action=SmartSecretAction(),
+    language="auto",
+    language_identify_model="gpt-3.5-turbo",  # Language detection
+    base_model="gpt-3.5-turbo",               # General operations
+    text_finder_model="gpt-4"                 # Content detection
+)
+
+# Or using LLM providers directly
+from upsonic.safety_engine.llm import UpsonicLLMProvider
+
+language_llm = UpsonicLLMProvider(
+    agent_name="Language Detector",
+    model="gpt-3.5-turbo"
+)
+
+advanced_policy_2 = Policy(
+    name="Advanced Security Policy",
+    description="Uses custom LLM providers",
+    rule=SmartConfidentialRule(),
+    action=SmartSecretAction(),
+    language="auto",
+    language_identify_llm=language_llm,
+    base_llm=UpsonicLLMProvider(model="gpt-4"),
+    text_finder_llm=UpsonicLLMProvider(model="gpt-4")
+)
+```
+
+**Using with Agent**
+
+```python
+from upsonic import Agent, Task
+
+# Apply policy to both input and output
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Secure Assistant",
+    user_policy=company_security_policy,    # Filter input
+    agent_policy=company_security_policy    # Filter output
+)
+
+# Test it
 try:
+    task = Task("What's the status of Project Zeus?")
     result = agent.do(task)
     print(result)
 except Exception as e:
     print(f"Blocked: {e}")
 ```
 
-**That's it!** You now have a complete, custom safety policy protecting your AI agent. Mix and match with pre-built policies for maximum protection.
+**Async Support**
 
+All policies automatically support async operations:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=company_security_policy
+)
+
+async def main():
+    result = await agent.do_async(Task("Confidential query"))
+    print(result)
+
+asyncio.run(main())
+```
+
+**Complete Example**
+
+Here's a full working example combining everything:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.base import RuleBase, ActionBase, Policy
+from upsonic.safety_engine.models import PolicyInput, RuleOutput, PolicyOutput
+import re
+
+# 1. Define the rule
+class ProjectCodeRule(RuleBase):
+    name = "Project Code Rule"
+    description = "Detects internal project codes"
+    language = "en"
+    
+    def __init__(self, options=None):
+        super().__init__(options)
+        self.pattern = r'\b[A-Z]{2,4}-\d{3,5}\b'
+    
+    def process(self, policy_input: PolicyInput) -> RuleOutput:
+        text = " ".join(policy_input.input_texts or [])
+        matches = re.findall(self.pattern, text)
+        
+        if not matches:
+            return RuleOutput(
+                confidence=0.0,
+                content_type="SAFE",
+                details="No project codes found"
+            )
+        
+        return RuleOutput(
+            confidence=1.0,
+            content_type="PROJECT_CODE",
+            details=f"Found {len(matches)} project codes",
+            triggered_keywords=matches
+        )
+
+# 2. Define the action
+class ProjectCodeAction(ActionBase):
+    name = "Project Code Action"
+    description = "Redacts project codes"
+    language = "en"
+    
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        if rule_result.confidence >= 0.8:
+            return self.replace_triggered_keywords("[PROJECT-CODE]")
+        return self.allow_content()
+
+# 3. Create the policy
+project_policy = Policy(
+    name="Project Code Policy",
+    description="Protects internal project codes",
+    rule=ProjectCodeRule(),
+    action=ProjectCodeAction()
+)
+
+# 4. Use with agent
+agent = Agent(
+    model="openai/gpt-4o",
+    agent_policy=project_policy
+)
+
+# Test
+task = Task("The issue is in ABC-1234 and XYZ-5678")
+result = agent.do(task)
+print(result)
+# Output: "The issue is in [PROJECT-CODE] and [PROJECT-CODE]"
+```

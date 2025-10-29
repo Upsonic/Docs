@@ -4,43 +4,113 @@ description: "Extract text from images and PDFs with multiple OCR provider suppo
 
 ## Overview
 
-In the Upsonic framework, `OCR` is a unified interface for optical character recognition that supports multiple OCR engines through a consistent API. It handles text extraction from images and PDFs with advanced preprocessing, multi-provider support, and comprehensive result tracking.
+### What is Unified OCR?
 
-The OCR class serves as a high-level orchestrator that manages:
+The Unified OCR system in Upsonic provides a consistent interface for optical character recognition across multiple OCR engines. Instead of learning different APIs for each OCR provider, you use a single `OCR` class that works seamlessly with EasyOCR, RapidOCR, Tesseract, DeepSeek, and PaddleOCR.
 
-- Multiple OCR provider backends (EasyOCR, RapidOCR, Tesseract, DeepSeek, PaddleOCR)
-- Image preprocessing (rotation correction, contrast enhancement, noise reduction)
-- PDF to image conversion with configurable DPI
-- Confidence scoring and bounding box detection
-- Performance metrics and processing statistics
-- Provider-specific features and optimizations
+The OCR class serves as a high-level orchestrator that:
+- Manages multiple OCR provider backends with a unified API
+- Handles image preprocessing (rotation correction, contrast enhancement, noise reduction)
+- Converts PDFs to images with configurable DPI
+- Tracks confidence scores and bounding box detection
+- Collects performance metrics and processing statistics
+- Provides provider-specific features and optimizations
 
-## OCR Configuration
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.easyocr import EasyOCR
 
-The OCR class provides comprehensive configuration options through the `OCRConfig` class to customize text extraction behavior.
+# Create OCR instance
+ocr = OCR(EasyOCR, languages=['en'], rotation_fix=True)
 
-### Core Configuration
+# Extract text
+text = ocr.get_text('document.pdf')
+print(text)
+```
 
-| Attribute                 | Type       | Description                                            |
-| ------------------------- | ---------- | ------------------------------------------------------ |
-| **languages**             | List[str]  | Languages to detect (default: ['en'])                  |
-| **confidence_threshold**  | float      | Minimum confidence threshold (0.0-1.0, default: 0.0)   |
-| **pdf_dpi**               | int        | DPI for PDF rendering (default: 300)                   |
-| **preserve_formatting**   | bool       | Try to preserve text formatting (default: True)        |
+### How Unified OCR Works
 
-### Image Preprocessing
+The OCR system follows a clear processing pipeline:
 
-| Attribute              | Type | Description                                         |
-| ---------------------- | ---- | --------------------------------------------------- |
-| **rotation_fix**       | bool | Enable automatic rotation correction (default: False) |
-| **enhance_contrast**   | bool | Enhance image contrast before OCR (default: False)  |
-| **remove_noise**       | bool | Apply noise reduction (default: False)              |
+1. **File Preparation**: Validates file existence and format (supports .png, .jpg, .jpeg, .bmp, .tiff, .tif, .webp, .pdf)
+2. **PDF Conversion**: If the file is a PDF, converts each page to images at the specified DPI
+3. **Image Preprocessing**: Optionally applies rotation correction, contrast enhancement, and noise reduction
+4. **OCR Processing**: Processes each image through the selected provider's engine
+5. **Result Aggregation**: Combines results from multiple pages, calculates average confidence scores
+6. **Metrics Tracking**: Updates processing statistics for performance analysis
 
-## Supported OCR Providers
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.rapidocr import RapidOCR
+
+# Create OCR with preprocessing
+ocr = OCR(
+    RapidOCR,
+    languages=['en'],
+    rotation_fix=True,
+    enhance_contrast=True,
+    pdf_dpi=300
+)
+
+# Process file - returns detailed results
+result = ocr.process_file('document.pdf')
+
+print(f"Text: {result.text}")
+print(f"Confidence: {result.confidence:.2%}")
+print(f"Pages: {result.page_count}")
+print(f"Processing time: {result.processing_time_ms:.2f}ms")
+```
+
+## Attributes
+
+The OCR system is configured through `OCRConfig`, which provides the following attributes:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `languages` | List[str] | `['en']` | Languages to detect (e.g., ['en', 'zh', 'ja']) |
+| `confidence_threshold` | float | `0.0` | Minimum confidence threshold (0.0-1.0) for accepting OCR results |
+| `rotation_fix` | bool | `False` | Enable automatic rotation correction for skewed images |
+| `enhance_contrast` | bool | `False` | Enhance image contrast before OCR processing |
+| `remove_noise` | bool | `False` | Apply noise reduction filter to improve text clarity |
+| `pdf_dpi` | int | `300` | DPI resolution for PDF rendering (higher = better quality, slower) |
+| `preserve_formatting` | bool | `True` | Try to preserve text formatting (line breaks, spacing) |
+
+**Configuration Example:**
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.base import OCRConfig
+from upsonic.ocr.tesseract import TesseractOCR
+
+# Method 1: Using OCRConfig
+config = OCRConfig(
+    languages=['eng', 'fra'],
+    confidence_threshold=0.6,
+    rotation_fix=True,
+    enhance_contrast=True,
+    remove_noise=True,
+    pdf_dpi=300,
+    preserve_formatting=True
+)
+ocr = OCR(TesseractOCR, config=config)
+
+# Method 2: Direct parameters
+ocr = OCR(
+    TesseractOCR,
+    languages=['eng', 'fra'],
+    confidence_threshold=0.6,
+    rotation_fix=True,
+    enhance_contrast=True
+)
+```
+
+## Providers
 
 ### EasyOCR
 
-Ready-to-use OCR with 80+ supported languages using deep learning models.
+Ready-to-use OCR with 80+ supported languages using deep learning models. Best for multi-language support with high accuracy.
+
+**Usage:**
 
 ```python
 from upsonic.ocr import OCR
@@ -48,53 +118,118 @@ from upsonic.ocr.easyocr import EasyOCR
 
 # Create OCR with EasyOCR
 ocr = OCR(EasyOCR, languages=['en', 'zh'], gpu=True, rotation_fix=True)
+
+# Extract text
 text = ocr.get_text('document.pdf')
+print(text)
+
+# Get detailed results
+result = ocr.process_file('image.png')
+print(f"Confidence: {result.confidence:.2%}")
+for block in result.blocks:
+    print(f"Text: {block.text}, Confidence: {block.confidence:.2%}")
 ```
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `languages` | List[str] | `['en']` | List of language codes to detect |
+| `gpu` | bool | `False` | Enable GPU acceleration for faster processing |
+| `rotation_fix` | bool | `False` | Auto-detect and fix image rotation |
+| `enhance_contrast` | bool | `False` | Enhance image contrast |
+| `remove_noise` | bool | `False` | Apply noise reduction |
+| `confidence_threshold` | float | `0.0` | Minimum confidence for text blocks |
+| `paragraph` | bool | `False` | Group text into paragraphs |
+| `min_size` | int | `10` | Minimum text region size |
+| `text_threshold` | float | `0.7` | Text detection threshold |
+
+**Supported Languages:** 80+ languages including English, Chinese, Japanese, Korean, Thai, Vietnamese, Arabic, Russian, and most European languages.
 
 ### RapidOCR
 
-Lightweight OCR based on ONNX Runtime for fast inference.
+Lightweight OCR based on ONNX Runtime for fast inference. Best for speed and lightweight deployment.
+
+**Usage:**
 
 ```python
 from upsonic.ocr import OCR
 from upsonic.ocr.rapidocr import RapidOCR
 
+# Create OCR with RapidOCR
 ocr = OCR(RapidOCR, languages=['en', 'ch'], confidence_threshold=0.5)
+
+# Extract text from image
 text = ocr.get_text('invoice.png')
+print(text)
+
+# Process PDF
+result = ocr.process_file('document.pdf')
+print(f"Extracted {len(result.text)} characters from {result.page_count} pages")
 ```
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `languages` | List[str] | `['en']` | List of language codes (primarily 'en' and 'ch') |
+| `confidence_threshold` | float | `0.0` | Minimum confidence for text blocks |
+| `rotation_fix` | bool | `False` | Auto-detect and fix image rotation |
+| `enhance_contrast` | bool | `False` | Enhance image contrast |
+| `remove_noise` | bool | `False` | Apply noise reduction |
+| `pdf_dpi` | int | `300` | DPI for PDF rendering |
+
+**Supported Languages:** English, Chinese (simplified and traditional), Japanese, Korean, and several other scripts including Tamil, Telugu, Arabic, Cyrillic, and Devanagari.
 
 ### Tesseract
 
-Google's open-source OCR engine with 100+ language support.
+Google's open-source OCR engine with 100+ language support. Best for traditional OCR with extensive language coverage.
+
+**Usage:**
 
 ```python
 from upsonic.ocr import OCR
 from upsonic.ocr.tesseract import TesseractOCR
 
+# Create OCR with Tesseract
 ocr = OCR(TesseractOCR, languages=['eng', 'fra'], enhance_contrast=True)
+
+# Extract text
 text = ocr.get_text('receipt.jpg')
+print(text)
+
+# Custom Tesseract configuration
+result = ocr.process_file('document.pdf', psm=3, oem=3)
+print(f"Text: {result.text}")
 ```
 
-### DeepSeek OCR
+**Parameters:**
 
-High-quality OCR using DeepSeek's specialized model with vLLM.
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `languages` | List[str] | `['eng']` | List of Tesseract language codes |
+| `tesseract_cmd` | str | `None` | Path to tesseract executable |
+| `confidence_threshold` | float | `0.0` | Minimum confidence for text blocks |
+| `rotation_fix` | bool | `False` | Auto-detect and fix image rotation |
+| `enhance_contrast` | bool | `False` | Enhance image contrast |
+| `remove_noise` | bool | `False` | Apply noise reduction |
+| `preserve_formatting` | bool | `True` | Preserve text layout and formatting |
+| `psm` | int | `3` | Page segmentation mode (0-13) |
+| `oem` | int | `3` | OCR Engine Mode (0-3) |
+| `custom_config` | str | `''` | Additional Tesseract configuration string |
 
-```python
-from upsonic.ocr import OCR
-from upsonic.ocr.deepseek import DeepSeekOCR
+**Supported Languages:** 100+ languages including all major languages. Requires language packs to be installed separately.
 
-ocr = OCR(
-    DeepSeekOCR,
-    model_name="deepseek-ai/DeepSeek-OCR",
-    temperature=0.0,
-    max_tokens=8192
-)
-text = ocr.get_text('complex_document.pdf')
-```
+**Installation Note:** Tesseract must be installed on the system:
+- Ubuntu/Debian: `sudo apt-get install tesseract-ocr`
+- macOS: `brew install tesseract`
+- Windows: Download installer from GitHub
 
 ### PaddleOCR
 
-Comprehensive OCR with multiple specialized pipelines.
+Comprehensive OCR with multiple specialized pipelines for advanced document understanding.
+
+**Usage:**
 
 ```python
 from upsonic.ocr import OCR
@@ -102,6 +237,7 @@ from upsonic.ocr.paddleocr import PaddleOCR, PPStructureV3, PPChatOCRv4, PaddleO
 
 # General OCR (PP-OCRv5)
 ocr = OCR(PaddleOCR, lang='en', ocr_version='PP-OCRv5')
+text = ocr.get_text('document.pdf')
 
 # Advanced document structure recognition
 ocr_structure = OCR(
@@ -109,6 +245,7 @@ ocr_structure = OCR(
     use_table_recognition=True,
     use_formula_recognition=True
 )
+result = ocr_structure.process_file('research_paper.pdf')
 
 # Chat-based document understanding
 ocr_chat = OCR(
@@ -126,101 +263,72 @@ ocr_vl = OCR(
 )
 ```
 
-## Creating OCR Instances
+**Parameters:**
 
-### Basic OCR Creation
+**PaddleOCR (General OCR):**
 
-```python
-from upsonic.ocr import OCR, infer_provider
-from upsonic.ocr.easyocr import EasyOCR
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `lang` | str | `'en'` | Language code |
+| `ocr_version` | str | `'PP-OCRv5'` | OCR version ('PP-OCRv3', 'PP-OCRv4', 'PP-OCRv5') |
+| `use_doc_orientation_classify` | bool | `None` | Enable document orientation classification |
+| `use_doc_unwarping` | bool | `None` | Enable document unwarping |
+| `use_textline_orientation` | bool | `None` | Enable text line orientation detection |
+| `text_det_limit_side_len` | int | `None` | Limit on detection input side length |
+| `text_rec_score_thresh` | float | `None` | Text recognition score threshold |
+| `return_word_box` | bool | `None` | Return word-level bounding boxes |
 
-# Method 1: Using provider class
-ocr = OCR(EasyOCR, languages=['en'], rotation_fix=True)
+**PPStructureV3 (Document Structure):**
 
-# Method 2: Using infer_provider helper
-ocr = infer_provider('easyocr', languages=['en'], rotation_fix=True)
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `use_table_recognition` | bool | `None` | Enable table recognition |
+| `use_formula_recognition` | bool | `None` | Enable formula recognition |
+| `use_seal_recognition` | bool | `None` | Enable seal text recognition |
+| `use_chart_recognition` | bool | `None` | Enable chart recognition |
+| `layout_threshold` | float | `None` | Layout detection score threshold |
+| `lang` | str | `'en'` | Language code |
 
-# Extract text
-text = ocr.get_text('document.pdf')
-print(text)
-```
+**PPChatOCRv4 (Chat-based OCR):**
 
-### OCR with Advanced Configuration
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `use_table_recognition` | bool | `None` | Enable table recognition |
+| `use_seal_recognition` | bool | `None` | Enable seal recognition |
+| `mllm_chat_bot_config` | dict | `None` | Multimodal LLM configuration |
+| `retriever_config` | dict | `None` | Retriever configuration for vector search |
+
+**PaddleOCRVL (Vision-Language):**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `use_layout_detection` | bool | `None` | Enable layout detection |
+| `use_chart_recognition` | bool | `None` | Enable chart recognition |
+| `format_block_content` | bool | `None` | Format content as Markdown |
+| `vl_rec_backend` | str | `'local'` | VL recognition backend |
+| `temperature` | float | `None` | Sampling temperature for VLM |
+
+**Supported Languages:** 40+ languages for PP-OCRv5, with extensive support in PP-OCRv3 for Asian, European, and Middle Eastern languages.
+
+## Metrics and Performance
+
+### Enabling Metrics
+
+The OCR system automatically tracks metrics for all operations. Metrics include files processed, pages, characters, confidence scores, and processing time.
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.base import OCRConfig
-from upsonic.ocr.tesseract import TesseractOCR
+from upsonic.ocr.easyocr import EasyOCR
 
-# Create custom configuration
-config = OCRConfig(
-    languages=['eng', 'fra'],
-    confidence_threshold=0.6,
-    rotation_fix=True,
-    enhance_contrast=True,
-    remove_noise=True,
-    pdf_dpi=300,
-    preserve_formatting=True
-)
+# Create OCR instance
+ocr = OCR(EasyOCR, languages=['en'])
 
-# Create OCR with config
-ocr = OCR(TesseractOCR, config=config)
+# Process multiple files
+ocr.get_text('document1.pdf')
+ocr.get_text('document2.pdf')
+ocr.get_text('image.png')
 
-# Or pass parameters directly
-ocr = OCR(
-    TesseractOCR,
-    languages=['eng', 'fra'],
-    confidence_threshold=0.6,
-    rotation_fix=True,
-    enhance_contrast=True
-)
-```
-
-## Text Extraction Methods
-
-### Simple Text Extraction
-
-```python
-# Extract text from image
-text = ocr.get_text('image.png')
-
-# Extract text from PDF (multi-page)
-text = ocr.get_text('document.pdf')
-
-# With runtime preprocessing options
-text = ocr.get_text('skewed_image.jpg', rotation_fix=True, enhance_contrast=True)
-```
-
-### Detailed OCR Results
-
-```python
-from upsonic.ocr.base import OCRResult
-
-# Get detailed results with metadata
-result: OCRResult = ocr.process_file('document.pdf')
-
-print(f"Text: {result.text}")
-print(f"Confidence: {result.confidence:.2%}")
-print(f"Pages: {result.page_count}")
-print(f"Processing time: {result.processing_time_ms:.2f}ms")
-print(f"Provider: {result.provider}")
-
-# Access individual text blocks
-for block in result.blocks:
-    print(f"Block text: {block.text}")
-    print(f"Confidence: {block.confidence:.2%}")
-    print(f"Page: {block.page_number}")
-    if block.bbox:
-        print(f"Position: ({block.bbox.x}, {block.bbox.y})")
-        print(f"Size: {block.bbox.width}x{block.bbox.height}")
-```
-
-## Metrics and Performance Tracking
-
-### OCR Metrics
-
-```python
-# Get processing metrics
+# Get metrics
 metrics = ocr.get_metrics()
 
 print(f"Files processed: {metrics.files_processed}")
@@ -228,62 +336,112 @@ print(f"Total pages: {metrics.total_pages}")
 print(f"Total characters: {metrics.total_characters}")
 print(f"Average confidence: {metrics.average_confidence:.2%}")
 print(f"Total processing time: {metrics.processing_time_ms:.2f}ms")
+print(f"Provider: {metrics.provider}")
 
-# Reset metrics
+# Reset metrics for new batch
 ocr.reset_metrics()
 ```
 
-### Provider Information
+### Analyzing Performance
+
+Use metrics to analyze and optimize OCR performance across different providers and configurations.
 
 ```python
-# Get provider information
-info = ocr.get_info()
+from upsonic.ocr import OCR
+from upsonic.ocr.easyocr import EasyOCR
+from upsonic.ocr.rapidocr import RapidOCR
+from upsonic.ocr.tesseract import TesseractOCR
 
-print(f"Provider: {info['name']}")
-print(f"Supported languages: {len(info['supported_languages'])}")
-print(f"Languages: {', '.join(info['supported_languages'][:10])}...")
-print(f"Metrics: {info['metrics']}")
+def benchmark_providers(file_path):
+    """Compare performance of different OCR providers."""
+    providers = [
+        ('EasyOCR', EasyOCR, {'languages': ['en'], 'gpu': False}),
+        ('RapidOCR', RapidOCR, {'languages': ['en']}),
+        ('Tesseract', TesseractOCR, {'languages': ['eng']})
+    ]
+    
+    results = {}
+    
+    for name, provider_class, params in providers:
+        ocr = OCR(provider_class, **params)
+        ocr.reset_metrics()
+        
+        # Process file
+        result = ocr.process_file(file_path)
+        
+        # Get metrics
+        metrics = ocr.get_metrics()
+        
+        results[name] = {
+            'confidence': result.confidence,
+            'processing_time_ms': result.processing_time_ms,
+            'characters': len(result.text)
+        }
+    
+    # Print comparison
+    print("Provider Performance Comparison:")
+    for name, data in results.items():
+        print(f"\n{name}:")
+        print(f"  Confidence: {data['confidence']:.2%}")
+        print(f"  Time: {data['processing_time_ms']:.2f}ms")
+        print(f"  Characters: {data['characters']}")
+    
+    return results
+
+# Run benchmark
+benchmark_providers('test_document.pdf')
 ```
 
 ## Advanced Features
 
-### PaddleOCR Advanced Features
+### Provider Selection Helper
+
+Use the `infer_provider` function to create OCR instances by provider name without importing provider classes.
+
+```python
+from upsonic.ocr import infer_provider
+
+# Create OCR by provider name
+ocr = infer_provider('easyocr', languages=['en'], rotation_fix=True)
+text = ocr.get_text('document.pdf')
+
+# Available provider names:
+# 'easyocr', 'rapidocr', 'tesseract', 'deepseek', 'deepseek_ocr'
+# 'paddleocr', 'paddle', 'ppstructurev3', 'ppchatocrv4', 'paddleocrvl'
+```
+
+### Batch Processing with DeepSeek
+
+DeepSeek OCR provides optimized batch processing for multi-page PDFs, processing all pages in a single batch for better performance.
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.paddleocr import PPChatOCRv4
+from upsonic.ocr.deepseek import DeepSeekOCR
 
-# Create PP-ChatOCRv4 for advanced document understanding
+# Create DeepSeek OCR
 ocr = OCR(
-    PPChatOCRv4,
-    use_table_recognition=True,
-    use_seal_recognition=True
+    DeepSeekOCR,
+    model_name="deepseek-ai/DeepSeek-OCR",
+    temperature=0.0,
+    max_tokens=8192
 )
 
-# Extract structured information
-visual_result = ocr.provider.visual_predict('invoice.pdf')
-
-# Build vector embeddings for retrieval
-vector_info = ocr.provider.build_vector(visual_result)
-
-# Extract specific fields using chat interface
-chat_result = ocr.provider.chat(
-    key_list=['invoice_number', 'date', 'total_amount'],
-    visual_info=visual_result,
-    use_vector_retrieval=True,
-    vector_info=vector_info
-)
-
-print(f"Extracted data: {chat_result}")
+# Automatically uses batch processing for PDFs
+result = ocr.process_file('multi_page_document.pdf')
+print(f"Processed {result.page_count} pages")
 ```
 
-### Structure Recognition
+### Advanced PaddleOCR Features
+
+PaddleOCR providers offer specialized features for complex document understanding.
+
+**Structure Recognition with PPStructureV3:**
 
 ```python
 from upsonic.ocr import OCR
 from upsonic.ocr.paddleocr import PPStructureV3
 
-# Use PP-StructureV3 for document structure analysis
+# Create structure-aware OCR
 ocr = OCR(
     PPStructureV3,
     use_table_recognition=True,
@@ -299,50 +457,182 @@ markdown_text = ocr.provider.concatenate_markdown_pages(result)
 print(markdown_text)
 ```
 
-## Practical Examples
-
-### Document Processing Pipeline
+**Information Extraction with PPChatOCRv4:**
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.rapidocr import RapidOCR
-from pathlib import Path
+from upsonic.ocr.paddleocr import PPChatOCRv4
 
-# Create OCR with preprocessing
+# Create chat-based OCR
 ocr = OCR(
-    RapidOCR,
-    languages=['en'],
-    confidence_threshold=0.7,
-    rotation_fix=True,
-    enhance_contrast=True,
-    remove_noise=True
+    PPChatOCRv4,
+    use_table_recognition=True,
+    use_seal_recognition=True
 )
 
-# Process documents
-document_dir = Path('documents')
-for pdf_file in document_dir.glob('*.pdf'):
-    print(f"Processing {pdf_file.name}...")
-    
-    result = ocr.process_file(pdf_file)
-    
-    # Save extracted text
-    output_file = pdf_file.with_suffix('.txt')
-    output_file.write_text(result.text)
-    
-    # Log results
-    print(f"  ✓ Extracted {len(result.text)} characters")
-    print(f"  ✓ Confidence: {result.confidence:.2%}")
-    print(f"  ✓ Pages: {result.page_count}")
-    print(f"  ✓ Time: {result.processing_time_ms:.0f}ms")
+# Extract visual information
+visual_result = ocr.provider.visual_predict('invoice.pdf')
 
-# Print summary
-metrics = ocr.get_metrics()
-print(f"\nProcessed {metrics.files_processed} files")
-print(f"Total pages: {metrics.total_pages}")
-print(f"Average confidence: {metrics.average_confidence:.2%}")
+# Build vector embeddings for retrieval
+vector_info = ocr.provider.build_vector(
+    visual_result,
+    min_characters=3500,
+    block_size=300
+)
+
+# Extract specific fields using chat interface
+invoice_data = ocr.provider.chat(
+    key_list=['invoice_number', 'date', 'total_amount', 'vendor_name'],
+    visual_info=visual_result,
+    use_vector_retrieval=True,
+    vector_info=vector_info
+)
+
+print(f"Invoice Number: {invoice_data.get('invoice_number')}")
+print(f"Date: {invoice_data.get('date')}")
+print(f"Total: {invoice_data.get('total_amount')}")
 ```
 
-### Multi-Language Document Extraction
+### Image Preprocessing
+
+Apply preprocessing to improve OCR accuracy for low-quality images.
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.tesseract import TesseractOCR
+
+# Create OCR with all preprocessing enabled
+ocr = OCR(
+    TesseractOCR,
+    languages=['eng'],
+    rotation_fix=True,        # Fix skewed/rotated images
+    enhance_contrast=True,    # Improve text clarity
+    remove_noise=True,        # Remove background noise
+    pdf_dpi=300              # High quality PDF rendering
+)
+
+# Process low-quality image
+text = ocr.get_text('skewed_noisy_image.jpg')
+```
+
+## Examples
+
+### Basic OCR Example
+
+**About the Example:**
+
+This example demonstrates a complete document processing pipeline using the Unified OCR system. It processes all PDF documents in a directory, extracts text with preprocessing, saves results and metadata, and generates a processing summary with metrics.
+
+**Unified OCR Configuration:**
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.easyocr import EasyOCR
+
+# Configure OCR with preprocessing for best results
+ocr = OCR(
+    EasyOCR,
+    languages=['en'],
+    confidence_threshold=0.6,
+    rotation_fix=True,
+    enhance_contrast=True,
+    remove_noise=True,
+    pdf_dpi=250,
+    gpu=True
+)
+```
+
+**Full Code:**
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.easyocr import EasyOCR
+from upsonic.ocr.exceptions import OCRError
+from pathlib import Path
+import json
+
+def process_documents(directory: str, output_dir: str):
+    """Process all PDF documents in a directory."""
+    
+    # Create OCR instance with optimal configuration
+    ocr = OCR(
+        EasyOCR,
+        languages=['en'],
+        confidence_threshold=0.6,
+        rotation_fix=True,
+        enhance_contrast=True,
+        remove_noise=True,
+        pdf_dpi=250,
+        gpu=True
+    )
+    
+    # Create output directory
+    output_path = Path(output_dir)
+    output_path.mkdir(exist_ok=True)
+    
+    # Process each PDF
+    input_path = Path(directory)
+    for pdf_file in input_path.glob('*.pdf'):
+        try:
+            print(f"Processing {pdf_file.name}...")
+            
+            # Extract text with detailed results
+            result = ocr.process_file(pdf_file)
+            
+            # Save extracted text
+            text_file = output_path / f"{pdf_file.stem}.txt"
+            text_file.write_text(result.text)
+            
+            # Save metadata
+            metadata_file = output_path / f"{pdf_file.stem}_metadata.json"
+            metadata_file.write_text(json.dumps(result.to_dict(), indent=2))
+            
+            # Log results
+            print(f"  ✓ Extracted {len(result.text)} characters")
+            print(f"  ✓ Confidence: {result.confidence:.2%}")
+            print(f"  ✓ Pages: {result.page_count}")
+            print(f"  ✓ Time: {result.processing_time_ms:.0f}ms")
+            print(f"  ✓ Blocks: {len(result.blocks)}")
+            
+        except OCRError as e:
+            print(f"  ✗ Error: {e}")
+            continue
+    
+    # Print summary
+    metrics = ocr.get_metrics()
+    print(f"\n=== Summary ===")
+    print(f"Files processed: {metrics.files_processed}")
+    print(f"Total pages: {metrics.total_pages}")
+    print(f"Total characters: {metrics.total_characters}")
+    print(f"Average confidence: {metrics.average_confidence:.2%}")
+    print(f"Total time: {metrics.processing_time_ms / 1000:.2f}s")
+
+if __name__ == "__main__":
+    process_documents('input_pdfs', 'output_text')
+```
+
+### Multi-Language Document Processing
+
+**About the Example:**
+
+Process documents containing multiple languages using EasyOCR's multi-language support. This example shows how to handle mixed-language content and analyze confidence scores per text block.
+
+**Unified OCR Configuration:**
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.easyocr import EasyOCR
+
+# Configure for multiple languages
+ocr = OCR(
+    EasyOCR,
+    languages=['en', 'zh', 'ja', 'ko'],
+    gpu=True,
+    confidence_threshold=0.5
+)
+```
+
+**Full Code:**
 
 ```python
 from upsonic.ocr import OCR
@@ -369,9 +659,38 @@ low_confidence_blocks = [
     if block.confidence < 0.6
 ]
 print(f"Low confidence blocks: {len(low_confidence_blocks)}")
+
+# Show detailed block analysis
+for i, block in enumerate(result.blocks[:5], 1):
+    print(f"\nBlock {i}:")
+    print(f"  Text: {block.text[:50]}...")
+    print(f"  Confidence: {block.confidence:.2%}")
+    if block.bbox:
+        print(f"  Position: ({block.bbox.x:.0f}, {block.bbox.y:.0f})")
 ```
 
-### Invoice Data Extraction
+### Invoice Data Extraction with PaddleOCR
+
+**About the Example:**
+
+Extract structured information from invoices using PPChatOCRv4's advanced features including table recognition, seal recognition, and key-value extraction.
+
+**Unified OCR Configuration:**
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.paddleocr import PPChatOCRv4
+
+# Configure for invoice processing
+ocr = OCR(
+    PPChatOCRv4,
+    use_table_recognition=True,
+    use_seal_recognition=True,
+    lang='en'
+)
+```
+
+**Full Code:**
 
 ```python
 from upsonic.ocr import OCR
@@ -410,131 +729,11 @@ invoice_data = ocr.provider.chat(
     vector_info=vector_info
 )
 
+# Display extracted information
 print(f"Invoice Number: {invoice_data.get('invoice_number')}")
 print(f"Date: {invoice_data.get('invoice_date')}")
 print(f"Vendor: {invoice_data.get('vendor_name')}")
 print(f"Total: {invoice_data.get('total_amount')}")
+print(f"Tax: {invoice_data.get('tax_amount')}")
+print(f"\nLine Items: {invoice_data.get('line_items')}")
 ```
-
-### Research Paper to Markdown
-
-```python
-from upsonic.ocr import OCR
-from upsonic.ocr.paddleocr import PaddleOCRVL
-from pathlib import Path
-
-# Create OCR with VL capabilities
-ocr = OCR(
-    PaddleOCRVL,
-    use_layout_detection=True,
-    use_chart_recognition=True,
-    format_block_content=True,
-    vl_rec_backend='local'
-)
-
-# Process research paper
-result = ocr.provider.predict('research_paper.pdf')
-
-# Concatenate all pages into markdown
-full_markdown = ocr.provider.concatenate_markdown_pages(result)
-
-# Save as markdown file
-Path('research_paper.md').write_text(full_markdown)
-print(f"Converted {len(result)} pages to markdown")
-```
-
-## Best Practices
-
-### Provider Selection
-
-1. **EasyOCR**: Best for multi-language support (80+ languages) with deep learning accuracy
-2. **RapidOCR**: Best for speed and lightweight deployment
-3. **Tesseract**: Best for traditional OCR with extensive language support (100+)
-4. **DeepSeek**: Best for complex layouts and high-accuracy requirements (requires GPU)
-5. **PaddleOCR**: Best for comprehensive document understanding with specialized pipelines
-
-### Performance Optimization
-
-1. **Choose appropriate DPI**: Use 200-300 DPI for PDFs (higher = slower but more accurate)
-2. **Enable GPU acceleration**: Use `gpu=True` for EasyOCR when available
-3. **Set confidence thresholds**: Filter low-quality results early to reduce noise
-4. **Use batch processing**: DeepSeek's batch mode significantly improves multi-page PDF performance
-5. **Disable unused preprocessing**: Only enable rotation_fix, enhance_contrast, remove_noise when needed
-
-### Quality Optimization
-
-1. **Enable preprocessing for low-quality images**: rotation_fix, enhance_contrast, remove_noise
-2. **Use multi-language support**: Specify all expected languages for better detection
-3. **Adjust confidence thresholds**: Balance between accuracy and recall based on use case
-4. **Validate results**: Check confidence scores and manually review low-confidence blocks
-5. **Choose specialized pipelines**: Use PPStructureV3 for tables, PPChatOCRv4 for structured extraction
-
-## Complete Example
-
-```python
-from upsonic.ocr import OCR
-from upsonic.ocr.easyocr import EasyOCR
-from upsonic.ocr.exceptions import OCRError
-from pathlib import Path
-
-def process_documents(directory: str, output_dir: str):
-    """Process all PDF documents in a directory."""
-    
-    # Create OCR instance
-    ocr = OCR(
-        EasyOCR,
-        languages=['en'],
-        confidence_threshold=0.6,
-        rotation_fix=True,
-        enhance_contrast=True,
-        remove_noise=True,
-        pdf_dpi=250,
-        gpu=True
-    )
-    
-    # Create output directory
-    output_path = Path(output_dir)
-    output_path.mkdir(exist_ok=True)
-    
-    # Process each PDF
-    input_path = Path(directory)
-    for pdf_file in input_path.glob('*.pdf'):
-        try:
-            print(f"Processing {pdf_file.name}...")
-            
-            # Extract text with detailed results
-            result = ocr.process_file(pdf_file)
-            
-            # Save extracted text
-            text_file = output_path / f"{pdf_file.stem}.txt"
-            text_file.write_text(result.text)
-            
-            # Save metadata
-            metadata_file = output_path / f"{pdf_file.stem}_metadata.json"
-            import json
-            metadata_file.write_text(json.dumps(result.to_dict(), indent=2))
-            
-            # Log results
-            print(f"  ✓ Extracted {len(result.text)} characters")
-            print(f"  ✓ Confidence: {result.confidence:.2%}")
-            print(f"  ✓ Pages: {result.page_count}")
-            print(f"  ✓ Time: {result.processing_time_ms:.0f}ms")
-            print(f"  ✓ Blocks: {len(result.blocks)}")
-            
-        except OCRError as e:
-            print(f"  ✗ Error: {e}")
-            continue
-    
-    # Print summary
-    metrics = ocr.get_metrics()
-    print(f"\n=== Summary ===")
-    print(f"Files processed: {metrics.files_processed}")
-    print(f"Total pages: {metrics.total_pages}")
-    print(f"Total characters: {metrics.total_characters}")
-    print(f"Average confidence: {metrics.average_confidence:.2%}")
-    print(f"Total time: {metrics.processing_time_ms / 1000:.2f}s")
-
-if __name__ == "__main__":
-    process_documents('input_pdfs', 'output_text')
-```
-

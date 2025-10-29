@@ -5,6 +5,8 @@ description: "Give your agents memory - remember conversations and users"
 
 ## Overview
 
+### What is Memory?
+
 Memory gives your agents the ability to remember. Without memory, every conversation starts fresh - your agent doesn't remember what you talked about before or who you are. With memory, your agents can:
 
 - **Remember conversations** - Reference previous messages and maintain context
@@ -12,128 +14,27 @@ Memory gives your agents the ability to remember. Without memory, every conversa
 - **Improve over time** - Build a complete picture of each user across all interactions
 - **Reduce repetition** - Never ask for the same information twice
 
-## Three Ways to Remember
+### How Memory Works
 
-Choose the type of memory that fits your needs:
+Memory works in two phases - before and after each conversation:
 
-| Type                   | What It Does                                    | Best For                                      |
-| ---------------------- | ----------------------------------------------- | --------------------------------------------- |
-| **Conversation Memory** | Keeps the complete chat history                 | Customer support, tutoring, long conversations |
-| **Summary Memory**      | Maintains a condensed summary of key points     | Long sessions, reducing costs                 |
-| **User Memory**         | Learns about each user across all conversations | Personalization, remembering preferences      |
+**Before Each Conversation:**
+1. Loads the user's profile (if you're using user analysis memory)
+2. Retrieves the conversation summary (if you're using summary memory)
+3. Pulls up previous messages (if you're using conversation memory)
+4. Gives all this context to your agent automatically
 
-You can use one type or combine all three for the most powerful memory system.
+**After Each Conversation:**
+1. Saves the new messages to history
+2. Updates the conversation summary
+3. Analyzes what the agent learned about the user
+4. Stores everything for next time
 
-## Where Memory Lives
+You don't have to do anything - memory handles it all automatically.
 
-Choose where to store your agent's memory:
+## Attributes
 
-| Storage Option      | When to Use                                | Persistence   |
-| ------------------- | ------------------------------------------ | ------------- |
-| **InMemoryStorage** | Testing and development                    | Lost on restart |
-| **JSONStorage**     | Simple apps, single machine                | Saved to files  |
-| **SqliteStorage**   | Desktop apps, small projects               | Local database  |
-| **PostgresStorage** | Production apps, multiple servers          | Production database |
-| **RedisStorage**    | High-performance, distributed systems      | Cache/database |
-| **Mem0Storage**     | Integration with Mem0 platform             | Cloud-based     |
-| **MongoStorage**    | Production apps, scalable systems        | MongoDB database |
-
-Start with `InMemoryStorage` for testing, then upgrade to `SqliteStorage` or `PostgresStorage` for production.
-
-## Quick Start
-
-### Your First Memory-Enabled Agent
-
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory, InMemoryStorage
-
-# Create storage backend
-storage = InMemoryStorage()
-
-# Create memory with full session history
-memory = Memory(
-    storage=storage,
-    session_id="user_session_123",
-    full_session_memory=True
-)
-
-# Create agent with memory
-agent = Agent(
-    model="openai/gpt-4o",
-    name="Assistant",
-    memory=memory
-)
-
-# First conversation
-task1 = Task(description="My name is Alex and I love programming")
-result1 = agent.do(task1)
-
-# Second conversation - agent remembers
-task2 = Task(description="What's my name?")
-result2 = agent.do(task2)  # Agent will remember: "Your name is Alex"
-```
-
-### Learning About Your Users
-
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory, InMemoryStorage
-
-# Create memory with user analysis
-memory = Memory(
-    storage=storage,
-    session_id="session_456",
-    user_id="user_123",
-    user_analysis_memory=True,
-    full_session_memory=True
-)
-
-# Create agent
-agent = Agent(model="openai/gpt-4o", memory=memory)
-
-# Conversation where agent learns about user
-task1 = Task(description="I'm a senior Python developer interested in AI")
-result1 = agent.do(task1)
-
-# Agent personalizes response based on learned profile
-task2 = Task(description="Explain async programming to me")
-result2 = agent.do(task2)  # Response tailored to senior developer level
-```
-
-### Reducing Costs with Summaries
-
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory, JSONStorage
-
-# Create persistent storage
-storage = JSONStorage(directory_path="./memory_data")
-
-# Create memory with summary generation
-memory = Memory(
-    storage=storage,
-    session_id="session_789",
-    summary_memory=True,
-    model="openai/gpt-4o-mini"  # Model for generating summaries
-)
-
-# Agent with summary memory
-agent = Agent(model="openai/gpt-4o", memory=memory)
-
-# Long conversation
-for i in range(10):
-    task = Task(description=f"Tell me about topic {i}")
-    result = agent.do(task)
-
-# Summary is automatically maintained and injected into context
-```
-
-## Using the Memory Class
-
-The `Memory` class is the core component that orchestrates all memory functionality. It works seamlessly with any storage backend and provides three types of memory management.
-
-### Core Parameters
+The `Memory` class provides the following key attributes:
 
 ```python
 from upsonic.storage import Memory, InMemoryStorage
@@ -147,157 +48,129 @@ memory = Memory(
     user_analysis_memory=True,        # Enable user learning
     num_last_messages=10,             # Limit history to last N turns
     model="openai/gpt-4o",            # Model for analysis/summaries
+    user_profile_schema=UserProfile,  # Custom user profile schema
+    dynamic_user_profile=True,        # Let agent create custom fields
+    user_memory_mode='update',        # 'update' or 'replace' mode
+    feed_tool_call_results=False,     # Include tool calls in memory
     debug=True                        # Enable debug logging
 )
 ```
 
-### Memory Types Explained
+## Choosing Right Memory Types
 
-**Full Session Memory** (`full_session_memory=True`)
-- Stores complete conversation history
-- Requires `session_id`
-- Best for: Customer support, tutoring, detailed conversations
+### What is The Selection Criteria?
 
-**Summary Memory** (`summary_memory=True`) 
-- Maintains evolving conversation summaries
-- Requires `session_id` and `model`
-- Best for: Long conversations, cost reduction
+Choose memory types based on your specific needs:
 
-**User Analysis Memory** (`user_analysis_memory=True`)
-- Learns about users across all sessions
-- Requires `user_id` and `model`
-- Best for: Personalization, user preferences
+| Memory Type | When to Use | Requirements |
+|-------------|-------------|--------------|
+| **Conversation Memory** | Customer support, tutoring, detailed conversations | `session_id` |
+| **Summary Memory** | Long conversations, cost reduction | `session_id`, `model` |
+| **User Analysis Memory** | Personalization, user preferences | `user_id`, `model` |
 
-### Simple Setup Patterns
+### Making Combination of Memory
+
+You can use one type or combine all three for the most powerful memory system:
 
 ```python
-# Basic conversation memory
+# Basic conversation memory only
 memory = Memory(
     storage=InMemoryStorage(),
-    session_id="chat_001",
+    session_id="session_001",
     full_session_memory=True
 )
 
-# User learning with custom schema
-from pydantic import BaseModel, Field
-from typing import Optional
-
-class UserProfile(BaseModel):
-    name: Optional[str] = Field(None, description="User's name")
-    expertise: Optional[str] = Field(None, description="Technical expertise level")
-    interests: Optional[list] = Field(None, description="Areas of interest")
-
+# All three memory types
 memory = Memory(
     storage=InMemoryStorage(),
     session_id="session_001",
     user_id="user_001",
-    user_analysis_memory=True,
-    user_profile_schema=UserProfile,
-    model="openai/gpt-4o"
-)
-
-# Dynamic user learning (agent decides what to remember)
-memory = Memory(
-    storage=InMemoryStorage(),
-    session_id="session_001", 
-    user_id="user_001",
-    user_analysis_memory=True,
-    dynamic_user_profile=True,  # Agent creates custom fields
-    model="openai/gpt-4o"
-)
-```
-
-### Memory Update Modes
-
-```python
-# Update mode (default) - merges new information
-memory = Memory(
-    storage=storage,
-    user_analysis_memory=True,
-    user_memory_mode='update'  # Accumulates knowledge over time
-)
-
-# Replace mode - overwrites profile each time  
-memory = Memory(
-    storage=storage,
-    user_analysis_memory=True,
-    user_memory_mode='replace'  # Session-specific analysis
-)
-```
-
-### Advanced Configuration
-
-```python
-# Production-ready memory with all features
-memory = Memory(
-    storage=PostgresStorage(db_url="postgresql://..."),
-    session_id="prod_session_001",
-    user_id="user_12345",
     full_session_memory=True,
     summary_memory=True,
     user_analysis_memory=True,
-    num_last_messages=15,           # Keep last 15 conversation turns
-    model="openai/gpt-4o",
-    feed_tool_call_results=False,   # Exclude tool calls from memory
-    debug=False
+    model="openai/gpt-4o"
 )
 ```
 
-## Configuration Guide
+### Use Case for Conversation Memory
 
-### Conversation Memory Options
+- **Customer Support**: Maintain context across support tickets
+- **Tutoring**: Remember what topics have been covered
+- **Long Conversations**: Keep track of detailed discussions
+- **Debugging Sessions**: Remember error states and solutions
+
+### Use Case for Summary Memory
+
+- **Long Sessions**: Reduce token costs for very long conversations
+- **Meeting Notes**: Automatically summarize key points
+- **Documentation**: Create evolving summaries of complex topics
+- **Cost Optimization**: Maintain context without full history
+
+### Use Case for User Analysis Memory
+
+- **Personalization**: Adapt responses to user preferences
+- **Learning Systems**: Track user progress and expertise
+- **Customer Profiles**: Build comprehensive user understanding
+- **Adaptive Interfaces**: Customize experience based on user traits
+
+## Memory Types
+
+### Conversation Memory
+
+#### What is Conversation Memory?
+
+Conversation Memory stores the complete chat history for a session, allowing your agent to reference previous messages and maintain context throughout the conversation.
+
+#### Usage
 
 ```python
 from upsonic.storage import Memory, InMemoryStorage
 
-# Basic full session memory
+# Basic conversation memory
 memory = Memory(
     storage=InMemoryStorage(),
     session_id="session_001",
     full_session_memory=True
 )
 
-# With message limiting (keep last N conversation turns)
+# With message limiting
 memory = Memory(
     storage=InMemoryStorage(),
     session_id="session_001",
     full_session_memory=True,
-    num_last_messages=5  # Keep only last 5 turns
-)
-
-# Include tool call results in memory
-memory = Memory(
-    storage=InMemoryStorage(),
-    session_id="session_001",
-    full_session_memory=True,
-    feed_tool_call_results=True  # Include tool calls in history
+    num_last_messages=10  # Keep last 10 conversation turns
 )
 ```
 
+#### Params
+
+- `full_session_memory: bool` - Enable/disable conversation memory
+- `session_id: str` - Required identifier for the session
+- `num_last_messages: int` - Optional limit on conversation history
+- `feed_tool_call_results: bool` - Include/exclude tool calls from memory
+
 ### Summary Memory
+
+#### What is Summary Memory?
+
+Summary Memory maintains an evolving, condensed summary of key conversation points, reducing costs while preserving important context.
+
+#### Usage
 
 ```python
 from upsonic.storage import Memory, SqliteStorage
 
-# Create storage
-storage = SqliteStorage(
-    sessions_table_name="sessions",
-    profiles_table_name="profiles",
-    db_file="./memory.db"
-)
-
-# Summary memory configuration
+# Summary memory with model
 memory = Memory(
-    storage=storage,
+    storage=SqliteStorage(sessions_table_name="sessions", profiles_table_name="profiles"),
     session_id="session_002",
     summary_memory=True,
-    model="openai/gpt-4o-mini",  # Model for summary generation
-    debug=True  # Enable debug logging
+    model="openai/gpt-4o-mini"  # Model for generating summaries
 )
 
-# Combined with full session memory
+# Combined with conversation memory
 memory = Memory(
-    storage=storage,
+    storage=SqliteStorage(sessions_table_name="sessions", profiles_table_name="profiles"),
     session_id="session_002",
     full_session_memory=True,
     summary_memory=True,
@@ -305,100 +178,74 @@ memory = Memory(
 )
 ```
 
-### User Learning Options
+#### Params
 
-```python
-from upsonic.storage import Memory, PostgresStorage
+- `summary_memory: bool` - Enable/disable summary generation
+- `session_id: str` - Required identifier for the session
+- `model: str` - Required model for generating summaries
 
-# Create PostgreSQL storage
-storage = PostgresStorage(
-    sessions_table_name="sessions",
-    profiles_table_name="profiles",
-    db_url="postgresql://user:password@localhost:5432/mydb"
-)
+### User Analysis Memory
 
-# User analysis with default schema
-memory = Memory(
-    storage=storage,
-    session_id="session_003",
-    user_id="user_456",
-    user_analysis_memory=True,
-    model="openai/gpt-4o"
-)
+#### What is User Analysis Memory?
 
-# With custom user profile schema
-from pydantic import BaseModel, Field
-from typing import Optional, List
+User Analysis Memory learns about users across all conversations, building comprehensive profiles that enable personalization and adaptive responses.
 
-class CustomUserProfile(BaseModel):
-    preferred_name: Optional[str] = Field(None, description="User's preferred name")
-    expertise_level: Optional[str] = Field(None, description="Technical expertise level")
-    primary_interests: Optional[List[str]] = Field(None, description="Main topics of interest")
-    communication_preference: Optional[str] = Field(None, description="Preferred communication style")
-
-memory = Memory(
-    storage=storage,
-    session_id="session_003",
-    user_id="user_456",
-    user_analysis_memory=True,
-    user_profile_schema=CustomUserProfile,
-    model="openai/gpt-4o"
-)
-```
-
-### Let Your Agent Learn Naturally
-
-Instead of defining what to remember about users, let your agent figure it out:
+#### Usage
 
 ```python
 from upsonic.storage import Memory, InMemoryStorage
+from pydantic import BaseModel, Field
+from typing import Optional
 
-# Agent decides what's important to remember about each user
+# Default user analysis
 memory = Memory(
     storage=InMemoryStorage(),
-    session_id="session_004",
-    user_id="user_789",
+    session_id="session_003",
+    user_id="user_001",
+    user_analysis_memory=True,
+    model="openai/gpt-4o"
+)
+
+# Custom user profile schema
+class UserProfile(BaseModel):
+    name: Optional[str] = Field(None, description="User's name")
+    expertise: Optional[str] = Field(None, description="Technical expertise level")
+    interests: Optional[list] = Field(None, description="Areas of interest")
+
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_003",
+    user_id="user_001",
+    user_analysis_memory=True,
+    user_profile_schema=UserProfile,
+    model="openai/gpt-4o"
+)
+
+# Dynamic user learning (agent creates custom fields)
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_003",
+    user_id="user_001",
     user_analysis_memory=True,
     dynamic_user_profile=True,  # Agent creates custom profile fields
-    model="openai/gpt-4o",
-    debug=True
-)
-
-agent = Agent(model="openai/gpt-4o", memory=memory)
-task = Task(description="I'm a data scientist working at TechCorp on ML projects")
-result = agent.do(task)
-# Agent automatically learns: occupation, company, expertise_area, etc.
-```
-
-### User Memory Update Modes
-
-```python
-from upsonic.storage import Memory, InMemoryStorage
-
-# Replace mode - overwrites entire profile each time
-memory_replace = Memory(
-    storage=InMemoryStorage(),
-    session_id="session_005",
-    user_id="user_001",
-    user_analysis_memory=True,
-    user_memory_mode='replace',  # Replace entire profile
-    model="openai/gpt-4o"
-)
-
-# Update mode - merges new information with existing profile
-memory_update = Memory(
-    storage=InMemoryStorage(),
-    session_id="session_005",
-    user_id="user_001",
-    user_analysis_memory=True,
-    user_memory_mode='update',  # Default: merge new traits
     model="openai/gpt-4o"
 )
 ```
 
-## Storage Setup
+#### Params
 
-### Development: In-Memory Storage
+- `user_analysis_memory: bool` - Enable/disable user learning
+- `user_id: str` - Required identifier for the user
+- `model: str` - Required model for analyzing user traits
+- `user_profile_schema: BaseModel` - Optional custom profile schema
+- `dynamic_user_profile: bool` - Let agent create custom fields
+- `user_memory_mode: str` - 'update' (default) or 'replace' mode
+
+## Storage Options
+
+### InMemoryStorage
+
+#### Usage
 
 ```python
 from upsonic.storage import InMemoryStorage
@@ -413,7 +260,14 @@ storage = InMemoryStorage(
 )
 ```
 
-### Simple Persistence: JSON Files
+#### Params
+
+- `max_sessions: int` - Optional limit on stored sessions (LRU cache)
+- `max_profiles: int` - Optional limit on stored profiles (LRU cache)
+
+### JSONStorage
+
+#### Usage
 
 ```python
 from upsonic.storage import JSONStorage
@@ -428,7 +282,14 @@ storage = JSONStorage(
 )
 ```
 
-### Local Database: SQLite
+#### Params
+
+- `directory_path: str` - Path to directory for JSON files
+- `pretty_print: bool` - Format JSON for readability (default: True)
+
+### SqliteStorage
+
+#### Usage
 
 ```python
 from upsonic.storage import SqliteStorage
@@ -448,7 +309,15 @@ storage = SqliteStorage(
 )
 ```
 
-### Production Database: PostgreSQL
+#### Params
+
+- `sessions_table_name: str` - Name of sessions table
+- `profiles_table_name: str` - Name of profiles table
+- `db_file: str` - Path to SQLite file (None for in-memory)
+
+### PostgresStorage
+
+#### Usage
 
 ```python
 from upsonic.storage import PostgresStorage
@@ -462,7 +331,16 @@ storage = PostgresStorage(
 )
 ```
 
-### Redis Storage
+#### Params
+
+- `sessions_table_name: str` - Name of sessions table
+- `profiles_table_name: str` - Name of profiles table
+- `db_url: str` - PostgreSQL connection URL
+- `schema: str` - Database schema (default: "public")
+
+### RedisStorage
+
+#### Usage
 
 ```python
 from upsonic.storage import RedisStorage
@@ -486,19 +364,58 @@ storage = RedisStorage(
 )
 ```
 
-### Mem0 Storage
+#### Params
+
+- `prefix: str` - Key prefix for namespacing
+- `host: str` - Redis server hostname (default: "localhost")
+- `port: int` - Redis server port (default: 6379)
+- `db: int` - Redis database number (default: 0)
+- `password: str` - Optional password for authentication
+- `ssl: bool` - Use SSL connection (default: False)
+- `expire: int` - Optional TTL in seconds for keys
+
+### Mem0Storage
+
+#### Usage
 
 ```python
 from upsonic.storage import Mem0Storage
 
-# Mem0 integration
+# Mem0 Platform integration
 storage = Mem0Storage(
     api_key="your_mem0_api_key",
-    org_id="your_org_id"
+    org_id="your_org_id",
+    project_id="your_project_id"
+)
+
+# Mem0 Open Source
+storage = Mem0Storage(
+    local_config={
+        "vector_store": {
+            "provider": "chroma",
+            "config": {
+                "path": "./chroma_db"
+            }
+        }
+    }
 )
 ```
 
-### MongoDB Storage
+#### Params
+
+- `api_key: str` - Mem0 Platform API key (for hosted service)
+- `org_id: str` - Organization ID for Mem0 Platform
+- `project_id: str` - Project ID for Mem0 Platform
+- `local_config: dict` - Configuration for Open Source Mem0
+- `namespace: str` - Application namespace (default: "upsonic")
+- `infer: bool` - Enable LLM-based inference (default: False)
+- `custom_categories: list` - Additional custom categories
+- `enable_caching: bool` - Enable ID caching (default: True)
+- `cache_ttl: int` - Cache time-to-live in seconds (default: 300)
+
+### MongoStorage
+
+#### Usage
 
 ```python
 from upsonic.storage import MongoStorage
@@ -518,33 +435,48 @@ storage = MongoStorage(
     sessions_collection_name="sessions",
     profiles_collection_name="profiles"
 )
+```
 
-# MongoDB with custom configuration
-storage = MongoStorage(
-    db_url="mongodb://cluster.example.com:27017",
-    database_name="distributed_agents",
-    sessions_collection_name="agent_sessions",
-    profiles_collection_name="user_profiles"
+#### Params
+
+- `db_url: str` - MongoDB connection string
+- `database_name: str` - Name of the database
+- `sessions_collection_name: str` - Name of sessions collection (default: "interaction_sessions")
+- `profiles_collection_name: str` - Name of profiles collection (default: "user_profiles")
+
+## Examples
+
+### Basic Memory Example
+
+#### About Example Scenario
+
+This example demonstrates a customer support agent that remembers conversations and learns about users across multiple sessions. The agent will maintain context within each support session and build a profile of each customer for personalized service.
+
+#### Memory Configuration
+
+```python
+from upsonic.storage import Memory, SqliteStorage
+
+# Create persistent storage
+storage = SqliteStorage(
+    sessions_table_name="support_sessions",
+    profiles_table_name="customers",
+    db_file="./support_memory.db"
+)
+
+# Create memory for customer support
+memory = Memory(
+    storage=storage,
+    session_id="support_session_001",
+    user_id="customer_123",
+    full_session_memory=True,      # Remember conversation history
+    user_analysis_memory=True,     # Learn about the customer
+    num_last_messages=10,          # Keep last 10 turns for context
+    model="openai/gpt-4o"
 )
 ```
 
-## What Can Agents Learn About Users?
-
-By default, your agent automatically detects and remembers:
-
-- **Expertise Level** - Are they a beginner, intermediate, or expert?
-- **Communication Style** - Do they prefer concise answers or detailed explanations?
-- **Interests** - What topics are they interested in?
-- **Current Goal** - What are they trying to accomplish right now?
-- **Mood** - Are they curious, frustrated, or pleased?
-- **Important People/Projects** - Names and entities they mention frequently
-- **Long-term Goals** - Their overarching objectives across all conversations
-
-Your agent uses this information to personalize every response automatically.
-
-## Real-World Examples
-
-### Customer Support That Remembers
+#### Full Code
 
 ```python
 from upsonic import Agent, Task
@@ -562,9 +494,9 @@ memory = Memory(
     storage=storage,
     session_id="support_session_001",
     user_id="customer_123",
-    full_session_memory=True,
-    user_analysis_memory=True,
-    num_last_messages=10,  # Keep last 10 turns for context
+    full_session_memory=True,      # Remember conversation history
+    user_analysis_memory=True,     # Learn about the customer
+    num_last_messages=10,          # Keep last 10 turns for context
     model="openai/gpt-4o"
 )
 
@@ -578,451 +510,31 @@ agent = Agent(
 # Conversation 1
 task1 = Task(description="I'm having trouble logging in to my account")
 result1 = agent.do(task1)
+print("Response 1:", result1)
 
 # Conversation 2 - agent remembers context and user
 task2 = Task(description="I tried resetting my password but didn't receive the email")
 result2 = agent.do(task2)
+print("Response 2:", result2)
 
 # Next session - agent remembers customer history
 memory_new_session = Memory(
     storage=storage,
     session_id="support_session_002",  # New session
-    user_id="customer_123",  # Same customer
+    user_id="customer_123",            # Same customer
     full_session_memory=True,
-    user_analysis_memory=True,
+    user_analysis_memory=True,         # Loads existing profile
     model="openai/gpt-4o"
 )
 
 agent_new = Agent(model="openai/gpt-4o", memory=memory_new_session)
 task3 = Task(description="Hello, I'm back")
 result3 = agent_new.do(task3)  # Agent knows customer's previous issues
+print("Response 3:", result3)
 ```
 
-### Personalized Tutoring
-
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory, JSONStorage
-from pydantic import BaseModel, Field
-from typing import Optional, List
-
-# Custom student profile
-class StudentProfile(BaseModel):
-    student_name: Optional[str] = Field(None, description="Student's name")
-    grade_level: Optional[str] = Field(None, description="Current grade or education level")
-    strong_subjects: Optional[List[str]] = Field(None, description="Subjects student excels in")
-    challenging_subjects: Optional[List[str]] = Field(None, description="Subjects needing more help")
-    learning_style: Optional[str] = Field(None, description="Visual/auditory/kinesthetic learner")
-    pace_preference: Optional[str] = Field(None, description="Fast/moderate/slow learning pace")
-
-# Create storage
-storage = JSONStorage(directory_path="./student_data")
-
-# Create memory for student
-memory = Memory(
-    storage=storage,
-    session_id="lesson_001",
-    user_id="student_alex",
-    full_session_memory=True,
-    summary_memory=True,
-    user_analysis_memory=True,
-    user_profile_schema=StudentProfile,
-    model="openai/gpt-4o"
-)
-
-# Tutor agent
-tutor = Agent(
-    model="openai/gpt-4o",
-    name="Math Tutor",
-    memory=memory
-)
-
-# Teaching session
-task1 = Task(description="I'm struggling with quadratic equations")
-result1 = tutor.do(task1)
-
-task2 = Task(description="Can you explain it with visual examples? I learn better that way")
-result2 = tutor.do(task2)
-
-# Next lesson - tutor remembers learning style
-memory_lesson2 = Memory(
-    storage=storage,
-    session_id="lesson_002",
-    user_id="student_alex",
-    full_session_memory=True,
-    summary_memory=True,
-    user_analysis_memory=True,
-    user_profile_schema=StudentProfile,
-    model="openai/gpt-4o"
-)
-
-tutor2 = Agent(model="openai/gpt-4o", memory=memory_lesson2)
-task3 = Task(description="Today I want to learn about polynomials")
-result3 = tutor2.do(task3)  # Uses visual explanations automatically
-```
-
-### Personal Assistant That Knows You
-
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory, PostgresStorage
-
-# Production-grade storage
-storage = PostgresStorage(
-    sessions_table_name="assistant_sessions",
-    profiles_table_name="user_profiles",
-    db_url="postgresql://user:pass@localhost:5432/assistant",
-    schema="production"
-)
-
-# Create memory with all features
-memory = Memory(
-    storage=storage,
-    session_id="daily_session_20241011",
-    user_id="user_john_doe",
-    full_session_memory=True,
-    summary_memory=True,
-    user_analysis_memory=True,
-    dynamic_user_profile=True,  # Learn custom traits
-    num_last_messages=20,
-    model="openai/gpt-4o",
-    debug=False
-)
-
-# Personal assistant
-assistant = Agent(
-    model="openai/gpt-4o",
-    name="Personal Assistant",
-    memory=memory
-)
-
-# Morning check-in
-task1 = Task(description="Good morning! What's on my schedule today?")
-result1 = assistant.do(task1)
-
-# Follow-up throughout the day
-task2 = Task(description="Remind me about the meeting with Sarah")
-result2 = assistant.do(task2)
-
-# Evening summary
-task3 = Task(description="Summarize what we accomplished today")
-result3 = assistant.do(task3)
-```
-
-### Multi-Session Analytics
-
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory, SqliteStorage
-
-storage = SqliteStorage(
-    sessions_table_name="sessions",
-    profiles_table_name="profiles",
-    db_file="./analytics.db"
-)
-
-# Session 1
-memory1 = Memory(
-    storage=storage,
-    session_id="morning_chat",
-    user_id="analyst_001",
-    full_session_memory=True,
-    user_analysis_memory=True,
-    model="openai/gpt-4o"
-)
-
-agent1 = Agent(model="openai/gpt-4o", memory=memory1)
-task1 = Task(description="I need help analyzing customer churn data")
-result1 = agent1.do(task1)
-
-# Session 2 - different session, same user
-memory2 = Memory(
-    storage=storage,
-    session_id="afternoon_chat",
-    user_id="analyst_001",  # Same user
-    full_session_memory=True,
-    user_analysis_memory=True,  # Loads existing profile
-    model="openai/gpt-4o"
-)
-
-agent2 = Agent(model="openai/gpt-4o", memory=memory2)
-task2 = Task(description="Can you help me create a retention strategy?")
-result2 = agent2.do(task2)  # Agent knows user works with churn analysis
-```
-
-### Async Memory Operations
-
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory, PostgresStorage
-import asyncio
-
-async def main():
-    # Create storage
-    storage = PostgresStorage(
-        sessions_table_name="async_sessions",
-        profiles_table_name="async_profiles",
-        db_url="postgresql://user:pass@localhost:5432/async_db"
-    )
-    
-    # Connect storage
-    await storage.connect_async()
-    
-    # Create memory
-    memory = Memory(
-        storage=storage,
-        session_id="async_session_001",
-        user_id="async_user_001",
-        full_session_memory=True,
-        user_analysis_memory=True,
-        model="openai/gpt-4o"
-    )
-    
-    # Create agent
-    agent = Agent(model="openai/gpt-4o", memory=memory)
-    
-    # Async task execution
-    task = Task(description="Hello, I'm interested in async programming")
-    result = await agent.do_async(task)
-    
-    print(result)
-    
-    # Cleanup
-    await storage.disconnect_async()
-
-asyncio.run(main())
-```
-
-## How Memory Works
-
-Memory works in two phases - before and after each conversation:
-
-### Before Each Conversation
-
-1. Loads the user's profile (if you're using user memory)
-2. Retrieves the conversation summary (if you're using summary memory)
-3. Pulls up previous messages (if you're using conversation memory)
-4. Gives all this context to your agent automatically
-
-### After Each Conversation
-
-1. Saves the new messages to history
-2. Updates the conversation summary
-3. Analyzes what the agent learned about the user
-4. Stores everything for next time
-
-You don't have to do anything - memory handles it all automatically.
-
-## Message History Limiting
-
-```python
-from upsonic.storage import Memory, InMemoryStorage
-
-# Keep last 5 conversation turns
-memory = Memory(
-    storage=InMemoryStorage(),
-    session_id="session_001",
-    full_session_memory=True,
-    num_last_messages=5  # Keeps last 5 request-response pairs
-)
-
-# How it works:
-# - Original system prompt is preserved
-# - User prompt from first message in window is kept
-# - Last N request-response pairs are included
-# - Reduces token usage while maintaining context
-```
-
-## Tool Call Result Filtering
-
-```python
-from upsonic.storage import Memory, InMemoryStorage
-
-# Exclude tool calls from memory (default)
-memory_clean = Memory(
-    storage=InMemoryStorage(),
-    session_id="session_001",
-    full_session_memory=True,
-    feed_tool_call_results=False  # Only user/assistant messages
-)
-
-# Include tool calls in memory
-memory_full = Memory(
-    storage=InMemoryStorage(),
-    session_id="session_001",
-    full_session_memory=True,
-    feed_tool_call_results=True  # Include tool execution details
-)
-```
-
-## Storage Management
-
-### Connection Management
-
-```python
-from upsonic.storage import PostgresStorage
-
-storage = PostgresStorage(
-    sessions_table_name="sessions",
-    profiles_table_name="profiles",
-    db_url="postgresql://user:pass@localhost:5432/db"
-)
-
-# Synchronous
-storage.connect()
-# Use storage
-storage.disconnect()
-
-# Asynchronous
-import asyncio
-
-async def use_storage():
-    await storage.connect_async()
-    # Use storage
-    await storage.disconnect_async()
-
-asyncio.run(use_storage())
-```
-
-### Direct Storage Operations
-
-```python
-from upsonic.storage import InMemoryStorage, InteractionSession, UserProfile
-from upsonic.storage.types import SessionId, UserId
-
-storage = InMemoryStorage()
-
-# Create session
-session = InteractionSession(
-    session_id=SessionId("session_001"),
-    user_id=UserId("user_001"),
-    chat_history=[],
-    summary=None
-)
-
-# Upsert session
-storage.upsert(session)
-
-# Read session
-loaded_session = storage.read(SessionId("session_001"), InteractionSession)
-
-# Create user profile
-profile = UserProfile(
-    user_id=UserId("user_001"),
-    profile_data={"expertise": "advanced", "interests": ["AI", "Python"]}
-)
-
-# Upsert profile
-storage.upsert(profile)
-
-# Read profile
-loaded_profile = storage.read(UserId("user_001"), UserProfile)
-
-# Delete
-storage.delete(SessionId("session_001"), InteractionSession)
-storage.delete(UserId("user_001"), UserProfile)
-
-# Drop all data
-storage.drop()
-```
-
-## Tips and Best Practices
-
-### Choosing Memory Types
-
-- **Start simple**: Begin with just conversation memory
-- **Add user memory**: When you want personalization across sessions
-- **Use summaries**: When conversations get long (10+ turns) to save costs
-- **Combine all three**: For the best experience in production
-
-### Choosing Storage
-
-- **Testing?** Use `InMemoryStorage`
-- **Small project?** Use `SqliteStorage`
-- **Production app?** Use `PostgresStorage`
-- **Need speed?** Use `RedisStorage`
-
-### Keeping Costs Down
-
-- Set `num_last_messages` to limit history (10-20 messages is usually enough)
-- Use summary memory for long conversations instead of full history
-- Set `feed_tool_call_results=False` to exclude tool details from memory
-
-### User Learning
-
-- Use **dynamic profiles** when you're not sure what to track about users
-- Use **custom schemas** when you know exactly what information matters
-- Use **'update' mode** to accumulate knowledge over time (recommended)
-- Use **'replace' mode** only for session-specific analysis
-
-## Complete Production Example
-
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory, MongoStorage
-from pydantic import BaseModel, Field
-from typing import Optional, List
-import asyncio
-
-# Custom user profile for production
-class ProductionUserProfile(BaseModel):
-    user_name: Optional[str] = Field(None, description="User's full name")
-    role: Optional[str] = Field(None, description="User's role or position")
-    department: Optional[str] = Field(None, description="Department or team")
-    expertise_areas: Optional[List[str]] = Field(None, description="Areas of expertise")
-    preferred_language: Optional[str] = Field(None, description="Preferred communication language")
-    timezone: Optional[str] = Field(None, description="User's timezone")
-
-async def run_production_agent():
-    # Production storage with MongoDB
-    storage = MongoStorage(
-        db_url="mongodb://prod_user:secure_pass@db.example.com:27017/prod_db",
-        database_name="production_memory",
-        sessions_collection_name="production_sessions",
-        profiles_collection_name="production_profiles"
-    )
-    
-    # Connect storage
-    await storage.connect_async()
-    
-    # Create production memory
-    memory = Memory(
-        storage=storage,
-        session_id="prod_session_20241011_001",
-        user_id="employee_12345",
-        full_session_memory=True,
-        summary_memory=True,
-        user_analysis_memory=True,
-        user_profile_schema=ProductionUserProfile,
-        user_memory_mode='update',
-        num_last_messages=15,
-        model="openai/gpt-4o",
-        feed_tool_call_results=False,
-        debug=False
-    )
-    
-    # Production agent
-    agent = Agent(
-        model="openai/gpt-4o",
-        name="Production Assistant",
-        memory=memory
-    )
-    
-    # Execute tasks
-    task1 = Task(description="Help me prepare the quarterly report")
-    result1 = await agent.do_async(task1)
-    print("Task 1:", result1)
-    
-    task2 = Task(description="What format should I use for the presentation?")
-    result2 = await agent.do_async(task2)
-    print("Task 2:", result2)
-    
-    # Cleanup
-    await storage.disconnect_async()
-    
-    return result2
-
-# Run production agent
-asyncio.run(run_production_agent())
-```
-
+This example shows how the agent:
+1. **Remembers the conversation** - References previous login issues
+2. **Learns about the user** - Builds a profile of the customer's technical level and preferences
+3. **Maintains context** - Knows about password reset attempts from earlier in the session
+4. **Persists across sessions** - Recognizes the customer in a new session and recalls their history
