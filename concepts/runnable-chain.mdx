@@ -797,39 +797,6 @@ result = pipeline.invoke({"topic": "Introduction to AI"})
 
 ---
 
-## API Reference
-
-### Core Classes
-
-- **`Runnable[Input, Output]`**: Base class for all Runnable Chain components
-  - `invoke(input, config=None)`: Synchronous execution
-  - `ainvoke(input, config=None)`: Async execution
-  
-- **`ChatPromptTemplate`**: Create and format prompts
-  - `from_template(template: str)`: Single message template
-  - `from_messages(messages: list)`: Multi-message template
-  
-- **`RunnableSequence`**: Chain components sequentially
-  - Created automatically with `|` operator
-  
-- **`RunnableParallel`**: Execute components in parallel
-  - `RunnableParallel(**kwargs)`: Explicit creation
-  - Dict syntax: `{"key": chain}` auto-converts
-  
-- **`RunnablePassthrough`**: Pass data through
-  - `RunnablePassthrough()`: Pass unchanged
-  - `RunnablePassthrough.assign(**kwargs)`: Add fields
-  
-- **`RunnableLambda`**: Wrap functions
-  - `RunnableLambda(func)`: Explicit wrapping
-  - Functions auto-wrap in chains
-  
-- **`RunnableBranch`**: Conditional routing
-  - `RunnableBranch((condition, chain), ..., default)`
-  
-- **`@chain`**: Decorator for custom chains
-  - Converts functions to Runnables
-
 ### Model Methods
 
 - **`add_memory(history=True, memory=None)`**: Add conversation history
