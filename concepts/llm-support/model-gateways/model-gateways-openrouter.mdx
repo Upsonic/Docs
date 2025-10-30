@@ -1,0 +1,324 @@
+---
+title: "OpenRouter"
+description: "Using OpenRouter to access multiple model providers"
+---
+
+## Overview
+
+OpenRouter provides unified access to models from OpenAI, Anthropic, Google, Meta, and many others through a single API. Simplifies multi-model applications with consistent pricing and routing.
+
+**Model Class:** `OpenAIChatModel` (OpenAI-compatible API)
+
+## Authentication
+
+### Environment Variables
+
+```bash
+export OPENROUTER_API_KEY="sk-or-..."
+```
+
+### Using infer_model
+
+```python
+from upsonic import infer_model
+
+# Access any supported model
+model = infer_model("openrouter/anthropic/claude-3-5-sonnet")
+```
+
+### Manual Configuration
+
+```python
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+
+settings = OpenAIChatModelSettings(
+    max_tokens=2048,
+    temperature=0.7
+)
+
+model = OpenAIChatModel(
+    model_name="anthropic/claude-3-5-sonnet",
+    provider="openrouter",
+    settings=settings
+)
+```
+
+## Examples
+
+### Basic Usage
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("openrouter/anthropic/claude-3-5-sonnet")
+agent = Agent(model=model)
+
+task = Task("Explain neural networks")
+result = agent.do(task)
+```
+
+### Access Different Providers
+
+```python
+from upsonic import infer_model
+
+# Anthropic
+model_claude = infer_model("openrouter/anthropic/claude-3-5-sonnet")
+
+# OpenAI
+model_gpt = infer_model("openrouter/openai/gpt-4o")
+
+# Google
+model_gemini = infer_model("openrouter/google/gemini-2.5-flash")
+
+# Meta
+model_llama = infer_model("openrouter/meta-llama/llama-3.1-70b-instruct")
+```
+
+### With Streaming
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("openrouter/anthropic/claude-3-5-sonnet")
+agent = Agent(model=model)
+
+task = Task("Write a detailed article about AI")
+
+async for chunk in agent.do_stream(task):
+    print(chunk, end="", flush=True)
+```
+
+### With Tools
+
+```python
+from upsonic import Agent, Task, infer_model
+
+def get_weather(location: str) -> str:
+    """Get weather for a location."""
+    return f"Weather in {location}: Sunny"
+
+model = infer_model("openrouter/openai/gpt-4o")
+agent = Agent(model=model, tools=[get_weather])
+
+task = Task("What's the weather in Tokyo?")
+result = agent.do(task)
+```
+
+### Free Models
+
+```python
+from upsonic import infer_model
+
+# Some models are free on OpenRouter
+model = infer_model("openrouter/google/gemini-2.5-flash-lite-free")
+agent = Agent(model=model)
+
+task = Task("Tell me about machine learning")
+result = agent.do(task)
+```
+
+## Prompt Caching
+
+OpenRouter does not support native prompt caching. Each request is independent.
+
+**Best Practice:** Use memory for conversation context:
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.storage.memory import Memory
+from upsonic.storage.providers.in_memory import InMemoryStorage
+
+storage = InMemoryStorage()
+memory = Memory(storage=storage, session_id="session-123")
+
+model = infer_model("openrouter/anthropic/claude-3-5-sonnet")
+agent = Agent(model=model, memory=memory)
+```
+
+## Model Parameters
+
+### Base Settings
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model default |
+| `temperature` | `float` | Sampling temperature | 1.0 |
+| `top_p` | `float` | Nucleus sampling | 1.0 |
+| `seed` | `int` | Random seed (if supported) | None |
+| `stop_sequences` | `list[str]` | Stop sequences | None |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 |
+
+### Example Configuration
+
+```python
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+
+settings = OpenAIChatModelSettings(
+    max_tokens=2048,
+    temperature=0.7,
+    top_p=0.9,
+    presence_penalty=0.1,
+    frequency_penalty=0.1
+)
+
+model = OpenAIChatModel(
+    model_name="anthropic/claude-3-5-sonnet",
+    provider="openrouter",
+    settings=settings
+)
+```
+
+## Available Models
+
+OpenRouter provides access to 100+ models from various providers:
+
+### Top Models
+
+#### OpenAI
+- `openai/gpt-4o`
+- `openai/gpt-4o-mini`
+- `openai/o1-preview`
+
+#### Anthropic
+- `anthropic/claude-3-5-sonnet`
+- `anthropic/claude-3-5-haiku`
+- `anthropic/claude-opus-4`
+
+#### Google
+- `google/gemini-2.5-pro`
+- `google/gemini-2.5-flash`
+- `google/gemini-2.5-flash-lite-free` (Free!)
+
+#### Meta
+- `meta-llama/llama-3.1-405b-instruct`
+- `meta-llama/llama-3.1-70b-instruct`
+- `meta-llama/llama-3.1-8b-instruct`
+
+#### Other Popular
+- `mistralai/mistral-large`
+- `cohere/command-r-plus`
+- `deepseek/deepseek-chat`
+
+### Free Models
+
+OpenRouter offers some free models:
+- `google/gemini-2.5-flash-lite-free`
+- `meta-llama/llama-3.1-8b-instruct:free`
+- Various community-hosted models
+
+## Model Selection Guide
+
+| Use Case | Recommended Model | Why |
+|----------|------------------|-----|
+| Complex tasks | `anthropic/claude-opus-4` | Best reasoning |
+| Balanced performance | `openai/gpt-4o` | Reliable all-rounder |
+| Cost-effective | `google/gemini-2.5-flash` | Good price/performance |
+| Free tier | `google/gemini-2.5-flash-lite-free` | No cost |
+| Code generation | `openai/gpt-4o` or `anthropic/claude-3-5-sonnet` | Strong code understanding |
+
+## Pricing
+
+OpenRouter uses a unified pricing model:
+
+- **Pay-as-you-go**: Only pay for what you use
+- **No subscriptions**: No monthly fees
+- **Credits system**: Add credits to your account
+- **Transparent**: See per-token costs for each model
+- **Competitive**: Often cheaper than going direct
+
+### Cost Optimization
+
+```python
+# Use cost-effective models for simple tasks
+simple_model = infer_model("openrouter/google/gemini-2.5-flash")
+
+# Reserve expensive models for complex tasks
+complex_model = infer_model("openrouter/anthropic/claude-opus-4")
+
+# Use free models for testing
+test_model = infer_model("openrouter/google/gemini-2.5-flash-lite-free")
+```
+
+## Best Practices
+
+1. **Model Selection**: Choose the right model for each task
+2. **Monitor Costs**: Track usage in OpenRouter dashboard
+3. **Use Free Models**: For development and testing
+4. **Implement Fallbacks**: Handle rate limits and errors
+5. **Set Budgets**: Configure spending limits
+6. **Test Before Production**: Verify model quality
+7. **Rate Limiting**: Implement backoff for retries
+
+## Features
+
+### Unified API
+- Single API for all models
+- Consistent request format
+- Simplified integration
+
+### Automatic Routing
+- Automatic fallback if model is down
+- Load balancing across providers
+- Best availability
+
+### Model Comparison
+- Test multiple models easily
+- Compare performance
+- Optimize costs
+
+### Rate Limit Handling
+- Automatic retry with backoff
+- Queue management
+- Better reliability
+
+## Error Handling
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.utils.package.exception import ModelHTTPError
+import asyncio
+
+async def request_with_retry(agent, task, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return agent.do(task)
+        except ModelHTTPError as e:
+            if e.status_code == 429:  # Rate limit
+                wait_time = 2 ** attempt
+                print(f"Rate limited, waiting {wait_time}s...")
+                await asyncio.sleep(wait_time)
+            elif e.status_code >= 500:  # Server error
+                wait_time = 2 ** attempt
+                print(f"Server error, retrying in {wait_time}s...")
+                await asyncio.sleep(wait_time)
+            else:
+                raise
+    raise Exception("Max retries exceeded")
+```
+
+## Advantages
+
+1. **Unified Access**: One API for many providers
+2. **Cost Effective**: Competitive pricing
+3. **Reliability**: Automatic fallback
+4. **Simplicity**: No need for multiple API keys
+5. **Flexibility**: Switch models easily
+6. **Free Options**: Available for testing
+
+## Limitations
+
+1. **No Native Caching**: Each request is independent
+2. **Additional Latency**: Routing overhead
+3. **Rate Limits**: Shared across all users
+4. **Feature Gaps**: May not support all provider-specific features
+
+## Related Resources
+
+- [OpenRouter Website](https://openrouter.ai/)
+- [Available Models](https://openrouter.ai/models)
+- [Pricing](https://openrouter.ai/docs#models)
+- [API Documentation](https://openrouter.ai/docs)
+- [Model Rankings](https://openrouter.ai/rankings)
+

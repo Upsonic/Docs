@@ -1,0 +1,366 @@
+---
+title: "AWS Bedrock"
+description: "Using AWS Bedrock with Upsonic"
+---
+
+## Overview
+
+AWS Bedrock provides access to multiple foundation models from Amazon, Anthropic, Meta, Mistral, and others through a single API. Enterprise-grade with AWS security and compliance.
+
+**Model Class:** `BedrockConverseModel`
+
+## Authentication
+
+### AWS Credentials
+
+Configure AWS credentials using one of these methods:
+
+```bash
+# Environment variables
+export AWS_ACCESS_KEY_ID="..."
+export AWS_SECRET_ACCESS_KEY="..."
+export AWS_REGION="us-east-1"
+
+# Or use AWS CLI
+aws configure
+```
+
+### Using infer_model
+
+```python
+from upsonic import infer_model
+
+# Format: bedrock/provider.model-id
+model = infer_model("bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0")
+```
+
+### Manual Configuration
+
+```python
+from upsonic.models.bedrock import BedrockConverseModel, BedrockModelSettings
+
+settings = BedrockModelSettings(
+    max_tokens=2048,
+    temperature=0.7
+)
+
+model = BedrockConverseModel(
+    model_name="anthropic.claude-3-5-sonnet-20241022-v2:0",
+    settings=settings
+)
+```
+
+### With Custom Region
+
+```python
+from upsonic.providers.bedrock import BedrockProvider
+import boto3
+
+# Custom region and credentials
+session = boto3.Session(
+    region_name="us-west-2",
+    aws_access_key_id="...",
+    aws_secret_access_key="..."
+)
+client = session.client("bedrock-runtime")
+
+provider = BedrockProvider(client=client)
+model = BedrockConverseModel(
+    model_name="anthropic.claude-3-5-sonnet-20241022-v2:0",
+    provider=provider
+)
+```
+
+## Examples
+
+### Basic Usage
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0")
+agent = Agent(model=model)
+
+task = Task("Analyze this business report")
+result = agent.do(task)
+```
+
+### With Guardrails
+
+```python
+from upsonic.models.bedrock import BedrockConverseModel, BedrockModelSettings
+
+settings = BedrockModelSettings(
+    max_tokens=2048,
+    temperature=0.7,
+    bedrock_guardrail_config={
+        "guardrailIdentifier": "your-guardrail-id",
+        "guardrailVersion": "1"
+    }
+)
+
+model = BedrockConverseModel(
+    model_name="anthropic.claude-3-5-sonnet-20241022-v2:0",
+    settings=settings
+)
+```
+
+### With Request Metadata
+
+```python
+from upsonic.models.bedrock import BedrockConverseModel, BedrockModelSettings
+
+settings = BedrockModelSettings(
+    max_tokens=2048,
+    bedrock_request_metadata={
+        "user_id": "user-123",
+        "session_id": "session-456"
+    }
+)
+
+model = BedrockConverseModel(
+    model_name="anthropic.claude-3-5-sonnet-20241022-v2:0",
+    settings=settings
+)
+```
+
+### With Amazon Nova
+
+```python
+from upsonic import Agent, Task, infer_model
+
+# Amazon's own models
+model = infer_model("bedrock/us.amazon.nova-pro-v1:0")
+agent = Agent(model=model)
+
+task = Task("Generate a product description")
+result = agent.do(task)
+```
+
+### Cross-Region Inference
+
+```python
+from upsonic import infer_model
+
+# Use cross-region inference for better availability
+model = infer_model("bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0")
+```
+
+## Prompt Caching
+
+Bedrock supports prompt caching for supported models (primarily Claude):
+
+```python
+from upsonic import Agent, Task, infer_model
+
+# Long context will be cached for Claude models
+system_prompt = """
+You are an AWS expert assistant with knowledge of:
+- All AWS services and their use cases
+- Best practices for cloud architecture
+- Security and compliance requirements
+... (extensive AWS documentation)
+"""
+
+model = infer_model("bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0")
+agent = Agent(
+    model=model,
+    system_prompt=system_prompt
+)
+
+# Subsequent requests benefit from caching
+task1 = Task("How do I set up S3 encryption?")
+result1 = agent.do(task1)
+
+task2 = Task("What's the best EC2 instance for my workload?")
+result2 = agent.do(task2)
+```
+
+### Cache Benefits
+- **Cost Savings**: Reduced input token costs
+- **Latency**: Faster processing
+- **Automatic**: No configuration for Claude models
+- **Model-Specific**: Check model documentation for support
+
+## Model Parameters
+
+### Base Settings
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `max_tokens` | `int` | Maximum tokens to generate | 2048 |
+| `temperature` | `float` | Sampling temperature | 1.0 |
+| `top_p` | `float` | Nucleus sampling | 1.0 |
+| `stop_sequences` | `list[str]` | Stop sequences | None |
+
+### Bedrock-Specific Settings
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `bedrock_guardrail_config` | `dict` | Content moderation settings |
+| `bedrock_performance_configuration` | `dict` | Performance optimization |
+| `bedrock_request_metadata` | `dict[str, str]` | Request metadata for tracking |
+| `bedrock_additional_model_response_fields_paths` | `list[str]` | Additional response fields |
+| `bedrock_prompt_variables` | `dict` | Template variables |
+| `bedrock_additional_model_requests_fields` | `dict` | Model-specific parameters |
+
+#### Guardrail Configuration
+
+```python
+bedrock_guardrail_config = {
+    "guardrailIdentifier": "abc123xyz",
+    "guardrailVersion": "1",
+    "trace": "enabled"  # Optional: enable tracing
+}
+```
+
+#### Performance Configuration
+
+```python
+bedrock_performance_configuration = {
+    "latency": "optimized"  # or "standard"
+}
+```
+
+### Example Configuration
+
+```python
+from upsonic.models.bedrock import BedrockConverseModel, BedrockModelSettings
+
+settings = BedrockModelSettings(
+    # Base settings
+    max_tokens=4096,
+    temperature=0.7,
+    top_p=0.9,
+    stop_sequences=["END"],
+    
+    # Bedrock-specific
+    bedrock_guardrail_config={
+        "guardrailIdentifier": "guardrail-id",
+        "guardrailVersion": "1"
+    },
+    bedrock_performance_configuration={
+        "latency": "optimized"
+    },
+    bedrock_request_metadata={
+        "user_id": "user-123",
+        "application": "chatbot"
+    }
+)
+
+model = BedrockConverseModel(
+    model_name="anthropic.claude-3-5-sonnet-20241022-v2:0",
+    settings=settings
+)
+```
+
+## Available Models
+
+### Amazon Nova
+- `us.amazon.nova-pro-v1:0`: Balanced performance
+- `us.amazon.nova-lite-v1:0`: Fast and affordable
+- `us.amazon.nova-micro-v1:0`: Ultra-lightweight
+
+### Anthropic Claude
+- `anthropic.claude-3-5-sonnet-20241022-v2:0`: Latest Claude
+- `us.anthropic.claude-3-5-sonnet-20241022-v2:0`: Cross-region
+- `anthropic.claude-3-5-haiku-20241022-v1:0`: Fast variant
+- `us.anthropic.claude-3-7-sonnet-20250219-v1:0`: Enhanced capabilities
+- `us.anthropic.claude-opus-4-20250514-v1:0`: Most powerful
+
+### Meta Llama
+- `meta.llama3-1-70b-instruct-v1:0`: Large model
+- `meta.llama3-1-8b-instruct-v1:0`: Efficient model
+- `us.meta.llama3-2-90b-instruct-v1:0`: Latest large
+- `us.meta.llama3-3-70b-instruct-v1:0`: Latest generation
+
+### Mistral
+- `mistral.mistral-large-2407-v1:0`: Most capable
+- `mistral.mixtral-8x7b-instruct-v0:1`: Fast and efficient
+
+### Cohere
+- `cohere.command-r-plus-v1:0`: Most capable
+- `cohere.command-r-v1:0`: Balanced option
+
+## Model Selection Guide
+
+| Use Case | Recommended Model | Why |
+|----------|------------------|-----|
+| Complex reasoning | Claude Opus 4 | Best reasoning capabilities |
+| Balanced performance | Claude Sonnet 3.5 | Speed + quality |
+| Cost-effective | Nova Lite | Amazon's affordable option |
+| Code generation | Claude Sonnet 3.5 | Strong code understanding |
+| High volume | Llama 3.1 8B | Fast and efficient |
+
+## Best Practices
+
+1. **Use Cross-Region Models**: Better availability with `us.` prefix
+2. **Enable Guardrails**: For production content filtering
+3. **Set Request Metadata**: For tracking and debugging
+4. **Choose Right Model**: Match model to use case and budget
+5. **Monitor CloudWatch**: Track usage and costs
+6. **Use IAM Roles**: More secure than access keys
+7. **Enable CloudTrail**: Audit API calls
+8. **Leverage Prompt Caching**: For Claude models with repeated contexts
+
+## Security and Compliance
+
+### IAM Permissions
+
+Required IAM permissions:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream"
+            ],
+            "Resource": "arn:aws:bedrock:*::foundation-model/*"
+        }
+    ]
+}
+```
+
+### VPC Endpoints
+
+Deploy Bedrock in VPC for enhanced security:
+
+```python
+import boto3
+
+# Use VPC endpoint
+client = boto3.client(
+    'bedrock-runtime',
+    endpoint_url='https://vpce-xxx.bedrock-runtime.region.vpce.amazonaws.com'
+)
+```
+
+### Compliance
+
+Bedrock supports:
+- HIPAA
+- SOC 1, 2, 3
+- ISO 27001, 27017, 27018
+- PCI DSS
+- FedRAMP (select regions)
+
+## Cost Optimization
+
+1. **Choose Appropriate Model**: Don't overpay for capabilities you don't need
+2. **Use Nova Models**: Amazon's models are cost-effective
+3. **Enable Prompt Caching**: Significant savings for Claude
+4. **Monitor Usage**: Set CloudWatch alarms for costs
+5. **Use Lite/Micro Variants**: For simple tasks
+
+## Related Resources
+
+- [AWS Bedrock Documentation](https://docs.aws.amazon.com/bedrock/)
+- [Bedrock Pricing](https://aws.amazon.com/bedrock/pricing/)
+- [Model Access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
+- [Guardrails](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html)
+- [Prompt Caching](https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html)
+

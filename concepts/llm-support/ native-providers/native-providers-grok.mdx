@@ -1,0 +1,244 @@
+---
+title: "Grok"
+description: "Using xAI Grok models with Upsonic"
+---
+
+## Overview
+
+xAI provides Grok models with real-time information access, strong reasoning capabilities, and multimodal understanding. All Grok models have built-in web search.
+
+**Model Class:** `OpenAIChatModel` (OpenAI-compatible API)
+
+## Authentication
+
+### Environment Variables
+
+```bash
+export GROK_API_KEY="xai-..."
+```
+
+### Using infer_model
+
+```python
+from upsonic import infer_model
+
+model = infer_model("grok/grok-4")
+```
+
+### Manual Configuration
+
+```python
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+
+settings = OpenAIChatModelSettings(
+    max_tokens=2048,
+    temperature=0.7
+)
+
+model = OpenAIChatModel(
+    model_name="grok-4",
+    provider="grok",
+    settings=settings
+)
+```
+
+## Examples
+
+### Basic Usage
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("grok/grok-4")
+agent = Agent(model=model)
+
+task = Task("Explain the latest developments in AI")
+result = agent.do(task)
+```
+
+### Real-Time Information (Web Search)
+
+```python
+from upsonic import Agent, Task, infer_model
+
+# Web search is built-in for all Grok models
+model = infer_model("grok/grok-4")
+agent = Agent(model=model)
+
+task = Task("What are the current top news stories today?")
+result = agent.do(task)  # Automatically uses web search
+```
+
+### With Reasoning
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("grok/grok-4")
+agent = Agent(model=model)
+
+task = Task("Analyze this complex scenario and provide detailed reasoning: ...")
+result = agent.do(task)
+```
+
+### With Vision
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.messages import ImageUrl
+
+model = infer_model("grok/grok-2-vision-1212")
+agent = Agent(model=model)
+
+task = Task(
+    description="Describe what's happening in this image",
+    attachments=[
+        ImageUrl(url="https://example.com/image.jpg")
+    ]
+)
+
+result = agent.do(task)
+```
+
+### Image Generation
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("grok/grok-2-image-1212")
+agent = Agent(model=model)
+
+task = Task("Generate an image of a futuristic city at sunset")
+result = agent.do(task)
+```
+
+### With Tools
+
+```python
+from upsonic import Agent, Task, infer_model
+
+def get_database_stats() -> dict:
+    """Get current database statistics."""
+    return {"records": 10000, "size_mb": 250}
+
+model = infer_model("grok/grok-4")
+agent = Agent(model=model, tools=[get_database_stats])
+
+task = Task("Check the database stats and tell me if we need more storage")
+result = agent.do(task)
+```
+
+## Prompt Caching
+
+Grok does not currently support native prompt caching.
+
+**Best Practice:** Use memory for conversation context:
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.storage.memory import Memory
+from upsonic.storage.providers.in_memory import InMemoryStorage
+
+storage = InMemoryStorage()
+memory = Memory(storage=storage, session_id="session-123")
+
+model = infer_model("grok/grok-4")
+agent = Agent(model=model, memory=memory)
+```
+
+## Model Parameters
+
+### Base Settings
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model default |
+| `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 |
+| `top_p` | `float` | Nucleus sampling | 1.0 |
+| `seed` | `int` | Random seed | None |
+| `stop_sequences` | `list[str]` | Stop sequences | None |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 |
+| `parallel_tool_calls` | `bool` | Allow parallel tools | True |
+| `timeout` | `float` | Request timeout (seconds) | 600 |
+
+### Example Configuration
+
+```python
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+
+settings = OpenAIChatModelSettings(
+    max_tokens=4096,
+    temperature=0.7,
+    top_p=0.9,
+    seed=42,
+    presence_penalty=0.1,
+    frequency_penalty=0.1,
+    parallel_tool_calls=True
+)
+
+model = OpenAIChatModel(
+    model_name="grok-4",
+    provider="grok",
+    settings=settings
+)
+```
+
+## Available Models
+
+### Grok 4 Series
+- `grok-4`: Most capable model with reasoning
+- `grok-4-0709`: Specific snapshot
+
+### Grok 3 Series
+- `grok-3`: Balanced performance
+- `grok-3-mini`: Fast and efficient
+- `grok-3-fast`: Optimized for speed
+- `grok-3-mini-fast`: Fastest variant
+
+### Specialized Models
+- `grok-2-vision-1212`: Vision understanding
+- `grok-2-image-1212`: Image generation
+
+## Model Comparison
+
+| Model | Speed | Cost | Best For |
+|-------|-------|------|----------|
+| grok-4 | Medium | High | Complex reasoning, real-time info |
+| grok-3 | Fast | Medium | General purpose |
+| grok-3-mini | Very Fast | Low | Simple tasks, high volume |
+| grok-3-fast | Very Fast | Medium | Speed-critical applications |
+
+## Key Features
+
+### Built-in Web Search
+All Grok models have integrated web search capabilities:
+- Real-time information access
+- Automatic source citation
+- No additional configuration needed
+
+### Strong Reasoning
+Grok models excel at:
+- Complex problem solving
+- Multi-step reasoning
+- Analytical tasks
+
+### Multimodal Capabilities
+- Vision understanding (grok-2-vision)
+- Image generation (grok-2-image)
+- Text generation (all models)
+
+## Best Practices
+
+1. **Leverage Real-Time Information**: Use for current events and time-sensitive queries
+2. **Enable Tools**: Grok works well with function calling
+3. **Use Appropriate Model**: Match model to task complexity
+4. **Monitor Costs**: Higher-tier models are more expensive
+5. **Implement Memory**: For multi-turn conversations
+
+## Related Resources
+
+- [xAI Documentation](https://docs.x.ai/)
+- [Grok Models](https://x.ai/grok)
+- [xAI API Reference](https://docs.x.ai/api)
+
