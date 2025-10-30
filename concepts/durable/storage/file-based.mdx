@@ -1,0 +1,34 @@
+---
+title: "File-Based"
+description: "Simple, human-readable JSON files for single-node applications"
+---
+
+## Usage
+
+```python
+from upsonic.durable import FileDurableStorage
+
+# Create storage with custom path
+storage = FileDurableStorage(path="./execution_states")
+
+durable = DurableExecution(
+    storage=storage,
+    auto_cleanup=False,  # Keep files after completion
+    debug=True
+)
+
+task = Task("Data processing", durable_execution=durable)
+```
+
+## Params
+
+| Parameter | Type | Description                          | Default         |
+| --------- | ---- | ------------------------------------ | --------------- |
+| **path**  | str  | Directory path for checkpoint files  | "./durable_states" |
+
+## Characteristics
+
+- 📁 Human-readable JSON format
+- ✅ Easy debugging and inspection
+- ✅ Simple backup and restore
+- ⚠️ Not suitable for distributed systems

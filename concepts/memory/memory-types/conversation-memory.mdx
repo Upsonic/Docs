@@ -1,0 +1,36 @@
+---
+title: "Conversation Memory"
+description: "Store complete chat history for maintaining context"
+---
+
+## What is Conversation Memory?
+
+Conversation Memory stores the complete chat history for a session, allowing your agent to reference previous messages and maintain context throughout the conversation.
+
+## Usage
+
+```python
+from upsonic.storage import Memory, InMemoryStorage
+
+# Basic conversation memory
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_001",
+    full_session_memory=True
+)
+
+# With message limiting
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_001",
+    full_session_memory=True,
+    num_last_messages=10  # Keep last 10 conversation turns
+)
+```
+
+## Params
+
+- `full_session_memory: bool` - Enable/disable conversation memory
+- `session_id: str` - Required identifier for the session
+- `num_last_messages: int` - Optional limit on conversation history
+- `feed_tool_call_results: bool` - Include/exclude tool calls from memory

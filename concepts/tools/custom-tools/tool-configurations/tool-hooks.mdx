@@ -1,0 +1,41 @@
+---
+title: "Tool Hooks"
+description: "Execute custom logic before and after tool execution"
+---
+
+## Overview
+
+Execute custom logic before and after tool execution.
+
+## Usage
+
+```python
+from upsonic.tools import tool, ToolHooks
+
+def before_execution(**kwargs):
+    print(f"Starting execution with args: {kwargs}")
+    return {"start_time": time.time()}
+
+def after_execution(result):
+    print(f"Execution completed with result: {result}")
+    return {"end_time": time.time()}
+
+@tool(
+    tool_hooks=ToolHooks(before=before_execution, after=after_execution)
+)
+def monitored_operation(data: str) -> str:
+    """
+    Operation with before/after hooks.
+
+    Args:
+        data: Input data
+
+    Returns:
+        Processed data
+    """
+    return data.upper()
+```
+
+## Parameters
+
+- `tool_hooks` (ToolHooks): Object with `before` and `after` callables

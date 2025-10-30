@@ -1,0 +1,47 @@
+---
+title: "Attributes"
+description: "Configuration options for the OCR system"
+---
+
+## Attributes
+
+The OCR system is configured through `OCRConfig`, which provides the following attributes:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `languages` | List[str] | `['en']` | Languages to detect (e.g., ['en', 'zh', 'ja']) |
+| `confidence_threshold` | float | `0.0` | Minimum confidence threshold (0.0-1.0) for accepting OCR results |
+| `rotation_fix` | bool | `False` | Enable automatic rotation correction for skewed images |
+| `enhance_contrast` | bool | `False` | Enhance image contrast before OCR processing |
+| `remove_noise` | bool | `False` | Apply noise reduction filter to improve text clarity |
+| `pdf_dpi` | int | `300` | DPI resolution for PDF rendering (higher = better quality, slower) |
+| `preserve_formatting` | bool | `True` | Try to preserve text formatting (line breaks, spacing) |
+
+## Configuration Example
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.base import OCRConfig
+from upsonic.ocr.tesseract import TesseractOCR
+
+# Method 1: Using OCRConfig
+config = OCRConfig(
+    languages=['eng', 'fra'],
+    confidence_threshold=0.6,
+    rotation_fix=True,
+    enhance_contrast=True,
+    remove_noise=True,
+    pdf_dpi=300,
+    preserve_formatting=True
+)
+ocr = OCR(TesseractOCR, config=config)
+
+# Method 2: Direct parameters
+ocr = OCR(
+    TesseractOCR,
+    languages=['eng', 'fra'],
+    confidence_threshold=0.6,
+    rotation_fix=True,
+    enhance_contrast=True
+)
+```

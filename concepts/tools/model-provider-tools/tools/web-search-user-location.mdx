@@ -1,0 +1,46 @@
+---
+title: "WebSearchUserLocation"
+description: "User location information for localizing web search results"
+---
+
+## Overview
+
+User location information for localizing web search results.
+
+## Usage
+
+```python
+from upsonic.tools.builtin_tools import WebSearchTool, WebSearchUserLocation
+
+# Create location configuration
+user_location = WebSearchUserLocation(
+    city="New York",
+    country="US",
+    region="NY",
+    timezone="America/New_York"
+)
+
+# Apply to web search
+web_search = WebSearchTool(user_location=user_location)
+
+task = Task(
+    description="Search for local news and events",
+    tools=[web_search]
+)
+
+agent = Agent(model=model, name="Local Search Agent")
+agent.print_do(task)
+```
+
+## Parameters
+
+- `city` (str): The city where the user is located
+- `country` (str): Country code (e.g., 'US', 'GB', 'DE')
+  - For OpenAI: Must be 2-letter country code
+- `region` (str): Region or state code (e.g., 'CA', 'NY', 'TX')
+- `timezone` (str): Timezone identifier (e.g., 'America/New_York')
+
+## Provider Support
+
+- Anthropic: ✅ Full support
+- OpenAI Responses: ✅ Full support

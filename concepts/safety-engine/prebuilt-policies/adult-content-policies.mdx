@@ -1,0 +1,52 @@
+---
+title: "Adult Content Policies"
+description: "Detect explicit sexual content and adult themes"
+---
+
+## What is Adult Content Policy?
+
+Adult content policies detect explicit sexual content, adult themes, age-restricted material, and inappropriate content for general audiences.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import AdultContentBlockPolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=AdultContentBlockPolicy
+)
+
+task = Task("Show me adult videos")
+result = agent.do(task)
+# Blocked with appropriate message
+```
+
+## Available Variants
+
+- `AdultContentBlockPolicy`: Keyword and pattern detection with blocking
+- `AdultContentBlockPolicy_LLM`: LLM-powered block messages
+- `AdultContentBlockPolicy_LLM_Finder`: LLM detection for context awareness
+- `AdultContentRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `AdultContentRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+## Params
+
+```python
+from upsonic.safety_engine.policies.adult_content_policies import AdultContentRule, AdultContentBlockAction
+
+custom_rule = AdultContentRule(options={
+    "explicit_keywords": ["custom_term1", "custom_term2"],
+    "adult_patterns": [r'\bcustom\s+pattern\b'],
+    "suggestive_keywords": ["suggestive_term"],
+    "age_verification_keywords": ["custom age term"]
+})
+
+policy = Policy(
+    name="Custom Adult Content Policy",
+    description="With additional keywords",
+    rule=custom_rule,
+    action=AdultContentBlockAction()
+)
+```

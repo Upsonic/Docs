@@ -1,0 +1,41 @@
+---
+title: "Creating Function Tool"
+description: "Create simple function-based tools"
+---
+
+## Overview
+
+Function tools are the simplest way to create custom tools. Decorate any Python function with `@tool` to make it available to your agents.
+
+## Example
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def sum_tool(a: float, b: float) -> float:
+    """
+    Add two numbers together.
+
+    Args:
+        a: First number
+        b: Second number
+
+    Returns:
+        The sum of a and b
+    """
+    return a + b
+
+# Create task with the tool
+task = Task(
+    description="Calculate 15 + 27",
+    tools=[sum_tool]
+)
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", name="Calculator Agent")
+
+# Execute
+agent.print_do(task)
+```

@@ -1,0 +1,24 @@
+---
+title: "JSONStorage"
+description: "File-based JSON storage for simple persistence"
+---
+
+## Usage
+
+```python
+from upsonic.storage import JSONStorage
+
+# Basic JSON storage
+storage = JSONStorage(directory_path="./memory_data")
+
+# With custom formatting
+storage = JSONStorage(
+    directory_path="./memory_data",
+    pretty_print=True  # Format JSON for readability
+)
+```
+
+## Params
+
+- `directory_path: str` - Path to directory for JSON files
+- `pretty_print: bool` - Format JSON for readability (default: True)

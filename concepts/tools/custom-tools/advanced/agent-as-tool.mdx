@@ -1,0 +1,41 @@
+---
+title: "Agent as Tool"
+description: "Use other agents as tools for hierarchical agent architectures"
+---
+
+## Overview
+
+Use other agents as tools for hierarchical agent architectures.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+
+# Create a specialized agent
+research_agent = Agent(
+    name="Research Specialist",
+    model="openai/gpt-4o",
+    system_prompt="You are a research specialist focused on gathering information."
+)
+
+# Use the specialized agent as a tool
+task = Task(
+    description="Research current AI trends and provide a summary",
+    tools=[research_agent]
+)
+
+# Main agent delegates to specialized agent
+main_agent = Agent(
+    name="Main Coordinator",
+    model="openai/gpt-4o"
+)
+
+main_agent.print_do(task)
+```
+
+## Parameters
+
+- Any agent instance can be used as a tool
+- The agent's `name`, `role`, `goal`, and `system_prompt` are used to generate the tool description
+- Tool name format: `ask_{agent_name}`

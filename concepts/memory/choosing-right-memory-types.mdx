@@ -1,0 +1,59 @@
+---
+title: "Choosing Right Memory Types"
+description: "Learn how to select the appropriate memory types for your use case"
+---
+
+## What is The Selection Criteria?
+
+Choose memory types based on your specific needs:
+
+| Memory Type | When to Use | Requirements |
+|-------------|-------------|--------------|
+| **Conversation Memory** | Customer support, tutoring, detailed conversations | `session_id` |
+| **Summary Memory** | Long conversations, cost reduction | `session_id`, `model` |
+| **User Analysis Memory** | Personalization, user preferences | `user_id`, `model` |
+
+## Making Combination of Memory
+
+You can use one type or combine all three for the most powerful memory system:
+
+```python
+# Basic conversation memory only
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_001",
+    full_session_memory=True
+)
+
+# All three memory types
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_001",
+    user_id="user_001",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    model="openai/gpt-4o"
+)
+```
+
+## Use Case for Conversation Memory
+
+- **Customer Support**: Maintain context across support tickets
+- **Tutoring**: Remember what topics have been covered
+- **Long Conversations**: Keep track of detailed discussions
+- **Debugging Sessions**: Remember error states and solutions
+
+## Use Case for Summary Memory
+
+- **Long Sessions**: Reduce token costs for very long conversations
+- **Meeting Notes**: Automatically summarize key points
+- **Documentation**: Create evolving summaries of complex topics
+- **Cost Optimization**: Maintain context without full history
+
+## Use Case for User Analysis Memory
+
+- **Personalization**: Adapt responses to user preferences
+- **Learning Systems**: Track user progress and expertise
+- **Customer Profiles**: Build comprehensive user understanding
+- **Adaptive Interfaces**: Customize experience based on user traits

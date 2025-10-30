@@ -1,0 +1,27 @@
+---
+title: "In-Memory"
+description: "Fast, non-persistent storage for testing and development"
+---
+
+## Usage
+
+```python
+from upsonic.durable import InMemoryDurableStorage
+
+storage = InMemoryDurableStorage()
+durable = DurableExecution(storage=storage)
+
+# Use with task
+task = Task("Quick test task", durable_execution=durable)
+```
+
+## Params
+
+No configuration parameters required.
+
+## Characteristics
+
+- ⚡ Fastest performance
+- ❌ No persistence (lost on restart)
+- ✅ Perfect for testing
+- ✅ No setup required

@@ -1,0 +1,79 @@
+---
+title: "WebSearchTool"
+description: "A built-in tool that allows models to search the web for information"
+---
+
+## Overview
+
+A built-in tool that allows models to search the web for information.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import WebSearchTool
+from upsonic.models.openai import OpenAIResponsesModel
+
+# Create model with OpenAI Responses API
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"
+)
+
+# Basic web search tool
+web_search = WebSearchTool()
+
+# Create task
+task = Task(
+    description="Search for latest AI news and summarize the findings",
+    tools=[web_search]
+)
+
+# Create agent
+agent = Agent(model=model, name="Web Search Agent")
+
+# Execute
+result = agent.do(task)
+print(f"Result: {result}")
+```
+
+## Advanced Configuration
+
+```python
+from upsonic.tools.builtin_tools import WebSearchTool, WebSearchUserLocation
+
+# Advanced web search with configuration
+advanced_search = WebSearchTool(
+    search_context_size="high",  # 'low', 'medium', or 'high'
+    user_location=WebSearchUserLocation(
+        city="San Francisco",
+        country="US",
+        region="CA",
+        timezone="America/Los_Angeles"
+    ),
+    blocked_domains=["example.com", "spam-site.com"],
+    max_uses=10
+)
+
+task = Task(
+    description="Search for AI trends with high context and location filtering",
+    tools=[advanced_search]
+)
+
+agent = Agent(model=model, name="Advanced Search Agent")
+agent.print_do(task)
+```
+
+## Parameters
+
+- `search_context_size` (str): Context amount - 'low', 'medium', or 'high' (default: 'medium')
+  - Supported by: OpenAI Responses
+- `user_location` (WebSearchUserLocation, optional): Localize search results
+  - Supported by: Anthropic, OpenAI Responses
+- `blocked_domains` (List[str], optional): Domains to exclude from results
+  - Supported by: Anthropic, Groq
+- `allowed_domains` (List[str], optional): Only include these domains
+  - Supported by: Anthropic, Groq
+  - Note: Cannot use both blocked_domains and allowed_domains with Anthropic
+- `max_uses` (int, optional): Maximum number of searches allowed
+  - Supported by: Anthropic

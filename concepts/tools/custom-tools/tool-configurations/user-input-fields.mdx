@@ -1,0 +1,35 @@
+---
+title: "User Input Fields"
+description: "Specify which fields require user input"
+---
+
+## Overview
+
+Specify which fields require user input.
+
+## Usage
+
+```python
+from upsonic.tools import tool
+
+@tool(
+    requires_user_input=True,
+    user_input_fields=["api_key"]
+)
+def api_call(endpoint: str, api_key: str) -> str:
+    """
+    Make an API call with user-provided key.
+
+    Args:
+        endpoint: API endpoint URL
+        api_key: API authentication key
+
+    Returns:
+        API response
+    """
+    return f"API call to {endpoint} completed"
+```
+
+## Parameters
+
+- `user_input_fields` (List[str]): List of field names that require user input

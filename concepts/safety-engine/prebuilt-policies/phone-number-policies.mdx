@@ -1,0 +1,34 @@
+---
+title: "Phone Number Policies"
+description: "Detect and anonymize phone numbers"
+---
+
+## What is Phone Number Policy?
+
+Phone number policies specifically detect and anonymize phone numbers in various formats (US, international, etc.).
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import AnonymizePhoneNumbersPolicy
+
+# Anonymize just phone numbers
+agent = Agent(
+    model="openai/gpt-4o",
+    agent_policy=AnonymizePhoneNumbersPolicy
+)
+
+task = Task("Call me at +1-555-123-4567")
+result = agent.do(task)
+# Phone number gets randomized but keeps the format
+```
+
+## Available Variants
+
+- `AnonymizePhoneNumbersPolicy`: Pattern-based detection and anonymization
+- `AnonymizePhoneNumbersPolicy_LLM_Finder`: LLM-powered detection for better accuracy
+
+## Params
+
+No custom parameters. Uses built-in phone number patterns.

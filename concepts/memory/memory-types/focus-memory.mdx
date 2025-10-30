@@ -1,0 +1,59 @@
+---
+title: "Focus Memory"
+description: "Learn about users and build comprehensive profiles"
+---
+
+## What is User Analysis Memory?
+
+User Analysis Memory learns about users across all conversations, building comprehensive profiles that enable personalization and adaptive responses.
+
+## Usage
+
+```python
+from upsonic.storage import Memory, InMemoryStorage
+from pydantic import BaseModel, Field
+from typing import Optional
+
+# Default user analysis
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_003",
+    user_id="user_001",
+    user_analysis_memory=True,
+    model="openai/gpt-4o"
+)
+
+# Custom user profile schema
+class UserProfile(BaseModel):
+    name: Optional[str] = Field(None, description="User's name")
+    expertise: Optional[str] = Field(None, description="Technical expertise level")
+    interests: Optional[list] = Field(None, description="Areas of interest")
+
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_003",
+    user_id="user_001",
+    user_analysis_memory=True,
+    user_profile_schema=UserProfile,
+    model="openai/gpt-4o"
+)
+
+# Dynamic user learning (agent creates custom fields)
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_003",
+    user_id="user_001",
+    user_analysis_memory=True,
+    dynamic_user_profile=True,  # Agent creates custom profile fields
+    model="openai/gpt-4o"
+)
+```
+
+## Params
+
+- `user_analysis_memory: bool` - Enable/disable user learning
+- `user_id: str` - Required identifier for the user
+- `model: str` - Required model for analyzing user traits
+- `user_profile_schema: BaseModel` - Optional custom profile schema
+- `dynamic_user_profile: bool` - Let agent create custom fields
+- `user_memory_mode: str` - 'update' (default) or 'replace' mode

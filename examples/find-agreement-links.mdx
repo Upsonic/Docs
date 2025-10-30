@@ -1,12 +1,13 @@
 ---
 title: "Find Agreement Links"
 description: "Build an Upsonic LLM agent that autonomously finds and verifies agreement or policy pages on company websites."
-
 ---
 
 This example demonstrates how to build an **Upsonic LLM agent** that can autonomously find and verify agreement or policy pages on a company's ecommerce website — such as Privacy Policy, Terms of Use, or Cookie Policy — using web scraping and LLM reasoning for exploration and validation.
 
-## Overview
+<iframe src="https://www.youtube.com/embed/TMQf7D7hFVM" title="YouTube video player" frameborder="0" className="w-full aspect-video rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen />
+
+Overview
 
 In this task, the agent:
 
@@ -301,14 +302,17 @@ Do not stop until you've found and verified at least 2 policy pages.
 ## How It Works
 
 ### 1. Website Discovery
+
 - The LLM uses the `website_scraping` tool to analyze the main site content
 - It identifies subpages likely to contain legal or policy-related text
 
 ### 2. Intelligent Exploration
+
 - The agent autonomously follows links and checks accessibility
 - It looks for URLs containing keywords like "privacy", "terms", "policy", "legal", "cookie"
 
 ### 3. Agreement Verification
+
 - The LLM determines whether each reachable page is an agreement/policy page
 - It analyzes content for mentions of user data, consent, cookies, terms, etc.
 - Results are returned as structured Pydantic models

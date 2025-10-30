@@ -1,0 +1,67 @@
+---
+title: "File Management"
+description: "Manage files programmatically in the virtual filesystem"
+---
+
+## Usage
+
+File management in Deep Agent is handled through the virtual filesystem capability.
+
+## Params
+
+### add_file
+Add a single file to the virtual filesystem.
+
+```python
+agent.add_file(file_path: str, content: str)
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `file_path` | `str` | Absolute path for the file |
+| `content` | `str` | File content |
+
+### set_files
+Set multiple files at once.
+
+```python
+agent.set_files(files: Dict[str, str])
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `files` | `Dict[str, str]` | Dictionary mapping file paths to content |
+
+### get_files
+Get all files from the virtual filesystem.
+
+```python
+files = agent.get_files()
+```
+
+**Return Value:** Dictionary mapping file paths to content.
+
+## Example
+
+```python
+from upsonic import DeepAgent, Task
+
+agent = DeepAgent("openai/gpt-4o")
+
+# Add initial files
+agent.add_file("/app/main.py", "print('Hello World')")
+agent.add_file("/app/requirements.txt", "flask==2.0.1")
+
+# Or set multiple files at once
+agent.set_files({
+    "/project/README.md": "# My Project",
+    "/project/src/main.py": "def main():\n    print('Hello')"
+})
+
+# Get all files
+files = agent.get_files()
+# Returns: {"/app/main.py": "...", "/app/requirements.txt": "..."}
+
+task = Task("Review the code and add error handling")
+result = agent.do(task)
+```

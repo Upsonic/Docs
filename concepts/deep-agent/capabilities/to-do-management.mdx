@@ -1,0 +1,36 @@
+---
+title: "To-Do Management"
+description: "Automatic todo tracking and completion enforcement"
+---
+
+## Usage
+
+Deep Agent provides automatic todo tracking and completion enforcement.
+
+Todos follow a strict lifecycle:
+1. Created as `"pending"` or `"in_progress"`
+2. Marked `"in_progress"` before starting work
+3. Marked `"completed"` immediately after finishing
+4. Agent continues until ALL todos are `"completed"`
+
+## Params
+
+### Automatic Completion Loop
+
+The agent automatically:
+- Checks todo completion after each execution
+- Creates continuation tasks for incomplete todos
+- Repeats up to 10 iterations (MAX_COMPLETION_ITERATIONS)
+- Provides debug output showing progress (completed/total)
+
+### Managing Todos Programmatically
+
+```python
+# Get current todos
+todos = agent.get_todos()
+# Returns: [{"content": "...", "status": "..."}, ...]
+
+# Access state directly
+state = agent.deep_agent_state
+todos = state.todos  # List[Todo]
+```

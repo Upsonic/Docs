@@ -1,0 +1,100 @@
+---
+title: "Creating Action"
+description: "Build custom content handling actions"
+---
+
+## Overall Class Structure
+
+Actions inherit from `ActionBase` and must implement the `action` method. They decide what to do when content is detected (block, allow, replace, anonymize, or raise exception).
+
+```python
+from upsonic.safety_engine.base import ActionBase
+from upsonic.safety_engine.models import RuleOutput, PolicyOutput
+
+class MyCustomAction(ActionBase):
+    """Action description"""
+
+    name = "My Custom Action"
+    description = "Handles detected content"
+    language = "en"
+
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        """Execute action based on rule result"""
+        # Check confidence threshold
+        if rule_result.confidence < 0.5:
+            return self.allow_content()
+
+        # Take appropriate action
+        return self.raise_block_error("Content blocked")
+```
+
+## Available Action Methods
+
+- `allow_content()`: Let content pass through
+- `raise_block_error(message)`: Block with a message
+- `replace_triggered_keywords(replacement)`: Replace keywords with text
+- `anonymize_triggered_keywords()`: Anonymize with random values
+- `raise_exception(message)`: Raise DisallowedOperation exception
+- `llm_raise_block_error(reason)`: Generate block message with LLM
+- `llm_raise_exception(reason)`: Generate exception with LLM
+
+## Example Action
+
+Here's a complete example of a custom action that handles confidential content:
+
+```python
+from upsonic.safety_engine.base import ActionBase
+from upsonic.safety_engine.models import RuleOutput, PolicyOutput
+
+class CompanySecretAction(ActionBase):
+    """Handles company confidential content"""
+
+    name = "Company Secret Action"
+    description = "Blocks or redacts confidential company information"
+    language = "en"
+
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        """Execute action for confidential content"""
+
+        # Allow if low confidence
+        if rule_result.confidence < 0.3:
+            return self.allow_content()
+
+        # Medium confidence: Redact keywords
+        if rule_result.confidence < 0.7:
+            return self.replace_triggered_keywords("[REDACTED]")
+
+        # High confidence: Block completely
+        block_message = (
+            "This content has been blocked because it contains "
+            "confidential company information. Please remove any "
+            "internal project names, codes, or proprietary data."
+        )
+        return self.raise_block_error(block_message)
+```
+
+## Using LLM in Actions
+
+For context-aware messages, use LLM-powered action methods:
+
+```python
+class SmartSecretAction(ActionBase):
+    """LLM-powered action for confidential content"""
+
+    name = "Smart Secret Action"
+    description = "Uses LLM to generate contextual messages"
+    language = "en"
+
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        """Execute LLM-powered action"""
+
+        if rule_result.confidence < 0.5:
+            return self.allow_content()
+
+        # Generate contextual block message using LLM
+        reason = (
+            f"Content contains confidential information: "
+            f"{rule_result.details}"
+        )
+        return self.llm_raise_block_error(reason)
+```

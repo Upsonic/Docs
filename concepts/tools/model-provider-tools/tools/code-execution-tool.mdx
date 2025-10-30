@@ -1,0 +1,77 @@
+---
+title: "CodeExecutionTool"
+description: "A built-in tool that allows models to execute code in a sandboxed environment"
+---
+
+## Overview
+
+A built-in tool that allows models to execute code in a sandboxed environment.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import CodeExecutionTool
+from upsonic.models.openai import OpenAIResponsesModel
+
+# Create model
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"
+)
+
+# Create code execution tool
+code_exec = CodeExecutionTool()
+
+# Create task
+task = Task(
+    description="Write a Python function to calculate factorial and test it with 5",
+    tools=[code_exec]
+)
+
+# Create agent
+agent = Agent(model=model, name="Code Execution Agent")
+
+# Execute
+result = agent.do(task)
+print(f"Result: {result}")
+```
+
+## Advanced Example
+
+```python
+from upsonic.tools.builtin_tools import CodeExecutionTool
+
+code_exec = CodeExecutionTool()
+
+# Complex computation task
+task = Task(
+    description="""
+    Write and execute Python code to:
+    1. Calculate Fibonacci sequence up to 10 terms
+    2. Find prime numbers up to 50
+    3. Create a simple data visualization (if matplotlib available)
+    """,
+    tools=[code_exec]
+)
+
+agent = Agent(model=model, name="Computational Agent")
+agent.print_do(task)
+```
+
+## Parameters
+
+- No configuration parameters (provider-managed execution)
+
+## Provider Support
+
+- Anthropic: ✅ Full support
+- OpenAI Responses: ✅ Full support
+- Google: ✅ Full support
+
+## Characteristics
+
+- Sandboxed execution environment
+- Python code support
+- Provider-managed security and isolation
+- Automatic timeout and resource limits

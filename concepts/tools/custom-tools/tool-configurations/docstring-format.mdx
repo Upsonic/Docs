@@ -1,0 +1,32 @@
+---
+title: "Docstring Format"
+description: "Specify the docstring format for parameter description extraction"
+---
+
+## Overview
+
+Specify the docstring format for parameter description extraction.
+
+## Usage
+
+```python
+from upsonic.tools import tool
+
+@tool(docstring_format='google')
+def process_data(input_data: str, format_type: str) -> str:
+    """
+    Process data with specified format.
+
+    Args:
+        input_data: The data to process
+        format_type: Format type for processing
+
+    Returns:
+        Processed data result
+    """
+    return f"Processed {input_data} as {format_type}"
+```
+
+## Parameters
+
+- `docstring_format` (str): Format type - 'google', 'numpy', 'sphinx', or 'auto' (default: 'auto')
