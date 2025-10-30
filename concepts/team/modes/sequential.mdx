@@ -1,0 +1,52 @@
+---
+title: "Sequential"
+description: "Linear workflow where tasks flow from one agent to the next"
+---
+
+## What is Sequential Team mode
+
+Sequential mode is the default and most straightforward team operation mode. Tasks flow from one agent to the next automatically, with the team intelligently selecting the best agent for each task based on their roles and capabilities.
+
+## Usage
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create specialized agents
+researcher = Agent(
+    model="openai/gpt-4o",
+    name="Researcher",
+    role="Research Specialist",
+    goal="Find accurate information and data"
+)
+
+writer = Agent(
+    model="openai/gpt-4o",
+    name="Writer",
+    role="Content Writer",
+    goal="Create clear and engaging content"
+)
+
+# Create sequential team
+team = Team(
+    agents=[researcher, writer],
+    mode="sequential"
+)
+
+# Define tasks
+tasks = [
+    Task(description="Research the latest developments in quantum computing"),
+    Task(description="Write a blog post about quantum computing for general audience")
+]
+
+# Execute team workflow
+result = team.do(tasks)
+print(result)
+```
+
+## Params
+
+- `agents`: List of Agent instances
+- `mode`: Set to `"sequential"`
+- `response_format`: Optional, defaults to `str`
+- `ask_other_team_members`: Optional, enables inter-agent communication

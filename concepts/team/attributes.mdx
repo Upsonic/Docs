@@ -1,0 +1,18 @@
+---
+title: "Attributes"
+description: "Configuration options for the Team class"
+---
+
+## Attributes
+
+The Team class accepts the following parameters:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `agents` | `list[Any]` | Required | List of Agent instances to use as team members |
+| `tasks` | `list[Task] \| None` | `None` | List of tasks to execute (optional) |
+| `model` | `Optional[Any]` | `None` | Model provider for internal agents (leader, router) |
+| `response_format` | `Any` | `str` | Response format for the final output |
+| `ask_other_team_members` | `bool` | `False` | Flag to add other agents as tools |
+| `mode` | `Literal["sequential", "coordinate", "route"]` | `"sequential"` | Operational mode for the team |
+| `memory` | `Optional[Memory]` | `None` | Shared memory for team coordination |
