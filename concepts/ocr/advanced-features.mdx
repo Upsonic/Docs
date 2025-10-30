@@ -1,0 +1,125 @@
+---
+title: "Advanced Features"
+description: "Advanced OCR capabilities and specialized features"
+---
+
+## Provider Selection Helper
+
+Use the `infer_provider` function to create OCR instances by provider name without importing provider classes.
+
+```python
+from upsonic.ocr import infer_provider
+
+# Create OCR by provider name
+ocr = infer_provider('easyocr', languages=['en'], rotation_fix=True)
+text = ocr.get_text('document.pdf')
+
+# Available provider names:
+# 'easyocr', 'rapidocr', 'tesseract', 'deepseek', 'deepseek_ocr'
+# 'paddleocr', 'paddle', 'ppstructurev3', 'ppchatocrv4', 'paddleocrvl'
+```
+
+## Batch Processing with DeepSeek
+
+DeepSeek OCR provides optimized batch processing for multi-page PDFs, processing all pages in a single batch for better performance.
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.deepseek import DeepSeekOCR
+
+# Create DeepSeek OCR
+ocr = OCR(
+    DeepSeekOCR,
+    model_name="deepseek-ai/DeepSeek-OCR",
+    temperature=0.0,
+    max_tokens=8192
+)
+
+# Automatically uses batch processing for PDFs
+result = ocr.process_file('multi_page_document.pdf')
+print(f"Processed {result.page_count} pages")
+```
+
+## Advanced PaddleOCR Features
+
+PaddleOCR providers offer specialized features for complex document understanding.
+
+### Structure Recognition with PPStructureV3
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.paddleocr import PPStructureV3
+
+# Create structure-aware OCR
+ocr = OCR(
+    PPStructureV3,
+    use_table_recognition=True,
+    use_formula_recognition=True,
+    use_chart_recognition=True
+)
+
+# Extract structured content
+result = ocr.provider.predict('research_paper.pdf')
+
+# Get markdown representation
+markdown_text = ocr.provider.concatenate_markdown_pages(result)
+print(markdown_text)
+```
+
+### Information Extraction with PPChatOCRv4
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.paddleocr import PPChatOCRv4
+
+# Create chat-based OCR
+ocr = OCR(
+    PPChatOCRv4,
+    use_table_recognition=True,
+    use_seal_recognition=True
+)
+
+# Extract visual information
+visual_result = ocr.provider.visual_predict('invoice.pdf')
+
+# Build vector embeddings for retrieval
+vector_info = ocr.provider.build_vector(
+    visual_result,
+    min_characters=3500,
+    block_size=300
+)
+
+# Extract specific fields using chat interface
+invoice_data = ocr.provider.chat(
+    key_list=['invoice_number', 'date', 'total_amount', 'vendor_name'],
+    visual_info=visual_result,
+    use_vector_retrieval=True,
+    vector_info=vector_info
+)
+
+print(f"Invoice Number: {invoice_data.get('invoice_number')}")
+print(f"Date: {invoice_data.get('date')}")
+print(f"Total: {invoice_data.get('total_amount')}")
+```
+
+## Image Preprocessing
+
+Apply preprocessing to improve OCR accuracy for low-quality images.
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.tesseract import TesseractOCR
+
+# Create OCR with all preprocessing enabled
+ocr = OCR(
+    TesseractOCR,
+    languages=['eng'],
+    rotation_fix=True,        # Fix skewed/rotated images
+    enhance_contrast=True,    # Improve text clarity
+    remove_noise=True,        # Remove background noise
+    pdf_dpi=300              # High quality PDF rendering
+)
+
+# Process low-quality image
+text = ocr.get_text('skewed_noisy_image.jpg')
+```

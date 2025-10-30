@@ -1,0 +1,61 @@
+---
+title: "Overview"
+description: "Extract text from images and PDFs with multiple OCR provider support"
+---
+
+## What is Unified OCR?
+
+The Unified OCR system in Upsonic provides a consistent interface for optical character recognition across multiple OCR engines. Instead of learning different APIs for each OCR provider, you use a single `OCR` class that works seamlessly with EasyOCR, RapidOCR, Tesseract, DeepSeek, and PaddleOCR.
+
+The OCR class serves as a high-level orchestrator that:
+- Manages multiple OCR provider backends with a unified API
+- Handles image preprocessing (rotation correction, contrast enhancement, noise reduction)
+- Converts PDFs to images with configurable DPI
+- Tracks confidence scores and bounding box detection
+- Collects performance metrics and processing statistics
+- Provides provider-specific features and optimizations
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.easyocr import EasyOCR
+
+# Create OCR instance
+ocr = OCR(EasyOCR, languages=['en'], rotation_fix=True)
+
+# Extract text
+text = ocr.get_text('document.pdf')
+print(text)
+```
+
+## How Unified OCR Works
+
+The OCR system follows a clear processing pipeline:
+
+1. **File Preparation**: Validates file existence and format (supports .png, .jpg, .jpeg, .bmp, .tiff, .tif, .webp, .pdf)
+2. **PDF Conversion**: If the file is a PDF, converts each page to images at the specified DPI
+3. **Image Preprocessing**: Optionally applies rotation correction, contrast enhancement, and noise reduction
+4. **OCR Processing**: Processes each image through the selected provider's engine
+5. **Result Aggregation**: Combines results from multiple pages, calculates average confidence scores
+6. **Metrics Tracking**: Updates processing statistics for performance analysis
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.rapidocr import RapidOCR
+
+# Create OCR with preprocessing
+ocr = OCR(
+    RapidOCR,
+    languages=['en'],
+    rotation_fix=True,
+    enhance_contrast=True,
+    pdf_dpi=300
+)
+
+# Process file - returns detailed results
+result = ocr.process_file('document.pdf')
+
+print(f"Text: {result.text}")
+print(f"Confidence: {result.confidence:.2%}")
+print(f"Pages: {result.page_count}")
+print(f"Processing time: {result.processing_time_ms:.2f}ms")
+```

@@ -1,0 +1,89 @@
+---
+title: "PaddleOCR"
+description: "Comprehensive OCR with multiple specialized pipelines for advanced document understanding"
+---
+
+## What is PaddleOCR?
+
+Comprehensive OCR with multiple specialized pipelines for advanced document understanding.
+
+## Usage
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.paddleocr import PaddleOCR, PPStructureV3, PPChatOCRv4, PaddleOCRVL
+
+# General OCR (PP-OCRv5)
+ocr = OCR(PaddleOCR, lang='en', ocr_version='PP-OCRv5')
+text = ocr.get_text('document.pdf')
+
+# Advanced document structure recognition
+ocr_structure = OCR(
+    PPStructureV3,
+    use_table_recognition=True,
+    use_formula_recognition=True
+)
+result = ocr_structure.process_file('research_paper.pdf')
+
+# Chat-based document understanding
+ocr_chat = OCR(
+    PPChatOCRv4,
+    use_table_recognition=True,
+    use_seal_recognition=True
+)
+
+# Vision-Language document understanding
+ocr_vl = OCR(
+    PaddleOCRVL,
+    use_layout_detection=True,
+    use_chart_recognition=True,
+    format_block_content=True
+)
+```
+
+## PaddleOCR (General OCR)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `lang` | str | `'en'` | Language code |
+| `ocr_version` | str | `'PP-OCRv5'` | OCR version ('PP-OCRv3', 'PP-OCRv4', 'PP-OCRv5') |
+| `use_doc_orientation_classify` | bool | `None` | Enable document orientation classification |
+| `use_doc_unwarping` | bool | `None` | Enable document unwarping |
+| `use_textline_orientation` | bool | `None` | Enable text line orientation detection |
+| `text_det_limit_side_len` | int | `None` | Limit on detection input side length |
+| `text_rec_score_thresh` | float | `None` | Text recognition score threshold |
+| `return_word_box` | bool | `None` | Return word-level bounding boxes |
+
+## PPStructureV3 (Document Structure)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `use_table_recognition` | bool | `None` | Enable table recognition |
+| `use_formula_recognition` | bool | `None` | Enable formula recognition |
+| `use_seal_recognition` | bool | `None` | Enable seal text recognition |
+| `use_chart_recognition` | bool | `None` | Enable chart recognition |
+| `layout_threshold` | float | `None` | Layout detection score threshold |
+| `lang` | str | `'en'` | Language code |
+
+## PPChatOCRv4 (Chat-based OCR)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `use_table_recognition` | bool | `None` | Enable table recognition |
+| `use_seal_recognition` | bool | `None` | Enable seal recognition |
+| `mllm_chat_bot_config` | dict | `None` | Multimodal LLM configuration |
+| `retriever_config` | dict | `None` | Retriever configuration for vector search |
+
+## PaddleOCRVL (Vision-Language)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `use_layout_detection` | bool | `None` | Enable layout detection |
+| `use_chart_recognition` | bool | `None` | Enable chart recognition |
+| `format_block_content` | bool | `None` | Format content as Markdown |
+| `vl_rec_backend` | str | `'local'` | VL recognition backend |
+| `temperature` | float | `None` | Sampling temperature for VLM |
+
+## Supported Languages
+
+40+ languages for PP-OCRv5, with extensive support in PP-OCRv3 for Asian, European, and Middle Eastern languages.
