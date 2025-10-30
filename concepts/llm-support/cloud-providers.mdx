@@ -1,0 +1,477 @@
+---
+title: "Cloud Model Providers"
+description: "AWS Bedrock and Azure OpenAI integration"
+---
+
+## Overview
+
+Cloud model providers offer enterprise-grade infrastructure, security, and compliance for deploying LLMs at scale. Upsonic supports AWS Bedrock and Azure OpenAI for cloud-based model deployments.
+
+---
+
+## AWS Bedrock
+
+AWS Bedrock provides access to foundation models from Amazon, Anthropic, Meta, Mistral, and other providers through a unified API.
+
+### Authentication
+
+Configure AWS credentials using one of these methods:
+
+**Option 1: Environment Variables**
+```bash
+export AWS_ACCESS_KEY_ID="AKIA..."
+export AWS_SECRET_ACCESS_KEY="..."
+export AWS_DEFAULT_REGION="us-east-1"
+```
+
+**Option 2: AWS CLI Configuration**
+```bash
+aws configure
+```
+
+**Option 3: IAM Roles (for EC2/ECS/Lambda)**
+
+AWS SDK will automatically use instance IAM roles when deployed on AWS services.
+
+### Available Models
+
+#### Amazon Models
+- `amazon.titan-tg1-large`
+- `amazon.titan-text-lite-v1`
+- `amazon.titan-text-express-v1`
+- `us.amazon.nova-pro-v1:0`
+- `us.amazon.nova-lite-v1:0`
+- `us.amazon.nova-micro-v1:0`
+
+#### Anthropic Models (via Bedrock)
+- `anthropic.claude-3-5-sonnet-20241022-v2:0`
+- `us.anthropic.claude-3-5-sonnet-20241022-v2:0`
+- `anthropic.claude-3-5-haiku-20241022-v1:0`
+- `us.anthropic.claude-3-5-haiku-20241022-v1:0`
+- `anthropic.claude-3-7-sonnet-20250219-v1:0`
+- `anthropic.claude-opus-4-20250514-v1:0`
+- `anthropic.claude-sonnet-4-20250514-v1:0`
+
+#### Meta Models
+- `meta.llama3-8b-instruct-v1:0`
+- `meta.llama3-70b-instruct-v1:0`
+- `meta.llama3-1-8b-instruct-v1:0`
+- `meta.llama3-1-70b-instruct-v1:0`
+- `meta.llama3-1-405b-instruct-v1:0`
+- `us.meta.llama3-2-11b-instruct-v1:0`
+- `us.meta.llama3-2-90b-instruct-v1:0`
+- `us.meta.llama3-3-70b-instruct-v1:0`
+
+#### Mistral Models
+- `mistral.mistral-7b-instruct-v0:2`
+- `mistral.mixtral-8x7b-instruct-v0:1`
+- `mistral.mistral-large-2402-v1:0`
+- `mistral.mistral-large-2407-v1:0`
+
+#### Cohere Models
+- `cohere.command-text-v14`
+- `cohere.command-r-v1:0`
+- `cohere.command-r-plus-v1:0`
+- `cohere.command-light-text-v14`
+
+### Basic Example
+
+```python
+from upsonic import Agent, Task
+
+# Use Anthropic Claude via Bedrock
+agent = Agent(model="bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0")
+
+task = Task("Analyze this data for patterns")
+result = agent.do(task)
+print(result)
+```
+
+### Advanced Configuration
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.bedrock import BedrockConverseModel, BedrockModelSettings
+
+# Configure Bedrock-specific settings
+settings = BedrockModelSettings(
+    max_tokens=2048,
+    temperature=0.7,
+    top_p=0.9,
+    stop_sequences=["Human:", "Assistant:"],
+    bedrock_guardrail_config={
+        "guardrailIdentifier": "my-guardrail-id",
+        "guardrailVersion": "DRAFT"
+    },
+    bedrock_performance_configuration={
+        "latency": "optimized"
+    },
+    bedrock_request_metadata={
+        "project": "my-project",
+        "team": "ai-team"
+    }
+)
+
+model = BedrockConverseModel(
+    model_name="anthropic.claude-3-5-sonnet-20241022-v2:0",
+    settings=settings
+)
+
+agent = Agent(model=model)
+task = Task("Generate a technical report")
+result = agent.do(task)
+```
+
+### Streaming Example
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent(model="bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0")
+task = Task("Write a detailed explanation of machine learning")
+
+async for chunk in agent.run_stream(task):
+    print(chunk, end="", flush=True)
+```
+
+### Guardrails
+
+AWS Bedrock provides content filtering and safety controls:
+
+```python
+from upsonic.models.bedrock import BedrockModelSettings
+
+settings = BedrockModelSettings(
+    bedrock_guardrail_config={
+        "guardrailIdentifier": "my-guardrail-id",
+        "guardrailVersion": "1",
+        "trace": "enabled"  # Enable guardrail tracing
+    }
+)
+```
+
+### Custom Model Parameters
+
+Pass model-specific parameters via `bedrock_additional_model_requests_fields`:
+
+```python
+from upsonic.models.bedrock import BedrockModelSettings
+
+settings = BedrockModelSettings(
+    bedrock_additional_model_requests_fields={
+        "top_k": 250,  # Model-specific parameter
+        "anthropic_version": "bedrock-2023-05-31"
+    }
+)
+```
+
+### Prompt Caching
+
+Bedrock does not currently support explicit prompt caching, but may cache internally.
+
+### Bedrock-Specific Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `bedrock_guardrail_config` | `GuardrailConfigurationTypeDef` | Content moderation and safety settings |
+| `bedrock_performance_configuration` | `PerformanceConfigurationTypeDef` | Performance optimization settings |
+| `bedrock_request_metadata` | `dict[str, str]` | Additional request metadata |
+| `bedrock_additional_model_response_fields_paths` | `list[str]` | JSON paths to extract from responses |
+| `bedrock_prompt_variables` | `Mapping[str, PromptVariableValuesTypeDef]` | Variables for prompt templates |
+| `bedrock_additional_model_requests_fields` | `Mapping[str, Any]` | Model-specific parameters |
+
+### Cross-Region Inference
+
+Use region-specific model identifiers for cross-region inference:
+
+```python
+# US-specific model
+agent = Agent(model="bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0")
+
+# EU-specific model (when available)
+agent = Agent(model="bedrock/eu.anthropic.claude-3-5-sonnet-20241022-v2:0")
+```
+
+### IAM Permissions Required
+
+Your AWS credentials need these permissions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "arn:aws:bedrock:*::foundation-model/*"
+    }
+  ]
+}
+```
+
+---
+
+## Azure OpenAI
+
+Azure OpenAI provides OpenAI models through Microsoft Azure infrastructure with enterprise security and compliance.
+
+### Authentication
+
+Set these environment variables:
+
+```bash
+export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/"
+export AZURE_OPENAI_API_KEY="..."
+export OPENAI_API_VERSION="2024-02-15-preview"  # Or latest version
+```
+
+### Available Models
+
+Azure OpenAI supports the same models as OpenAI, deployed on Azure:
+
+- **GPT-4o**: `gpt-4o`, `gpt-4o-mini`
+- **GPT-4**: `gpt-4`, `gpt-4-turbo`, `gpt-4-32k`
+- **GPT-3.5**: `gpt-3.5-turbo`, `gpt-3.5-turbo-16k`
+- **o1 Series**: `o1`, `o1-mini`, `o1-preview`, `o1-pro`
+- **Embeddings**: `text-embedding-ada-002`, `text-embedding-3-small`, `text-embedding-3-large`
+
+**Note:** Model availability varies by Azure region. Check your deployment for available models.
+
+### Basic Example
+
+```python
+from upsonic import Agent, Task
+
+# Use Azure OpenAI
+agent = Agent(model="azure/gpt-4o")
+
+task = Task("Summarize this document")
+result = agent.do(task)
+print(result)
+```
+
+### Advanced Configuration
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+
+# Azure-specific settings
+settings = OpenAIChatModelSettings(
+    max_tokens=2048,
+    temperature=0.7,
+    top_p=0.9,
+    seed=42,
+    parallel_tool_calls=True,
+    extra_headers={
+        "x-ms-client-request-id": "unique-request-id"
+    }
+)
+
+model = OpenAIChatModel(
+    model_name="gpt-4o",
+    provider="azure",
+    settings=settings
+)
+
+agent = Agent(model=model)
+task = Task("Generate code for a REST API")
+result = agent.do(task)
+```
+
+### Using Deployment Names
+
+Azure OpenAI uses deployment names instead of model names:
+
+```python
+# If your deployment is named "my-gpt4-deployment"
+agent = Agent(model="azure/my-gpt4-deployment")
+```
+
+### Streaming Example
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent(model="azure/gpt-4o")
+task = Task("Write a long technical document")
+
+async for chunk in agent.run_stream(task):
+    print(chunk, end="", flush=True)
+```
+
+### With Structured Output
+
+```python
+from pydantic import BaseModel
+from upsonic import Agent, Task
+
+class CodeReview(BaseModel):
+    quality_score: int
+    issues: list[str]
+    recommendations: list[str]
+
+agent = Agent(model="azure/gpt-4o")
+task = Task("Review this Python code", response_format=CodeReview)
+result = agent.do(task)  # Returns CodeReview instance
+```
+
+### Content Filtering
+
+Azure OpenAI includes content filtering by default:
+
+```python
+from upsonic.utils.package.exception import ModelHTTPError
+
+try:
+    result = agent.do(task)
+except ModelHTTPError as e:
+    if "content_filter" in str(e.body):
+        print("Content was filtered by Azure safety systems")
+```
+
+### Private Endpoints
+
+For enhanced security, use Azure Private Link:
+
+```bash
+export AZURE_OPENAI_ENDPOINT="https://your-resource.privatelink.openai.azure.com/"
+```
+
+### Managed Identity Authentication
+
+When running on Azure services (VM, App Service, Functions), use managed identity:
+
+```python
+from azure.identity import DefaultAzureCredential
+from openai import AsyncAzureOpenAI
+
+# Managed identity will be used automatically
+credential = DefaultAzureCredential()
+```
+
+### Prompt Caching
+
+Azure OpenAI does not currently support prompt caching.
+
+### Azure-Specific Considerations
+
+| Feature | Details |
+|---------|---------|
+| **Deployment Names** | Use your deployment name instead of OpenAI model names |
+| **API Versions** | Must specify API version in `OPENAI_API_VERSION` |
+| **Regional Availability** | Models vary by region; check Azure portal |
+| **Content Filtering** | Automatic content filtering (configurable) |
+| **Data Residency** | Data stays in your Azure region |
+| **VNET Integration** | Supports Azure Virtual Network integration |
+| **Private Endpoints** | Azure Private Link support |
+| **Managed Identity** | Azure AD authentication support |
+
+### Best Practices
+
+**1. Use Managed Identity in Production**
+```bash
+# Don't use API keys in production
+# Use managed identity instead
+export AZURE_OPENAI_USE_MANAGED_IDENTITY="true"
+```
+
+**2. Set Appropriate Timeouts**
+```python
+from upsonic.models.openai import OpenAIChatModelSettings
+
+settings = OpenAIChatModelSettings(
+    timeout=60.0  # 60 seconds timeout
+)
+```
+
+**3. Monitor with Application Insights**
+```python
+settings = OpenAIChatModelSettings(
+    extra_headers={
+        "x-ms-client-request-id": request_id,
+        "x-ms-useragent": "MyApp/1.0"
+    }
+)
+```
+
+**4. Handle Content Filtering**
+```python
+try:
+    result = agent.do(task)
+except ModelHTTPError as e:
+    if "content_filter" in str(e.body):
+        # Handle filtered content appropriately
+        pass
+```
+
+---
+
+## Comparison: Bedrock vs Azure OpenAI
+
+| Feature | AWS Bedrock | Azure OpenAI |
+|---------|------------|--------------|
+| **Model Selection** | Multiple providers (Anthropic, Meta, Mistral, Amazon) | OpenAI models only |
+| **Deployment** | Serverless, managed | Managed deployments |
+| **Authentication** | AWS IAM | API Key or Managed Identity |
+| **Pricing** | Pay-per-token | Pay-per-token with commitment options |
+| **Compliance** | AWS compliance certifications | Azure compliance certifications |
+| **Data Residency** | AWS region-specific | Azure region-specific |
+| **Guardrails** | Built-in AWS Guardrails | Built-in content filtering |
+| **Streaming** | ✅ | ✅ |
+| **Tools/Functions** | ✅ | ✅ |
+| **JSON Schema** | ❌ (varies by model) | ✅ |
+| **Best For** | Multi-provider access, AWS ecosystem | OpenAI models, Azure ecosystem |
+
+---
+
+## When to Use Cloud Providers
+
+### Choose AWS Bedrock When:
+- You need access to multiple model providers
+- You're already using AWS infrastructure
+- You need AWS Guardrails for content safety
+- You want to avoid vendor lock-in with multiple model options
+- You need cross-region inference capabilities
+
+### Choose Azure OpenAI When:
+- You want OpenAI models with enterprise features
+- You're already using Azure infrastructure
+- You need Azure AD integration and managed identity
+- You require Azure compliance certifications
+- You want Azure Private Link for network isolation
+
+### General Cloud Provider Benefits:
+- **Enterprise Security**: SOC 2, ISO compliance, private deployments
+- **Data Sovereignty**: Keep data in specific regions
+- **Integration**: Native integration with cloud services
+- **Reliability**: High availability and SLAs
+- **Monitoring**: Native cloud monitoring and logging
+- **Access Control**: IAM-based access management
+
+---
+
+## Cost Optimization
+
+### AWS Bedrock
+- Use Amazon Nova models for cost-effective inference
+- Monitor usage with AWS Cost Explorer
+- Set up billing alerts for unexpected usage
+
+### Azure OpenAI
+- Use Provisioned Throughput Units (PTUs) for predictable costs
+- Monitor with Azure Cost Management
+- Consider commitment-based pricing for high volume
+
+---
+
+## Next Steps
+
+- [Native Model Providers](/native-providers) - OpenAI, Anthropic, Google, Groq
+- [Local Model Providers](/local-providers) - Ollama for local deployment
+- [Model Gateways](/model-gateways) - OpenRouter, LiteLLM
+- [OpenAI-Compatible Models](/openai-compatible) - Using OpenAI-compatible endpoints
+

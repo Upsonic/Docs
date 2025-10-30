@@ -1,0 +1,195 @@
+---
+title: "LLM Support Overview"
+description: "Understanding LLM models in Upsonic AI Agent Framework"
+---
+
+## What are LLM Models?
+
+Large Language Models (LLMs) are the core components that power AI agents in the Upsonic framework. The framework provides a unified interface to interact with various LLM providers through a common `Model` class.
+
+### Model Architecture
+
+All model classes in Upsonic inherit from the base `Model` class, which provides:
+
+- **Unified Interface**: Common methods across all providers
+- **LCEL Compatibility**: Models inherit from `Runnable` for chain composition
+- **Streaming Support**: Async streaming responses via `request_stream()`
+- **Tool Integration**: Built-in support for function calling and tools
+- **Memory Management**: Conversation history and context handling
+- **Structured Output**: Pydantic model validation for responses
+
+### Core Model Methods
+
+```python
+from upsonic import Agent, Task
+from upsonic.models import infer_model
+
+# Create a model instance
+model = infer_model("openai/gpt-4o")
+
+# Use in an agent
+agent = Agent(model=model)
+task = Task("Analyze this data")
+result = agent.do(task)
+```
+
+### Model Inference
+
+The `infer_model()` function automatically detects and instantiates the appropriate model class based on the provider prefix:
+
+```python
+from upsonic.models import infer_model
+
+# Automatic provider detection
+openai_model = infer_model("openai/gpt-4o")
+anthropic_model = infer_model("anthropic/claude-3-5-sonnet-20241022")
+google_model = infer_model("google-gla/gemini-2.5-flash")
+groq_model = infer_model("groq/llama-3.3-70b-versatile")
+```
+
+### Model Settings
+
+Every model supports a `ModelSettings` configuration:
+
+```python
+from upsonic.models.settings import ModelSettings
+
+settings = ModelSettings(
+    max_tokens=2048,
+    temperature=0.7,
+    top_p=0.9,
+    seed=42,
+    presence_penalty=0.0,
+    frequency_penalty=0.0,
+    stop_sequences=["END", "STOP"]
+)
+
+model = infer_model("openai/gpt-4o")
+agent = Agent(model=model, settings=settings)
+```
+
+### Provider-Specific Settings
+
+Each provider extends `ModelSettings` with provider-specific parameters (all prefixed to avoid conflicts):
+
+```python
+from upsonic.models.anthropic import AnthropicModelSettings
+
+# Anthropic-specific settings
+anthropic_settings = AnthropicModelSettings(
+    max_tokens=4096,
+    temperature=0.1,
+    anthropic_thinking={
+        "type": "enabled",
+        "budget_tokens": 8192
+    },
+    anthropic_metadata={
+        "user_id": "user-123"
+    }
+)
+```
+
+## Error Handling
+
+The framework provides structured error handling for model operations:
+
+### Model HTTP Errors
+
+```python
+from upsonic.utils.package.exception import ModelHTTPError, UserError
+
+try:
+    result = agent.do(task)
+except ModelHTTPError as e:
+    print(f"HTTP Error: {e.status_code}")
+    print(f"Model: {e.model_name}")
+    print(f"Response: {e.body}")
+except UserError as e:
+    print(f"User Error: {e}")
+```
+
+### Unexpected Model Behavior
+
+```python
+from upsonic.utils.package.exception import UnexpectedModelBehavior
+
+try:
+    async with model.request_stream(messages, settings, params) as stream:
+        async for event in stream:
+            process_event(event)
+except UnexpectedModelBehavior as e:
+    print(f"Unexpected behavior: {e}")
+```
+
+### Retry Logic
+
+Models automatically handle certain errors with retry logic:
+
+- **Rate Limiting**: Automatic backoff for 429 errors
+- **Timeout Handling**: Configurable timeout settings
+- **Connection Errors**: Automatic retry with exponential backoff
+
+### Allow Model Requests
+
+Control model access globally for testing:
+
+```python
+from upsonic.models import ALLOW_MODEL_REQUESTS, override_allow_model_requests
+
+# Disable model requests globally (useful for testing)
+with override_allow_model_requests(False):
+    # Model requests will raise RuntimeError
+    pass
+```
+
+### Common Error Types
+
+| Error Type | Description | Solution |
+|------------|-------------|----------|
+| `ModelHTTPError` | HTTP errors from provider APIs (4xx, 5xx) | Check API credentials and request parameters |
+| `UnexpectedModelBehavior` | Unexpected response format | Update to latest version or report issue |
+| `UserError` | Invalid configuration or usage | Review error message and fix configuration |
+| `ValidationError` | Invalid tool call arguments or structured output | Check schema definitions and model responses |
+
+### Error Response Details
+
+All HTTP errors include detailed information:
+
+```python
+try:
+    result = agent.do(task)
+except ModelHTTPError as e:
+    # Access error details
+    status_code = e.status_code      # HTTP status code
+    model_name = e.model_name        # Model that failed
+    error_body = e.body              # Provider error response
+    
+    # Handle specific status codes
+    if status_code == 429:
+        print("Rate limit exceeded")
+    elif status_code == 401:
+        print("Invalid API credentials")
+    elif status_code == 400:
+        print("Invalid request parameters")
+```
+
+## Environment Configuration
+
+Set the default model via environment variable:
+
+```bash
+# Set default model for all agents
+export LLM_MODEL_KEY="anthropic/claude-3-5-sonnet-20241022"
+```
+
+The framework uses this priority:
+1. Explicitly passed model to Agent
+2. `LLM_MODEL_KEY` environment variable
+3. Default: `openai/gpt-4o`
+
+## Next Steps
+
+- [Compatibility Overview](/compatibility-overview) - See which features are supported by each provider
+- [Native Model Providers](/native-providers) - Learn about OpenAI, Anthropic, Google and other native providers
+- [OpenAI-compatible Models](/openai-compatible) - Use OpenAI-compatible endpoints
+

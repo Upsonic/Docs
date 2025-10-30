@@ -1,0 +1,581 @@
+---
+title: "Native Model Providers"
+description: "OpenAI, Anthropic, Google, Groq, Cohere, and Mistral integration"
+---
+
+## Overview
+
+Native model providers have dedicated SDK implementations in Upsonic, providing full feature support and optimized performance. Each provider uses its official Python client library.
+
+---
+
+## OpenAI
+
+OpenAI provides state-of-the-art language models including GPT-4, GPT-4o, and o1 reasoning models.
+
+### Authentication
+
+Set your OpenAI API key as an environment variable:
+
+```bash
+export OPENAI_API_KEY="sk-..."
+export OPENAI_BASE_URL="https://api.openai.com/v1"  # Optional
+```
+
+### Available Models
+
+- **GPT-4o**: `gpt-4o`, `gpt-4o-mini`, `gpt-4o-2024-11-20`
+- **GPT-4**: `gpt-4`, `gpt-4-turbo`, `gpt-4-32k`
+- **GPT-3.5**: `gpt-3.5-turbo`, `gpt-3.5-turbo-16k`
+- **o1 Series**: `o1`, `o1-mini`, `o1-preview`, `o1-pro`
+- **o3 Series**: `o3`, `o3-mini`, `o3-pro`
+- **GPT-5**: `gpt-5`, `gpt-5-mini`, `gpt-5-nano`
+
+### Basic Example
+
+```python
+from upsonic import Agent, Task
+
+# Simple usage
+agent = Agent(model="openai/gpt-4o")
+task = Task("Explain quantum computing")
+result = agent.do(task)
+print(result)
+```
+
+### Advanced Example with Settings
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+
+# Configure model settings
+settings = OpenAIChatModelSettings(
+    max_tokens=2048,
+    temperature=0.7,
+    top_p=0.9,
+    seed=42,
+    presence_penalty=0.1,
+    frequency_penalty=0.1,
+    parallel_tool_calls=True,
+    openai_logprobs=True,
+    openai_top_logprobs=3,
+    openai_user="user-123"
+)
+
+# Create model instance
+model = OpenAIChatModel(
+    model_name="gpt-4o",
+    settings=settings
+)
+
+agent = Agent(model=model)
+task = Task("Write a technical blog post about AI agents")
+result = agent.do(task)
+```
+
+### Reasoning Models (o1, o3, gpt-5)
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIResponsesModel, OpenAIResponsesModelSettings
+
+# Configure reasoning settings
+settings = OpenAIResponsesModelSettings(
+    max_tokens=4096,
+    openai_reasoning_effort="high",  # low, medium, high
+    openai_reasoning_summary="detailed"  # concise, detailed
+)
+
+model = OpenAIResponsesModel(
+    model_name="o1",
+    settings=settings
+)
+
+agent = Agent(model=model)
+task = Task("Solve this complex mathematical proof step by step")
+result = agent.do(task)
+```
+
+### Prompt Caching
+
+OpenAI does not currently support native prompt caching. Consider using semantic caching at the application level.
+
+### OpenAI-Specific Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `openai_reasoning_effort` | `"low" \| "medium" \| "high"` | Reasoning effort for o1/o3 models |
+| `openai_reasoning_summary` | `"concise" \| "detailed"` | Summary detail level for reasoning |
+| `openai_logprobs` | `bool` | Include log probabilities |
+| `openai_top_logprobs` | `int` | Number of top log probabilities |
+| `openai_user` | `str` | End-user identifier for monitoring |
+| `openai_service_tier` | `"auto" \| "default" \| "flex" \| "priority"` | Service tier selection |
+| `openai_prediction` | `ChatCompletionPredictionContentParam` | Predictive outputs |
+| `openai_previous_response_id` | `str \| "auto"` | Continue from previous response |
+
+---
+
+## Anthropic
+
+Anthropic provides Claude models with advanced reasoning and safety features.
+
+### Authentication
+
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."
+```
+
+### Available Models
+
+- **Claude 3.5**: `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022`
+- **Claude 3.7**: `claude-3-7-sonnet-20250219`
+- **Claude 4**: `claude-4-opus-20250514`, `claude-4-sonnet-20250514`
+- **Aliases**: `claude-3-5-sonnet-latest`, `claude-opus-4-0`, `claude-sonnet-4-0`
+
+### Basic Example
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent(model="anthropic/claude-3-5-sonnet-20241022")
+task = Task("Analyze this code for security vulnerabilities")
+result = agent.do(task)
+```
+
+### Extended Thinking
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.anthropic import AnthropicModel, AnthropicModelSettings
+
+# Enable extended thinking
+settings = AnthropicModelSettings(
+    max_tokens=4096,
+    temperature=0.1,
+    anthropic_thinking={
+        "type": "enabled",
+        "budget_tokens": 8192  # Thinking token budget
+    },
+    anthropic_metadata={
+        "user_id": "user-123"
+    }
+)
+
+model = AnthropicModel(
+    model_name="claude-3-5-sonnet-20241022",
+    settings=settings
+)
+
+agent = Agent(
+    model=model,
+    enable_thinking_tool=True  # Framework-level thinking
+)
+
+task = Task("Design a distributed system architecture")
+result = agent.do(task)
+```
+
+### With Built-in Tools
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import WebSearchTool
+
+agent = Agent(
+    model="anthropic/claude-3-5-sonnet-20241022",
+    builtin_tools=[WebSearchTool()]  # Enable web search
+)
+
+task = Task("What are the latest developments in quantum computing?")
+result = agent.do(task)
+```
+
+### Prompt Caching
+
+Anthropic automatically caches prompts longer than 1024 tokens. No configuration needed.
+
+**Cache Benefits:**
+- Up to 90% cost reduction for cached content
+- 5-minute cache lifetime
+- Automatic cache invalidation
+
+**Example with long context:**
+```python
+from upsonic import Agent, Task
+
+# Long system prompt will be automatically cached
+agent = Agent(
+    model="anthropic/claude-3-5-sonnet-20241022",
+    system_prompt="""
+    You are an expert software architect...
+    [Long system prompt > 1024 tokens]
+    """
+)
+
+# First call: Creates cache
+result1 = agent.do(Task("Design a microservices architecture"))
+
+# Second call within 5 minutes: Uses cache
+result2 = agent.do(Task("Design a monolithic architecture"))
+```
+
+### Anthropic-Specific Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `anthropic_thinking` | `BetaThinkingConfigParam` | Extended thinking configuration |
+| `anthropic_metadata` | `BetaMetadataParam` | Request metadata with user_id |
+
+---
+
+## Google Gemini
+
+Google's Gemini models offer long context windows and multimodal capabilities.
+
+### Authentication
+
+```bash
+# For Gemini API
+export GOOGLE_API_KEY="AIza..."
+
+# OR for Vertex AI
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_CLOUD_LOCATION="us-central1"  # Optional
+```
+
+### Available Models
+
+- **Gemini 2.5**: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`
+- **Gemini 2.0**: `gemini-2.0-flash`, `gemini-2.0-flash-lite`
+
+### Basic Example
+
+```python
+from upsonic import Agent, Task
+
+# Using Gemini API
+agent = Agent(model="google-gla/gemini-2.5-flash")
+
+# OR using Vertex AI
+agent = Agent(model="google-vertex/gemini-2.5-flash")
+
+task = Task("Summarize this document")
+result = agent.do(task)
+```
+
+### With Thinking Configuration
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.google import GoogleModel, GoogleModelSettings
+
+settings = GoogleModelSettings(
+    max_tokens=2048,
+    temperature=0.4,
+    google_thinking_config={
+        "include_thoughts": True,
+        "thinking_budget": -1  # Automatic budget
+    },
+    google_safety_settings=[
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+        }
+    ]
+)
+
+model = GoogleModel(
+    model_name="gemini-2.5-flash",
+    provider="google-gla",
+    settings=settings
+)
+
+agent = Agent(model=model)
+task = Task("Explain quantum mechanics")
+result = agent.do(task)
+```
+
+### Token Counting
+
+Google Gemini supports pre-request token counting:
+
+```python
+from upsonic.models.google import GoogleModel
+from upsonic.messages import ModelRequest, UserPromptPart
+
+model = GoogleModel("gemini-2.5-flash", provider="google-gla")
+
+messages = [ModelRequest(parts=[UserPromptPart(content="Hello, world!")])]
+usage = await model.count_tokens(messages, None, model_params)
+
+print(f"Input tokens: {usage.input_tokens}")
+```
+
+### Prompt Caching
+
+```python
+from upsonic.models.google import GoogleModelSettings
+
+# Create cached content first (requires Vertex AI API)
+# Then reference it in settings
+settings = GoogleModelSettings(
+    google_cached_content="cached-content-id"
+)
+```
+
+### Google-Specific Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `google_thinking_config` | `ThinkingConfigDict` | Thinking configuration |
+| `google_safety_settings` | `list[SafetySettingDict]` | Content safety filters |
+| `google_labels` | `dict[str, str]` | Metadata for billing (Vertex AI only) |
+| `google_video_resolution` | `MediaResolution` | Video input resolution |
+| `google_cached_content` | `str` | Cached content reference |
+
+---
+
+## Groq
+
+Groq provides ultra-fast inference for open-source models.
+
+### Authentication
+
+```bash
+export GROQ_API_KEY="gsk_..."
+export GROQ_BASE_URL="https://api.groq.com"  # Optional
+```
+
+### Available Models
+
+- **Production**: `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, `llama3-70b-8192`
+- **Reasoning**: `qwen-qwq-32b`, `deepseek-r1-distill-llama-70b`, `deepseek-r1-distill-qwen-32b`
+- **Other**: `gemma2-9b-it`, `mixtral-8x7b-32768`
+
+### Basic Example
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent(model="groq/llama-3.3-70b-versatile")
+task = Task("Write a Python function to sort a list")
+result = agent.do(task)
+```
+
+### With Reasoning Format
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.groq import GroqModel, GroqModelSettings
+
+# Configure reasoning format
+settings = GroqModelSettings(
+    max_tokens=2048,
+    temperature=0.6,
+    groq_reasoning_format="parsed"  # hidden, raw, parsed
+)
+
+model = GroqModel(
+    model_name="qwen-qwq-32b",
+    settings=settings
+)
+
+agent = Agent(model=model)
+task = Task("Solve this logic puzzle step by step")
+result = agent.do(task)
+```
+
+### Streaming Example
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent(model="groq/llama-3.3-70b-versatile")
+task = Task("Write a long story")
+
+async for chunk in agent.run_stream(task):
+    print(chunk, end="", flush=True)
+```
+
+### Prompt Caching
+
+Groq does not currently support prompt caching.
+
+### Groq-Specific Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `groq_reasoning_format` | `"hidden" \| "raw" \| "parsed"` | How reasoning is formatted |
+
+---
+
+## Cohere
+
+Cohere provides Command models optimized for business applications.
+
+### Authentication
+
+```bash
+export CO_API_KEY="..."
+export CO_BASE_URL="https://api.cohere.ai"  # Optional
+```
+
+### Available Models
+
+- **Command R**: `command-r`, `command-r-plus`, `command-r-08-2024`, `command-r-plus-08-2024`
+- **Legacy**: `command`, `command-light`, `command-nightly`
+- **Multilingual**: `c4ai-aya-expanse-32b`, `c4ai-aya-expanse-8b`
+- **Recent**: `command-r7b-12-2024`
+
+### Basic Example
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent(model="cohere/command-r-plus")
+task = Task("Summarize this business report")
+result = agent.do(task)
+```
+
+### With Settings
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.cohere import CohereModel, CohereModelSettings
+
+settings = CohereModelSettings(
+    max_tokens=1024,
+    temperature=0.5,
+    top_p=0.9,
+    seed=42,
+    presence_penalty=0.0,
+    frequency_penalty=0.0
+)
+
+model = CohereModel(
+    model_name="command-r-plus",
+    settings=settings
+)
+
+agent = Agent(model=model)
+task = Task("Generate a marketing email")
+result = agent.do(task)
+```
+
+### Limitations
+
+- No streaming support
+- No JSON schema output (only basic tool calling)
+- No built-in tools
+
+### Prompt Caching
+
+Cohere does not currently support prompt caching.
+
+### Cohere-Specific Parameters
+
+Currently, Cohere uses only base `ModelSettings` parameters. No provider-specific parameters are available.
+
+---
+
+## Mistral
+
+Mistral AI provides efficient open and commercial models.
+
+### Authentication
+
+```bash
+export MISTRAL_API_KEY="..."
+```
+
+### Available Models
+
+- `mistral-large-latest`
+- `mistral-small-latest`
+- `mistral-moderation-latest`
+- `codestral-latest`
+
+### Basic Example
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent(model="mistral/mistral-large-latest")
+task = Task("Explain machine learning")
+result = agent.do(task)
+```
+
+### With Custom JSON Schema Prompt
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.mistral import MistralModel, MistralModelSettings
+
+# Custom JSON schema prompt template
+model = MistralModel(
+    model_name="mistral-large-latest",
+    json_mode_schema_prompt="""Please respond in JSON format:\n{schema}\n"""
+)
+
+agent = Agent(model=model)
+```
+
+### Streaming Example
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.mistral import MistralModel, MistralModelSettings
+
+settings = MistralModelSettings(
+    max_tokens=1500,
+    temperature=0.7,
+    top_p=0.9
+)
+
+model = MistralModel(
+    model_name="mistral-large-latest",
+    settings=settings
+)
+
+agent = Agent(model=model)
+task = Task("Write a technical guide")
+
+async for chunk in agent.run_stream(task):
+    print(chunk, end="", flush=True)
+```
+
+### Prompt Caching
+
+Mistral does not currently support prompt caching.
+
+### Mistral-Specific Parameters
+
+Currently, Mistral uses only base `ModelSettings` parameters. No provider-specific parameters are available.
+
+---
+
+## Comparison Summary
+
+| Feature | OpenAI | Anthropic | Google | Groq | Cohere | Mistral |
+|---------|--------|-----------|--------|------|--------|---------|
+| **Streaming** | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| **JSON Schema** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Thinking/Reasoning** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Built-in Tools** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Prompt Caching** | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Token Counting** | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Parallel Tools** | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
+| **Best For** | General purpose | Reasoning | Long context | Speed | Business | Code |
+
+## Next Steps
+
+- [Cloud Model Providers](/cloud-providers) - AWS Bedrock, Azure OpenAI
+- [Local Model Providers](/local-providers) - Ollama
+- [Model Gateways](/model-gateways) - OpenRouter, LiteLLM
+- [OpenAI-Compatible Models](/openai-compatible) - Using OpenAI-compatible endpoints
+
