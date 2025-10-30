@@ -1,0 +1,29 @@
+---
+title: "SQLite"
+description: "Queryable, efficient storage for small to medium applications"
+---
+
+## Usage
+
+```python
+from upsonic.durable import SQLiteDurableStorage
+
+# Create storage with custom database
+storage = SQLiteDurableStorage(db_path="./executions.db")
+
+durable = DurableExecution(storage=storage)
+task = Task("Analytics task", durable_execution=durable)
+```
+
+## Params
+
+| Parameter      | Type | Description                 | Default               |
+| -------------- | ---- | --------------------------- | --------------------- |
+| **db_path**    | str  | SQLite database file path   | "./durable_executions.db" |
+
+## Characteristics
+
+- 🗄️ Single-file database
+- ✅ ACID transactions
+- ✅ Queryable execution history
+- ✅ Efficient for thousands of executions

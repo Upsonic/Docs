@@ -1,0 +1,88 @@
+---
+title: "Basic Direct LLM Call Example"
+description: "Extract structured information from a business document"
+---
+
+## About Example Scenario
+
+This example demonstrates a practical use case for Direct LLM Call: extracting structured information from a business document. We have a PDF invoice and need to extract key financial information in a type-safe, validated format. This scenario showcases:
+
+- Document processing with attachments
+- Structured output using Pydantic models
+- Simple, direct execution without agent complexity
+- Type-safe data extraction
+
+## Direct LLM Call Configuration
+
+**Model Selection**: We use `"openai/gpt-4o"` for its strong vision and reasoning capabilities, essential for document understanding.
+
+**Task Configuration**:
+- **Description**: Clear instruction for the LLM
+- **Attachments**: PDF document passed as attachment for processing
+- **Response Format**: Pydantic model (`InvoiceData`) ensures validated, structured output with required fields
+
+**Pydantic Model**: Defines the expected structure with field types, ensuring runtime validation and type safety. The model includes:
+- Invoice number (string)
+- Total amount (float)
+- Issue date (string)
+- List of line items with name and amount
+
+## Full Code
+
+```python
+from upsonic import Direct, Task
+from pydantic import BaseModel
+
+
+# Define the structured response format
+class LineItem(BaseModel):
+    name: str
+    amount: float
+
+
+class InvoiceData(BaseModel):
+    invoice_number: str
+    total_amount: float
+    issue_date: str
+    line_items: list[LineItem]
+
+
+# Initialize Direct with GPT-4o
+direct = Direct(model="openai/gpt-4o")
+
+# Create task with document attachment and structured response
+task = Task(
+    description="Extract invoice data from this document including invoice number, total amount, issue date, and all line items with their amounts.",
+    attachments=["invoice.pdf"],
+    response_format=InvoiceData
+)
+
+# Execute and get structured result
+result = direct.do(task)
+
+# Access structured data with type safety
+print(f"Invoice: {result.invoice_number}")
+print(f"Total: ${result.total_amount}")
+print(f"Date: {result.issue_date}")
+print(f"\nLine Items:")
+for item in result.line_items:
+    print(f"  - {item.name}: ${item.amount}")
+```
+
+**Expected Output Structure**:
+```
+Invoice: INV-2024-001
+Total: $1250.50
+Date: 2024-10-29
+
+Line Items:
+  - Consulting Services: $1000.00
+  - Software License: $250.50
+```
+
+**Key Features Demonstrated**:
+- Automatic PDF processing through attachments
+- Type-safe structured output with Pydantic validation
+- Clean, synchronous API for straightforward use cases
+- Zero configuration for memory or tools
+- Automatic MIME type detection for attachments

@@ -1,0 +1,61 @@
+---
+title: "Docker"
+description: "Docker container-based MCP servers for maximum isolation"
+---
+
+## Overview
+
+Docker container-based MCP servers for maximum isolation.
+
+## Usage
+
+```python
+from upsonic import Task, Agent
+
+# Docker-based MCP server
+class DatabaseMCP:
+    command = "docker"
+    args = [
+        "run",
+        "--rm",
+        "-i",
+        "--network", "host",
+        "your-mcp-server-image:latest"
+    ]
+    env = {
+        "DATABASE_URL": "postgresql://localhost/mydb"
+    }
+
+# Create task
+task = Task(
+    description="Query the database and analyze results",
+    tools=[DatabaseMCP]
+)
+
+# Create agent
+agent = Agent(
+    name="Database Agent",
+    model="openai/gpt-4o"
+)
+
+# Execute
+agent.print_do(task)
+```
+
+## Parameters
+
+- `command` (str): The command to run ("docker")
+- `args` (List[str]): Docker run arguments including image name
+- `env` (Dict[str, str]): Environment variables to pass to container
+
+## Requirements
+
+- Docker must be installed and running
+- MCP server Docker image must be available
+
+## Characteristics
+
+- Maximum isolation and security
+- Consistent environment across systems
+- Easy deployment and versioning
+- Network and resource control

@@ -1,0 +1,84 @@
+---
+title: "Software Developer Agent"
+description: "Comprehensive software development workflow with specialized subagents"
+---
+
+## About Example Scenario
+
+A comprehensive software development workflow using Deep Agent with specialized subagents for different aspects of development (frontend, backend, testing).
+
+## Deep Agent Configuration
+
+```python
+from upsonic import DeepAgent, Agent, Task
+
+# Create specialized development team
+frontend_dev = Agent(
+    "openai/gpt-4o",
+    name="frontend",
+    system_prompt="You are a frontend development expert specializing in React and modern web technologies"
+)
+
+backend_dev = Agent(
+    "openai/gpt-4o",
+    name="backend",
+    system_prompt="You are a backend development expert specializing in Node.js, Python, and database design"
+)
+
+tester = Agent(
+    "openai/gpt-4o",
+    name="tester",
+    system_prompt="You are a QA and testing expert focused on automation and comprehensive test coverage"
+)
+
+# Create Deep Agent with specialized team
+agent = DeepAgent(
+    "openai/gpt-4o",
+    subagents=[frontend_dev, backend_dev, tester]
+)
+```
+
+## Full Code
+
+```python
+from upsonic import DeepAgent, Agent, Task
+
+# Create specialized development team
+frontend_dev = Agent(
+    "openai/gpt-4o",
+    name="frontend",
+    system_prompt="You are a frontend development expert specializing in React and modern web technologies"
+)
+
+backend_dev = Agent(
+    "openai/gpt-4o",
+    name="backend",
+    system_prompt="You are a backend development expert specializing in Node.js, Python, and database design"
+)
+
+tester = Agent(
+    "openai/gpt-4o",
+    name="tester",
+    system_prompt="You are a QA and testing expert focused on automation and comprehensive test coverage"
+)
+
+# Create Deep Agent with specialized team
+agent = DeepAgent(
+    "openai/gpt-4o",
+    subagents=[frontend_dev, backend_dev, tester]
+)
+
+# Execute complex development project
+task = Task("""
+Build a complete task management application:
+- User authentication and authorization
+- Task CRUD operations
+- Real-time updates
+- Mobile-responsive design
+- Unit and integration tests
+- Deployment configuration
+""")
+
+result = agent.do(task)
+print(result)
+```

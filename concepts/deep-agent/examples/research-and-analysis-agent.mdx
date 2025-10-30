@@ -1,0 +1,82 @@
+---
+title: "Research and Analysis Agent"
+description: "Research workflow with specialized subagents for analysis and writing"
+---
+
+## About Example Scenario
+
+A research workflow that uses Deep Agent to conduct comprehensive analysis with specialized subagents for data analysis, research, and writing.
+
+## Deep Agent Configuration
+
+```python
+from upsonic import DeepAgent, Agent, Task
+
+# Create research team
+data_analyst = Agent(
+    "openai/gpt-4o",
+    name="data-analyst",
+    system_prompt="You are a data analysis and statistics expert"
+)
+
+researcher = Agent(
+    "openai/gpt-4o",
+    name="researcher",
+    system_prompt="You are a research and information gathering expert"
+)
+
+writer = Agent(
+    "openai/gpt-4o",
+    name="writer",
+    system_prompt="You are a technical writing and report creation expert"
+)
+
+# Create Deep Agent with research team
+agent = DeepAgent(
+    "openai/gpt-4o",
+    subagents=[data_analyst, researcher, writer]
+)
+```
+
+## Full Code
+
+```python
+from upsonic import DeepAgent, Agent, Task
+
+# Create research team
+data_analyst = Agent(
+    "openai/gpt-4o",
+    name="data-analyst",
+    system_prompt="You are a data analysis and statistics expert"
+)
+
+researcher = Agent(
+    "openai/gpt-4o",
+    name="researcher",
+    system_prompt="You are a research and information gathering expert"
+)
+
+writer = Agent(
+    "openai/gpt-4o",
+    name="writer",
+    system_prompt="You are a technical writing and report creation expert"
+)
+
+# Create Deep Agent with research team
+agent = DeepAgent(
+    "openai/gpt-4o",
+    subagents=[data_analyst, researcher, writer]
+)
+
+# Execute comprehensive research project
+task = Task("""
+Conduct comprehensive market research on AI tools:
+- Analyze market trends and competitors
+- Gather data on user preferences
+- Create detailed report with recommendations
+- Include charts and visualizations
+""")
+
+result = agent.do(task)
+print(result)
+```

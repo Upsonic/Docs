@@ -1,0 +1,39 @@
+---
+title: "Caching"
+description: "Enable result caching to avoid redundant executions"
+---
+
+## Overview
+
+Enable result caching to avoid redundant executions.
+
+## Usage
+
+```python
+from upsonic.tools import tool
+
+@tool(
+    cache_results=True,
+    cache_ttl=3600,  # Cache for 1 hour
+    cache_dir="/tmp/tool_cache"
+)
+def expensive_computation(n: int) -> int:
+    """
+    Perform an expensive computation with caching.
+
+    Args:
+        n: Input number
+
+    Returns:
+        Computation result
+    """
+    import time
+    time.sleep(2)  # Simulate expensive operation
+    return n ** 2
+```
+
+## Parameters
+
+- `cache_results` (bool): Enable caching
+- `cache_ttl` (int): Cache time-to-live in seconds
+- `cache_dir` (str): Directory for cache storage (default: ~/.upsonic/cache)

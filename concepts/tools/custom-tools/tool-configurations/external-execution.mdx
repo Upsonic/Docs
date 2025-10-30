@@ -1,0 +1,50 @@
+---
+title: "External Execution"
+description: "Mark a tool for execution outside the framework"
+---
+
+## Overview
+
+Mark a tool for execution outside the framework.
+
+## Usage
+
+```python
+from upsonic.tools import tool
+
+@tool(external_execution=True)
+def external_database_query(query: str) -> str:
+    """
+    Execute a database query externally.
+
+    Args:
+        query: SQL query to execute
+
+    Returns:
+        Query results
+    """
+    return f"Query executed: {query}"
+
+# Usage with external execution handling
+task = Task(
+    description="Query the database",
+    tools=[external_database_query]
+)
+
+agent = Agent(model="openai/gpt-4o")
+result = await agent.do_async(task)
+
+# Handle external execution
+if task.is_paused and task.tools_awaiting_external_execution:
+    for external_call in task.tools_awaiting_external_execution:
+        # Execute the actual external operation
+        result = external_database_query(**external_call.args)
+        external_call.result = result
+
+    # Continue execution
+    final_result = agent.continue_run(task)
+```
+
+## Parameters
+
+- `external_execution` (bool): If True, pauses agent execution for external tool handling

@@ -1,0 +1,54 @@
+---
+title: "Cryptocurrency Policies"
+description: "Detect and handle crypto-related content"
+---
+
+## What is Crypto Policy?
+
+Cryptocurrency policies detect and handle crypto-related content. Designed for financial institutions that need to block or control cryptocurrency discussions, trading advice, or wallet addresses.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import CryptoBlockPolicy
+
+# Block any crypto-related questions
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=CryptoBlockPolicy
+)
+
+task = Task("Tell me about Bitcoin investments")
+result = agent.do(task)
+# Blocked before processing
+```
+
+## Available Variants
+
+- `CryptoBlockPolicy`: Static keyword detection with blocking
+- `CryptoBlockPolicy_LLM_Block`: Static detection with LLM-generated block messages
+- `CryptoBlockPolicy_LLM_Finder`: LLM-powered detection for better accuracy
+- `CryptoReplace`: Replaces crypto keywords with placeholder text
+- `CryptoRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `CryptoRaiseExceptionPolicy_LLM_Raise`: LLM-generated exception messages
+
+## Params
+
+When creating custom crypto policies, you can pass options:
+
+```python
+from upsonic.safety_engine.base import Policy
+from upsonic.safety_engine.policies.crypto_policies import CryptoRule, CryptoBlockAction
+
+custom_rule = CryptoRule(options={
+    "keywords": ["NFT", "DeFi", "Web3", "token", "staking"]
+})
+
+policy = Policy(
+    name="Extended Crypto Policy",
+    description="Extra Web3 keywords included",
+    rule=custom_rule,
+    action=CryptoBlockAction()
+)
+```

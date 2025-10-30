@@ -1,0 +1,36 @@
+---
+title: "Requires User Input"
+description: "Prompt the user for input during tool execution"
+---
+
+## Overview
+
+Prompt the user for input during tool execution.
+
+## Usage
+
+```python
+from upsonic.tools import tool
+
+@tool(
+    requires_user_input=True,
+    user_input_fields=["username", "password"]
+)
+def secure_login(username: str, password: str) -> str:
+    """
+    Login with user-provided credentials.
+
+    Args:
+        username: Username for login
+        password: Password for login
+
+    Returns:
+        Login status message
+    """
+    return f"Login successful for user: {username}"
+```
+
+## Parameters
+
+- `requires_user_input` (bool): If True, prompts user for specified fields
+- `user_input_fields` (List[str]): List of parameter names to request from user

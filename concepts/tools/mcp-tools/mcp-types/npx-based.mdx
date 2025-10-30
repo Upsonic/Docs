@@ -1,0 +1,48 @@
+---
+title: "NPX Based"
+description: "Node.js package runner based MCP servers"
+---
+
+## Overview
+
+Node.js package runner based MCP servers.
+
+## Usage
+
+```python
+from upsonic import Task, Agent
+
+# NPX-based MCP server (requires Node.js installed)
+class GitHubMCP:
+    command = "npx"
+    args = ["-y", "@modelcontextprotocol/server-github"]
+    env = {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your_token_here"
+    }
+
+# Create task
+task = Task(
+    description="Check my GitHub repositories and list recent commits",
+    tools=[GitHubMCP]
+)
+
+# Create agent
+agent = Agent(
+    name="GitHub Agent",
+    model="openai/gpt-4o"
+)
+
+# Execute
+agent.print_do(task)
+```
+
+## Parameters
+
+- `command` (str): The command to run ("npx")
+- `args` (List[str]): Arguments including package name and flags
+- `env` (Dict[str, str]): Environment variables (optional)
+
+## Requirements
+
+- Node.js and npm must be installed on your system
+- Package is downloaded on first use

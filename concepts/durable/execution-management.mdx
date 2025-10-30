@@ -1,0 +1,88 @@
+---
+title: "Execution Management"
+description: "List, query, and manage durable executions"
+---
+
+## Listing Executions
+
+```python
+from upsonic.durable import DurableExecution
+
+# List all executions
+all_executions = DurableExecution.list_all_executions(storage)
+for exec_data in all_executions:
+    print(f"ID: {exec_data['execution_id']}")
+    print(f"Status: {exec_data['status']}")
+    print(f"Step: {exec_data['step_name']}")
+    print(f"Timestamp: {exec_data['timestamp']}")
+    print("---")
+
+# List by status
+failed_executions = DurableExecution.list_all_executions(
+    storage,
+    status="failed"
+)
+
+completed_executions = DurableExecution.list_all_executions(
+    storage,
+    status="completed"
+)
+
+# List executions in progress (last step was successful)
+in_progress_executions = DurableExecution.list_all_executions(
+    storage,
+    status="running"
+)
+```
+
+## Getting Execution Information
+
+```python
+# Get detailed execution information
+durable = DurableExecution(storage=storage, execution_id=execution_id)
+exec_info = durable.get_execution_info()
+
+if exec_info:
+    print(f"Status: {exec_info['status']}")
+    print(f"Step Index: {exec_info['step_index']}")
+    print(f"Step Name: {exec_info['step_name']}")
+    print(f"Timestamp: {exec_info['timestamp']}")
+
+    if exec_info['error']:
+        print(f"Error: {exec_info['error']}")
+```
+
+## Storage Statistics
+
+```python
+# Get storage statistics
+stats = storage.get_stats()
+
+print(f"Backend: {stats['backend']}")
+print(f"Total executions: {stats['total_executions']}")
+print(f"By status: {stats['by_status']}")
+
+# Example output:
+# Backend: file
+# Total executions: 15
+# By status: {'running': 2, 'failed': 3, 'completed': 10, 'paused': 0}
+```
+
+## Cleanup Operations
+
+```python
+import asyncio
+
+# Cleanup old executions (older than 7 days)
+deleted_count = asyncio.run(
+    storage.cleanup_old_executions_async(older_than_days=7)
+)
+print(f"Deleted {deleted_count} old executions")
+
+# Delete specific execution
+success = asyncio.run(
+    storage.delete_state_async(execution_id)
+)
+if success:
+    print(f"Deleted execution: {execution_id}")
+```

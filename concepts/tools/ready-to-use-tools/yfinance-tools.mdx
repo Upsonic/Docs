@@ -1,0 +1,117 @@
+---
+title: "YFinanceTools"
+description: "Comprehensive financial data toolkit using Yahoo Finance API"
+---
+
+## Overview
+
+Comprehensive financial data toolkit using Yahoo Finance API.
+
+## Basic Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.common_tools import YFinanceTools
+
+# Create finance tools instance
+finance_tools = YFinanceTools()
+finance_tools.enable_all_tools()
+
+# Create task
+task = Task(
+    description="Get the current stock price for Apple (AAPL)",
+    tools=[finance_tools]
+)
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", name="Finance Agent")
+
+# Execute
+agent.print_do(task)
+```
+
+## Selective Tool Configuration
+
+Enable only specific financial capabilities:
+
+```python
+from upsonic.tools.common_tools import YFinanceTools
+
+# Enable specific tools
+finance_tools = YFinanceTools(
+    stock_price=True,
+    company_info=True,
+    analyst_recommendations=False,
+    company_news=False
+)
+
+task = Task(
+    description="Get stock price and company information for Microsoft (MSFT)",
+    tools=[finance_tools]
+)
+
+agent = Agent(model="openai/gpt-4o", name="Selective Finance Agent")
+agent.print_do(task)
+```
+
+## Available Tools
+
+When using `enable_all_tools()`, the following methods are available:
+
+1. **get_current_stock_price(symbol: str)**: Get current stock price
+2. **get_company_info(symbol: str)**: Get comprehensive company information
+3. **get_analyst_recommendations(symbol: str)**: Get analyst recommendations
+4. **get_company_news(symbol: str, num_stories: int)**: Get recent company news
+5. **get_stock_fundamentals(symbol: str)**: Get key financial fundamentals
+6. **get_income_statements(symbol: str)**: Get income statement data
+7. **get_key_financial_ratios(symbol: str)**: Get key financial ratios
+8. **get_historical_stock_prices(symbol: str, period: str, interval: str)**: Get historical price data
+9. **get_technical_indicators(symbol: str, period: str)**: Get technical indicators
+
+## Parameters
+
+**Constructor Parameters:**
+- `stock_price` (bool): Enable stock price retrieval (default: True)
+- `company_info` (bool): Enable company information (default: False)
+- `analyst_recommendations` (bool): Enable analyst recommendations (default: False)
+- `company_news` (bool): Enable company news (default: False)
+- `enable_all` (bool): Enable all available tools (default: False)
+
+**Historical Data Parameters:**
+- `period` (str): Time period - '1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max'
+- `interval` (str): Data interval - '1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo'
+
+## Complete Example
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.common_tools import YFinanceTools
+
+# Enable all financial tools
+finance_tools = YFinanceTools()
+finance_tools.enable_all_tools()
+
+# Comprehensive analysis task
+task = Task(
+    description="""
+    Perform comprehensive financial analysis of Tesla (TSLA):
+    1. Get current stock price
+    2. Get company fundamentals
+    3. Get recent news
+    4. Provide investment recommendation
+    """,
+    tools=[finance_tools]
+)
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", name="Financial Analyst")
+
+# Execute
+agent.print_do(task)
+```
+
+## Installation
+
+```bash
+pip install yfinance pandas
+```

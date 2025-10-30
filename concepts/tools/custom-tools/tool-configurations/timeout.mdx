@@ -1,0 +1,37 @@
+---
+title: "Timeout"
+description: "Set execution timeout for a tool"
+---
+
+## Overview
+
+Set execution timeout for a tool.
+
+## Usage
+
+```python
+from upsonic.tools import tool
+
+@tool(
+    timeout=30.0,  # 30 seconds timeout
+    max_retries=3
+)
+def api_request(url: str) -> str:
+    """
+    Make an API request with timeout.
+
+    Args:
+        url: URL to request
+
+    Returns:
+        API response
+    """
+    import requests
+    response = requests.get(url)
+    return response.text
+```
+
+## Parameters
+
+- `timeout` (float): Timeout in seconds (default: 30.0)
+- `max_retries` (int): Number of retries on timeout (default: 5)

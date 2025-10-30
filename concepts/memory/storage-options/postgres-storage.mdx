@@ -1,0 +1,25 @@
+---
+title: "PostgresStorage"
+description: "PostgreSQL database storage for production systems"
+---
+
+## Usage
+
+```python
+from upsonic.storage import PostgresStorage
+
+# PostgreSQL with connection pooling
+storage = PostgresStorage(
+    sessions_table_name="agent_sessions",
+    profiles_table_name="user_profiles",
+    db_url="postgresql://user:pass@localhost:5432/agentdb",
+    schema="public"
+)
+```
+
+## Params
+
+- `sessions_table_name: str` - Name of sessions table
+- `profiles_table_name: str` - Name of profiles table
+- `db_url: str` - PostgreSQL connection URL
+- `schema: str` - Database schema (default: "public")

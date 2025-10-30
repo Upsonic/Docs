@@ -1,0 +1,56 @@
+---
+title: "Financial Information Policies"
+description: "Protect credit cards, bank accounts, and financial data"
+---
+
+## What is Financial Info Policy?
+
+Financial information policies detect and protect credit cards, bank accounts, SSN, routing numbers, IBAN, SWIFT codes, tax IDs, investment accounts, cryptocurrency wallets, and other sensitive financial data.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import FinancialInfoAnonymizePolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    agent_policy=FinancialInfoAnonymizePolicy
+)
+
+task = Task("My credit card is 4532-1234-5678-9010")
+result = agent.do(task)
+# Credit card number is anonymized
+```
+
+## Available Variants
+
+- `FinancialInfoBlockPolicy`: Pattern detection with blocking
+- `FinancialInfoBlockPolicy_LLM`: LLM-powered block messages
+- `FinancialInfoBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `FinancialInfoAnonymizePolicy`: Anonymizes financial data
+- `FinancialInfoReplacePolicy`: Replaces with `[FINANCIAL_INFO_REDACTED]`
+- `FinancialInfoRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `FinancialInfoRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+## Params
+
+```python
+from upsonic.safety_engine.policies.financial_policies import FinancialInfoRule, FinancialInfoBlockAction
+
+custom_rule = FinancialInfoRule(options={
+    "custom_patterns": {
+        "credit_card": [r'\bcustom\s+card\s+pattern\b'],
+        "bank_account": [r'\bcustom\s+account\s+pattern\b'],
+        "crypto": [r'\bcustom\s+wallet\s+pattern\b']
+    },
+    "custom_keywords": ["custom financial term", "proprietary account type"]
+})
+
+policy = Policy(
+    name="Custom Financial Info Policy",
+    description="With custom patterns",
+    rule=custom_rule,
+    action=FinancialInfoBlockAction()
+)
+```

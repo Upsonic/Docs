@@ -1,0 +1,41 @@
+---
+title: "RapidOCR"
+description: "Lightweight OCR based on ONNX Runtime for fast inference"
+---
+
+## What is RapidOCR?
+
+Lightweight OCR based on ONNX Runtime for fast inference. Best for speed and lightweight deployment.
+
+## Usage
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.rapidocr import RapidOCR
+
+# Create OCR with RapidOCR
+ocr = OCR(RapidOCR, languages=['en', 'ch'], confidence_threshold=0.5)
+
+# Extract text from image
+text = ocr.get_text('invoice.png')
+print(text)
+
+# Process PDF
+result = ocr.process_file('document.pdf')
+print(f"Extracted {len(result.text)} characters from {result.page_count} pages")
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `languages` | List[str] | `['en']` | List of language codes (primarily 'en' and 'ch') |
+| `confidence_threshold` | float | `0.0` | Minimum confidence for text blocks |
+| `rotation_fix` | bool | `False` | Auto-detect and fix image rotation |
+| `enhance_contrast` | bool | `False` | Enhance image contrast |
+| `remove_noise` | bool | `False` | Apply noise reduction |
+| `pdf_dpi` | int | `300` | DPI for PDF rendering |
+
+## Supported Languages
+
+English, Chinese (simplified and traditional), Japanese, Korean, and several other scripts including Tamil, Telugu, Arabic, Cyrillic, and Devanagari.

@@ -1,0 +1,57 @@
+---
+title: "Overview"
+description: "Build resilient AI agents with automatic state preservation and recovery"
+---
+
+## What is Durable Execution
+
+Durable Execution provides fault-tolerant execution for AI agents by automatically saving execution state at each pipeline step. This enables agents to recover from failures, resume from interruptions, and maintain consistency across restarts.
+
+The DurableExecution system manages:
+
+- Automatic checkpoint creation after each pipeline step
+- State persistence across multiple storage backends
+- Execution recovery from the point of failure
+- Error tracking and debugging information
+- Execution history and analytics
+- Cleanup of old execution data
+
+## How Durable Execution Works
+
+When an agent executes a task with durable execution enabled:
+
+1. **Checkpoint Creation**: After each successful pipeline step, the system saves a checkpoint containing:
+   - Task state (description, configuration, response format)
+   - Execution context (messages, agent state, step information)
+   - Current step index and name
+   - Execution status (running, paused, failed, completed)
+
+2. **Failure Handling**: When a step fails:
+   - The system saves a checkpoint at the failed step with status="failed"
+   - Error details are preserved in the checkpoint
+   - Execution metadata is updated
+
+3. **Recovery**: To resume execution:
+   - Load the checkpoint from storage
+   - Reconstruct the task and execution context
+   - Retry the failed step (if status="failed") or continue from the next step
+   - Complete remaining pipeline steps
+
+### Checkpoint Strategy
+
+The system uses an **overwrite strategy** - each execution has ONE checkpoint that is continuously updated:
+
+```
+Step 0 ✅ → Checkpoint: {step: 0, status: "running"}    OVERWRITE
+Step 1 ✅ → Checkpoint: {step: 1, status: "running"}    OVERWRITE
+Step 2 ✅ → Checkpoint: {step: 2, status: "running"}    OVERWRITE
+Step 3 ❌ → Checkpoint: {step: 3, status: "failed"}     OVERWRITE
+```
+
+**Status Values:**
+- **`running`**: Individual step in progress or completed successfully (intermediate state)
+- **`failed`**: Step failed with error
+- **`paused`**: Execution paused (e.g., human-in-the-loop)
+- **`completed`**: All steps finished successfully (final state)
+
+Result: ONE file/record per execution_id with the latest state.

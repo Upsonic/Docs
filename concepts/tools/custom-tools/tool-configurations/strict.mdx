@@ -1,0 +1,33 @@
+---
+title: "Strict"
+description: "Enforce strict JSON schema validation on tool parameters"
+---
+
+## Overview
+
+Enforce strict JSON schema validation on tool parameters.
+
+## Usage
+
+```python
+from upsonic.tools import tool
+
+@tool(strict=True)
+def validate_input(name: str, age: int, email: str) -> str:
+    """
+    Process user data with strict validation.
+
+    Args:
+        name: User's full name
+        age: User's age
+        email: User's email address
+
+    Returns:
+        Validation result
+    """
+    return f"Validated: {name}, {age}, {email}"
+```
+
+## Parameters
+
+- `strict` (bool): If True, enforces strict JSON schema validation

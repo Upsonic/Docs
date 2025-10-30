@@ -1,0 +1,45 @@
+---
+title: "Planning"
+description: "Create and manage structured task lists for complex work"
+---
+
+## Usage
+
+Deep Agent uses the `write_todos` tool to create and manage structured task lists for complex work sessions.
+
+The agent automatically uses this tool when:
+- Tasks require 3 or more distinct steps
+- Tasks are non-trivial and require careful planning
+- User explicitly requests todo list
+- User provides multiple tasks
+- Future revisions may be needed based on intermediate results
+
+## Params
+
+```python
+write_todos(todos: List[Todo]) -> str
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `todos` | `List[Todo]` | Yes | List of Todo objects with 'content' and 'status' fields |
+
+**Return Value:** Confirmation message with the updated todo list.
+
+## Example
+
+```python
+from upsonic import DeepAgent, Task
+
+agent = DeepAgent("openai/gpt-4o")
+task = Task("""
+Create a complete web application with:
+- User authentication system
+- Product catalog with search
+- Shopping cart functionality
+- Payment processing
+""")
+
+result = agent.do(task)
+# Agent creates todos, works through them, and ensures all are completed
+```

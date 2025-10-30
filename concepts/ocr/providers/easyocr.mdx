@@ -1,0 +1,46 @@
+---
+title: "EasyOCR"
+description: "Ready-to-use OCR with 80+ supported languages using deep learning models"
+---
+
+## What is EasyOCR?
+
+Ready-to-use OCR with 80+ supported languages using deep learning models. Best for multi-language support with high accuracy.
+
+## Usage
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.easyocr import EasyOCR
+
+# Create OCR with EasyOCR
+ocr = OCR(EasyOCR, languages=['en', 'zh'], gpu=True, rotation_fix=True)
+
+# Extract text
+text = ocr.get_text('document.pdf')
+print(text)
+
+# Get detailed results
+result = ocr.process_file('image.png')
+print(f"Confidence: {result.confidence:.2%}")
+for block in result.blocks:
+    print(f"Text: {block.text}, Confidence: {block.confidence:.2%}")
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `languages` | List[str] | `['en']` | List of language codes to detect |
+| `gpu` | bool | `False` | Enable GPU acceleration for faster processing |
+| `rotation_fix` | bool | `False` | Auto-detect and fix image rotation |
+| `enhance_contrast` | bool | `False` | Enhance image contrast |
+| `remove_noise` | bool | `False` | Apply noise reduction |
+| `confidence_threshold` | float | `0.0` | Minimum confidence for text blocks |
+| `paragraph` | bool | `False` | Group text into paragraphs |
+| `min_size` | int | `10` | Minimum text region size |
+| `text_threshold` | float | `0.7` | Text detection threshold |
+
+## Supported Languages
+
+80+ languages including English, Chinese, Japanese, Korean, Thai, Vietnamese, Arabic, Russian, and most European languages.

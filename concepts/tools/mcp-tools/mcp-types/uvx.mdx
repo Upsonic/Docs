@@ -1,0 +1,50 @@
+---
+title: "UVX"
+description: "Python-based MCP servers using the uvx package runner"
+---
+
+## Overview
+
+Python-based MCP servers using the uvx package runner.
+
+## Usage
+
+```python
+from upsonic import Task, Agent
+
+# UVX-based MCP server (Python-based, no installation needed)
+class FetchMCP:
+    command = "uvx"
+    args = ["mcp-server-fetch"]
+
+class FileSystemMCP:
+    command = "uvx"
+    args = ["mcp-server-filesystem"]
+
+# Create task
+task = Task(
+    description="Fetch data from the web and save to file system",
+    tools=[FetchMCP, FileSystemMCP]
+)
+
+# Create agent
+agent = Agent(
+    name="Data Fetcher",
+    model="openai/gpt-4o"
+)
+
+# Execute
+agent.print_do(task)
+```
+
+## Parameters
+
+- `command` (str): The command to run ("uvx")
+- `args` (List[str]): Arguments including package name
+
+## Characteristics
+
+- Python-based MCP servers
+- Automatic dependency management
+- No manual installation required
+- Isolated execution environment

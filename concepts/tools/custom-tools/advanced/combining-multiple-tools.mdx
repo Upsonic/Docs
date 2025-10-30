@@ -1,0 +1,59 @@
+---
+title: "Combining Multiple Tools"
+description: "Combine different types of tools in a single task"
+---
+
+## Overview
+
+Combine different types of tools in a single task.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolKit
+
+# Function tool
+@tool
+def fetch_data(source: str) -> str:
+    """Fetch data from source."""
+    return f"Data from {source}"
+
+# ToolKit
+class DataProcessor(ToolKit):
+    @tool
+    def transform(self, data: str) -> str:
+        """Transform data."""
+        return data.upper()
+
+    @tool
+    def validate(self, data: str) -> bool:
+        """Validate data."""
+        return len(data) > 0
+
+# Specialized agent
+analyzer_agent = Agent(
+    name="Data Analyzer",
+    model="openai/gpt-4o",
+    system_prompt="Analyze data patterns"
+)
+
+# Combine all tools
+task = Task(
+    description="Fetch, process, validate, and analyze data",
+    tools=[
+        fetch_data,
+        DataProcessor(),
+        analyzer_agent
+    ]
+)
+
+agent = Agent(model="openai/gpt-4o", name="Main Agent")
+agent.print_do(task)
+```
+
+## Parameters
+
+- Tools list accepts: functions, ToolKit instances, class instances, and agent instances
+- All tools are registered and available to the agent during execution
+- Tools can be called in any order based on the agent's reasoning

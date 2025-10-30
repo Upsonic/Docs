@@ -1,0 +1,84 @@
+---
+title: "Metrics and Performance"
+description: "Track and analyze OCR performance"
+---
+
+## Enabling Metrics
+
+The OCR system automatically tracks metrics for all operations. Metrics include files processed, pages, characters, confidence scores, and processing time.
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.easyocr import EasyOCR
+
+# Create OCR instance
+ocr = OCR(EasyOCR, languages=['en'])
+
+# Process multiple files
+ocr.get_text('document1.pdf')
+ocr.get_text('document2.pdf')
+ocr.get_text('image.png')
+
+# Get metrics
+metrics = ocr.get_metrics()
+
+print(f"Files processed: {metrics.files_processed}")
+print(f"Total pages: {metrics.total_pages}")
+print(f"Total characters: {metrics.total_characters}")
+print(f"Average confidence: {metrics.average_confidence:.2%}")
+print(f"Total processing time: {metrics.processing_time_ms:.2f}ms")
+print(f"Provider: {metrics.provider}")
+
+# Reset metrics for new batch
+ocr.reset_metrics()
+```
+
+## Analyzing Performance
+
+Use metrics to analyze and optimize OCR performance across different providers and configurations.
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.easyocr import EasyOCR
+from upsonic.ocr.rapidocr import RapidOCR
+from upsonic.ocr.tesseract import TesseractOCR
+
+def benchmark_providers(file_path):
+    """Compare performance of different OCR providers."""
+    providers = [
+        ('EasyOCR', EasyOCR, {'languages': ['en'], 'gpu': False}),
+        ('RapidOCR', RapidOCR, {'languages': ['en']}),
+        ('Tesseract', TesseractOCR, {'languages': ['eng']})
+    ]
+
+    results = {}
+
+    for name, provider_class, params in providers:
+        ocr = OCR(provider_class, **params)
+        ocr.reset_metrics()
+
+        # Process file
+        result = ocr.process_file(file_path)
+
+        # Get metrics
+        metrics = ocr.get_metrics()
+
+        results[name] = {
+            'confidence': result.confidence,
+            'processing_time_ms': result.processing_time_ms,
+            'characters': len(result.text)
+        }
+
+    # Print comparison
+    print("Provider Performance Comparison:")
+    for name, data in results.items():
+        print(f"\n{name}:")
+        print(f"  Confidence: {data['confidence']:.2%}")
+        print(f"  Time: {data['processing_time_ms']:.2f}ms")
+        print(f"  Characters: {data['characters']}")
+
+    return results
+
+# Run benchmark
+benchmark_providers('test_document.pdf')
+```

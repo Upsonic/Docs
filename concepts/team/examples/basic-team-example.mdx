@@ -1,0 +1,52 @@
+---
+title: "Basic Team Example"
+description: "Complete example of a content creation workflow with multiple agents"
+---
+
+## About Example Scenario
+
+This example demonstrates a content creation workflow where a research agent gathers information about AI trends, and a writer agent creates a blog post based on that research.
+
+## Team Configuration
+
+- **Mode**: Sequential (default)
+- **Agents**: Research Specialist + Content Writer
+- **Workflow**: Research → Write
+- **Context Sharing**: Automatic between tasks
+
+## Full Code
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create specialized agents
+researcher = Agent(
+    model="openai/gpt-4o",
+    name="Researcher",
+    role="Research Specialist",
+    goal="Find accurate information and data"
+)
+
+writer = Agent(
+    model="openai/gpt-4o",
+    name="Writer",
+    role="Content Writer",
+    goal="Create clear and engaging content"
+)
+
+# Create team
+team = Team(
+    agents=[researcher, writer],
+    mode="sequential"
+)
+
+# Define tasks
+tasks = [
+    Task(description="Research the latest developments in quantum computing"),
+    Task(description="Write a blog post about quantum computing for general audience")
+]
+
+# Execute team workflow
+result = team.do(tasks)
+print(result)
+```

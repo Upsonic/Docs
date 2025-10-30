@@ -1,0 +1,42 @@
+---
+title: "Basic Deep Agent Example"
+description: "Simple example demonstrating core capabilities"
+---
+
+## About Example Scenario
+
+A simple example demonstrating Deep Agent's core capabilities: automatic todo creation, file management, and completion tracking for building a basic application.
+
+## Deep Agent Configuration
+
+```python
+from upsonic import DeepAgent, Task
+
+agent = DeepAgent("openai/gpt-4o")
+```
+
+This creates a basic Deep Agent with:
+- Default model: GPT-4o
+- Auto-created InMemoryStorage-based memory
+- Tool call limit: 100
+- All default Deep Agent tools enabled
+
+## Full Code
+
+```python
+from upsonic import DeepAgent, Task
+
+# Create a Deep Agent
+agent = DeepAgent("openai/gpt-4o")
+
+# Complex task that benefits from planning
+task = Task("Analyze the codebase and create a comprehensive report with recommendations")
+result = agent.do(task)
+
+# The agent will automatically:
+# 1. Create a todo list to plan the work
+# 2. Use virtual files to organize findings
+# 3. Complete all tasks before finishing
+
+print(result)
+```

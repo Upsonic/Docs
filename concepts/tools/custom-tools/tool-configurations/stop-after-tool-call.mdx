@@ -1,0 +1,34 @@
+---
+title: "Stop After Tool Call"
+description: "Terminate the agent's run after this tool executes"
+---
+
+## Overview
+
+Terminate the agent's run after this tool executes.
+
+## Usage
+
+```python
+from upsonic.tools import tool
+
+@tool(
+    stop_after_tool_call=True,
+    show_result=True
+)
+def final_answer(answer: str) -> str:
+    """
+    Provide final answer and stop execution.
+
+    Args:
+        answer: The final answer
+
+    Returns:
+        Final answer message
+    """
+    return f"Final Answer: {answer}"
+```
+
+## Parameters
+
+- `stop_after_tool_call` (bool): If True, terminates agent execution after this tool runs

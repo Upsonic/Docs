@@ -1,0 +1,88 @@
+---
+title: "Creating ToolKit"
+description: "Organize related tools in a class"
+---
+
+## Overview
+
+ToolKits allow you to organize related tools together in a class. Only methods decorated with `@tool` are exposed as tools to the agent.
+
+## Example
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolKit
+
+class CalculatorToolKit(ToolKit):
+    """A toolkit for mathematical operations."""
+
+    @tool
+    def add(self, a: float, b: float) -> float:
+        """
+        Add two numbers.
+
+        Args:
+            a: First number
+            b: Second number
+
+        Returns:
+            Sum of a and b
+        """
+        return a + b
+
+    @tool
+    def subtract(self, a: float, b: float) -> float:
+        """
+        Subtract b from a.
+
+        Args:
+            a: First number
+            b: Second number
+
+        Returns:
+            Difference of a and b
+        """
+        return a - b
+
+    @tool
+    def multiply(self, a: float, b: float) -> float:
+        """
+        Multiply two numbers.
+
+        Args:
+            a: First number
+            b: Second number
+
+        Returns:
+            Product of a and b
+        """
+        return a * b
+
+    @tool
+    def divide(self, a: float, b: float) -> float:
+        """
+        Divide a by b.
+
+        Args:
+            a: Numerator
+            b: Denominator
+
+        Returns:
+            Quotient of a and b
+        """
+        if b == 0:
+            raise ValueError("Cannot divide by zero")
+        return a / b
+
+# Create task with the toolkit
+task = Task(
+    description="Calculate (15 + 27) * 2 and then divide by 3",
+    tools=[CalculatorToolKit()]
+)
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", name="Math Agent")
+
+# Execute
+agent.print_do(task)
+```

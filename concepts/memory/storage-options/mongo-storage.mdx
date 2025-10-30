@@ -1,0 +1,33 @@
+---
+title: "MongoStorage"
+description: "MongoDB storage for scalable document-based systems"
+---
+
+## Usage
+
+```python
+from upsonic.storage import MongoStorage
+
+# MongoDB storage for scalable systems
+storage = MongoStorage(
+    db_url="mongodb://localhost:27017",
+    database_name="agent_memory",
+    sessions_collection_name="interaction_sessions",
+    profiles_collection_name="user_profiles"
+)
+
+# MongoDB with authentication
+storage = MongoStorage(
+    db_url="mongodb://user:password@localhost:27017/agentdb",
+    database_name="production_memory",
+    sessions_collection_name="sessions",
+    profiles_collection_name="profiles"
+)
+```
+
+## Params
+
+- `db_url: str` - MongoDB connection string
+- `database_name: str` - Name of the database
+- `sessions_collection_name: str` - Name of sessions collection (default: "interaction_sessions")
+- `profiles_collection_name: str` - Name of profiles collection (default: "user_profiles")

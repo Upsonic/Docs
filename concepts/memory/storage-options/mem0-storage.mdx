@@ -1,0 +1,41 @@
+---
+title: "Mem0Storage"
+description: "Mem0 Platform and Open Source integration"
+---
+
+## Usage
+
+```python
+from upsonic.storage import Mem0Storage
+
+# Mem0 Platform integration
+storage = Mem0Storage(
+    api_key="your_mem0_api_key",
+    org_id="your_org_id",
+    project_id="your_project_id"
+)
+
+# Mem0 Open Source
+storage = Mem0Storage(
+    local_config={
+        "vector_store": {
+            "provider": "chroma",
+            "config": {
+                "path": "./chroma_db"
+            }
+        }
+    }
+)
+```
+
+## Params
+
+- `api_key: str` - Mem0 Platform API key (for hosted service)
+- `org_id: str` - Organization ID for Mem0 Platform
+- `project_id: str` - Project ID for Mem0 Platform
+- `local_config: dict` - Configuration for Open Source Mem0
+- `namespace: str` - Application namespace (default: "upsonic")
+- `infer: bool` - Enable LLM-based inference (default: False)
+- `custom_categories: list` - Additional custom categories
+- `enable_caching: bool` - Enable ID caching (default: True)
+- `cache_ttl: int` - Cache time-to-live in seconds (default: 300)
