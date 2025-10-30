@@ -1,0 +1,503 @@
+---
+title: "Google (Gemini)"
+description: "Using Google Gemini models with Upsonic"
+---
+
+## Overview
+
+Google provides the Gemini family of multimodal models with strong capabilities in reasoning, vision, and grounding. Upsonic supports both the Gemini API and Vertex AI.
+
+**Model Class:** `GoogleModel`
+
+**Provider Options:**
+- `google-gla`: Gemini API (generativelanguage.googleapis.com)
+- `google-vertex`: Vertex AI API (requires GCP setup)
+
+## Authentication
+
+### Gemini API (google-gla)
+
+Set your API key:
+
+```bash
+export GOOGLE_API_KEY="AIza..."
+# OR (legacy)
+export GEMINI_API_KEY="AIza..."
+```
+
+### Vertex AI (google-vertex)
+
+Set your GCP project:
+
+```bash
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_CLOUD_LOCATION="us-central1"  # Optional
+```
+
+Authenticate with GCP:
+
+```bash
+gcloud auth application-default login
+```
+
+### Using infer_model
+
+```python
+from upsonic import infer_model
+
+# Gemini API
+model = infer_model("google-gla/gemini-2.5-flash")
+
+# Vertex AI
+model = infer_model("google-vertex/gemini-2.5-pro")
+```
+
+### Manual Configuration
+
+```python
+from upsonic.models.google import GoogleModel, GoogleModelSettings
+
+settings = GoogleModelSettings(
+    max_tokens=2048,
+    temperature=0.7
+)
+
+# Gemini API
+model = GoogleModel(
+    model_name="gemini-2.5-flash",
+    provider="google-gla",
+    settings=settings
+)
+
+# Vertex AI
+model = GoogleModel(
+    model_name="gemini-2.5-pro",
+    provider="google-vertex",
+    settings=settings
+)
+```
+
+## Examples
+
+### Basic Usage
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("google-gla/gemini-2.5-flash")
+agent = Agent(model=model)
+
+task = Task("Explain machine learning concepts")
+result = agent.do(task)
+print(result.output)
+```
+
+### With Thinking Configuration
+
+```python
+from upsonic.models.google import GoogleModel, GoogleModelSettings
+
+settings = GoogleModelSettings(
+    max_tokens=4096,
+    temperature=0.3,
+    google_thinking_config={
+        "include_thoughts": True,
+        "thinking_budget": 5000  # -1 for automatic
+    }
+)
+
+model = GoogleModel(
+    model_name="gemini-2.5-flash-lite",
+    provider="google-gla",
+    settings=settings
+)
+
+agent = Agent(model=model)
+task = Task("Solve this logic puzzle with detailed reasoning: ...")
+result = agent.do(task)
+```
+
+### Streaming Responses
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("google-gla/gemini-2.5-flash")
+agent = Agent(model=model)
+
+task = Task("Write a comprehensive guide to Python programming")
+
+async for chunk in agent.do_stream(task):
+    print(chunk, end="", flush=True)
+```
+
+### With Tools
+
+```python
+from upsonic import Agent, Task, infer_model
+
+def get_stock_price(symbol: str) -> float:
+    """Get the current stock price for a symbol."""
+    return 150.25
+
+def calculate_profit(buy_price: float, sell_price: float, shares: int) -> float:
+    """Calculate profit from a stock trade."""
+    return (sell_price - buy_price) * shares
+
+model = infer_model("google-gla/gemini-2.5-flash")
+agent = Agent(
+    model=model,
+    tools=[get_stock_price, calculate_profit]
+)
+
+task = Task("What would be my profit if I bought 100 shares of AAPL at $140 and sold at current price?")
+result = agent.do(task)
+```
+
+### With Vision
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.messages import ImageUrl
+
+model = infer_model("google-gla/gemini-2.5-flash")
+agent = Agent(model=model)
+
+task = Task(
+    description="Analyze this chart and explain the trends",
+    attachments=[
+        ImageUrl(url="https://example.com/chart.jpg")
+    ]
+)
+
+result = agent.do(task)
+```
+
+### With Video
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.messages import VideoUrl
+from upsonic.models.google import GoogleModelSettings
+
+settings = GoogleModelSettings(
+    max_tokens=4096,
+    google_video_resolution="high"
+)
+
+model = infer_model("google-gla/gemini-2.5-flash")
+agent = Agent(model=model, settings=settings)
+
+task = Task(
+    description="Summarize what happens in this video",
+    attachments=[
+        VideoUrl(url="https://example.com/video.mp4")
+    ]
+)
+
+result = agent.do(task)
+```
+
+### With Grounding (Web Search)
+
+```python
+from upsonic.models.google import GoogleModel, GoogleModelSettings
+
+# Grounding is enabled by default for supported models
+model = GoogleModel(
+    model_name="gemini-2.5-flash",
+    provider="google-gla"
+)
+
+agent = Agent(model=model)
+task = Task("What are the latest news about quantum computing breakthroughs?")
+result = agent.do(task)
+
+# Response includes web search results with citations
+```
+
+### With Safety Settings
+
+```python
+from upsonic.models.google import GoogleModel, GoogleModelSettings
+
+settings = GoogleModelSettings(
+    max_tokens=2048,
+    google_safety_settings=[
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "BLOCK_LOW_AND_ABOVE"
+        },
+        {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+        }
+    ]
+)
+
+model = GoogleModel(
+    model_name="gemini-2.5-flash",
+    provider="google-gla",
+    settings=settings
+)
+```
+
+### Code Execution
+
+```python
+from upsonic import Agent, Task, infer_model
+
+# Code execution is automatically available
+model = infer_model("google-gla/gemini-2.5-pro")
+agent = Agent(model=model)
+
+task = Task("Create a visualization of prime numbers up to 100")
+result = agent.do(task)
+```
+
+## Prompt Caching (Context Caching)
+
+Google supports context caching through the Gemini API to reduce costs and latency.
+
+### How It Works
+
+Context caching allows you to cache large context inputs:
+1. Create a cached content object with your context
+2. Reference it in subsequent requests
+3. Cached content is reused across requests
+4. Significantly reduces costs and improves latency
+
+### Best Practices
+
+```python
+from upsonic.models.google import GoogleModel, GoogleModelSettings
+
+# Long context that will be cached
+large_context = """
+... extensive documentation or knowledge base (10,000+ tokens) ...
+"""
+
+settings = GoogleModelSettings(
+    max_tokens=2048,
+    # google_cached_content will be set automatically if you reuse context
+)
+
+model = GoogleModel(
+    model_name="gemini-2.5-flash",
+    provider="google-gla",
+    settings=settings
+)
+
+agent = Agent(
+    model=model,
+    system_prompt=large_context
+)
+
+# First request creates cache
+task1 = Task("Based on the documentation, explain feature X")
+result1 = agent.do(task1)
+
+# Subsequent requests use cache (faster and cheaper)
+task2 = Task("Based on the documentation, explain feature Y")
+result2 = agent.do(task2)
+```
+
+### Cache Efficiency
+
+- **Minimum Length**: At least 32,768 tokens recommended
+- **Cost Savings**: Cached tokens cost 75% less
+- **TTL**: Cache expires after 60 minutes
+- **Best For**: Large knowledge bases, extensive documentation
+
+### Vertex AI Context Caching
+
+```python
+from upsonic.models.google import GoogleModel, GoogleModelSettings
+
+# Vertex AI supports context caching with labels
+settings = GoogleModelSettings(
+    max_tokens=2048,
+    google_labels={
+        "environment": "production",
+        "team": "engineering"
+    }
+)
+
+model = GoogleModel(
+    model_name="gemini-2.5-pro",
+    provider="google-vertex",
+    settings=settings
+)
+
+# Context caching works automatically with Vertex AI
+```
+
+## Model Parameters
+
+### Base Model Settings
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `max_tokens` | `int` | Maximum tokens to generate | 2048 |
+| `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 |
+| `top_p` | `float` | Nucleus sampling threshold | 0.95 |
+| `top_k` | `int` | Top-k sampling parameter | 40 |
+| `seed` | `int` | Random seed for deterministic outputs | None |
+| `stop_sequences` | `list[str]` | Sequences that stop generation | None |
+| `presence_penalty` | `float` | Penalty for token presence | 0.0 |
+| `frequency_penalty` | `float` | Penalty for token frequency | 0.0 |
+
+### Google-Specific Settings
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `google_safety_settings` | `list[SafetySettingDict]` | Content safety configuration |
+| `google_thinking_config` | `ThinkingConfigDict` | Thinking behavior configuration |
+| `google_labels` | `dict[str, str]` | Billing labels (Vertex AI only) |
+| `google_video_resolution` | `'low' \| 'medium' \| 'high'` | Video processing resolution |
+| `google_cached_content` | `str` | Name of cached content to use |
+
+#### Safety Settings
+
+```python
+google_safety_settings = [
+    {
+        "category": "HARM_CATEGORY_HARASSMENT",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+    }
+]
+```
+
+**Categories:**
+- `HARM_CATEGORY_HARASSMENT`
+- `HARM_CATEGORY_HATE_SPEECH`
+- `HARM_CATEGORY_SEXUALLY_EXPLICIT`
+- `HARM_CATEGORY_DANGEROUS_CONTENT`
+
+**Thresholds:**
+- `BLOCK_NONE`: Allow all content
+- `BLOCK_LOW_AND_ABOVE`: Block low and above
+- `BLOCK_MEDIUM_AND_ABOVE`: Block medium and above (recommended)
+- `BLOCK_ONLY_HIGH`: Block only high severity
+
+#### Thinking Configuration
+
+```python
+google_thinking_config = {
+    "include_thoughts": True,
+    "thinking_budget": 5000  # -1 for automatic
+}
+```
+
+### Example with All Settings
+
+```python
+from upsonic.models.google import GoogleModel, GoogleModelSettings
+
+settings = GoogleModelSettings(
+    # Base settings
+    max_tokens=4096,
+    temperature=0.7,
+    top_p=0.9,
+    top_k=40,
+    seed=42,
+    stop_sequences=["END"],
+    presence_penalty=0.1,
+    frequency_penalty=0.1,
+    
+    # Google-specific
+    google_safety_settings=[
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+        }
+    ],
+    google_thinking_config={
+        "include_thoughts": True,
+        "thinking_budget": -1  # Automatic
+    },
+    google_video_resolution="high",
+    
+    # Vertex AI labels
+    google_labels={
+        "environment": "production",
+        "project": "chatbot"
+    }
+)
+
+model = GoogleModel(
+    model_name="gemini-2.5-pro",
+    provider="google-vertex",
+    settings=settings
+)
+```
+
+## Available Models
+
+### Gemini 2.5 Series
+- `gemini-2.5-pro`: Most capable model
+- `gemini-2.5-flash`: Balanced performance
+- `gemini-2.5-flash-lite`: Fast and efficient
+
+### Gemini 2.0 Series
+- `gemini-2.0-flash`: Fast multimodal model
+- `gemini-2.0-flash-lite`: Lightweight variant
+
+### Legacy Models
+- `gemini-1.5-pro`: Previous generation
+- `gemini-1.5-flash`: Previous generation
+- `gemini-1.0-pro`: Original Gemini
+
+## Model Comparison
+
+| Model | Speed | Cost | Context | Best For |
+|-------|-------|------|---------|----------|
+| gemini-2.5-pro | Medium | High | 2M tokens | Complex reasoning, analysis |
+| gemini-2.5-flash | Fast | Medium | 1M tokens | General purpose, balanced |
+| gemini-2.5-flash-lite | Very Fast | Low | 1M tokens | Simple tasks, high volume |
+
+## Best Practices
+
+1. **Use Gemini API for Simplicity**: Easier setup than Vertex AI
+2. **Use Vertex AI for Production**: Better for GCP-integrated applications
+3. **Enable Context Caching**: For large, reused contexts
+4. **Configure Safety Settings**: Adjust based on your use case
+5. **Use Thinking for Complex Tasks**: Enable thinking configuration
+6. **Optimize Video Resolution**: Balance quality vs cost
+7. **Leverage Grounding**: For up-to-date information
+8. **Monitor Safety Blocks**: Check responses for safety filtering
+
+## Differences Between APIs
+
+### Gemini API (google-gla)
+- ✅ Simple API key authentication
+- ✅ No GCP account required
+- ✅ Grounding (web search) included
+- ❌ No billing labels
+- ❌ No VPC support
+
+### Vertex AI (google-vertex)
+- ✅ GCP integration
+- ✅ Billing labels support
+- ✅ VPC and security features
+- ✅ Enterprise support
+- ❌ Requires GCP setup
+- ❌ More complex authentication
+
+## Related Resources
+
+- [Gemini API Documentation](https://ai.google.dev/docs)
+- [Vertex AI Documentation](https://cloud.google.com/vertex-ai/docs)
+- [Gemini Models Overview](https://ai.google.dev/models/gemini)
+- [Context Caching Guide](https://ai.google.dev/docs/caching)
+- [Safety Settings Guide](https://ai.google.dev/docs/safety-setting_gemini)
+- [Gemini Pricing](https://ai.google.dev/pricing)
+

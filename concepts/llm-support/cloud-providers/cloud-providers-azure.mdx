@@ -1,0 +1,342 @@
+---
+title: "Azure OpenAI"
+description: "Using Azure OpenAI Service with Upsonic"
+---
+
+## Overview
+
+Azure OpenAI Service provides access to OpenAI models through Microsoft Azure with enterprise features, compliance, and regional deployment.
+
+**Model Class:** `OpenAIChatModel` (uses Azure provider)
+
+## Authentication
+
+### Environment Variables
+
+```bash
+export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/"
+export AZURE_OPENAI_API_KEY="..."
+export OPENAI_API_VERSION="2024-02-15-preview"
+```
+
+### Using infer_model
+
+```python
+from upsonic import infer_model
+
+model = infer_model("azure/gpt-4o")
+```
+
+### Manual Configuration
+
+```python
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+from upsonic.providers.azure import AzureProvider
+
+# Using provider
+provider = AzureProvider()
+model = OpenAIChatModel(
+    model_name="gpt-4o",
+    provider=provider
+)
+
+# Or specify provider string
+model = OpenAIChatModel(
+    model_name="gpt-4o",
+    provider="azure"
+)
+```
+
+## Examples
+
+### Basic Usage
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("azure/gpt-4o")
+agent = Agent(model=model)
+
+task = Task("Analyze customer feedback data")
+result = agent.do(task)
+```
+
+### With Custom Deployment
+
+```python
+from upsonic.models.openai import OpenAIChatModel
+from openai import AsyncAzureOpenAI
+
+# Custom deployment name
+client = AsyncAzureOpenAI(
+    azure_endpoint="https://your-resource.openai.azure.com/",
+    api_key="your-api-key",
+    api_version="2024-02-15-preview"
+)
+
+from upsonic.providers.azure import AzureProvider
+provider = AzureProvider(client=client)
+
+model = OpenAIChatModel(
+    model_name="your-deployment-name",  # Your deployment name in Azure
+    provider=provider
+)
+```
+
+### With Managed Identity
+
+```python
+from azure.identity import DefaultAzureCredential
+from openai import AsyncAzureOpenAI
+
+# Using managed identity (no API key needed)
+credential = DefaultAzureCredential()
+token = credential.get_token("https://cognitiveservices.azure.com/.default")
+
+client = AsyncAzureOpenAI(
+    azure_endpoint="https://your-resource.openai.azure.com/",
+    azure_ad_token=token.token,
+    api_version="2024-02-15-preview"
+)
+
+from upsonic.providers.azure import AzureProvider
+provider = AzureProvider(client=client)
+
+model = OpenAIChatModel(
+    model_name="gpt-4o",
+    provider=provider
+)
+```
+
+### With Virtual Network
+
+```python
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+
+# Azure resources can be behind VNet
+settings = OpenAIChatModelSettings(
+    max_tokens=2048,
+    timeout=120.0
+)
+
+model = OpenAIChatModel(
+    model_name="gpt-4o",
+    provider="azure",
+    settings=settings
+)
+```
+
+### With Content Filtering
+
+```python
+from upsonic import Agent, Task, infer_model
+
+# Azure includes built-in content filtering
+model = infer_model("azure/gpt-4o")
+agent = Agent(model=model)
+
+task = Task("Generate safe content for children")
+result = agent.do(task)
+```
+
+## Prompt Caching
+
+Azure OpenAI supports the same prompt caching capabilities as OpenAI:
+
+```python
+from upsonic import Agent, Task, infer_model
+
+# Long system prompt will be cached
+system_prompt = """
+You are an enterprise assistant with access to:
+- Company policies and procedures
+- HR handbook
+- IT security guidelines
+... (extensive context)
+"""
+
+model = infer_model("azure/gpt-4o")
+agent = Agent(
+    model=model,
+    system_prompt=system_prompt
+)
+
+# First request builds cache
+task1 = Task("What's the vacation policy?")
+result1 = agent.do(task1)
+
+# Subsequent requests use cache
+task2 = Task("How do I report a security incident?")
+result2 = agent.do(task2)
+```
+
+### Cache Benefits
+- **Cost Reduction**: 50% savings on cached input tokens
+- **Latency**: 2-4x faster with cache hits
+- **Automatic**: No configuration needed
+- **Minimum Size**: 1024 tokens recommended
+
+## Model Parameters
+
+### Base Settings
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model-specific |
+| `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 |
+| `top_p` | `float` | Nucleus sampling | 1.0 |
+| `seed` | `int` | Random seed | None |
+| `stop_sequences` | `list[str]` | Stop sequences | None |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 |
+| `logit_bias` | `dict[str, int]` | Token likelihood modifier | None |
+| `parallel_tool_calls` | `bool` | Allow parallel tools | True |
+| `timeout` | `float` | Request timeout (seconds) | 600 |
+
+### Azure-Specific Features
+
+Azure OpenAI includes additional enterprise features:
+
+- **Content Filtering**: Automatic content safety checks
+- **Managed Identity**: Azure AD authentication
+- **Private Endpoints**: VNet integration
+- **Data Residency**: Regional deployment
+- **Compliance**: SOC 2, HIPAA, ISO certifications
+
+### Example Configuration
+
+```python
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+
+settings = OpenAIChatModelSettings(
+    max_tokens=4096,
+    temperature=0.7,
+    top_p=0.9,
+    seed=42,
+    presence_penalty=0.1,
+    frequency_penalty=0.1,
+    parallel_tool_calls=True,
+    timeout=120.0
+)
+
+model = OpenAIChatModel(
+    model_name="gpt-4o",
+    provider="azure",
+    settings=settings
+)
+```
+
+## Available Models
+
+Azure OpenAI provides access to OpenAI models through regional deployments:
+
+### GPT-4o Models
+- `gpt-4o`: Latest GPT-4o
+- `gpt-4o-mini`: Efficient variant
+
+### GPT-4 Models
+- `gpt-4`: Original GPT-4
+- `gpt-4-32k`: Extended context
+- `gpt-4-turbo`: Faster variant
+
+### GPT-3.5 Models
+- `gpt-3.5-turbo`: Cost-effective
+- `gpt-3.5-turbo-16k`: Extended context
+
+**Note:** Model availability varies by region. Check Azure portal for your region's offerings.
+
+## Deployment Configuration
+
+### Creating a Deployment
+
+1. Create Azure OpenAI resource
+2. Deploy a model (create deployment)
+3. Note deployment name (used as model_name)
+4. Get endpoint and keys
+
+```python
+# Use your deployment name
+model = OpenAIChatModel(
+    model_name="my-gpt4o-deployment",  # Your deployment name
+    provider="azure"
+)
+```
+
+### Regional Considerations
+
+Choose region based on:
+- Data residency requirements
+- Latency requirements
+- Model availability
+- Compliance needs
+
+**Example regions:**
+- East US
+- West Europe
+- UK South
+- Australia East
+
+## Best Practices
+
+1. **Use Managed Identity**: More secure than API keys
+2. **Deploy in Same Region**: Minimize latency
+3. **Use Private Endpoints**: For sensitive data
+4. **Monitor Usage**: Track through Azure portal
+5. **Set Up Alerts**: For quota and cost management
+6. **Version API Calls**: Use specific API versions
+7. **Leverage Content Filtering**: Built-in safety features
+8. **Use Deployment Names**: Not model IDs
+
+## Enterprise Features
+
+### Content Filtering
+
+Azure includes multi-level content filtering:
+- Hate and fairness
+- Sexual content
+- Violence
+- Self-harm
+
+Levels: Low, Medium, High filtering
+
+### Compliance
+
+Azure OpenAI is compliant with:
+- SOC 2 Type II
+- ISO 27001, 27018, 27701
+- HIPAA
+- FedRAMP (select regions)
+
+### Data Privacy
+
+- Data stays in your Azure tenant
+- No data used for model training
+- Customer Lockbox support
+- Encryption at rest and in transit
+
+## Monitoring and Logging
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("azure/gpt-4o")
+agent = Agent(model=model)
+
+# Azure automatically logs to Azure Monitor
+task = Task("Process this request")
+result = agent.do(task)
+
+# View metrics in Azure Portal:
+# - Token usage
+# - Latency
+# - Error rates
+# - Content filtering actions
+```
+
+## Related Resources
+
+- [Azure OpenAI Documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/)
+- [Azure OpenAI Pricing](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/)
+- [Content Filtering](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/content-filter)
+- [Model Availability](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models)
+

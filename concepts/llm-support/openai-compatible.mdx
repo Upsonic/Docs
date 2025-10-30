@@ -1,670 +1,332 @@
 ---
 title: "OpenAI-Compatible Models"
-description: "Using OpenAI-compatible API endpoints with Upsonic"
+description: "Using models that implement the OpenAI API specification"
 ---
 
 ## What are OpenAI-Compatible Models?
 
-OpenAI-compatible models implement the same API interface as OpenAI's Chat Completions API, making it easy to switch between providers without changing code. Many providers offer OpenAI-compatible endpoints to simplify integration.
+OpenAI-compatible models are LLM providers and services that implement the OpenAI API specification. This means they expose the same REST API endpoints, request/response formats, and SDK compatibility as OpenAI, allowing you to use them as drop-in replacements for OpenAI models with minimal code changes.
 
-### Key Benefits
+### Key Characteristics
 
-- **Easy Migration**: Switch providers without code changes
-- **Unified Interface**: Same API across multiple providers
-- **Drop-in Replacement**: Works with existing OpenAI code
-- **Wide Support**: Many providers offer compatibility
-- **Simplified Integration**: Single SDK for multiple providers
+**API Compatibility:**
+- Same endpoint structure (`/v1/chat/completions`, `/v1/completions`)
+- Identical request/response JSON format
+- Compatible with OpenAI Python/JavaScript SDKs
+- Standard authentication via API keys
 
-### API Compatibility
+**Model Classes:**
+- All use `OpenAIChatModel` in Upsonic
+- Import from `upsonic.models.openai`
+- Configure via provider parameter or base_url
 
-OpenAI-compatible providers implement these endpoints:
-- `/v1/chat/completions` - Chat completions
-- `/v1/completions` - Text completions (legacy)
-- `/v1/embeddings` - Text embeddings
-- `/v1/models` - List available models
+**Benefits:**
+- **Easy Migration**: Switch providers without rewriting code
+- **Vendor Independence**: Not locked into single provider
+- **Cost Optimization**: Choose best price/performance ratio
+- **Redundancy**: Fallback between providers
+- **Feature Access**: Use latest open-source models
 
----
+### Supported Providers in Upsonic
 
-## Supported Providers
+| Provider | Base URL | Best For |
+|----------|----------|----------|
+| **DeepSeek** | `https://api.deepseek.com` | Cost-effective reasoning |
+| **Cerebras** | `https://api.cerebras.ai/v1` | Ultra-fast inference |
+| **Fireworks** | `https://api.fireworks.ai/inference/v1` | Open model access |
+| **GitHub Models** | `https://models.inference.ai.azure.com` | Developer testing |
+| **Together AI** | `https://api.together.xyz` | Collaborative serving |
+| **Azure OpenAI** | `https://{resource}.openai.azure.com` | Enterprise deployment |
+| **Ollama** | `http://localhost:11434/v1` | Local inference |
+| **Grok** | `https://api.x.ai/v1` | Real-time information |
+| **Vercel AI** | Various | Edge-optimized |
+| **Heroku** | Various | Cloud platform |
 
-Upsonic supports these OpenAI-compatible providers through the `OpenAIChatModel` class:
+**Note:** Some providers like Groq have dedicated model classes but also support OpenAI-compatible API.
 
-| Provider | Full Name | Specialty | Notes |
-|----------|-----------|-----------|-------|
-| **deepseek** | DeepSeek | Reasoning models | R1 models with chain-of-thought |
-| **cerebras** | Cerebras | Ultra-fast inference | Industry-leading speed |
-| **fireworks** | Fireworks AI | Open models | Fast inference, multiple models |
-| **github** | GitHub Models | Free tier | Good for testing and development |
-| **grok** | xAI Grok | Latest from xAI | Grok 2, 3, 4 models |
-| **heroku** | Heroku AI | Managed hosting | Integrated with Heroku platform |
-| **moonshotai** | Moonshot AI | Chinese models | Kimi models |
-| **openrouter** | OpenRouter | Gateway | Access to 100+ models |
-| **together** | Together AI | Open-source | Community models |
-| **vercel** | Vercel AI | Serverless | Edge deployments |
-| **litellm** | LiteLLM | Self-hosted gateway | Proxy for 100+ providers |
-| **azure** | Azure OpenAI | Enterprise | Microsoft cloud integration |
+## Usage
 
----
+### Basic Usage with infer_model
 
-## Basic Usage
-
-### Simple Pattern
-
-The easiest way to use OpenAI-compatible providers:
+The simplest way to use OpenAI-compatible models is with `infer_model`:
 
 ```python
-from upsonic import Agent, Task
+from upsonic import Agent, Task, infer_model
 
-# Just prefix the model name with the provider
-agent = Agent(model="deepseek/deepseek-chat")
+# Using provider prefix (recommended)
+model = infer_model("deepseek/deepseek-chat")
+agent = Agent(model=model)
+
 task = Task("Explain quantum computing")
 result = agent.do(task)
 ```
 
-### Supported Provider Prefixes
+### Switching Between Providers (All are openai compatible)
 
 ```python
-# DeepSeek
-agent = Agent(model="deepseek/deepseek-chat")
-agent = Agent(model="deepseek/deepseek-reasoner")
+from upsonic import infer_model
 
-# Cerebras
-agent = Agent(model="cerebras/llama-3.3-70b")
+# OpenAI
+model_openai = infer_model("openai/gpt-4o")
 
-# Fireworks
-agent = Agent(model="fireworks/llama-v3-70b-instruct")
+# DeepSeek - same interface
+model_deepseek = infer_model("deepseek/deepseek-chat")
 
-# GitHub Models
-agent = Agent(model="github/gpt-4o")
+# Cerebras - same interface
+model_cerebras = infer_model("cerebras/llama-3.3-70b")
 
-# Grok
-agent = Agent(model="grok/grok-4")
-
-# Together AI
-agent = Agent(model="together/meta-llama/Llama-3.3-70B-Instruct-Turbo")
-
-# OpenRouter
-agent = Agent(model="openrouter/anthropic/claude-3.5-sonnet")
-
-# Azure OpenAI
-agent = Agent(model="azure/gpt-4o")
+# All work identically
+agent = Agent(model=model_deepseek)
+result = agent.do(Task("Hello"))
 ```
 
----
+### Manual Configuration
 
-## Advanced Configuration
-
-### Using Custom Providers
-
-Create a custom provider for any OpenAI-compatible endpoint:
+For more control, instantiate models directly:
 
 ```python
-from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
-from upsonic.providers.openai import openai_provider
-
-# Create custom provider
-provider = openai_provider(
-    provider_name="my-provider",
-    base_url="https://api.my-provider.com/v1",
-    api_key="your-api-key"
-)
-
-# Create model
-model = OpenAIChatModel(
-    model_name="custom-model",
-    provider=provider
-)
-
-agent = Agent(model=model)
-task = Task("Your task")
-result = agent.do(task)
-```
-
-### With Environment Variables
-
-```bash
-export OPENAI_BASE_URL="https://api.custom-provider.com/v1"
-export OPENAI_API_KEY="your-key"
-```
-
-```python
-from upsonic import Agent, Task
-
-# Will use the custom endpoint
-agent = Agent(model="openai/any-model-name")
-task = Task("Your task")
-result = agent.do(task)
-```
-
-### With Settings
-
-```python
-from upsonic import Agent, Task
 from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
 
 settings = OpenAIChatModelSettings(
     max_tokens=2048,
-    temperature=0.7,
-    top_p=0.9,
-    seed=42,
-    presence_penalty=0.1,
-    frequency_penalty=0.1
+    temperature=0.7
 )
+
+# Using provider name
+model = OpenAIChatModel(
+    model_name="deepseek-chat",
+    provider="deepseek",
+    settings=settings
+)
+```
+
+### Using Custom Base URL
+
+For self-hosted or custom endpoints:
+
+```python
+from upsonic.models.openai import OpenAIChatModel
+from openai import AsyncOpenAI
+
+# Custom OpenAI-compatible endpoint
+client = AsyncOpenAI(
+    base_url="https://your-custom-endpoint.com/v1",
+    api_key="your-api-key"
+)
+
+from upsonic.providers.openai import OpenAIProvider
+provider = OpenAIProvider(client=client)
 
 model = OpenAIChatModel(
-    model_name="custom-model",
-    provider="custom-provider",
-    settings=settings
+    model_name="your-model-name",
+    provider=provider
 )
+```
 
+### Environment-Based Configuration
+
+```python
+import os
+from upsonic import infer_model
+
+# Set provider via environment
+provider = os.getenv("LLM_PROVIDER", "openai")
+model_name = os.getenv("LLM_MODEL", "gpt-4o")
+
+# Switch providers without code changes
+model = infer_model(f"{provider}/{model_name}")
+```
+
+Example `.env` file:
+
+```bash
+# Switch to DeepSeek
+LLM_PROVIDER=deepseek
+LLM_MODEL=deepseek-chat
+
+# Or Cerebras
+LLM_PROVIDER=cerebras
+LLM_MODEL=llama-3.3-70b
+```
+
+### With Streaming
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("deepseek/deepseek-chat")
 agent = Agent(model=model)
+
+task = Task("Write a long story")
+
+# Streaming works identically across providers
+async with agent.stream(task) as result:
+    async for text in result.stream_output():
+        print(text, end='', flush=True)
 ```
 
----
-
-## Provider-Specific Examples
-
-### DeepSeek
-
-DeepSeek provides reasoning models with R1:
+### With Tools
 
 ```python
-from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModelSettings
+from upsonic import Agent, Task, infer_model
 
-# R1 models show reasoning process
-settings = OpenAIChatModelSettings(
-    max_tokens=4096,
-    temperature=0.1
-)
+def calculate(expression: str) -> float:
+    """Evaluate a mathematical expression."""
+    return eval(expression)
 
-agent = Agent(
-    model="deepseek/deepseek-reasoner",
-    settings=settings
-)
+# Tools work with OpenAI-compatible models
+model = infer_model("cerebras/llama-3.3-70b")
+agent = Agent(model=model, tools=[calculate])
 
-task = Task("Solve this complex problem step by step")
+task = Task("What is 456 * 789?")
 result = agent.do(task)
 ```
 
-**Environment Variables:**
-```bash
-export DEEPSEEK_API_KEY="your-key"
-```
-
-**Available Models:**
-- `deepseek-chat` - General purpose
-- `deepseek-reasoner` - R1 reasoning model
-
----
-
-### Cerebras
-
-Cerebras provides ultra-fast inference:
+### With Structured Output
 
 ```python
-from upsonic import Agent, Task
+from pydantic import BaseModel
+from upsonic import infer_model
 
-# Cerebras is optimized for speed
-agent = Agent(model="cerebras/llama-3.3-70b")
-task = Task("Quick response needed")
-result = agent.do(task)
+class Analysis(BaseModel):
+    sentiment: str
+    confidence: float
+    summary: str
+
+model = infer_model("deepseek/deepseek-chat")
+model = model.with_structured_output(Analysis)
+
+result = await model.ainvoke("Analyze this: Great product!")
+print(result.sentiment, result.confidence)
 ```
 
-**Environment Variables:**
-```bash
-export CEREBRAS_API_KEY="your-key"
-```
-
-**Available Models:**
-- `llama-3.3-70b` - Llama 3.3 70B
-- `llama-4-scout-17b-16e-instruct` - Llama 4 Scout
-- `llama-4-maverick-17b-128e-instruct` - Llama 4 Maverick
-- `qwen-3-235b-a22b-instruct-2507` - Qwen 3
-- `qwen-3-235b-a22b-thinking-2507` - Qwen 3 Thinking
-
----
-
-### Fireworks AI
-
-Fireworks provides fast inference for open models:
+### Fallback Pattern
 
 ```python
-from upsonic import Agent, Task
-
-agent = Agent(model="fireworks/llama-v3-70b-instruct")
-task = Task("Your task")
-result = agent.do(task)
-```
-
-**Environment Variables:**
-```bash
-export FIREWORKS_API_KEY="your-key"
-```
-
-**Available Models:** Check [fireworks.ai/models](https://fireworks.ai/models)
-
----
-
-### GitHub Models
-
-GitHub provides free access to popular models:
-
-```python
-from upsonic import Agent, Task
-
-# Free tier available
-agent = Agent(model="github/gpt-4o")
-task = Task("Test task")
-result = agent.do(task)
-```
-
-**Environment Variables:**
-```bash
-export GITHUB_TOKEN="ghp_..."
-```
-
-**Available Models:**
-- OpenAI models (GPT-4, GPT-3.5)
-- Anthropic Claude
-- Meta Llama
-- Mistral
-
----
-
-### Grok (xAI)
-
-Access xAI's Grok models:
-
-```python
-from upsonic import Agent, Task
-
-agent = Agent(model="grok/grok-4")
-task = Task("Your task")
-result = agent.do(task)
-```
-
-**Environment Variables:**
-```bash
-export GROK_API_KEY="xai-..."
-```
-
-**Available Models:**
-- `grok-4` - Latest Grok model
-- `grok-4-0709` - Specific version
-- `grok-3` - Previous generation
-- `grok-3-mini` - Smaller, faster
-- `grok-3-fast` - Optimized for speed
-- `grok-2-vision-1212` - Vision capabilities
-
----
-
-### Heroku AI
-
-Integrated AI for Heroku platform:
-
-```python
-from upsonic import Agent, Task
-
-agent = Agent(model="heroku/claude-3-5-sonnet-latest")
-task = Task("Your task")
-result = agent.do(task)
-```
-
-**Available Models:**
-- Claude models
-- Nova models
-- GPT models
-
----
-
-### Moonshot AI (Kimi)
-
-Chinese AI models from Moonshot:
-
-```python
-from upsonic import Agent, Task
-
-agent = Agent(model="moonshotai/kimi-latest")
-task = Task("Your task")
-result = agent.do(task)
-```
-
-**Environment Variables:**
-```bash
-export MOONSHOT_API_KEY="your-key"
-```
-
-**Available Models:**
-- `moonshot-v1-8k` - 8K context
-- `moonshot-v1-32k` - 32K context
-- `moonshot-v1-128k` - 128K context
-- `kimi-latest` - Latest Kimi model
-- `kimi-thinking-preview` - Reasoning model
-- `kimi-k2-0711-preview` - K2 preview
-
----
-
-## Feature Support
-
-Not all OpenAI-compatible providers support all OpenAI features:
-
-| Feature | Support Varies By Provider |
-|---------|---------------------------|
-| **Streaming** | ✅ Most support |
-| **Function Calling** | ⚠️ Some support |
-| **JSON Mode** | ⚠️ Limited support |
-| **JSON Schema** | ⚠️ Very limited |
-| **Vision** | ❌ Rarely supported |
-| **Tools** | ⚠️ Basic support |
-
-### Testing Compatibility
-
-```python
-from upsonic import Agent, Task
+from upsonic import Agent, Task, infer_model
 from upsonic.utils.package.exception import ModelHTTPError
 
-try:
-    # Test if streaming works
-    agent = Agent(model="provider/model")
-    task = Task("Test")
+async def request_with_fallback(prompt: str):
+    """Try multiple providers in order."""
+    providers = [
+        ("openai", "gpt-4o"),
+        ("deepseek", "deepseek-chat"),
+        ("cerebras", "llama-3.3-70b"),
+    ]
     
-    async for chunk in agent.run_stream(task):
-        print("Streaming works!")
-        break
-        
-except ModelHTTPError as e:
-    print(f"Streaming not supported: {e}")
+    for provider, model_name in providers:
+        try:
+            model = infer_model(f"{provider}/{model_name}")
+            agent = Agent(model=model)
+            return agent.do(Task(prompt))
+        except ModelHTTPError:
+            continue
+    
+    raise Exception("All providers failed")
 ```
 
----
+## Params
 
-## Common Parameters
+### Base Model Parameters
 
-All OpenAI-compatible providers support these base parameters:
+All OpenAI-compatible models support these standard parameters:
 
-```python
-from upsonic.models.openai import OpenAIChatModelSettings
-
-settings = OpenAIChatModelSettings(
-    max_tokens=2048,          # Maximum tokens to generate
-    temperature=0.7,          # Randomness (0.0-2.0)
-    top_p=0.9,               # Nucleus sampling
-    seed=42,                 # Random seed
-    stop_sequences=["END"],  # Stop sequences
-    presence_penalty=0.0,    # Penalize repeated topics
-    frequency_penalty=0.0,   # Penalize repeated tokens
-)
-```
+| Parameter | Type | Description | Default | Support |
+|-----------|------|-------------|---------|---------|
+| `max_tokens` | `int` | Maximum tokens to generate | Varies | All |
+| `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 | All |
+| `top_p` | `float` | Nucleus sampling threshold | 1.0 | All |
+| `seed` | `int` | Random seed for reproducibility | None | Most |
+| `stop_sequences` | `list[str]` | Sequences that stop generation | None | All |
+| `presence_penalty` | `float` | Penalize token presence (-2.0 to 2.0) | 0.0 | Most |
+| `frequency_penalty` | `float` | Penalize token frequency (-2.0 to 2.0) | 0.0 | Most |
+| `logit_bias` | `dict[str, int]` | Modify token likelihoods | None | Some |
+| `parallel_tool_calls` | `bool` | Allow parallel tool execution | True | Most |
+| `timeout` | `float` | Request timeout in seconds | 600 | All |
 
 ### Provider-Specific Parameters
 
-Some providers support additional parameters via `extra_body`:
+Some providers extend the OpenAI spec with additional parameters:
+
+| Provider | Additional Parameters | Notes |
+|----------|---------------------|-------|
+| DeepSeek | None | Standard OpenAI params only |
+| Cerebras | None | Standard OpenAI params only |
+| Fireworks | `context_length_exceeded_behavior` | How to handle context overflow |
+| Together AI | `repetition_penalty` | Additional control over repetition |
+| Azure | `azure_deployment` | Deployment name in Azure |
+| Ollama | `num_predict`, `num_ctx` | Ollama-specific controls |
+
+### Example: Full Configuration
 
 ```python
-settings = OpenAIChatModelSettings(
-    extra_body={
-        "top_k": 50,              # Top-K sampling (some providers)
-        "repetition_penalty": 1.1, # Repetition penalty (some providers)
-        "min_p": 0.1,             # Min-P sampling (some providers)
-    }
-)
-```
-
----
-
-## Authentication Methods
-
-### Method 1: Environment Variables (Recommended)
-
-```bash
-export PROVIDER_API_KEY="your-key"
-export PROVIDER_BASE_URL="https://api.provider.com/v1"
-```
-
-### Method 2: Direct Configuration
-
-```python
-from upsonic.providers.openai import openai_provider
-
-provider = openai_provider(
-    provider_name="custom",
-    base_url="https://api.provider.com/v1",
-    api_key="your-key"
-)
-```
-
-### Method 3: Dynamic Configuration
-
-```python
-import os
-
-# Set at runtime
-os.environ["OPENAI_BASE_URL"] = "https://api.provider.com/v1"
-os.environ["OPENAI_API_KEY"] = "your-key"
-
-agent = Agent(model="openai/model-name")
-```
-
----
-
-## Switching Between Providers
-
-### Easy Provider Switching
-
-```python
-from upsonic import Agent, Task
-
-# Test the same task across providers
-providers = [
-    "openai/gpt-4o",
-    "deepseek/deepseek-chat",
-    "cerebras/llama-3.3-70b",
-    "fireworks/llama-v3-70b-instruct"
-]
-
-task = Task("Explain machine learning")
-
-for provider in providers:
-    agent = Agent(model=provider)
-    result = agent.do(task)
-    print(f"\n{provider}:\n{result}\n")
-```
-
-### Fallback Strategy
-
-```python
-from upsonic import Agent, Task
-from upsonic.utils.package.exception import ModelHTTPError
-
-async def call_with_fallback(task: Task, providers: list[str]):
-    for provider in providers:
-        try:
-            agent = Agent(model=provider)
-            return await agent.async_do(task)
-        except ModelHTTPError as e:
-            print(f"{provider} failed: {e}")
-            continue
-    raise RuntimeError("All providers failed")
-
-# Try providers in order
-providers = [
-    "openai/gpt-4o",          # Primary
-    "deepseek/deepseek-chat",  # Fallback 1
-    "cerebras/llama-3.3-70b"   # Fallback 2
-]
-
-result = await call_with_fallback(task, providers)
-```
-
----
-
-## Performance Comparison
-
-Approximate inference speeds (may vary):
-
-| Provider | Speed | Cost | Best For |
-|----------|-------|------|----------|
-| **Cerebras** | ⚡⚡⚡⚡⚡ | $$ | Real-time apps |
-| **Groq** | ⚡⚡⚡⚡ | $ | Fast responses |
-| **Fireworks** | ⚡⚡⚡ | $$ | Balanced |
-| **Together** | ⚡⚡⚡ | $$ | Open models |
-| **DeepSeek** | ⚡⚡ | $ | Reasoning |
-| **OpenAI** | ⚡⚡ | $$$ | Quality |
-
----
-
-## Troubleshooting
-
-### Connection Refused
-
-```python
-# Check if base URL is correct
-import os
-print(os.getenv("OPENAI_BASE_URL"))
-
-# Verify API key is set
-print(os.getenv("PROVIDER_API_KEY"))
-```
-
-### Unsupported Features
-
-```python
-from upsonic.utils.package.exception import ModelHTTPError
-
-try:
-    result = agent.do(task)
-except ModelHTTPError as e:
-    if e.status_code == 400:
-        print("Feature not supported by provider")
-```
-
-### Rate Limiting
-
-```python
-import asyncio
-from upsonic.utils.package.exception import ModelHTTPError
-
-async def with_retry(agent, task, max_retries=3):
-    for i in range(max_retries):
-        try:
-            return await agent.async_do(task)
-        except ModelHTTPError as e:
-            if e.status_code == 429:  # Rate limit
-                wait = 2 ** i  # Exponential backoff
-                await asyncio.sleep(wait)
-            else:
-                raise
-```
-
----
-
-## Best Practices
-
-### 1. Set Timeouts
-
-```python
-from upsonic.models.openai import OpenAIChatModelSettings
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
 
 settings = OpenAIChatModelSettings(
-    timeout=30.0  # 30 seconds
+    # Token control
+    max_tokens=4096,
+    
+    # Sampling parameters
+    temperature=0.7,
+    top_p=0.9,
+    seed=42,
+    
+    # Penalties
+    presence_penalty=0.1,
+    frequency_penalty=0.1,
+    
+    # Stop sequences
+    stop_sequences=["END", "STOP"],
+    
+    # Tool settings
+    parallel_tool_calls=True,
+    
+    # Request settings
+    timeout=120.0,
+    
+    # Custom headers
+    extra_headers={"X-Custom": "value"}
+)
+
+model = OpenAIChatModel(
+    model_name="deepseek-chat",
+    provider="deepseek",
+    settings=settings
 )
 ```
 
-### 2. Handle Errors Gracefully
+### Parameter Comparison Table
 
-```python
-from upsonic.utils.package.exception import ModelHTTPError, UserError
+Support across major OpenAI-compatible providers:
 
-try:
-    result = agent.do(task)
-except ModelHTTPError as e:
-    print(f"HTTP {e.status_code}: {e.body}")
-except UserError as e:
-    print(f"Configuration error: {e}")
-```
+| Parameter | OpenAI | DeepSeek | Cerebras | Fireworks | Together | Azure | Ollama |
+|-----------|--------|----------|----------|-----------|----------|-------|--------|
+| `max_tokens` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `temperature` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `top_p` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `seed` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `stop_sequences` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `presence_penalty` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `frequency_penalty` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `logit_bias` | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| `parallel_tool_calls` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `stream` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-### 3. Use Provider-Specific Settings
+### Temperature Guidelines
 
-```python
-# Check provider documentation for supported parameters
-settings = OpenAIChatModelSettings(
-    temperature=0.7,  # Standard
-    extra_body={
-        "top_k": 50  # Provider-specific
-    }
-)
-```
+| Temperature | Behavior | Best For |
+|-------------|----------|----------|
+| 0.0 - 0.3 | Very focused | Code, math, factual |
+| 0.4 - 0.7 | Balanced | General purpose |
+| 0.8 - 1.0 | Creative | Stories, brainstorming |
+| 1.1 - 2.0 | Very random | Experimental |
 
-### 4. Test Before Production
 
-```python
-# Test with a simple task first
-test_task = Task("Say 'Hello'")
-try:
-    result = agent.do(test_task)
-    print("Provider works!")
-except Exception as e:
-    print(f"Provider test failed: {e}")
-```
 
-### 5. Monitor Usage
+## Related Resources
 
-```python
-# Log API calls for monitoring
-import logging
-
-logging.basicConfig(level=logging.INFO)
-result = agent.do(task)  # Will log API calls
-```
-
----
-
-## Migration Guide
-
-### From OpenAI to Other Providers
-
-```python
-# Before (OpenAI)
-agent = Agent(model="openai/gpt-4o")
-
-# After (DeepSeek)
-agent = Agent(model="deepseek/deepseek-chat")
-
-# After (Cerebras)
-agent = Agent(model="cerebras/llama-3.3-70b")
-
-# Code remains the same!
-task = Task("Your task")
-result = agent.do(task)
-```
-
-### From LangChain
-
-```python
-# LangChain
-from langchain_openai import ChatOpenAI
-llm = ChatOpenAI(
-    base_url="https://api.provider.com/v1",
-    api_key="key"
-)
-
-# Upsonic
-from upsonic import Agent
-import os
-os.environ["OPENAI_BASE_URL"] = "https://api.provider.com/v1"
-os.environ["OPENAI_API_KEY"] = "key"
-agent = Agent(model="openai/model")
-```
-
----
-
-## Next Steps
-
-- [Native Model Providers](/native-providers) - OpenAI, Anthropic, Google
-- [Cloud Model Providers](/cloud-providers) - AWS Bedrock, Azure OpenAI
-- [Local Model Providers](/local-providers) - Ollama
-- [Model Gateways](/model-gateways) - OpenRouter, LiteLLM
-- [LLM Support Overview](/llm-overview) - Understanding LLM models
-
+- [DeepSeek Documentation](https://platform.deepseek.com/docs)
+- [Cerebras Documentation](https://inference-docs.cerebras.ai/)
+- [Fireworks Documentation](https://docs.fireworks.ai/)
+- [Together AI Documentation](https://docs.together.ai/)
+- [OpenAI API Reference](https://platform.openai.com/docs/api-reference)

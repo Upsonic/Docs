@@ -1,0 +1,184 @@
+---
+title: "Cohere"
+description: "Using Cohere models with Upsonic"
+---
+
+## Overview
+
+Cohere provides enterprise-grade language models including Command R+ with strong multilingual capabilities and retrieval-augmented generation.
+
+**Model Class:** `CohereModel`
+
+## Authentication
+
+### Environment Variables
+
+```bash
+export CO_API_KEY="..."
+export CO_BASE_URL="https://api.cohere.ai"  # Optional
+```
+
+### Using infer_model
+
+```python
+from upsonic import infer_model
+
+model = infer_model("cohere/command-r-plus")
+```
+
+### Manual Configuration
+
+```python
+from upsonic.models.cohere import CohereModel, CohereModelSettings
+
+settings = CohereModelSettings(
+    max_tokens=2048,
+    temperature=0.7
+)
+
+model = CohereModel(
+    model_name="command-r-plus",
+    settings=settings
+)
+```
+
+## Examples
+
+### Basic Usage
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("cohere/command-r-plus")
+agent = Agent(model=model)
+
+task = Task("Summarize the benefits of renewable energy")
+result = agent.do(task)
+```
+
+### With Thinking
+
+```python
+from upsonic import Agent, Task, infer_model
+
+# Command R+ supports thinking
+model = infer_model("cohere/command-r-plus")
+agent = Agent(model=model)
+
+task = Task("Analyze this complex problem step by step: ...")
+result = agent.do(task)
+```
+
+### With Tools
+
+```python
+from upsonic import Agent, Task, infer_model
+
+def search_products(query: str) -> list[dict]:
+    """Search for products."""
+    return [{"name": "Product 1", "price": 99.99}]
+
+model = infer_model("cohere/command-r-plus")
+agent = Agent(model=model, tools=[search_products])
+
+task = Task("Find me laptops under $1000")
+result = agent.do(task)
+```
+
+### Multilingual Support
+
+```python
+from upsonic import Agent, Task, infer_model
+
+# Command R+ excels at multilingual tasks
+model = infer_model("cohere/command-r-plus")
+agent = Agent(model=model)
+
+task = Task("Translate this to French: Hello, how are you?")
+result = agent.do(task)
+```
+
+## Prompt Caching
+
+Cohere does not currently support native prompt caching.
+
+**Best Practice:** Use memory for conversation context:
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.storage.memory import Memory
+from upsonic.storage.providers.in_memory import InMemoryStorage
+
+storage = InMemoryStorage()
+memory = Memory(storage=storage, session_id="session-123")
+
+model = infer_model("cohere/command-r-plus")
+agent = Agent(model=model, memory=memory)
+```
+
+## Model Parameters
+
+### Base Settings
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `max_tokens` | `int` | Maximum tokens to generate | 4096 |
+| `temperature` | `float` | Sampling temperature (0.0-1.0) | 0.3 |
+| `p` (top_p) | `float` | Nucleus sampling | 0.75 |
+| `seed` | `int` | Random seed | None |
+| `stop_sequences` | `list[str]` | Stop sequences | None |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 |
+
+### Example Configuration
+
+```python
+from upsonic.models.cohere import CohereModel, CohereModelSettings
+
+settings = CohereModelSettings(
+    max_tokens=2048,
+    temperature=0.7,
+    top_p=0.9,
+    seed=42,
+    stop_sequences=["END"],
+    presence_penalty=0.1,
+    frequency_penalty=0.1
+)
+
+model = CohereModel(
+    model_name="command-r-plus",
+    settings=settings
+)
+```
+
+## Available Models
+
+### Command R Series
+- `command-r-plus`: Most capable, multilingual
+- `command-r-plus-08-2024`: Latest R+ snapshot
+- `command-r`: Balanced performance
+- `command-r-08-2024`: Latest R snapshot
+- `command-r7b-12-2024`: Lightweight variant
+
+### Aya Expanse (Multilingual)
+- `c4ai-aya-expanse-32b`: Large multilingual model
+- `c4ai-aya-expanse-8b`: Efficient multilingual
+
+### Legacy Models
+- `command`: Original Command model
+- `command-light`: Lightweight variant
+
+## Best Practices
+
+1. **Use Command R+ for Multilingual**: Best-in-class multilingual support
+2. **Lower Temperature for RAG**: More accurate retrieval
+3. **Thinking for Reasoning**: Command R+ supports thinking
+4. **Batch Requests**: For high-volume processing
+5. **Monitor Costs**: Track token usage
+
+## Related Resources
+
+- [Cohere API Documentation](https://docs.cohere.com/)
+- [Cohere Models](https://docs.cohere.com/docs/models)
+- [Cohere Pricing](https://cohere.com/pricing)
+

@@ -1,0 +1,228 @@
+---
+title: "Hugging Face"
+description: "Using Hugging Face models with Upsonic"
+---
+
+## Overview
+
+Hugging Face provides access to thousands of open-source models through their Inference API. Great for experimentation with cutting-edge models.
+
+**Model Class:** `HuggingFaceModel`
+
+## Authentication
+
+### Environment Variables
+
+```bash
+export HF_TOKEN="hf_..."
+```
+
+### Using infer_model
+
+```python
+from upsonic import infer_model
+
+model = infer_model("huggingface/meta-llama/Llama-3.3-70B-Instruct")
+```
+
+### Manual Configuration
+
+```python
+from upsonic.models.huggingface import HuggingFaceModel, HuggingFaceModelSettings
+
+settings = HuggingFaceModelSettings(
+    max_tokens=2048,
+    temperature=0.7
+)
+
+model = HuggingFaceModel(
+    model_name="meta-llama/Llama-3.3-70B-Instruct",
+    settings=settings
+)
+```
+
+## Examples
+
+### Basic Usage
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("huggingface/meta-llama/Llama-3.3-70B-Instruct")
+agent = Agent(model=model)
+
+task = Task("Explain deep learning")
+result = agent.do(task)
+```
+
+### With Reasoning Models
+
+```python
+from upsonic import Agent, Task, infer_model
+
+# DeepSeek R1 reasoning model
+model = infer_model("huggingface/deepseek-ai/DeepSeek-R1")
+agent = Agent(model=model)
+
+task = Task("Solve this math problem step by step: ...")
+result = agent.do(task)
+```
+
+### With Qwen Models
+
+```python
+from upsonic import Agent, Task, infer_model
+
+# Qwen's large model
+model = infer_model("huggingface/Qwen/Qwen3-235B-A22B")
+agent = Agent(model=model)
+
+task = Task("Generate Python code for web scraping")
+result = agent.do(task)
+```
+
+## Prompt Caching
+
+Hugging Face does not currently support native prompt caching.
+
+**Best Practice:** Use memory for conversation context:
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.storage.memory import Memory
+from upsonic.storage.providers.in_memory import InMemoryStorage
+
+storage = InMemoryStorage()
+memory = Memory(storage=storage, session_id="session-123")
+
+model = infer_model("huggingface/meta-llama/Llama-3.3-70B-Instruct")
+agent = Agent(model=model, memory=memory)
+```
+
+## Model Parameters
+
+### Base Settings
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model default |
+| `temperature` | `float` | Sampling temperature | 1.0 |
+| `top_p` | `float` | Nucleus sampling | 1.0 |
+| `seed` | `int` | Random seed | None |
+| `stop_sequences` | `list[str]` | Stop sequences | None |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 |
+
+### Example Configuration
+
+```python
+from upsonic.models.huggingface import HuggingFaceModel, HuggingFaceModelSettings
+
+settings = HuggingFaceModelSettings(
+    max_tokens=2048,
+    temperature=0.7,
+    top_p=0.9,
+    seed=42,
+    presence_penalty=0.1,
+    frequency_penalty=0.1
+)
+
+model = HuggingFaceModel(
+    model_name="meta-llama/Llama-3.3-70B-Instruct",
+    settings=settings
+)
+```
+
+## Available Models
+
+### Meta Llama
+- `meta-llama/Llama-3.3-70B-Instruct`: Latest Llama
+- `meta-llama/Llama-4-Scout-17B-16E-Instruct`: Llama 4 small
+- `meta-llama/Llama-4-Maverick-17B-128E-Instruct`: Llama 4 large context
+
+### DeepSeek
+- `deepseek-ai/DeepSeek-R1`: Reasoning model
+
+### Qwen
+- `Qwen/Qwen3-235B-A22B`: Large model
+- `Qwen/Qwen3-32B`: Efficient model
+- `Qwen/Qwen2.5-72B-Instruct`: Previous generation
+- `Qwen/QwQ-32B`: Reasoning model
+
+## Model Selection Guide
+
+| Model | Size | Best For |
+|-------|------|----------|
+| Llama 3.3 70B | 70B | Balanced performance |
+| Llama 4 Scout | 17B | Fast inference |
+| Llama 4 Maverick | 17B | Long contexts |
+| DeepSeek R1 | Large | Reasoning tasks |
+| Qwen 3 235B | 235B | Complex tasks |
+| Qwen 3 32B | 32B | Efficient processing |
+
+## Best Practices
+
+1. **Choose Right Model Size**: Balance performance and cost
+2. **Check Model Availability**: Some models require approval
+3. **Handle Rate Limits**: Free tier has limitations
+4. **Use Pro Subscription**: For higher limits
+5. **Monitor Costs**: Paid usage can add up
+6. **Test Before Production**: Verify model quality
+
+## Rate Limits
+
+### Free Tier
+- Limited requests per minute
+- May experience queuing
+- Good for testing
+
+### Pro Subscription
+- Higher rate limits
+- Priority access
+- Better for production
+
+## Troubleshooting
+
+### Model Loading Errors
+
+```python
+# Some models require explicit access approval
+# Visit model page on Hugging Face to request access
+```
+
+### Token Limit Exceeded
+
+```python
+from upsonic.models.huggingface import HuggingFaceModelSettings
+
+# Reduce max_tokens
+settings = HuggingFaceModelSettings(
+    max_tokens=1024  # Lower limit
+)
+```
+
+### Rate Limiting
+
+```python
+import asyncio
+from upsonic.utils.package.exception import ModelHTTPError
+
+async def request_with_retry(agent, task, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return agent.do(task)
+        except ModelHTTPError as e:
+            if e.status_code == 429:
+                wait_time = 2 ** attempt
+                await asyncio.sleep(wait_time)
+            else:
+                raise
+```
+
+## Related Resources
+
+- [Hugging Face Hub](https://huggingface.co/models)
+- [Inference API Documentation](https://huggingface.co/docs/api-inference/)
+- [Model Cards](https://huggingface.co/docs/hub/model-cards)
+- [Pricing](https://huggingface.co/pricing)
+

@@ -1,0 +1,367 @@
+---
+title: "Groq"
+description: "Using Groq's LPU Inference Engine for ultra-fast model inference"
+---
+
+## Overview
+
+Groq provides ultra-fast inference through their Language Processing Unit (LPU) technology. Access open-source models with industry-leading speed and built-in web search capabilities.
+
+**Model Class:** `GroqModel`
+
+## Authentication
+
+### Environment Variables
+
+```bash
+export GROQ_API_KEY="gsk_..."
+export GROQ_BASE_URL="https://api.groq.com"  # Optional
+```
+
+### Using infer_model
+
+```python
+from upsonic import infer_model
+
+model = infer_model("groq/llama-3.3-70b-versatile")
+```
+
+### Manual Configuration
+
+```python
+from upsonic.models.groq import GroqModel, GroqModelSettings
+
+settings = GroqModelSettings(
+    max_tokens=2048,
+    temperature=0.7
+)
+
+model = GroqModel(
+    model_name="llama-3.3-70b-versatile",
+    settings=settings
+)
+```
+
+## Examples
+
+### Basic Usage
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("groq/llama-3.3-70b-versatile")
+agent = Agent(model=model)
+
+task = Task("Explain quantum computing")
+result = agent.do(task)
+```
+
+### Ultra-Fast Streaming
+
+```python
+from upsonic import Agent, Task, infer_model
+
+# Groq is exceptionally fast at streaming
+model = infer_model("groq/llama-3.3-70b-versatile")
+agent = Agent(model=model)
+
+task = Task("Write a story about space exploration")
+
+# Notice the speed!
+async for chunk in agent.do_stream(task):
+    print(chunk, end="", flush=True)
+```
+
+### With Web Search
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.tools.builtin_tools import WebSearchTool
+
+# Built-in web search for all models
+model = infer_model("groq/llama-3.3-70b-versatile")
+agent = Agent(
+    model=model,
+    builtin_tools=[WebSearchTool()]
+)
+
+task = Task("What are the latest AI news today?")
+result = agent.do(task)
+```
+
+### With Reasoning Format
+
+```python
+from upsonic.models.groq import GroqModel, GroqModelSettings
+
+# Control reasoning output format
+settings = GroqModelSettings(
+    max_tokens=4096,
+    temperature=0.3,
+    groq_reasoning_format="parsed"  # 'hidden', 'raw', or 'parsed'
+)
+
+model = GroqModel(
+    model_name="qwen-qwq-32b",  # Reasoning model
+    settings=settings
+)
+
+agent = Agent(model=model)
+task = Task("Solve this complex problem: ...")
+result = agent.do(task)
+```
+
+### With Tools
+
+```python
+from upsonic import Agent, Task, infer_model
+
+def calculate(expression: str) -> float:
+    """Evaluate a mathematical expression."""
+    return eval(expression)
+
+model = infer_model("groq/llama-3.3-70b-versatile")
+agent = Agent(model=model, tools=[calculate])
+
+task = Task("What is 456 * 789?")
+result = agent.do(task)
+```
+
+### Vision Understanding
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.messages import ImageUrl
+
+model = infer_model("groq/llama-3.2-90b-vision-preview")
+agent = Agent(model=model)
+
+task = Task(
+    description="Describe this image",
+    attachments=[
+        ImageUrl(url="https://example.com/image.jpg")
+    ]
+)
+
+result = agent.do(task)
+```
+
+## Prompt Caching
+
+Groq does not currently support native prompt caching.
+
+**Best Practice:** Use memory for conversation context:
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.storage.memory import Memory
+from upsonic.storage.providers.in_memory import InMemoryStorage
+
+storage = InMemoryStorage()
+memory = Memory(storage=storage, session_id="session-123")
+
+model = infer_model("groq/llama-3.3-70b-versatile")
+agent = Agent(model=model, memory=memory)
+```
+
+## Model Parameters
+
+### Base Settings
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `max_tokens` | `int` | Maximum tokens to generate | 1024 |
+| `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 |
+| `top_p` | `float` | Nucleus sampling | 1.0 |
+| `seed` | `int` | Random seed | None |
+| `stop_sequences` | `list[str]` | Stop sequences | None |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 |
+| `parallel_tool_calls` | `bool` | Allow parallel tools | True |
+| `timeout` | `float` | Request timeout (seconds) | 600 |
+
+### Groq-Specific Settings
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `groq_reasoning_format` | `'hidden' \| 'raw' \| 'parsed'` | How to format reasoning output |
+
+**Reasoning Format Options:**
+- `hidden`: Don't show reasoning (default)
+- `raw`: Show raw reasoning with tags
+- `parsed`: Show structured reasoning
+
+### Example Configuration
+
+```python
+from upsonic.models.groq import GroqModel, GroqModelSettings
+
+settings = GroqModelSettings(
+    max_tokens=4096,
+    temperature=0.7,
+    top_p=0.9,
+    seed=42,
+    presence_penalty=0.1,
+    frequency_penalty=0.1,
+    parallel_tool_calls=True,
+    groq_reasoning_format="parsed"
+)
+
+model = GroqModel(
+    model_name="llama-3.3-70b-versatile",
+    settings=settings
+)
+```
+
+## Available Models
+
+### Production Models
+
+#### Meta Llama
+- `llama-3.3-70b-versatile`: Latest, most capable
+- `llama-3.3-70b-specdec`: Speculative decoding variant
+- `llama-3.1-8b-instant`: Fast, efficient
+- `llama3-70b-8192`: Extended context
+- `llama3-8b-8192`: Small, fast
+
+#### Google Gemma
+- `gemma2-9b-it`: Efficient instruction model
+
+### Preview Models
+
+#### Reasoning Models
+- `qwen-qwq-32b`: Qwen reasoning model
+- `deepseek-r1-distill-qwen-32b`: DeepSeek R1 distilled
+- `deepseek-r1-distill-llama-70b`: DeepSeek R1 large
+
+#### Vision Models
+- `llama-3.2-90b-vision-preview`: Large vision model
+- `llama-3.2-11b-vision-preview`: Efficient vision
+
+#### Specialized
+- `mistral-saba-24b`: Mistral variant
+- `qwen-2.5-coder-32b`: Code specialist
+- `qwen-2.5-32b`: General purpose
+
+## Model Comparison
+
+| Model | Tokens/sec* | Context | Best For |
+|-------|------------|---------|----------|
+| llama-3.3-70b-versatile | ~700 | 128K | General purpose, highest quality |
+| llama-3.1-8b-instant | ~1500 | 128K | Speed-critical apps |
+| qwen-qwq-32b | ~600 | 32K | Reasoning tasks |
+| llama-3.2-90b-vision | ~500 | 128K | Vision understanding |
+
+*Approximate, varies by load
+
+## LPU Technology
+
+Groq's Language Processing Unit delivers:
+
+- **Extreme Speed**: 10-100x faster than GPUs
+- **Low Latency**: Sub-second first token
+- **Consistent**: Predictable performance
+- **Cost-Effective**: Competitive pricing
+- **Energy Efficient**: Lower power consumption
+
+### Performance Benefits
+
+```python
+import time
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("groq/llama-3.3-70b-versatile")
+agent = Agent(model=model)
+
+task = Task("Write a detailed explanation of neural networks")
+
+start = time.time()
+result = agent.do(task)
+elapsed = time.time() - start
+
+print(f"Generated in {elapsed:.2f}s")
+# Typically 1-3 seconds for long responses!
+```
+
+## Built-in Web Search
+
+All Groq models support web search:
+
+```python
+from upsonic import Agent, Task, infer_model
+from upsonic.tools.builtin_tools import WebSearchTool
+
+model = infer_model("groq/llama-3.3-70b-versatile")
+agent = Agent(
+    model=model,
+    builtin_tools=[WebSearchTool()]
+)
+
+# Automatically searches the web
+task = Task("What's happening in the tech world today?")
+result = agent.do(task)
+```
+
+## Best Practices
+
+1. **Use for Speed-Critical Apps**: Leverage LPU performance
+2. **Enable Streaming**: Show responses as they generate
+3. **Choose Right Model**: Balance speed vs capability
+4. **Use Preview Models**: Try latest models for specific tasks
+5. **Enable Web Search**: For current information
+6. **Monitor Rate Limits**: Free tier has limits
+7. **Implement Retry Logic**: Handle rate limiting gracefully
+
+## Rate Limits
+
+### Free Tier
+- Generous limits for testing
+- Rate-limited during peak hours
+- Suitable for development
+
+### Paid Plans
+- Higher rate limits
+- Priority access
+- Production-ready
+
+## Use Cases
+
+### Real-Time Chat
+- Ultra-fast response times
+- Great user experience
+- Low latency
+
+### High-Volume Processing
+- Batch processing
+- Data analysis
+- Content generation at scale
+
+### Cost Optimization
+- Fast inference = lower costs
+- Efficient token usage
+- Good price/performance
+
+## Advantages
+
+1. **Speed**: Industry-leading inference speed
+2. **Cost-Effective**: Competitive pricing
+3. **Quality**: Access to top open models
+4. **Web Search**: Built-in for all models
+5. **Simple API**: Easy integration
+6. **Reliable**: Consistent performance
+
+## Limitations
+
+1. **Model Selection**: Limited to supported models
+2. **No Caching**: Each request is independent
+3. **Rate Limits**: Free tier restrictions
+4. **Open Models Only**: No proprietary models
+
+## Related Resources
+
+- [Groq Website](https://groq.com/)
+- [Groq Console](https://console.groq.com/)
+- [Model Documentation](https://console.groq.com/docs/models)
+- [API Reference](https://console.groq.com/docs/api-reference)
+- [Pricing](https://groq.com/pricing/)
+

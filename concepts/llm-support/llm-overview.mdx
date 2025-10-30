@@ -1,55 +1,28 @@
 ---
-title: "LLM Support Overview"
-description: "Understanding LLM models in Upsonic AI Agent Framework"
+title: "LLM Models Overview"
+description: "Understanding LLM models and error handling in Upsonic"
 ---
 
 ## What are LLM Models?
 
-Large Language Models (LLMs) are the core components that power AI agents in the Upsonic framework. The framework provides a unified interface to interact with various LLM providers through a common `Model` class.
+Large Language Models (LLMs) are the foundation of the Upsonic AI Agent Framework. The framework provides a unified interface to interact with various LLM providers, allowing you to build AI agents that can leverage different models without changing your code structure.
 
 ### Model Architecture
 
-All model classes in Upsonic inherit from the base `Model` class, which provides:
+In Upsonic, all model classes inherit from the base `Model` class, which provides:
 
-- **Unified Interface**: Common methods across all providers
-- **LCEL Compatibility**: Models inherit from `Runnable` for chain composition
-- **Streaming Support**: Async streaming responses via `request_stream()`
-- **Tool Integration**: Built-in support for function calling and tools
-- **Memory Management**: Conversation history and context handling
-- **Structured Output**: Pydantic model validation for responses
+- **Unified Interface**: Consistent API across all providers
+- **LCEL Integration**: Models implement the `Runnable` interface for chain composition
+- **Streaming Support**: Real-time response streaming for better UX
+- **Tool Calling**: Native function calling capabilities
+- **Structured Output**: Type-safe responses using Pydantic models
+- **Memory Management**: Built-in conversation history support
 
-### Core Model Methods
+### Key Components
 
-```python
-from upsonic import Agent, Task
-from upsonic.models import infer_model
+#### 1. Model Settings
 
-# Create a model instance
-model = infer_model("openai/gpt-4o")
-
-# Use in an agent
-agent = Agent(model=model)
-task = Task("Analyze this data")
-result = agent.do(task)
-```
-
-### Model Inference
-
-The `infer_model()` function automatically detects and instantiates the appropriate model class based on the provider prefix:
-
-```python
-from upsonic.models import infer_model
-
-# Automatic provider detection
-openai_model = infer_model("openai/gpt-4o")
-anthropic_model = infer_model("anthropic/claude-3-5-sonnet-20241022")
-google_model = infer_model("google-gla/gemini-2.5-flash")
-groq_model = infer_model("groq/llama-3.3-70b-versatile")
-```
-
-### Model Settings
-
-Every model supports a `ModelSettings` configuration:
+Model settings control the behavior of LLM requests:
 
 ```python
 from upsonic.models.settings import ModelSettings
@@ -58,138 +31,218 @@ settings = ModelSettings(
     max_tokens=2048,
     temperature=0.7,
     top_p=0.9,
-    seed=42,
-    presence_penalty=0.0,
-    frequency_penalty=0.0,
-    stop_sequences=["END", "STOP"]
+    seed=42
 )
-
-model = infer_model("openai/gpt-4o")
-agent = Agent(model=model, settings=settings)
 ```
 
-### Provider-Specific Settings
+All settings are optional and provider-specific settings are prefixed with the provider name (e.g., `openai_`, `anthropic_`, `google_`).
 
-Each provider extends `ModelSettings` with provider-specific parameters (all prefixed to avoid conflicts):
+#### 2. Model Profiles
+
+Profiles define model capabilities and behaviors:
 
 ```python
-from upsonic.models.anthropic import AnthropicModelSettings
+from upsonic.profiles import ModelProfile
 
-# Anthropic-specific settings
-anthropic_settings = AnthropicModelSettings(
-    max_tokens=4096,
-    temperature=0.1,
-    anthropic_thinking={
-        "type": "enabled",
-        "budget_tokens": 8192
-    },
-    anthropic_metadata={
-        "user_id": "user-123"
-    }
+profile = ModelProfile(
+    supports_tools=True,
+    supports_json_schema_output=True,
+    default_structured_output_mode='native'
 )
+```
+
+#### 3. Model Inference
+
+Use `infer_model()` to automatically select the appropriate model class:
+
+```python
+from upsonic import infer_model
+
+# Automatic provider detection
+model = infer_model("openai/gpt-4o")
+model = infer_model("anthropic/claude-3-5-sonnet-20241022")
+model = infer_model("google-gla/gemini-2.5-flash")
+```
+
+### Usage Patterns
+
+#### Basic Usage
+
+```python
+from upsonic import Agent, Task, infer_model
+
+model = infer_model("openai/gpt-4o")
+agent = Agent(model=model)
+
+task = Task("Explain quantum computing")
+result = agent.do(task)
+```
+
+#### With Custom Settings
+
+```python
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+
+settings = OpenAIChatModelSettings(
+    max_tokens=1024,
+    temperature=0.5,
+    openai_reasoning_effort="high"
+)
+
+model = OpenAIChatModel(
+    model_name="gpt-4o",
+    settings=settings
+)
+
+agent = Agent(model=model)
+```
+
+#### LCEL Chains
+
+```python
+from upsonic.lcel import ChatPromptTemplate
+from upsonic import infer_model
+
+prompt = ChatPromptTemplate.from_template("Tell me about {topic}")
+model = infer_model("openai/gpt-4o")
+
+# Chain composition with pipe operator
+chain = prompt | model
+result = await chain.invoke({"topic": "AI"})
 ```
 
 ## Error Handling
 
-The framework provides structured error handling for model operations:
+The framework provides comprehensive error handling for LLM operations:
 
-### Model HTTP Errors
+### Common Exceptions
+
+#### ModelHTTPError
+
+Raised when an HTTP error occurs during model requests:
 
 ```python
-from upsonic.utils.package.exception import ModelHTTPError, UserError
+from upsonic.utils.package.exception import ModelHTTPError
 
 try:
     result = agent.do(task)
 except ModelHTTPError as e:
-    print(f"HTTP Error: {e.status_code}")
+    print(f"Status Code: {e.status_code}")
     print(f"Model: {e.model_name}")
-    print(f"Response: {e.body}")
-except UserError as e:
-    print(f"User Error: {e}")
+    print(f"Body: {e.body}")
 ```
 
-### Unexpected Model Behavior
+#### UserError
+
+Raised for user-facing configuration or usage errors:
+
+```python
+from upsonic.utils.package.exception import UserError
+
+try:
+    model = infer_model("unknown/model")
+except UserError as e:
+    print(f"Error: {e}")
+```
+
+#### UnexpectedModelBehavior
+
+Raised when a model responds in an unexpected way:
 
 ```python
 from upsonic.utils.package.exception import UnexpectedModelBehavior
 
 try:
-    async with model.request_stream(messages, settings, params) as stream:
-        async for event in stream:
-            process_event(event)
+    response = await model.request_stream(messages, settings, params)
 except UnexpectedModelBehavior as e:
     print(f"Unexpected behavior: {e}")
 ```
 
-### Retry Logic
-
-Models automatically handle certain errors with retry logic:
-
-- **Rate Limiting**: Automatic backoff for 429 errors
-- **Timeout Handling**: Configurable timeout settings
-- **Connection Errors**: Automatic retry with exponential backoff
-
-### Allow Model Requests
-
-Control model access globally for testing:
+### Handling Rate Limits
 
 ```python
-from upsonic.models import ALLOW_MODEL_REQUESTS, override_allow_model_requests
+import asyncio
+from upsonic.utils.package.exception import ModelHTTPError
 
-# Disable model requests globally (useful for testing)
-with override_allow_model_requests(False):
-    # Model requests will raise RuntimeError
-    pass
+async def request_with_retry(agent, task, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return agent.do(task)
+        except ModelHTTPError as e:
+            if e.status_code == 429:  # Rate limit
+                wait_time = 2 ** attempt  # Exponential backoff
+                print(f"Rate limited. Waiting {wait_time}s...")
+                await asyncio.sleep(wait_time)
+            else:
+                raise
+    raise Exception("Max retries exceeded")
 ```
 
-### Common Error Types
-
-| Error Type | Description | Solution |
-|------------|-------------|----------|
-| `ModelHTTPError` | HTTP errors from provider APIs (4xx, 5xx) | Check API credentials and request parameters |
-| `UnexpectedModelBehavior` | Unexpected response format | Update to latest version or report issue |
-| `UserError` | Invalid configuration or usage | Review error message and fix configuration |
-| `ValidationError` | Invalid tool call arguments or structured output | Check schema definitions and model responses |
-
-### Error Response Details
-
-All HTTP errors include detailed information:
+### Handling Token Limits
 
 ```python
+from upsonic.models.settings import ModelSettings
+
+settings = ModelSettings(
+    max_tokens=4096,
+    # Will raise error if input + output exceeds context window
+)
+
 try:
-    result = agent.do(task)
+    model = infer_model("openai/gpt-4o")
+    agent = Agent(model=model, settings=settings)
+    result = agent.do(very_long_task)
 except ModelHTTPError as e:
-    # Access error details
-    status_code = e.status_code      # HTTP status code
-    model_name = e.model_name        # Model that failed
-    error_body = e.body              # Provider error response
-    
-    # Handle specific status codes
-    if status_code == 429:
-        print("Rate limit exceeded")
-    elif status_code == 401:
-        print("Invalid API credentials")
-    elif status_code == 400:
-        print("Invalid request parameters")
+    if "context_length_exceeded" in str(e.body):
+        print("Input too long, consider truncating")
 ```
 
-## Environment Configuration
+### Handling Invalid Responses
 
-Set the default model via environment variable:
+```python
+from pydantic import BaseModel, ValidationError
 
-```bash
-# Set default model for all agents
-export LLM_MODEL_KEY="anthropic/claude-3-5-sonnet-20241022"
+class ResponseFormat(BaseModel):
+    answer: str
+    confidence: float
+
+try:
+    model = infer_model("openai/gpt-4o")
+    model = model.with_structured_output(ResponseFormat)
+    result = await model.ainvoke("What is AI?")
+except ValidationError as e:
+    print(f"Invalid response format: {e}")
 ```
 
-The framework uses this priority:
-1. Explicitly passed model to Agent
-2. `LLM_MODEL_KEY` environment variable
-3. Default: `openai/gpt-4o`
+### Global Error Handling
+
+Disable model requests globally for testing:
+
+```python
+from upsonic.models import override_allow_model_requests
+
+# Disable requests (useful for testing)
+with override_allow_model_requests(False):
+    try:
+        result = agent.do(task)
+    except RuntimeError as e:
+        print("Model requests are disabled")
+```
+
+## Best Practices
+
+1. **Always Use Environment Variables**: Store API keys in environment variables, never hardcode them
+2. **Implement Retry Logic**: Network errors and rate limits are common, implement exponential backoff
+3. **Monitor Token Usage**: Track usage to avoid unexpected costs
+4. **Handle Timeouts**: Set appropriate timeouts based on your use case
+5. **Validate Outputs**: Use structured output with Pydantic models for type safety
+6. **Log Errors**: Implement comprehensive logging for debugging
+7. **Use Streaming**: For better UX, use streaming responses when available
+8. **Test Error Paths**: Write tests that cover error scenarios
 
 ## Next Steps
 
-- [Compatibility Overview](/compatibility-overview) - See which features are supported by each provider
-- [Native Model Providers](/native-providers) - Learn about OpenAI, Anthropic, Google and other native providers
-- [OpenAI-compatible Models](/openai-compatible) - Use OpenAI-compatible endpoints
+- Explore [Compatibility Overview](/compatibility-overview) to see feature support across providers
+- Learn about [Native Model Providers](/native-providers/openai) for direct API access
+- Check [Model Gateways](/model-gateways/openrouter) for unified access to multiple models
 
