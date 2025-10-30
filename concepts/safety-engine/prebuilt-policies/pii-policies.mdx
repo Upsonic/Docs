@@ -1,0 +1,57 @@
+---
+title: "PII Policies"
+description: "Detect and protect personal identifiable information"
+---
+
+## What is PII Policy?
+
+PII policies detect and protect personal identifiable information including emails, phone numbers, SSN, addresses, credit cards, driver's licenses, passports, IP addresses, and other sensitive personal data.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import PIIAnonymizePolicy
+
+# Automatically hide sensitive info in responses
+agent = Agent(
+    model="openai/gpt-4o",
+    agent_policy=PIIAnonymizePolicy
+)
+
+task = Task("My email is john@example.com and phone is 555-0123")
+result = agent.do(task)
+# Output: "My email is xxxx@xxxxxxx.xxx and phone is XXX-XXXX"
+```
+
+## Available Variants
+
+- `PIIBlockPolicy`: Blocks any content with PII
+- `PIIBlockPolicy_LLM`: LLM-powered block messages
+- `PIIBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `PIIAnonymizePolicy`: Anonymizes PII with unique replacements
+- `PIIReplacePolicy`: Replaces PII with `[PII_REDACTED]`
+- `PIIRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `PIIRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+## Params
+
+```python
+from upsonic.safety_engine.policies.pii_policies import PIIRule, PIIBlockAction
+
+custom_rule = PIIRule(options={
+    "custom_patterns": {
+        "phone": [r'\b\d{3}-\d{4}\b'],  # Custom phone pattern
+        "credit_card": [r'\b\d{4}\s\d{4}\s\d{4}\s\d{4}\b'],
+        "address": [r'\b\d+\s+Main St\b']
+    },
+    "custom_keywords": ["employee id", "badge number", "internal code"]
+})
+
+policy = Policy(
+    name="Extended PII Policy",
+    description="With custom patterns",
+    rule=custom_rule,
+    action=PIIBlockAction()
+)
+```

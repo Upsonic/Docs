@@ -1,0 +1,168 @@
+---
+title: "Creating Rule"
+description: "Build custom content detection rules"
+---
+
+## Overall Class Structure
+
+Rules inherit from `RuleBase` and must implement the `process` method. They detect specific content and return a `RuleOutput` with confidence score and detected keywords.
+
+```python
+from upsonic.safety_engine.base import RuleBase
+from upsonic.safety_engine.models import PolicyInput, RuleOutput
+from typing import Optional, Dict, Any
+
+class MyCustomRule(RuleBase):
+    """Rule description"""
+
+    name = "My Custom Rule"
+    description = "Detects specific content in text"
+    language = "en"  # Default language
+
+    def __init__(self, options: Optional[Dict[str, Any]] = None):
+        super().__init__(options)
+        # Initialize your detection logic
+        self.keywords = ["keyword1", "keyword2"]
+
+    def process(self, policy_input: PolicyInput) -> RuleOutput:
+        """Process the input and return detection results"""
+        # Combine input texts
+        combined_text = " ".join(policy_input.input_texts or []).lower()
+
+        # Find matches
+        triggered = []
+        for keyword in self.keywords:
+            if keyword in combined_text:
+                triggered.append(keyword)
+
+        # Return result
+        if not triggered:
+            return RuleOutput(
+                confidence=0.0,
+                content_type="SAFE",
+                details="No issues detected"
+            )
+
+        return RuleOutput(
+            confidence=1.0,
+            content_type="DETECTED",
+            details=f"Found {len(triggered)} matches",
+            triggered_keywords=triggered
+        )
+```
+
+## Example Rule
+
+Here's a complete example of a custom rule that detects company-specific confidential terms:
+
+```python
+import re
+from upsonic.safety_engine.base import RuleBase
+from upsonic.safety_engine.models import PolicyInput, RuleOutput
+from typing import Optional, Dict, Any
+
+class CompanySecretRule(RuleBase):
+    """Detects company confidential information"""
+
+    name = "Company Secret Rule"
+    description = "Detects confidential company terms and code names"
+    language = "en"
+
+    def __init__(self, options: Optional[Dict[str, Any]] = None):
+        super().__init__(options)
+
+        # Confidential keywords
+        self.secret_keywords = [
+            "project zeus", "alpha build", "confidential",
+            "internal only", "trade secret", "proprietary"
+        ]
+
+        # Confidential patterns
+        self.secret_patterns = [
+            r'\b(?:project|operation)\s+[A-Z][a-z]+\b',  # Project names
+            r'\b[A-Z]{3}-\d{4}\b',  # Internal codes like ABC-1234
+        ]
+
+        # Allow custom keywords from options
+        if options and "keywords" in options:
+            self.secret_keywords.extend(options["keywords"])
+
+    def process(self, policy_input: PolicyInput) -> RuleOutput:
+        """Process input for confidential content"""
+        combined_text = " ".join(policy_input.input_texts or [])
+
+        # Find keyword matches
+        triggered_keywords = []
+        for keyword in self.secret_keywords:
+            pattern = r'\b' + re.escape(keyword) + r'\b'
+            if re.search(pattern, combined_text, re.IGNORECASE):
+                triggered_keywords.append(keyword)
+
+        # Find pattern matches
+        for pattern in self.secret_patterns:
+            matches = re.findall(pattern, combined_text)
+            triggered_keywords.extend(matches)
+
+        # Calculate confidence
+        if not triggered_keywords:
+            return RuleOutput(
+                confidence=0.0,
+                content_type="SAFE",
+                details="No confidential content detected"
+            )
+
+        confidence = min(1.0, len(triggered_keywords) * 0.5)
+
+        return RuleOutput(
+            confidence=confidence,
+            content_type="CONFIDENTIAL",
+            details=f"Detected {len(triggered_keywords)} confidential terms",
+            triggered_keywords=triggered_keywords
+        )
+```
+
+## Using LLM in Rules
+
+For more intelligent detection, you can use LLM-powered content finding:
+
+```python
+class SmartConfidentialRule(RuleBase):
+    """LLM-powered confidential content detection"""
+
+    name = "Smart Confidential Rule"
+    description = "Uses LLM to detect confidential content with context"
+    language = "en"
+
+    def __init__(self, options: Optional[Dict[str, Any]] = None, text_finder_llm=None):
+        super().__init__(options, text_finder_llm)
+
+    def process(self, policy_input: PolicyInput) -> RuleOutput:
+        """Process using LLM for better accuracy"""
+        if not self.text_finder_llm:
+            # Fallback to keyword detection if no LLM
+            return RuleOutput(
+                confidence=0.0,
+                content_type="SAFE",
+                details="LLM not available"
+            )
+
+        # Use built-in LLM helper
+        triggered = self._llm_find_keywords_with_input(
+            "confidential company information",
+            policy_input
+        )
+
+        if not triggered:
+            return RuleOutput(
+                confidence=0.0,
+                content_type="SAFE",
+                details="No confidential content detected"
+            )
+
+        return RuleOutput(
+            confidence=1.0,
+            content_type="CONFIDENTIAL",
+            details=f"LLM detected {len(triggered)} confidential items",
+            triggered_keywords=triggered
+        )
+```

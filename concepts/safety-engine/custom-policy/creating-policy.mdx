@@ -1,0 +1,183 @@
+---
+title: "Creating Policy"
+description: "Combine rules and actions into complete policies"
+---
+
+## Example Policy
+
+Combine your custom rule and action into a complete policy:
+
+```python
+from upsonic.safety_engine.base import Policy
+
+# Create the policy
+company_security_policy = Policy(
+    name="Company Security Policy",
+    description="Protects confidential company information",
+    rule=CompanySecretRule(),
+    action=CompanySecretAction(),
+    language="auto"  # Auto-detect user language
+)
+
+# Use with your agent
+from upsonic import Agent, Task
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Company Assistant",
+    user_policy=company_security_policy
+)
+
+task = Task("Tell me about Project Zeus")
+result = agent.do(task)
+# Blocked if confidential content detected
+```
+
+## Advanced Policy Configuration
+
+You can specify different LLM models for different operations:
+
+```python
+# Using model strings
+advanced_policy = Policy(
+    name="Advanced Security Policy",
+    description="Uses different models for different tasks",
+    rule=SmartConfidentialRule(),
+    action=SmartSecretAction(),
+    language="auto",
+    language_identify_model="gpt-3.5-turbo",  # Language detection
+    base_model="gpt-3.5-turbo",               # General operations
+    text_finder_model="gpt-4"                 # Content detection
+)
+
+# Or using LLM providers directly
+from upsonic.safety_engine.llm import UpsonicLLMProvider
+
+language_llm = UpsonicLLMProvider(
+    agent_name="Language Detector",
+    model="gpt-3.5-turbo"
+)
+
+advanced_policy_2 = Policy(
+    name="Advanced Security Policy",
+    description="Uses custom LLM providers",
+    rule=SmartConfidentialRule(),
+    action=SmartSecretAction(),
+    language="auto",
+    language_identify_llm=language_llm,
+    base_llm=UpsonicLLMProvider(model="gpt-4"),
+    text_finder_llm=UpsonicLLMProvider(model="gpt-4")
+)
+```
+
+## Using with Agent
+
+```python
+from upsonic import Agent, Task
+
+# Apply policy to both input and output
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Secure Assistant",
+    user_policy=company_security_policy,    # Filter input
+    agent_policy=company_security_policy    # Filter output
+)
+
+# Test it
+try:
+    task = Task("What's the status of Project Zeus?")
+    result = agent.do(task)
+    print(result)
+except Exception as e:
+    print(f"Blocked: {e}")
+```
+
+## Async Support
+
+All policies automatically support async operations:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=company_security_policy
+)
+
+async def main():
+    result = await agent.do_async(Task("Confidential query"))
+    print(result)
+
+asyncio.run(main())
+```
+
+## Complete Example
+
+Here's a full working example combining everything:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.base import RuleBase, ActionBase, Policy
+from upsonic.safety_engine.models import PolicyInput, RuleOutput, PolicyOutput
+import re
+
+# 1. Define the rule
+class ProjectCodeRule(RuleBase):
+    name = "Project Code Rule"
+    description = "Detects internal project codes"
+    language = "en"
+
+    def __init__(self, options=None):
+        super().__init__(options)
+        self.pattern = r'\b[A-Z]{2,4}-\d{3,5}\b'
+
+    def process(self, policy_input: PolicyInput) -> RuleOutput:
+        text = " ".join(policy_input.input_texts or [])
+        matches = re.findall(self.pattern, text)
+
+        if not matches:
+            return RuleOutput(
+                confidence=0.0,
+                content_type="SAFE",
+                details="No project codes found"
+            )
+
+        return RuleOutput(
+            confidence=1.0,
+            content_type="PROJECT_CODE",
+            details=f"Found {len(matches)} project codes",
+            triggered_keywords=matches
+        )
+
+# 2. Define the action
+class ProjectCodeAction(ActionBase):
+    name = "Project Code Action"
+    description = "Redacts project codes"
+    language = "en"
+
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        if rule_result.confidence >= 0.8:
+            return self.replace_triggered_keywords("[PROJECT-CODE]")
+        return self.allow_content()
+
+# 3. Create the policy
+project_policy = Policy(
+    name="Project Code Policy",
+    description="Protects internal project codes",
+    rule=ProjectCodeRule(),
+    action=ProjectCodeAction()
+)
+
+# 4. Use with agent
+agent = Agent(
+    model="openai/gpt-4o",
+    agent_policy=project_policy
+)
+
+# Test
+task = Task("The issue is in ABC-1234 and XYZ-5678")
+result = agent.do(task)
+print(result)
+# Output: "The issue is in [PROJECT-CODE] and [PROJECT-CODE]"
+```

@@ -1,0 +1,37 @@
+---
+title: "Medical Information Policies"
+description: "Protect health records and PHI for HIPAA compliance"
+---
+
+## What is Medical Info Policy?
+
+Medical information policies detect and protect health records, diagnoses, prescriptions, medical IDs, insurance information, and other Protected Health Information (PHI) for HIPAA compliance.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import MedicalInfoRaiseExceptionPolicy
+
+# Zero tolerance for PHI
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=MedicalInfoRaiseExceptionPolicy,
+    agent_policy=MedicalInfoRaiseExceptionPolicy
+)
+
+try:
+    result = agent.do(Task("Patient John Doe has diabetes"))
+except Exception as e:
+    print(f"Protected: {e}")  # HIPAA violation prevented
+```
+
+## Available Variants
+
+- `MedicalInfoBlockPolicy`: Pattern detection with blocking
+- `MedicalInfoBlockPolicy_LLM`: LLM-powered block messages
+- `MedicalInfoBlockPolicy_LLM_Finder`: LLM detection for better accuracy
+- `MedicalInfoAnonymizePolicy`: Anonymizes medical data
+- `MedicalInfoReplacePolicy`: Replaces with `[MEDICAL_INFO_REDACTED]`
+- `MedicalInfoRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `MedicalInfoRaiseExceptionPolicy_LLM`: LLM-generated exception messages

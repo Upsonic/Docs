@@ -1,0 +1,51 @@
+---
+title: "Sensitive Social Policies"
+description: "Detect racism, hate speech, and discriminatory language"
+---
+
+## What is Sensitive Social Policy?
+
+Sensitive social policies detect racism, hate speech, discriminatory language, and other sensitive social issues to maintain respectful and inclusive communication.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import SensitiveSocialBlockPolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=SensitiveSocialBlockPolicy
+)
+
+task = Task("Inappropriate hate speech content")
+result = agent.do(task)
+# Blocked with educational message
+```
+
+## Available Variants
+
+- `SensitiveSocialBlockPolicy`: Keyword and pattern detection with blocking
+- `SensitiveSocialBlockPolicy_LLM`: LLM-powered block messages
+- `SensitiveSocialBlockPolicy_LLM_Finder`: LLM detection for context awareness
+- `SensitiveSocialRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `SensitiveSocialRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+
+## Params
+
+```python
+from upsonic.safety_engine.policies.sensitive_social_policies import SensitiveSocialRule, SensitiveSocialBlockAction
+
+custom_rule = SensitiveSocialRule(options={
+    "hate_speech_keywords": ["custom_term"],
+    "hate_patterns": [r'\bcustom\s+pattern\b'],
+    "discriminatory_keywords": ["custom discrimination term"]
+})
+
+policy = Policy(
+    name="Custom Sensitive Social Policy",
+    description="With additional terms",
+    rule=custom_rule,
+    action=SensitiveSocialBlockAction()
+)
+```
