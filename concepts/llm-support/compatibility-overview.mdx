@@ -1,0 +1,291 @@
+---
+title: "Model Compatibility Overview"
+description: "Feature support across different LLM providers"
+---
+
+## Feature Support Matrix
+
+This table shows which features are supported by each model provider in the Upsonic framework.
+
+### Core Features
+
+| Provider | Tools | JSON Schema Output | JSON Object Output | Streaming | Thinking/Reasoning |
+|----------|-------|-------------------|-------------------|-----------|-------------------|
+| **OpenAI** | ✅ | ✅ | ✅ | ✅ | ✅ (o1, o3, gpt-5) |
+| **Anthropic** | ✅ | ✅ | ✅ | ✅ | ✅ (Extended Thinking) |
+| **Google Gemini** | ✅ | ✅ | ❌ | ✅ | ✅ (Thinking Config) |
+| **Groq** | ✅ | ✅ | ✅ | ✅ | ✅ (QwQ, DeepSeek-R1) |
+| **Cohere** | ✅ | ❌ | ❌ | ❌ | ✅ (Native) |
+| **Mistral** | ✅ | ❌ | ✅ | ✅ | ✅ (Native) |
+| **AWS Bedrock** | ✅ | ❌ | ❌ | ✅ | ✅ (Model-dependent) |
+| **Azure OpenAI** | ✅ | ✅ | ✅ | ✅ | ✅ (o1, o3, gpt-5) |
+| **HuggingFace** | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **DeepSeek** | ✅ | ✅ | ✅ | ✅ | ✅ (R1 models) |
+
+### Advanced Features
+
+| Provider | Built-in Tools | Token Counting | Prompt Caching | Parallel Tool Calls |
+|----------|----------------|----------------|----------------|-------------------|
+| **OpenAI** | ✅ (Web Search, Code Interpreter, File Search) | ❌ | ❌ | ✅ |
+| **Anthropic** | ✅ (Web Search, Code Execution) | ❌ | ✅ | ✅ |
+| **Google Gemini** | ✅ (Web Search, Code Execution) | ✅ | ✅ | ❌ |
+| **Groq** | ✅ (Web Search on specific models) | ❌ | ❌ | ✅ |
+| **Cohere** | ❌ | ❌ | ❌ | ❌ |
+| **Mistral** | ❌ | ❌ | ❌ | ❌ |
+| **AWS Bedrock** | ❌ | ❌ | ❌ | ❌ |
+| **Azure OpenAI** | ✅ (Same as OpenAI) | ❌ | ❌ | ✅ |
+| **HuggingFace** | ❌ | ❌ | ❌ | ❌ |
+| **DeepSeek** | ❌ | ❌ | ❌ | ✅ |
+
+## Feature Descriptions
+
+### Tools (Function Calling)
+
+The ability for models to call external functions and tools. All major providers support this feature.
+
+**Example:**
+```python
+from upsonic import Agent, Task
+from upsonic.tools import ToolConfig
+
+def get_weather(location: str) -> str:
+    return f"Weather in {location}: Sunny, 72°F"
+
+agent = Agent(
+    model="openai/gpt-4o",
+    tools=[get_weather]
+)
+```
+
+### JSON Schema Output
+
+Native support for structured output with JSON schema validation. Ensures type-safe responses.
+
+**Supported by:** OpenAI, Anthropic, Google, Groq, Azure OpenAI, DeepSeek
+
+**Example:**
+```python
+from pydantic import BaseModel
+from upsonic import Agent, Task
+
+class Analysis(BaseModel):
+    sentiment: str
+    confidence: float
+    key_points: list[str]
+
+agent = Agent(model="openai/gpt-4o")
+task = Task("Analyze this review", response_format=Analysis)
+result = agent.do(task)  # Returns Analysis instance
+```
+
+### JSON Object Output
+
+Basic JSON object output without strict schema validation.
+
+**Supported by:** OpenAI, Anthropic, Groq, Mistral, Azure OpenAI, DeepSeek
+
+### Streaming
+
+Real-time token streaming for responsive applications.
+
+**Supported by:** All providers except Cohere
+
+**Example:**
+```python
+agent = Agent(model="openai/gpt-4o")
+task = Task("Write a story")
+
+async for chunk in agent.run_stream(task):
+    print(chunk, end="", flush=True)
+```
+
+### Thinking/Reasoning
+
+Models can show their reasoning process before providing final answers.
+
+**Implementation varies by provider:**
+
+- **OpenAI** (o1, o3, gpt-5): Native reasoning with summary generation
+- **Anthropic**: Extended Thinking with configurable token budgets
+- **Google**: Thinking configuration with automatic/manual budgets
+- **Groq**: QwQ and DeepSeek-R1 distilled models
+- **Cohere**: Native thinking blocks in responses
+- **Mistral**: `<think>` tags for reasoning
+- **DeepSeek**: R1 models with reasoning content
+
+**Example:**
+```python
+from upsonic import Agent, Task
+from upsonic.models.anthropic import AnthropicModelSettings
+
+settings = AnthropicModelSettings(
+    anthropic_thinking={
+        "type": "enabled",
+        "budget_tokens": 8192
+    }
+)
+
+agent = Agent(
+    model="anthropic/claude-3-5-sonnet-20241022",
+    settings=settings,
+    enable_thinking_tool=True
+)
+```
+
+### Built-in Tools
+
+Provider-managed tools that don't require custom implementations.
+
+#### Web Search
+- **OpenAI**: Available on `-search-preview` models
+- **Anthropic**: Available with `web_search_20250114` tool
+- **Google**: Grounding with Google Search
+- **Groq**: Available on select models
+
+#### Code Execution
+- **OpenAI**: Code Interpreter tool
+- **Anthropic**: Code execution with `bash_20250114` tool
+- **Google**: Code execution functionality
+
+**Example:**
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import WebSearchTool
+
+agent = Agent(
+    model="anthropic/claude-3-5-sonnet-20241022",
+    builtin_tools=[WebSearchTool()]
+)
+
+task = Task("What's the latest news about AI?")
+result = agent.do(task)  # Will use web search automatically
+```
+
+### Token Counting
+
+Pre-request token counting to estimate costs and manage context windows.
+
+**Supported by:** Google Gemini only
+
+**Example:**
+```python
+from upsonic.models.google import GoogleModel
+
+model = GoogleModel("gemini-2.5-flash", provider="google-gla")
+usage = await model.count_tokens(messages, settings, params)
+print(f"Estimated tokens: {usage.input_tokens}")
+```
+
+### Prompt Caching
+
+Cache frequently used prompts to reduce latency and costs.
+
+**Supported by:** Anthropic, Google Gemini
+
+**Anthropic Prompt Caching:**
+- Automatically caches context longer than 1024 tokens
+- Up to 5 minutes cache lifetime
+- Significant cost reduction for repeated prompts
+
+**Google Prompt Caching:**
+- Controlled via `google_cached_content` parameter
+- Requires explicit cache creation
+
+### Parallel Tool Calls
+
+Execute multiple tool calls simultaneously for faster responses.
+
+**Supported by:** OpenAI, Anthropic, Groq, Azure OpenAI, DeepSeek
+
+**Example:**
+```python
+from upsonic.models.openai import OpenAIChatModelSettings
+
+settings = OpenAIChatModelSettings(
+    parallel_tool_calls=True  # Enable parallel execution
+)
+
+agent = Agent(model="openai/gpt-4o", settings=settings)
+```
+
+## Model Settings Support
+
+### Common Settings (All Providers)
+
+These settings are supported by most providers:
+
+- `max_tokens`: Maximum tokens to generate
+- `temperature`: Randomness (0.0 to 2.0)
+- `top_p`: Nucleus sampling
+- `stop_sequences`: Stop generation sequences
+- `seed`: Random seed for reproducibility
+
+### Provider-Specific Settings
+
+Each provider has unique settings prefixed with the provider name:
+
+| Provider | Unique Settings |
+|----------|----------------|
+| **OpenAI** | `openai_reasoning_effort`, `openai_logprobs`, `openai_service_tier`, `openai_prediction` |
+| **Anthropic** | `anthropic_thinking`, `anthropic_metadata` |
+| **Google** | `google_safety_settings`, `google_thinking_config`, `google_labels`, `google_cached_content` |
+| **Groq** | `groq_reasoning_format` |
+| **Bedrock** | `bedrock_guardrail_config`, `bedrock_performance_configuration` |
+
+See individual provider documentation for complete settings reference.
+
+## OpenAI-Compatible Providers
+
+Many providers offer OpenAI-compatible APIs, meaning they work with the `OpenAIChatModel` class:
+
+| Provider | Compatibility | Notes |
+|----------|--------------|-------|
+| **DeepSeek** | Full | Includes reasoning models (R1) |
+| **Cerebras** | Full | Fast inference |
+| **Fireworks** | Full | Multiple model options |
+| **GitHub Models** | Full | Free tier available |
+| **Grok** | Full | xAI's models |
+| **Together** | Full | Multiple providers |
+| **OpenRouter** | Full | Gateway to 100+ models |
+| **Azure OpenAI** | Full | Enterprise features |
+| **Ollama** | Partial | Local deployment, basic features |
+
+**Usage:**
+```python
+# All use OpenAIChatModel internally
+model = infer_model("deepseek/deepseek-chat")
+model = infer_model("fireworks/llama-v3-70b-instruct")
+model = infer_model("grok/grok-4")
+```
+
+## Choosing a Provider
+
+### For Production Applications
+- **OpenAI**: Best overall quality, advanced features (Responses API)
+- **Anthropic**: Strong reasoning, extended thinking, enterprise safety
+- **Google Gemini**: Long context, multimodal, cost-effective
+
+### For Development
+- **Groq**: Extremely fast inference, good for testing
+- **Ollama**: Local deployment, no API costs
+- **HuggingFace**: Access to open-source models
+
+### For Cost Optimization
+- **Google Gemini Flash**: Low cost, fast
+- **Groq**: Generous free tier
+- **DeepSeek**: Competitive pricing
+
+### For Reasoning Tasks
+- **OpenAI o1/o3**: Advanced reasoning
+- **Anthropic**: Extended Thinking with token budgets
+- **DeepSeek R1**: Open reasoning models
+- **Groq QwQ**: Fast reasoning inference
+
+## Next Steps
+
+- [Native Model Providers](/native-providers) - OpenAI, Anthropic, Google, Groq, Cohere, Mistral
+- [Cloud Model Providers](/cloud-providers) - AWS Bedrock, Azure OpenAI
+- [Local Model Providers](/local-providers) - Ollama
+- [Model Gateways](/model-gateways) - OpenRouter, LiteLLM
+- [OpenAI-Compatible Models](/openai-compatible) - Using OpenAI-compatible endpoints
+
