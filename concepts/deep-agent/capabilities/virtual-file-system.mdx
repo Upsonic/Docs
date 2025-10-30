@@ -1,0 +1,71 @@
+---
+title: "Virtual File System"
+description: "Isolated filesystem for file operations during task execution"
+---
+
+## Usage
+
+Deep Agent provides an isolated virtual filesystem for file operations during task execution.
+
+Files are stored in the `deep_agent_state.files` dictionary and persist across the completion loop.
+
+## Params
+
+### ls
+List all files in the virtual filesystem.
+
+```python
+ls() -> List[str]
+```
+
+**Return Value:** List of file paths.
+
+### read_file
+Read a file from the virtual filesystem with optional pagination.
+
+```python
+read_file(file_path: str, offset: int = 0, limit: int = 2000) -> str
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `file_path` | `str` | Required | Absolute path to the file to read |
+| `offset` | `int` | `0` | Line number to start reading from (0-based) |
+| `limit` | `int` | `2000` | Maximum number of lines to read |
+
+**Return Value:** File content with line numbers (cat -n format), or error message if file not found.
+
+**Notes:**
+- Line numbers start at 1
+- Lines longer than 2000 characters are truncated
+- Empty files return system reminder
+
+### write_file
+Create or overwrite a file in the virtual filesystem.
+
+```python
+write_file(file_path: str, content: str) -> str
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `file_path` | `str` | Absolute path where the file should be written |
+| `content` | `str` | Content to write to the file |
+
+**Return Value:** Confirmation message.
+
+### edit_file
+Perform exact string replacement in a file.
+
+```python
+edit_file(file_path: str, old_string: str, new_string: str, replace_all: bool = False) -> str
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `file_path` | `str` | Required | Absolute path to the file to edit |
+| `old_string` | `str` | Required | Exact string to find and replace |
+| `new_string` | `str` | Required | String to replace old_string with |
+| `replace_all` | `bool` | `False` | If True, replace all occurrences; if False, require uniqueness |
+
+**Return Value:** Confirmation message or error if string not found/not unique.

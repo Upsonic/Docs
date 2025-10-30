@@ -1,0 +1,31 @@
+---
+title: "Attributes"
+description: "Configuration options for Deep Agent"
+---
+
+## Attributes
+
+The DeepAgent class accepts the following initialization parameters:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `model` | `str` or `Model` | `"openai/gpt-4o"` | Model identifier or Model instance |
+| `subagents` | `List[Agent]` | `None` | List of Agent instances to use as subagents (each must have a name) |
+| `instructions` | `str` | `None` | Additional instructions to append to system prompt |
+| `tool_call_limit` | `int` | `100` | Maximum tool calls per execution |
+| `memory` | `Memory` | Auto-created | Memory instance (auto-created with InMemoryStorage if not provided) |
+| `**kwargs` | | | Additional arguments passed to base Agent |
+
+## DeepAgentState Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `todos` | `List[Todo]` | List of todo items for task planning and tracking |
+| `files` | `Dict[str, str]` | Virtual filesystem mapping file paths to content |
+
+## Todo Model
+
+| Attribute | Type | Values | Description |
+|-----------|------|--------|-------------|
+| `content` | `str` | | Description of the task to complete |
+| `status` | `Literal` | `"pending"`, `"in_progress"`, `"completed"` | Current status of the task |

@@ -1,0 +1,38 @@
+---
+title: "Advanced"
+description: "Performance optimization and quality assurance for Deep Agent"
+---
+
+## Performance Optimization
+
+### Parallelization
+- Launch multiple subagents concurrently for independent tasks
+- Use general-purpose agents to isolate context and reduce token usage
+- Each subagent processes work independently and returns synthesized results
+
+### Model Selection
+- Use appropriate models based on task complexity
+- DeepAgent inherits all model selection capabilities from base Agent
+- Can override model for specific executions
+
+### Monitoring
+- Track todo status with `get_todos()`
+- Monitor completion progress in debug mode
+- Access files at any time with `get_files()`
+
+## Quality Assurance
+
+### Todo Completion Enforcement
+- Automatic verification that all todos are completed
+- Up to 10 continuation iterations if todos remain incomplete
+- Debug warnings if max iterations reached with incomplete todos
+
+### File Validation
+- All file operations return confirmation or error messages
+- Read before edit enforcement in prompts
+- Exact string matching for edit operations
+
+### Subagent Quality
+- Subagents can be specialized for review and validation
+- Results can be verified by main agent before proceeding
+- Isolated context prevents subagent errors from affecting main agent
