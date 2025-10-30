@@ -1,0 +1,32 @@
+---
+title: "Sequential & Parallel Run"
+description: "Control whether a tool can be executed in parallel with others"
+---
+
+## Overview
+
+Control whether a tool can be executed in parallel with others.
+
+## Usage
+
+```python
+from upsonic.tools import tool
+
+@tool(sequential=True)
+def database_transaction(operation: str, data: str) -> str:
+    """
+    Execute a database transaction that must run sequentially.
+
+    Args:
+        operation: Transaction type
+        data: Transaction data
+
+    Returns:
+        Transaction result
+    """
+    return f"Transaction {operation} completed with data: {data}"
+```
+
+## Parameters
+
+- `sequential` (bool): If True, tool must execute sequentially (no parallelization)

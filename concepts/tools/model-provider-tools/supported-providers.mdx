@@ -1,0 +1,51 @@
+---
+title: "Supported Providers"
+description: "Model provider tools compatibility and configuration"
+---
+
+## Overview
+
+Model provider tools are native capabilities provided directly by AI model providers (OpenAI, Anthropic, Google). These tools are executed by the provider's infrastructure rather than the Upsonic framework, offering provider-optimized performance and specialized features.
+
+## Key Characteristics
+
+- **Provider-Executed**: Run on model provider infrastructure, not in your code
+- **Native Integration**: Deep integration with model capabilities
+- **Specialized Features**: Provider-specific optimizations and configurations
+- **Automatic Rate Limiting**: Provider-managed execution and rate limiting
+- **Sequential Execution**: Always executed sequentially by the provider
+
+## Differences from Custom Tools
+
+| Feature | Custom Tools | Model Provider Tools |
+|---------|--------------|---------------------|
+| **Execution** | Upsonic Framework | Provider Infrastructure |
+| **Configuration** | Full Support | Provider-Specific Only |
+| **Parallelization** | ✅ Supported | ❌ Always Sequential |
+| **Caching** | ✅ Configurable | ❌ Provider-Managed |
+| **Retries** | ✅ Configurable | ❌ Provider-Managed |
+| **Hooks** | ✅ Supported | ❌ Not Supported |
+
+## Provider Compatibility
+
+| Tool | OpenAI Responses | Anthropic | Google | Azure OpenAI |
+|------|------------------|-----------|--------|--------------|
+| **WebSearchTool** | ✅ | ✅ | ✅ | ❌ |
+| **CodeExecutionTool** | ✅ | ✅ | ✅ | ❌ |
+| **UrlContextTool** | ❌ | ❌ | ✅ | ❌ |
+
+## Important Notes
+
+**For OpenAI:**
+- ✅ Use `openai-responses/gpt-4o` for model provider tools
+- ❌ Do NOT use `openai/gpt-4o` (standard chat completion model)
+
+**For Azure OpenAI:**
+- ❌ Model provider tools are NOT supported
+- ✅ Use custom tools instead with `azure/gpt-4o`
+
+**For Anthropic:**
+- ✅ Full support for WebSearchTool and CodeExecutionTool
+
+**For Google:**
+- ✅ Full support including exclusive UrlContextTool

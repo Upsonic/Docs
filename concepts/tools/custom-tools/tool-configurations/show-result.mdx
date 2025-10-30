@@ -1,0 +1,31 @@
+---
+title: "Show Result"
+description: "Display tool output to the user instead of sending it back to the LLM"
+---
+
+## Overview
+
+Display tool output to the user instead of sending it back to the LLM.
+
+## Usage
+
+```python
+from upsonic.tools import tool
+
+@tool(show_result=True)
+def display_report(data: str) -> str:
+    """
+    Generate and display a report.
+
+    Args:
+        data: Data to include in report
+
+    Returns:
+        Formatted report
+    """
+    return f"=== REPORT ===\n{data}\n=============="
+```
+
+## Parameters
+
+- `show_result` (bool): If True, displays output to user and doesn't send to LLM

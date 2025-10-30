@@ -1,0 +1,33 @@
+---
+title: "Required Confirmation"
+description: "Require user confirmation before executing a tool"
+---
+
+## Overview
+
+Require user confirmation before executing a tool.
+
+## Usage
+
+```python
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True)
+def delete_file(file_path: str) -> str:
+    """
+    Delete a file from the system.
+
+    Args:
+        file_path: Path to the file to delete
+
+    Returns:
+        Confirmation message
+    """
+    import os
+    os.remove(file_path)
+    return f"File {file_path} deleted successfully"
+```
+
+## Parameters
+
+- `requires_confirmation` (bool): If True, prompts user with "Proceed? (y/n)" before execution

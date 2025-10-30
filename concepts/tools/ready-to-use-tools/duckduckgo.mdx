@@ -1,0 +1,84 @@
+---
+title: "DuckDuckGo"
+description: "Web search tool using DuckDuckGo's search engine"
+---
+
+## Overview
+
+Web search tool using DuckDuckGo's search engine.
+
+## Basic Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.common_tools import duckduckgo_search_tool
+
+# Create DuckDuckGo search tool
+ddg_search = duckduckgo_search_tool(max_results=5)
+
+# Create task
+task = Task(
+    description="Search for 'artificial intelligence trends 2024'",
+    tools=[ddg_search]
+)
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", name="Search Agent")
+
+# Execute
+agent.print_do(task)
+```
+
+## Custom Configuration
+
+```python
+from upsonic.tools.common_tools import duckduckgo_search_tool
+from ddgs import DDGS
+
+# Create custom client
+custom_client = DDGS()
+
+# Configure search tool
+ddg_search = duckduckgo_search_tool(
+    duckduckgo_client=custom_client,
+    max_results=10
+)
+
+task = Task(
+    description="Search for Python programming tutorials with 10 results",
+    tools=[ddg_search]
+)
+
+agent = Agent(model="openai/gpt-4o", name="Custom Search Agent")
+agent.print_do(task)
+```
+
+## Parameters
+
+**Function Parameters:**
+- `duckduckgo_client` (DDGS, optional): Custom DuckDuckGo client instance
+- `max_results` (int, optional): Maximum number of results to return
+
+**Tool Parameters:**
+- `query` (str): The search query string
+
+## Result Format
+
+Search results are returned as a list of dictionaries:
+
+```python
+[
+    {
+        "title": "Result Title",
+        "href": "https://example.com",
+        "body": "Description of the result"
+    },
+    # ... more results
+]
+```
+
+## Installation
+
+```bash
+pip install duckduckgo-search
+```

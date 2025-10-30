@@ -1,0 +1,93 @@
+---
+title: "Tavily"
+description: "Advanced web search using the Tavily API"
+---
+
+## Overview
+
+Advanced web search using the Tavily API.
+
+## Basic Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.common_tools import tavily_search_tool
+
+# Create Tavily search tool (requires API key)
+tavily_search = tavily_search_tool(api_key="your_tavily_api_key_here")
+
+# Create task
+task = Task(
+    description="Search for 'machine learning news'",
+    tools=[tavily_search]
+)
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", name="Tavily Search Agent")
+
+# Execute
+agent.print_do(task)
+```
+
+## Advanced Search
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.common_tools import tavily_search_tool
+
+# Create Tavily search with API key
+tavily_search = tavily_search_tool(api_key="your_api_key")
+
+# Advanced search task
+task = Task(
+    description="""
+    Search for recent AI developments using these parameters:
+    - Search depth: advanced
+    - Topic: news
+    - Time range: week
+    """,
+    tools=[tavily_search]
+)
+
+agent = Agent(model="openai/gpt-4o", name="Advanced Search Agent")
+agent.print_do(task)
+```
+
+## Parameters
+
+**Function Parameters:**
+- `api_key` (str): Your Tavily API key (required)
+
+**Tool Parameters:**
+- `query` (str): The search query
+- `search_deep` (str): Search depth - 'basic' or 'advanced' (default: 'basic')
+- `topic` (str): Search category - 'general' or 'news' (default: 'general')
+- `time_range` (str): Time filter - 'day', 'week', 'month', 'year', 'd', 'w', 'm', 'y' (optional)
+
+## Result Format
+
+Search results are returned as a list of dictionaries:
+
+```python
+[
+    {
+        "title": "Article Title",
+        "url": "https://example.com/article",
+        "content": "Article excerpt or description",
+        "score": 0.95  # Relevance score
+    },
+    # ... more results
+]
+```
+
+## Getting an API Key
+
+1. Sign up at [https://app.tavily.com/home](https://app.tavily.com/home)
+2. Get your API key from the dashboard
+3. Use it in the `tavily_search_tool` function
+
+## Installation
+
+```bash
+pip install tavily-python
+```

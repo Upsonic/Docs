@@ -1,0 +1,47 @@
+---
+title: "SSE Server"
+description: "Server-Sent Events based servers for remote MCP tool access"
+---
+
+## Overview
+
+Server-Sent Events (SSE) based servers for remote MCP tool access.
+
+## Usage
+
+```python
+from upsonic import Task, Agent
+
+# Define SSE-based MCP servers
+class FetchMCP:
+    url = "https://your-mcp-server.com/sse"
+
+class SearchMCP:
+    url = "https://search-mcp-server.com/sse"
+
+# Create task with MCP tools
+task = Task(
+    description="Use the fetch tool to get latest news in Europe",
+    tools=[FetchMCP, SearchMCP]
+)
+
+# Create agent
+agent = Agent(
+    name="News Agent",
+    model="openai/gpt-4o"
+)
+
+# Execute
+agent.print_do(task)
+```
+
+## Parameters
+
+- `url` (str): The SSE endpoint URL of the MCP server
+
+## Characteristics
+
+- Remote server access over HTTP
+- Real-time event streaming
+- Suitable for cloud-hosted MCP servers
+- No local installation required

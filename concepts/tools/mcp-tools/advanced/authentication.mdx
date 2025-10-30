@@ -1,0 +1,121 @@
+---
+title: "Authentication"
+description: "Configure authentication for MCP servers that require credentials"
+---
+
+## Overview
+
+Configure authentication for MCP servers that require credentials.
+
+## Usage
+
+```python
+from upsonic import Task, Agent
+
+# MCP server with authentication
+class AuthenticatedMCP:
+    command = "npx"
+    args = ["-y", "@company/private-mcp-server"]
+    env = {
+        "API_KEY": "your_api_key_here",
+        "API_SECRET": "your_api_secret_here",
+        "AUTH_TOKEN": "bearer_token_here"
+    }
+
+# Multiple servers with different auth
+class GitHubMCP:
+    command = "npx"
+    args = ["-y", "@modelcontextprotocol/server-github"]
+    env = {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxx"
+    }
+
+class SlackMCP:
+    command = "uvx"
+    args = ["mcp-server-slack"]
+    env = {
+        "SLACK_BOT_TOKEN": "xoxb-xxxxx",
+        "SLACK_TEAM_ID": "T1234567"
+    }
+
+# Create task with authenticated tools
+task = Task(
+    description="Check GitHub issues and notify the team on Slack",
+    tools=[GitHubMCP, SlackMCP]
+)
+
+# Create agent
+agent = Agent(
+    name="Integration Agent",
+    model="openai/gpt-4o"
+)
+
+# Execute
+agent.print_do(task)
+```
+
+## Parameters
+
+- `env` (Dict[str, str]): Dictionary of environment variables for authentication
+  - Common keys: `API_KEY`, `API_SECRET`, `AUTH_TOKEN`, `ACCESS_TOKEN`
+  - Service-specific keys: `GITHUB_PERSONAL_ACCESS_TOKEN`, `SLACK_BOT_TOKEN`, etc.
+
+## Best Practices
+
+- Store credentials securely (use environment variables or secrets management)
+- Never hardcode credentials in source code
+- Use separate credentials for development and production
+- Rotate credentials regularly
+- Follow the principle of least privilege
+
+## Example with Environment Variables
+
+```python
+import os
+from upsonic import Task, Agent
+
+# Load from environment
+class SecureMCP:
+    command = "npx"
+    args = ["-y", "@company/mcp-server"]
+    env = {
+        "API_KEY": os.getenv("MCP_API_KEY"),
+        "API_SECRET": os.getenv("MCP_API_SECRET")
+    }
+
+task = Task(
+    description="Use authenticated MCP server",
+    tools=[SecureMCP]
+)
+
+agent = Agent(name="Secure Agent", model="openai/gpt-4o")
+agent.print_do(task)
+```
+
+## SSE Server Authentication
+
+```python
+from upsonic import Task, Agent
+
+# SSE server with authentication headers
+class AuthenticatedSSE:
+    url = "https://mcp-server.com/sse"
+    # Note: Authentication for SSE typically handled server-side
+    # Pass credentials via URL parameters or configure server-side
+
+task = Task(
+    description="Use authenticated SSE MCP server",
+    tools=[AuthenticatedSSE]
+)
+
+agent = Agent(name="SSE Agent", model="openai/gpt-4o")
+agent.print_do(task)
+```
+
+## Troubleshooting Authentication
+
+Common authentication issues:
+- **Invalid credentials**: Verify tokens and keys are correct
+- **Expired tokens**: Refresh or regenerate authentication tokens
+- **Permission errors**: Ensure credentials have required scopes/permissions
+- **Network errors**: Check firewall and proxy settings for authenticated connections

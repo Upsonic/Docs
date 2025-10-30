@@ -1,0 +1,24 @@
+---
+title: "Attributes"
+description: "Configuration options for custom tools"
+---
+
+## Attributes
+
+Custom tools support comprehensive configuration through the `@tool` decorator:
+
+- **requires_confirmation**: Require user confirmation before execution
+- **requires_user_input**: Prompt user for input during execution
+- **user_input_fields**: Specify which fields require user input
+- **external_execution**: Mark tool for external execution
+- **show_result**: Display output to user instead of sending to LLM
+- **stop_after_tool_call**: Terminate agent run after tool execution
+- **sequential**: Enforce sequential execution (no parallelization)
+- **cache_results**: Enable result caching
+- **cache_dir**: Directory for cache storage
+- **cache_ttl**: Cache time-to-live in seconds
+- **tool_hooks**: Before/after execution hooks
+- **max_retries**: Maximum retry attempts
+- **timeout**: Execution timeout in seconds
+- **strict**: Enforce strict JSON schema validation
+- **docstring_format**: Docstring parsing format ('google', 'numpy', 'sphinx', 'auto')
