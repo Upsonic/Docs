@@ -1,0 +1,31 @@
+---
+title: "Attributes"
+description: "Configuration options for Direct LLM Call"
+---
+
+## Attributes
+
+The `Direct` class accepts the following attributes during initialization:
+
+| Attribute | Type | Description | Default |
+|-----------|------|-------------|---------|
+| **model** | `Union[str, Any, None]` | Model identifier (e.g., "openai/gpt-4o"), Model instance, or None | `"openai/gpt-4o"` (when None) |
+| **settings** | `Optional[ModelSettings]` | Model-specific configuration including temperature, max_tokens, etc. | `None` |
+| **profile** | `Optional[ModelProfileSpec]` | Model profile configuration for advanced customization | `None` |
+| **provider** | `Optional[Union[str, Provider]]` | Provider name or Provider instance for custom provider integration | `None` |
+
+## Fluent Interface Methods
+
+The Direct class provides immutable configuration methods that return new instances:
+
+- `with_model(model)`: Create new instance with specified model
+- `with_settings(settings)`: Create new instance with specified settings
+- `with_profile(profile)`: Create new instance with specified profile
+- `with_provider(provider)`: Create new instance with specified provider
+
+## Execution Methods
+
+- `do(task, show_output=True)`: Execute task synchronously
+- `do_async(task, show_output=True)`: Execute task asynchronously
+- `print_do(task)`: Execute task synchronously with visual output
+- `print_do_async(task)`: Execute task asynchronously with visual output

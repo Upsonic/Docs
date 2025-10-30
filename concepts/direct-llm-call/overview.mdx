@@ -1,0 +1,35 @@
+---
+title: "Overview"
+description: "High-speed, streamlined interface for direct LLM interactions without memory or tool complexity"
+---
+
+## What is Direct LLM Call?
+
+`Direct` is a simplified, high-speed interface for LLM interactions in the Upsonic AI Agent Framework. It provides a streamlined way to communicate with language models without the overhead of memory management, knowledge bases, or tool orchestration. This component is designed for scenarios where you need fast, direct responses from an LLM with minimal configuration.
+
+## How Direct LLM Call Works
+
+The Direct LLM Call mechanism operates through a straightforward pipeline:
+
+1. **Initialization**: Create a `Direct` instance with your preferred model and optional configuration (settings, profile, provider)
+2. **Task Definition**: Define your task using the `Task` object, which includes the description, optional attachments, context, and response format
+3. **Execution**: Execute the task using `do()` for synchronous or `do_async()` for asynchronous operations
+4. **Response Processing**: The system automatically processes the LLM response based on your specified response format (string or Pydantic model)
+
+The Direct class handles all the underlying complexity including:
+- Model instantiation and configuration
+- Message construction from task descriptions and attachments
+- Request parameter building based on response format requirements
+- Automatic parsing of structured outputs
+- Usage metrics tracking
+
+## Why We Need Direct LLM Call
+
+Direct LLM Call addresses specific needs in AI agent development:
+
+- **Performance**: Eliminates overhead from memory, context management, and tool orchestration when these features are unnecessary
+- **Simplicity**: Provides a clean API for straightforward LLM interactions without learning complex agent patterns
+- **Structured Outputs**: Built-in support for Pydantic models ensures type-safe, validated responses
+- **Flexibility**: Fluent interface allows easy configuration switching (different models, settings, profiles)
+- **Document Processing**: Native support for attachments (PDFs, images) with automatic MIME type detection
+- **Async Support**: Full async/await support for high-concurrency scenarios
