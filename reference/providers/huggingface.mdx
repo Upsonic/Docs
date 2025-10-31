@@ -7,7 +7,7 @@ sidebarTitle: HuggingFaceProvider
 
 | Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
 | ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `base_url`                         | `str \| None`                                         | `None`     | The base url for the Hugging Face requests.                                                                                                                                                                                      |
+| `base_url`                         | `str \| None`                                         | `None`     | The base url for the Huggingface requests.                                                                                                                                                                                      |
 | `api_key`                          | `str \| None`                                         | `None`     | The API key to use for authentication, if not provided, the `HF_TOKEN` environment variable will be used if available.                                                                                                          |
 | `hf_client`                        | `AsyncInferenceClient \| None`                        | `None`     | An existing [`AsyncInferenceClient`](https://huggingface.co/docs/huggingface_hub/v0.29.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient) client to use. If not provided, a new instance will be created. |
 | `http_client`                      | `AsyncClient \| None`                                 | `None`     | (currently ignored) An existing `httpx.AsyncClient` to use for making HTTP requests.                                                                                                                                              |
@@ -17,11 +17,11 @@ sidebarTitle: HuggingFaceProvider
 
 ### `__init__`
 
-Create a new Hugging Face provider.
+Create a new Huggingface provider.
 
 **Parameters:**
 
-- `base_url` (str | None): The base url for the Hugging Face requests.
+- `base_url` (str | None): The base url for the Huggingface requests.
 - `api_key` (str | None): The API key to use for authentication, if not provided, the `HF_TOKEN` environment variable will be used if available.
 - `hf_client` (AsyncInferenceClient | None): An existing [`AsyncInferenceClient`](https://huggingface.co/docs/huggingface_hub/v0.29.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient) client to use. If not provided, a new instance will be created.
 - `http_client` (AsyncClient | None): (currently ignored) An existing `httpx.AsyncClient` to use for making HTTP requests.
