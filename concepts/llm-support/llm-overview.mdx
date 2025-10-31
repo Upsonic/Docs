@@ -12,7 +12,7 @@ Large Language Models (LLMs) are the foundation of the Upsonic AI Agent Framewor
 In Upsonic, all model classes inherit from the base `Model` class, which provides:
 
 - **Unified Interface**: Consistent API across all providers
-- **LCEL Integration**: Models implement the `Runnable` interface for chain composition
+- **UEL Integration**: Models implement the `Runnable` interface for chain composition
 - **Streaming Support**: Real-time response streaming for better UX
 - **Tool Calling**: Native function calling capabilities
 - **Structured Output**: Type-safe responses using Pydantic models
@@ -97,10 +97,10 @@ model = OpenAIChatModel(
 agent = Agent(model=model)
 ```
 
-#### LCEL Chains
+#### UEL Chains
 
 ```python
-from upsonic.lcel import ChatPromptTemplate
+from upsonic.uel import ChatPromptTemplate
 from upsonic import infer_model
 
 prompt = ChatPromptTemplate.from_template("Tell me about {topic}")

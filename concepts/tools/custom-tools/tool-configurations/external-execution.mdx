@@ -11,6 +11,7 @@ Mark a tool for execution outside the framework.
 
 ```python
 from upsonic.tools import tool
+from upsonic import Agent, Task
 
 @tool(external_execution=True)
 def external_database_query(query: str) -> str:
@@ -27,12 +28,12 @@ def external_database_query(query: str) -> str:
 
 # Usage with external execution handling
 task = Task(
-    description="Query the database",
+    description="CALL external_database_query tool with the query 'SELECT * FROM users'",
     tools=[external_database_query]
 )
 
 agent = Agent(model="openai/gpt-4o")
-result = await agent.do_async(task)
+result = agent.do(task)
 
 # Handle external execution
 if task.is_paused and task.tools_awaiting_external_execution:

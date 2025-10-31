@@ -18,13 +18,13 @@ url_tool = UrlContextTool()
 
 # Create task
 task = Task(
-    description="Read content from https://docs.python.org and explain Python basics",
+    description="Read content from https://docs.python.org and explain Python basics.",
     tools=[url_tool]
 )
 
 # Create agent with Google model (required for UrlContextTool)
 agent = Agent(
-    model="google/gemini-1.5-pro",
+    model="google-gla/gemini-2.5-pro",
     name="URL Context Agent"
 )
 
@@ -36,6 +36,7 @@ agent.print_do(task)
 
 ```python
 from upsonic.tools.builtin_tools import UrlContextTool
+from upsonic import Agent, Task
 
 url_tool = UrlContextTool()
 
@@ -51,7 +52,7 @@ task = Task(
     tools=[url_tool]
 )
 
-agent = Agent(model="google/gemini-1.5-pro", name="Multi-URL Agent")
+agent = Agent(model="google-gla/gemini-2.5-pro", name="Multi-URL Agent")
 agent.print_do(task)
 ```
 

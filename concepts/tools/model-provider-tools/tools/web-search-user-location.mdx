@@ -11,6 +11,14 @@ User location information for localizing web search results.
 
 ```python
 from upsonic.tools.builtin_tools import WebSearchTool, WebSearchUserLocation
+from upsonic.models.openai import OpenAIResponsesModel
+from upsonic import Agent, Task
+
+
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"
+)
 
 # Create location configuration
 user_location = WebSearchUserLocation(

@@ -41,6 +41,13 @@ print(f"Result: {result}")
 
 ```python
 from upsonic.tools.builtin_tools import WebSearchTool, WebSearchUserLocation
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIResponsesModel
+
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"
+)
 
 # Advanced web search with configuration
 advanced_search = WebSearchTool(
