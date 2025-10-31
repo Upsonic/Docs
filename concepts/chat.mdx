@@ -57,31 +57,39 @@ Chat sessions are created directly in code using the constructor. Each chat sess
 ### Basic Chat Creation
 
 ```python
+import asyncio
 from upsonic import Chat, Agent
 
-# Create agent
-agent = Agent("openai/gpt-4o")
 
-# Create basic chat session
-chat = Chat(
-    session_id="user123_session1",
-    user_id="user123",
-    agent=agent
-)
+async def main():
+    # Create agent
+    agent = Agent("openai/gpt-4o")
 
-# Send a message
-response = await chat.invoke("Hello, how are you?")
-print(response)
+    # Create basic chat session
+    chat = Chat(
+        session_id="user123_session1",
+        user_id="user123",
+        agent=agent
+    )
 
-# Access chat history
-print(chat.all_messages)
-print(f"Total cost: ${chat.total_cost}")
+    # Send a message
+    response = await chat.invoke("Hello, how are you?")
+    print(response)
+
+    # Access chat history
+    print(chat.all_messages)
+    print(f"Total cost: ${chat.total_cost}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ### Chat with Custom Memory Settings
 
 ```python
 from upsonic.storage.providers import SqliteStorage
+from upsonic import Chat
 
 # Create storage backend
 storage = SqliteStorage(
@@ -124,6 +132,7 @@ chat = Chat(
 
 ```python
 from upsonic.storage.providers import SqliteStorage, PostgresStorage
+from upsonic import Chat
 
 # SQLite storage for development and small-scale applications
 sqlite_storage = SqliteStorage(
@@ -379,6 +388,9 @@ if chat.state == SessionState.ERROR:
 ### Customer Support Chat
 
 ```python
+from upsonic.storage.providers import SqliteStorage
+from upsonic import Chat
+
 # Create storage for customer support
 support_storage = SqliteStorage(
     sessions_table_name="support_sessions",
@@ -409,6 +421,9 @@ response = await support_chat.invoke("The error message says 'invalid credential
 ### Educational Assistant
 
 ```python
+from upsonic.storage.providers import SqliteStorage
+from upsonic import Chat
+
 # Create storage for educational chat
 edu_storage = SqliteStorage(
     sessions_table_name="learning_sessions",
@@ -441,6 +456,9 @@ response = await edu_chat.invoke("I'm confused about functions")
 ### Multi-User Chat System
 
 ```python
+from upsonic.storage.providers import SqliteStorage
+from upsonic import Chat
+
 # Create multiple chat sessions for different users
 chats = {}
 
@@ -474,6 +492,8 @@ async def handle_user_message(user_id: str, message: str):
 ### Streaming Chat Interface
 
 ```python
+from upsonic import Chat
+
 # Create a streaming chat for real-time applications
 streaming_chat = Chat(
     session_id="realtime_chat",

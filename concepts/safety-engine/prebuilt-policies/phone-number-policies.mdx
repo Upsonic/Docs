@@ -16,12 +16,13 @@ from upsonic.safety_engine.policies import AnonymizePhoneNumbersPolicy
 # Anonymize just phone numbers
 agent = Agent(
     model="openai/gpt-4o",
-    agent_policy=AnonymizePhoneNumbersPolicy
+    agent_policy=AnonymizePhoneNumbersPolicy,
+    debug=True
 )
 
-task = Task("Call me at +1-555-123-4567")
+task = Task("My Number is: +1-555-123-4567. Tell me what is my number.")
 result = agent.do(task)
-# Phone number gets randomized but keeps the format
+# Output: "Your number is: XXX-XXXX."
 ```
 
 ## Available Variants

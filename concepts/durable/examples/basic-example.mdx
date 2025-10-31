@@ -45,10 +45,10 @@ def process_tool(record_count: int) -> dict:
     return {"processed": record_count, "status": "success"}
 
 @tool
-def report_tool(data: dict) -> str:
+def report_tool(data: str) -> str:
     """Generate final report."""
-    print(f"Generating report from {data['processed']} records...")
-    return f"Report generated for {data['processed']} records"
+    print(f"Generating report from {data} records...")
+    return f"Report generated for {data} records"
 
 
 async def main():
@@ -143,7 +143,7 @@ async def main():
     print(f"By status: {stats['by_status']}")
 
     # List all executions
-    all_executions = DurableExecution.list_all_executions(storage)
+    all_executions = await DurableExecution.list_all_executions_async(storage)
     print(f"\nAll executions in storage: {len(all_executions)}")
 
     for exec_data in all_executions[:5]:

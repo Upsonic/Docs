@@ -13,15 +13,17 @@ PII policies detect and protect personal identifiable information including emai
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import PIIAnonymizePolicy
 
-# Automatically hide sensitive info in responses
+# Automatically hide sensitive info in output only
 agent = Agent(
     model="openai/gpt-4o",
-    agent_policy=PIIAnonymizePolicy
+    agent_policy=PIIAnonymizePolicy,
+    debug=True
 )
 
-task = Task("My email is john@example.com and phone is 555-0123")
+task = Task("My email is john@example.com and phone is 555-0123. Tell me what is my e mail and phone number.")
 result = agent.do(task)
-# Output: "My email is xxxx@xxxxxxx.xxx and phone is XXX-XXXX"
+print(result)
+# Output should anonymize to: "xxxx@xxxxxxx.xxx" and "XXX-XXXX"
 ```
 
 ## Available Variants

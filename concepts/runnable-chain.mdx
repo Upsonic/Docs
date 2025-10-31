@@ -25,7 +25,7 @@ Runnable Chains make your AI applications more modular, testable, and production
 The foundation of Runnable Chains is the pipe operator (`|`), which chains components together. Each component receives the output of the previous one:
 
 ```python
-from upsonic.lcel import ChatPromptTemplate
+from upsonic.uel import ChatPromptTemplate
 from upsonic.models import infer_model
 
 # Chain components with the pipe operator
@@ -57,7 +57,7 @@ Create dynamic prompts with variable substitution and message formatting.
 #### Simple Templates
 
 ```python
-from upsonic.lcel import ChatPromptTemplate
+from upsonic.uel import ChatPromptTemplate
 
 # Single template with variables
 template = ChatPromptTemplate.from_template(
@@ -130,7 +130,7 @@ Models implement the Runnable interface and can be enhanced with memory, tools, 
 
 ```python
 from upsonic.models import infer_model
-from upsonic.lcel import ChatPromptTemplate
+from upsonic.uel import ChatPromptTemplate
 
 model = infer_model("openai/gpt-4o")
 
@@ -216,7 +216,7 @@ chain = prompt | powered_model
 Execute multiple chains simultaneously and collect results in a dictionary.
 
 ```python
-from upsonic.lcel import RunnableParallel, ChatPromptTemplate
+from upsonic.uel import RunnableParallel, ChatPromptTemplate
 from upsonic.models import infer_model
 
 model = infer_model("openai/gpt-4o")
@@ -268,7 +268,7 @@ Pass input through unchanged or with additional assignments.
 #### Basic Passthrough
 
 ```python
-from upsonic.lcel import RunnablePassthrough, ChatPromptTemplate
+from upsonic.uel import RunnablePassthrough, ChatPromptTemplate
 
 # Pass input directly to the prompt
 chain = (
@@ -306,7 +306,7 @@ result = chain.invoke({"question": "What is AI?"})
 Wrap Python functions to use them in chains.
 
 ```python
-from upsonic.lcel import RunnableLambda
+from upsonic.uel import RunnableLambda
 
 # Wrap a function
 def format_answer(response):
@@ -348,7 +348,7 @@ chain = prompt | model | RunnableLambda(extract_and_validate)
 Route execution to different chains based on conditions.
 
 ```python
-from upsonic.lcel import RunnableBranch, ChatPromptTemplate
+from upsonic.uel import RunnableBranch, ChatPromptTemplate
 from upsonic.models import infer_model
 
 model = infer_model("openai/gpt-4o")
@@ -416,7 +416,7 @@ chain = (
 Create custom Runnable functions with full control.
 
 ```python
-from upsonic.lcel import chain, ChatPromptTemplate
+from upsonic.uel import chain, ChatPromptTemplate
 from upsonic.models import infer_model
 
 prompt1 = ChatPromptTemplate.from_template("Tell a joke about {topic}")
@@ -467,7 +467,7 @@ result = adaptive_chain.invoke({"query": "...", "complex": True})
 
 ```python
 from operator import itemgetter
-from upsonic.lcel import RunnablePassthrough, ChatPromptTemplate
+from upsonic.uel import RunnablePassthrough, ChatPromptTemplate
 
 # Contextualize question based on history
 contextualize_template = ChatPromptTemplate.from_messages([

@@ -83,7 +83,7 @@ memory_new_session = Memory(
 )
 
 agent_new = Agent(model="openai/gpt-4o", memory=memory_new_session)
-task3 = Task(description="Hello, I'm back")
+task3 = Task(description="Hello, I'm back. What was my problem?")
 result3 = agent_new.do(task3)  # Agent knows customer's previous issues
 print("Response 3:", result3)
 ```
