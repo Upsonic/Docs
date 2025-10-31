@@ -244,18 +244,6 @@ All OpenAI-compatible models support these standard parameters:
 | `parallel_tool_calls` | `bool` | Allow parallel tool execution | True | Most |
 | `timeout` | `float` | Request timeout in seconds | 600 | All |
 
-### Provider-Specific Parameters
-
-Some providers extend the OpenAI spec with additional parameters:
-
-| Provider | Additional Parameters | Notes |
-|----------|---------------------|-------|
-| DeepSeek | None | Standard OpenAI params only |
-| Cerebras | None | Standard OpenAI params only |
-| Fireworks | `context_length_exceeded_behavior` | How to handle context overflow |
-| Together AI | `repetition_penalty` | Additional control over repetition |
-| Azure | `azure_deployment` | Deployment name in Azure |
-| Ollama | `num_predict`, `num_ctx` | Ollama-specific controls |
 
 ### Example: Full Configuration
 
@@ -306,10 +294,10 @@ Support across major OpenAI-compatible providers:
 | `top_p` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `seed` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `stop_sequences` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `presence_penalty` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `frequency_penalty` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `logit_bias` | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| `parallel_tool_calls` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `presence_penalty` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `frequency_penalty` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `logit_bias` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `parallel_tool_calls` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `stream` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ### Temperature Guidelines
