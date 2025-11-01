@@ -25,13 +25,13 @@ export AWS_REGION="us-east-1"
 aws configure
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.bedrock import BedrockConverseModel
 
-# Format: bedrock/provider.model-id
-model = infer_model("bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0")
+# Format: provider.model-id
+model = BedrockConverseModel(model_name="anthropic.claude-3-5-sonnet-20241022-v2:0")
 ```
 
 ### Manual Configuration
@@ -76,9 +76,11 @@ model = BedrockConverseModel(
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0")
+from upsonic.models.bedrock import BedrockConverseModel
+
+model = BedrockConverseModel(model_name="anthropic.claude-3-5-sonnet-20241022-v2:0")
 agent = Agent(model=model)
 
 task = Task("Analyze this business report")
@@ -127,10 +129,12 @@ model = BedrockConverseModel(
 ### With Amazon Nova
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Amazon's own models
-model = infer_model("bedrock/us.amazon.nova-pro-v1:0")
+from upsonic.models.bedrock import BedrockConverseModel
+
+model = BedrockConverseModel(model_name="us.amazon.nova-pro-v1:0")
 agent = Agent(model=model)
 
 task = Task("Generate a product description")
@@ -140,10 +144,10 @@ result = agent.do(task)
 ### Cross-Region Inference
 
 ```python
-from upsonic import infer_model
+from upsonic.models.bedrock import BedrockConverseModel
 
 # Use cross-region inference for better availability
-model = infer_model("bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0")
+model = BedrockConverseModel(model_name="us.anthropic.claude-3-5-sonnet-20241022-v2:0")
 ```
 
 ## Prompt Caching
@@ -151,7 +155,7 @@ model = infer_model("bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0")
 Bedrock supports prompt caching for supported models (primarily Claude):
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Long context will be cached for Claude models
 system_prompt = """
@@ -162,7 +166,9 @@ You are an AWS expert assistant with knowledge of:
 ... (extensive AWS documentation)
 """
 
-model = infer_model("bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0")
+from upsonic.models.bedrock import BedrockConverseModel
+
+model = BedrockConverseModel(model_name="anthropic.claude-3-5-sonnet-20241022-v2:0")
 agent = Agent(
     model=model,
     system_prompt=system_prompt

@@ -40,16 +40,16 @@ Authenticate with GCP:
 gcloud auth application-default login
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.google import GoogleModel
 
 # Gemini API
-model = infer_model("google-gla/gemini-2.5-flash")
+model = GoogleModel(model_name="gemini-2.5-flash", provider="google-gla")
 
 # Vertex AI
-model = infer_model("google-vertex/gemini-2.5-pro")
+model = GoogleModel(model_name="gemini-2.5-pro", provider="google-vertex")
 ```
 
 ### Manual Configuration
@@ -82,9 +82,10 @@ model = GoogleModel(
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
+from upsonic.models.google import GoogleModel
 
-model = infer_model("google-gla/gemini-2.5-flash")
+model = GoogleModel(model_name="gemini-2.5-flash", provider="google-gla")
 agent = Agent(model=model)
 
 task = Task("Explain machine learning concepts")
@@ -120,21 +121,24 @@ result = agent.do(task)
 ### Streaming Responses
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("google-gla/gemini-2.5-flash")
+from upsonic.models.google import GoogleModel
+
+model = GoogleModel(model_name="gemini-2.5-flash", provider="google-gla")
 agent = Agent(model=model)
 
 task = Task("Write a comprehensive guide to Python programming")
 
-async for chunk in agent.do_stream(task):
-    print(chunk, end="", flush=True)
+async with agent.stream(task) as result:
+    async for text in result.stream_output():
+        print(text, end='', flush=True)
 ```
 
 ### With Tools
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 def get_stock_price(symbol: str) -> float:
     """Get the current stock price for a symbol."""
@@ -144,23 +148,27 @@ def calculate_profit(buy_price: float, sell_price: float, shares: int) -> float:
     """Calculate profit from a stock trade."""
     return (sell_price - buy_price) * shares
 
-model = infer_model("google-gla/gemini-2.5-flash")
-agent = Agent(
-    model=model,
+from upsonic.models.google import GoogleModel
+
+model = GoogleModel(model_name="gemini-2.5-flash", provider="google-gla")
+agent = Agent(model=model)
+
+task = Task(
+    "What would be my profit if I bought 100 shares of AAPL at $140 and sold at current price?",
     tools=[get_stock_price, calculate_profit]
 )
-
-task = Task("What would be my profit if I bought 100 shares of AAPL at $140 and sold at current price?")
 result = agent.do(task)
 ```
 
 ### With Vision
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.messages import ImageUrl
 
-model = infer_model("google-gla/gemini-2.5-flash")
+from upsonic.models.google import GoogleModel
+
+model = GoogleModel(model_name="gemini-2.5-flash", provider="google-gla")
 agent = Agent(model=model)
 
 task = Task(
@@ -176,7 +184,7 @@ result = agent.do(task)
 ### With Video
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.messages import VideoUrl
 from upsonic.models.google import GoogleModelSettings
 
@@ -185,7 +193,9 @@ settings = GoogleModelSettings(
     google_video_resolution="high"
 )
 
-model = infer_model("google-gla/gemini-2.5-flash")
+from upsonic.models.google import GoogleModel
+
+model = GoogleModel(model_name="gemini-2.5-flash", provider="google-gla")
 agent = Agent(model=model, settings=settings)
 
 task = Task(
@@ -253,10 +263,12 @@ model = GoogleModel(
 ### Code Execution
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Code execution is automatically available
-model = infer_model("google-gla/gemini-2.5-pro")
+from upsonic.models.google import GoogleModel
+
+model = GoogleModel(model_name="gemini-2.5-pro", provider="google-gla")
 agent = Agent(model=model)
 
 task = Task("Create a visualization of prime numbers up to 100")
@@ -349,7 +361,6 @@ model = GoogleModel(
 | `max_tokens` | `int` | Maximum tokens to generate | 2048 |
 | `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 |
 | `top_p` | `float` | Nucleus sampling threshold | 0.95 |
-| `top_k` | `int` | Top-k sampling parameter | 40 |
 | `seed` | `int` | Random seed for deterministic outputs | None |
 | `stop_sequences` | `list[str]` | Sequences that stop generation | None |
 | `presence_penalty` | `float` | Penalty for token presence | 0.0 |
@@ -407,7 +418,6 @@ settings = GoogleModelSettings(
     max_tokens=4096,
     temperature=0.7,
     top_p=0.9,
-    top_k=40,
     seed=42,
     stop_sequences=["END"],
     presence_penalty=0.1,
@@ -451,10 +461,6 @@ model = GoogleModel(
 - `gemini-2.0-flash`: Fast multimodal model
 - `gemini-2.0-flash-lite`: Lightweight variant
 
-### Legacy Models
-- `gemini-1.5-pro`: Previous generation
-- `gemini-1.5-flash`: Previous generation
-- `gemini-1.0-pro`: Original Gemini
 
 ## Model Comparison
 

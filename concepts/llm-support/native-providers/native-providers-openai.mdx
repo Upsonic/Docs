@@ -22,13 +22,13 @@ export OPENAI_API_KEY="sk-..."
 export OPENAI_BASE_URL="https://api.openai.com/v1"  # Optional
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
 # Automatic authentication from environment
-model = infer_model("openai/gpt-4o")
+model = OpenAIChatModel(model_name="gpt-4o")
 ```
 
 ### Manual Configuration
@@ -69,9 +69,10 @@ model = OpenAIChatModel(model_name="gpt-4o", provider=provider)
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
 
-model = infer_model("openai/gpt-4o")
+model = OpenAIChatModel(model_name="gpt-4o")
 agent = Agent(model=model)
 
 task = Task("Explain quantum computing in simple terms")
@@ -103,33 +104,36 @@ result = agent.do(task)
 ### Streaming Responses
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
 
-model = infer_model("openai/gpt-4o")
+model = OpenAIChatModel(model_name="gpt-4o")
 agent = Agent(model=model)
 
 task = Task("Write a long story about space exploration")
 
-async for chunk in agent.do_stream(task):
-    print(chunk, end="", flush=True)
+async with agent.stream(task) as result:
+    async for text in result.stream_output():
+        print(text, end='', flush=True)
 ```
 
 ### With Tools
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
 
 def get_weather(location: str) -> str:
     """Get the weather for a location."""
     return f"The weather in {location} is sunny."
 
-model = infer_model("openai/gpt-4o")
-agent = Agent(
-    model=model,
+model = OpenAIChatModel(model_name="gpt-4o")
+agent = Agent(model=model)
+
+task = Task(
+    "What's the weather in San Francisco?",
     tools=[get_weather]
 )
-
-task = Task("What's the weather in San Francisco?")
 result = agent.do(task)
 ```
 
@@ -137,14 +141,14 @@ result = agent.do(task)
 
 ```python
 from pydantic import BaseModel
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
 class Analysis(BaseModel):
     sentiment: str
     confidence: float
     key_points: list[str]
 
-model = infer_model("openai/gpt-4o")
+model = OpenAIChatModel(model_name="gpt-4o")
 model = model.with_structured_output(Analysis)
 
 result = await model.ainvoke("Analyze this product review: ...")
@@ -155,10 +159,11 @@ print(result.confidence)
 ### With Vision
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
 from upsonic.messages import ImageUrl
 
-model = infer_model("openai/gpt-4o")
+model = OpenAIChatModel(model_name="gpt-4o")
 agent = Agent(model=model)
 
 task = Task(
@@ -224,7 +229,7 @@ OpenAI automatically caches long prompts. When you send a request with a long co
 ### Best Practices
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Long system prompt that will be cached
 system_prompt = """
@@ -236,7 +241,9 @@ You are an expert software engineer with deep knowledge of:
 ... (more context)
 """
 
-model = infer_model("openai/gpt-4o")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="gpt-4o")
 agent = Agent(
     model=model,
     system_prompt=system_prompt
@@ -261,7 +268,7 @@ result2 = agent.do(task2)
 ### With Memory
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.storage.memory import Memory
 from upsonic.storage.providers.in_memory import InMemoryStorage
 
@@ -269,7 +276,9 @@ from upsonic.storage.providers.in_memory import InMemoryStorage
 storage = InMemoryStorage()
 memory = Memory(storage=storage, session_id="user-123")
 
-model = infer_model("openai/gpt-4o")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="gpt-4o")
 agent = Agent(model=model, memory=memory)
 
 # Conversation history is cached

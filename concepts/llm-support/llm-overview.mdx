@@ -47,21 +47,23 @@ from upsonic.profiles import ModelProfile
 profile = ModelProfile(
     supports_tools=True,
     supports_json_schema_output=True,
-    default_structured_output_mode='native'
+    default_structured_output_mode='tool'
 )
 ```
 
-#### 3. Model Inference
+#### 3. Model Classes
 
-Use `infer_model()` to automatically select the appropriate model class:
+Import and instantiate model classes directly:
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.anthropic import AnthropicModel
+from upsonic.models.google import GoogleModel
 
-# Automatic provider detection
-model = infer_model("openai/gpt-4o")
-model = infer_model("anthropic/claude-3-5-sonnet-20241022")
-model = infer_model("google-gla/gemini-2.5-flash")
+# Direct instantiation
+model = OpenAIChatModel(model_name="gpt-4o")
+model = AnthropicModel(model_name="claude-3-5-sonnet-20241022")
+model = GoogleModel(model_name="gemini-2.5-flash", provider="google-gla")
 ```
 
 ### Usage Patterns
@@ -69,9 +71,10 @@ model = infer_model("google-gla/gemini-2.5-flash")
 #### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
 
-model = infer_model("openai/gpt-4o")
+model = OpenAIChatModel(model_name="gpt-4o")
 agent = Agent(model=model)
 
 task = Task("Explain quantum computing")
@@ -101,10 +104,10 @@ agent = Agent(model=model)
 
 ```python
 from upsonic.uel import ChatPromptTemplate
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
 prompt = ChatPromptTemplate.from_template("Tell me about {topic}")
-model = infer_model("openai/gpt-4o")
+model = OpenAIChatModel(model_name="gpt-4o")
 
 # Chain composition with pipe operator
 chain = prompt | model
@@ -140,7 +143,8 @@ Raised for user-facing configuration or usage errors:
 from upsonic.utils.package.exception import UserError
 
 try:
-    model = infer_model("unknown/model")
+    from upsonic.models.openai import OpenAIChatModel
+    model = OpenAIChatModel(model_name="invalid-model-name")
 except UserError as e:
     print(f"Error: {e}")
 ```
@@ -151,9 +155,15 @@ Raised when a model responds in an unexpected way:
 
 ```python
 from upsonic.utils.package.exception import UnexpectedModelBehavior
+from upsonic.models import ModelRequestParameters
+from upsonic.models.settings import ModelSettings
 
 try:
-    response = await model.request_stream(messages, settings, params)
+    model_settings = ModelSettings(max_tokens=2048)
+    model_request_parameters = ModelRequestParameters()
+    async with model.request_stream(messages, model_settings, model_request_parameters) as stream:
+        # Handle stream
+        pass
 except UnexpectedModelBehavior as e:
     print(f"Unexpected behavior: {e}")
 ```
@@ -189,7 +199,8 @@ settings = ModelSettings(
 )
 
 try:
-    model = infer_model("openai/gpt-4o")
+    from upsonic.models.openai import OpenAIChatModel
+    model = OpenAIChatModel(model_name="gpt-4o")
     agent = Agent(model=model, settings=settings)
     result = agent.do(very_long_task)
 except ModelHTTPError as e:
@@ -207,7 +218,8 @@ class ResponseFormat(BaseModel):
     confidence: float
 
 try:
-    model = infer_model("openai/gpt-4o")
+    from upsonic.models.openai import OpenAIChatModel
+    model = OpenAIChatModel(model_name="gpt-4o")
     model = model.with_structured_output(ResponseFormat)
     result = await model.ainvoke("What is AI?")
 except ValidationError as e:

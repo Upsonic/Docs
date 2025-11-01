@@ -17,13 +17,13 @@ OpenRouter provides unified access to models from OpenAI, Anthropic, Google, Met
 export OPENROUTER_API_KEY="sk-or-..."
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
 # Access any supported model
-model = infer_model("openrouter/anthropic/claude-3-5-sonnet")
+model = OpenAIChatModel(model_name="anthropic/claude-3-5-sonnet-20241022", provider="openrouter")
 ```
 
 ### Manual Configuration
@@ -37,7 +37,7 @@ settings = OpenAIChatModelSettings(
 )
 
 model = OpenAIChatModel(
-    model_name="anthropic/claude-3-5-sonnet",
+    model_name="anthropic/claude-3-5-sonnet-20241022",
     provider="openrouter",
     settings=settings
 )
@@ -48,9 +48,11 @@ model = OpenAIChatModel(
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("openrouter/anthropic/claude-3-5-sonnet")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="claude-3-5-sonnet-20241022", provider="openrouter")
 agent = Agent(model=model)
 
 task = Task("Explain neural networks")
@@ -60,58 +62,66 @@ result = agent.do(task)
 ### Access Different Providers
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
 # Anthropic
-model_claude = infer_model("openrouter/anthropic/claude-3-5-sonnet")
+model_claude = OpenAIChatModel(model_name="claude-3-5-sonnet", provider="openrouter")
 
 # OpenAI
-model_gpt = infer_model("openrouter/openai/gpt-4o")
+model_gpt = OpenAIChatModel(model_name="gpt-4o", provider="openrouter")
 
 # Google
-model_gemini = infer_model("openrouter/google/gemini-2.5-flash")
+model_gemini = OpenAIChatModel(model_name="gemini-2.5-flash", provider="openrouter")
 
-# Meta
-model_llama = infer_model("openrouter/meta-llama/llama-3.1-70b-instruct")
+# Meta (via OpenRouter)
+model_llama = OpenAIChatModel(model_name="meta-llama/Llama-3.3-70B-Instruct", provider="openrouter")
 ```
 
 ### With Streaming
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("openrouter/anthropic/claude-3-5-sonnet")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="claude-3-5-sonnet-20241022", provider="openrouter")
 agent = Agent(model=model)
 
 task = Task("Write a detailed article about AI")
 
-async for chunk in agent.do_stream(task):
-    print(chunk, end="", flush=True)
+async with agent.stream(task) as result:
+    async for text in result.stream_output():
+        print(text, end='', flush=True)
 ```
 
 ### With Tools
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 def get_weather(location: str) -> str:
     """Get weather for a location."""
     return f"Weather in {location}: Sunny"
 
-model = infer_model("openrouter/openai/gpt-4o")
-agent = Agent(model=model, tools=[get_weather])
+from upsonic.models.openai import OpenAIChatModel
 
-task = Task("What's the weather in Tokyo?")
+model = OpenAIChatModel(model_name="gpt-4o", provider="openrouter")
+agent = Agent(model=model)
+
+task = Task(
+    "What's the weather in Tokyo?",
+    tools=[get_weather]
+)
 result = agent.do(task)
 ```
 
-### Free Models
+### Cost-Effective Models
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
-# Some models are free on OpenRouter
-model = infer_model("openrouter/google/gemini-2.5-flash-lite-free")
+# Cost-effective models on OpenRouter
+model = OpenAIChatModel(model_name="gemini-2.5-flash-lite", provider="openrouter")
 agent = Agent(model=model)
 
 task = Task("Tell me about machine learning")
@@ -125,14 +135,16 @@ OpenRouter does not support native prompt caching. Each request is independent.
 **Best Practice:** Use memory for conversation context:
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.storage.memory import Memory
 from upsonic.storage.providers.in_memory import InMemoryStorage
 
 storage = InMemoryStorage()
 memory = Memory(storage=storage, session_id="session-123")
 
-model = infer_model("openrouter/anthropic/claude-3-5-sonnet")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="claude-3-5-sonnet-20241022", provider="openrouter")
 agent = Agent(model=model, memory=memory)
 ```
 
@@ -164,7 +176,7 @@ settings = OpenAIChatModelSettings(
 )
 
 model = OpenAIChatModel(
-    model_name="anthropic/claude-3-5-sonnet",
+    model_name="claude-3-5-sonnet-20241022",
     provider="openrouter",
     settings=settings
 )
@@ -182,41 +194,35 @@ OpenRouter provides access to 100+ models from various providers:
 - `openai/o1-preview`
 
 #### Anthropic
-- `anthropic/claude-3-5-sonnet`
-- `anthropic/claude-3-5-haiku`
-- `anthropic/claude-opus-4`
+- `anthropic/claude-3-5-sonnet-20241022`
+- `anthropic/claude-3-5-haiku-20241022`
+- `anthropic/claude-opus-4-20250514`
 
 #### Google
-- `google/gemini-2.5-pro`
-- `google/gemini-2.5-flash`
-- `google/gemini-2.5-flash-lite-free` (Free!)
+- `google-gla/gemini-2.5-pro`
+- `google-gla/gemini-2.5-flash`
+- `google-gla/gemini-2.5-flash-lite`
 
 #### Meta
-- `meta-llama/llama-3.1-405b-instruct`
-- `meta-llama/llama-3.1-70b-instruct`
-- `meta-llama/llama-3.1-8b-instruct`
+- `bedrock/meta.llama3-1-405b-instruct-v1:0`
+- `bedrock/meta.llama3-1-70b-instruct-v1:0`
+- `bedrock/meta.llama3-1-8b-instruct-v1:0`
 
 #### Other Popular
-- `mistralai/mistral-large`
+- `mistral/mistral-large-latest`
 - `cohere/command-r-plus`
 - `deepseek/deepseek-chat`
 
-### Free Models
-
-OpenRouter offers some free models:
-- `google/gemini-2.5-flash-lite-free`
-- `meta-llama/llama-3.1-8b-instruct:free`
-- Various community-hosted models
 
 ## Model Selection Guide
 
 | Use Case | Recommended Model | Why |
 |----------|------------------|-----|
-| Complex tasks | `anthropic/claude-opus-4` | Best reasoning |
+| Complex tasks | `anthropic/claude-opus-4-20250514` | Best reasoning |
 | Balanced performance | `openai/gpt-4o` | Reliable all-rounder |
-| Cost-effective | `google/gemini-2.5-flash` | Good price/performance |
-| Free tier | `google/gemini-2.5-flash-lite-free` | No cost |
-| Code generation | `openai/gpt-4o` or `anthropic/claude-3-5-sonnet` | Strong code understanding |
+| Cost-effective | `google-gla/gemini-2.5-flash` | Good price/performance |
+| Cost-effective | `google-gla/gemini-2.5-flash-lite` | Very affordable |
+| Code generation | `openai/gpt-4o` or `anthropic/claude-3-5-sonnet-20241022` | Strong code understanding |
 
 ## Pricing
 
@@ -232,13 +238,14 @@ OpenRouter uses a unified pricing model:
 
 ```python
 # Use cost-effective models for simple tasks
-simple_model = infer_model("openrouter/google/gemini-2.5-flash")
+from upsonic.models.openai import OpenAIChatModel
+
+# Simple model for quick tasks
+simple_model = OpenAIChatModel(model_name="gemini-2.5-flash", provider="openrouter")
 
 # Reserve expensive models for complex tasks
-complex_model = infer_model("openrouter/anthropic/claude-opus-4")
+complex_model = OpenAIChatModel(model_name="claude-opus-4-20250514", provider="openrouter")
 
-# Use free models for testing
-test_model = infer_model("openrouter/google/gemini-2.5-flash-lite-free")
 ```
 
 ## Best Practices
@@ -276,7 +283,7 @@ test_model = infer_model("openrouter/google/gemini-2.5-flash-lite-free")
 ## Error Handling
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.utils.package.exception import ModelHTTPError
 import asyncio
 

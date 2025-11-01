@@ -55,7 +55,7 @@ This provides access to the full stream events including tool calls, thinking ev
 **Example:**
 
 ```python
-async with agent.run_stream(task) as result:
+async with agent.stream(task) as result:
     async for event in result.stream_events():
         if isinstance(event, PartStartEvent):
             print(f"New part: {type(event.part).__name__}")

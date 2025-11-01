@@ -19,12 +19,12 @@ export AZURE_OPENAI_API_KEY="..."
 export OPENAI_API_VERSION="2024-02-15-preview"
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
-model = infer_model("azure/gpt-4o")
+model = OpenAIChatModel(model_name="gpt-4o", provider="azure")
 ```
 
 ### Manual Configuration
@@ -52,9 +52,11 @@ model = OpenAIChatModel(
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("azure/gpt-4o")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="gpt-4o", provider="azure")
 agent = Agent(model=model)
 
 task = Task("Analyze customer feedback data")
@@ -129,10 +131,12 @@ model = OpenAIChatModel(
 ### With Content Filtering
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Azure includes built-in content filtering
-model = infer_model("azure/gpt-4o")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="gpt-4o", provider="azure")
 agent = Agent(model=model)
 
 task = Task("Generate safe content for children")
@@ -144,7 +148,7 @@ result = agent.do(task)
 Azure OpenAI supports the same prompt caching capabilities as OpenAI:
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Long system prompt will be cached
 system_prompt = """
@@ -155,7 +159,9 @@ You are an enterprise assistant with access to:
 ... (extensive context)
 """
 
-model = infer_model("azure/gpt-4o")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="gpt-4o", provider="azure")
 agent = Agent(
     model=model,
     system_prompt=system_prompt
@@ -317,9 +323,11 @@ Azure OpenAI is compliant with:
 ## Monitoring and Logging
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("azure/gpt-4o")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="gpt-4o", provider="azure")
 agent = Agent(model=model)
 
 # Azure automatically logs to Azure Monitor

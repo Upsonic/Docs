@@ -17,12 +17,12 @@ xAI provides Grok models with real-time information access, strong reasoning cap
 export GROK_API_KEY="xai-..."
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
-model = infer_model("grok/grok-4")
+model = OpenAIChatModel(model_name="grok-4", provider="grok")
 ```
 
 ### Manual Configuration
@@ -47,9 +47,10 @@ model = OpenAIChatModel(
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
 
-model = infer_model("grok/grok-4")
+model = OpenAIChatModel(model_name="grok-4", provider="grok")
 agent = Agent(model=model)
 
 task = Task("Explain the latest developments in AI")
@@ -59,10 +60,12 @@ result = agent.do(task)
 ### Real-Time Information (Web Search)
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Web search is built-in for all Grok models
-model = infer_model("grok/grok-4")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="grok-4", provider="grok")
 agent = Agent(model=model)
 
 task = Task("What are the current top news stories today?")
@@ -72,9 +75,11 @@ result = agent.do(task)  # Automatically uses web search
 ### With Reasoning
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("grok/grok-4")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="grok-4", provider="grok")
 agent = Agent(model=model)
 
 task = Task("Analyze this complex scenario and provide detailed reasoning: ...")
@@ -84,10 +89,12 @@ result = agent.do(task)
 ### With Vision
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.messages import ImageUrl
 
-model = infer_model("grok/grok-2-vision-1212")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="grok-2-vision-1212", provider="grok")
 agent = Agent(model=model)
 
 task = Task(
@@ -103,9 +110,11 @@ result = agent.do(task)
 ### Image Generation
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("grok/grok-2-image-1212")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="grok-2-image-1212", provider="grok")
 agent = Agent(model=model)
 
 task = Task("Generate an image of a futuristic city at sunset")
@@ -115,16 +124,21 @@ result = agent.do(task)
 ### With Tools
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 def get_database_stats() -> dict:
     """Get current database statistics."""
     return {"records": 10000, "size_mb": 250}
 
-model = infer_model("grok/grok-4")
-agent = Agent(model=model, tools=[get_database_stats])
+from upsonic.models.openai import OpenAIChatModel
 
-task = Task("Check the database stats and tell me if we need more storage")
+model = OpenAIChatModel(model_name="grok-4", provider="grok")
+agent = Agent(model=model)
+
+task = Task(
+    "Check the database stats and tell me if we need more storage",
+    tools=[get_database_stats]
+)
 result = agent.do(task)
 ```
 
@@ -135,14 +149,16 @@ Grok does not currently support native prompt caching.
 **Best Practice:** Use memory for conversation context:
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.storage.memory import Memory
 from upsonic.storage.providers.in_memory import InMemoryStorage
 
 storage = InMemoryStorage()
 memory = Memory(storage=storage, session_id="session-123")
 
-model = infer_model("grok/grok-4")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="grok-4", provider="grok")
 agent = Agent(model=model, memory=memory)
 ```
 

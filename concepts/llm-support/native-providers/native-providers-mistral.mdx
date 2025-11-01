@@ -17,12 +17,12 @@ Mistral AI provides high-performance open and commercial models including Mistra
 export MISTRAL_API_KEY="..."
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.mistral import MistralModel
 
-model = infer_model("mistral/mistral-large-latest")
+model = MistralModel(model_name="mistral-large-latest")
 ```
 
 ### Manual Configuration
@@ -46,9 +46,11 @@ model = MistralModel(
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("mistral/mistral-large-latest")
+from upsonic.models.mistral import MistralModel
+
+model = MistralModel(model_name="mistral-large-latest")
 agent = Agent(model=model)
 
 task = Task("Explain neural networks")
@@ -58,25 +60,31 @@ result = agent.do(task)
 ### With Tools
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 def get_weather(city: str) -> str:
     """Get weather for a city."""
     return f"Weather in {city}: Sunny, 72°F"
 
-model = infer_model("mistral/mistral-large-latest")
-agent = Agent(model=model, tools=[get_weather])
+from upsonic.models.mistral import MistralModel
 
-task = Task("What's the weather in Paris?")
+model = MistralModel(model_name="mistral-large-latest")
+agent = Agent(model=model)
+
+task = Task(
+    "What's the weather in Paris?",
+    tools=[get_weather]
+)
 result = agent.do(task)
 ```
 
 ### Code Generation (Codestral)
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
+from upsonic.models.mistral import MistralModel
 
-model = infer_model("mistral/codestral-latest")
+model = MistralModel(model_name="codestral-latest")
 agent = Agent(model=model)
 
 task = Task("Write a Python function to calculate Fibonacci numbers")
@@ -86,8 +94,9 @@ result = agent.do(task)
 ### Streaming
 
 ```python
-async for chunk in agent.do_stream(task):
-    print(chunk, end="", flush=True)
+async with agent.stream(task) as result:
+    async for text in result.stream_output():
+        print(text, end='', flush=True)
 ```
 
 ## Prompt Caching
@@ -97,14 +106,16 @@ Mistral does not currently support native prompt caching.
 **Workaround:** Use conversation memory to maintain context:
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.storage.memory import Memory
 from upsonic.storage.providers.in_memory import InMemoryStorage
 
 storage = InMemoryStorage()
 memory = Memory(storage=storage, session_id="session-123")
 
-model = infer_model("mistral/mistral-large-latest")
+from upsonic.models.mistral import MistralModel
+
+model = MistralModel(model_name="mistral-large-latest")
 agent = Agent(model=model, memory=memory)
 
 # Conversation history maintained across requests
