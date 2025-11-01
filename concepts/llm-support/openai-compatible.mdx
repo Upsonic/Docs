@@ -46,15 +46,16 @@ OpenAI-compatible models are LLM providers and services that implement the OpenA
 
 ## Usage
 
-### Basic Usage with infer_model
+### Basic Usage
 
-The simplest way to use OpenAI-compatible models is with `infer_model`:
+Use OpenAI-compatible models by specifying the provider:
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
 
-# Using provider prefix (recommended)
-model = infer_model("deepseek/deepseek-chat")
+# Using provider parameter
+model = OpenAIChatModel(model_name="deepseek-chat", provider="deepseek")
 agent = Agent(model=model)
 
 task = Task("Explain quantum computing")
@@ -64,16 +65,16 @@ result = agent.do(task)
 ### Switching Between Providers (All are openai compatible)
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
 # OpenAI
-model_openai = infer_model("openai/gpt-4o")
+model_openai = OpenAIChatModel(model_name="gpt-4o", provider="openai")
 
 # DeepSeek - same interface
-model_deepseek = infer_model("deepseek/deepseek-chat")
+model_deepseek = OpenAIChatModel(model_name="deepseek-chat", provider="deepseek")
 
 # Cerebras - same interface
-model_cerebras = infer_model("cerebras/llama-3.3-70b")
+model_cerebras = OpenAIChatModel(model_name="llama-3.3-70b", provider="cerebras")
 
 # All work identically
 agent = Agent(model=model_deepseek)
@@ -127,14 +128,14 @@ model = OpenAIChatModel(
 
 ```python
 import os
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
 # Set provider via environment
 provider = os.getenv("LLM_PROVIDER", "openai")
 model_name = os.getenv("LLM_MODEL", "gpt-4o")
 
 # Switch providers without code changes
-model = infer_model(f"{provider}/{model_name}")
+model = OpenAIChatModel(model_name=model_name, provider=provider)
 ```
 
 Example `.env` file:
@@ -152,9 +153,10 @@ LLM_MODEL=llama-3.3-70b
 ### With Streaming
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
 
-model = infer_model("deepseek/deepseek-chat")
+model = OpenAIChatModel(model_name="deepseek-chat", provider="deepseek")
 agent = Agent(model=model)
 
 task = Task("Write a long story")
@@ -168,17 +170,22 @@ async with agent.stream(task) as result:
 ### With Tools
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 def calculate(expression: str) -> float:
     """Evaluate a mathematical expression."""
     return eval(expression)
 
 # Tools work with OpenAI-compatible models
-model = infer_model("cerebras/llama-3.3-70b")
-agent = Agent(model=model, tools=[calculate])
+from upsonic.models.openai import OpenAIChatModel
 
-task = Task("What is 456 * 789?")
+model = OpenAIChatModel(model_name="llama-3.3-70b", provider="cerebras")
+agent = Agent(model=model)
+
+task = Task(
+    "What is 456 * 789?",
+    tools=[calculate]
+)
 result = agent.do(task)
 ```
 
@@ -186,14 +193,14 @@ result = agent.do(task)
 
 ```python
 from pydantic import BaseModel
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
 class Analysis(BaseModel):
     sentiment: str
     confidence: float
     summary: str
 
-model = infer_model("deepseek/deepseek-chat")
+model = OpenAIChatModel(model_name="deepseek-chat", provider="deepseek")
 model = model.with_structured_output(Analysis)
 
 result = await model.ainvoke("Analyze this: Great product!")
@@ -203,7 +210,7 @@ print(result.sentiment, result.confidence)
 ### Fallback Pattern
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.utils.package.exception import ModelHTTPError
 
 async def request_with_fallback(prompt: str):
@@ -216,7 +223,8 @@ async def request_with_fallback(prompt: str):
     
     for provider, model_name in providers:
         try:
-            model = infer_model(f"{provider}/{model_name}")
+            from upsonic.models.openai import OpenAIChatModel
+            model = OpenAIChatModel(model_name=model_name, provider=provider)
             agent = Agent(model=model)
             return agent.do(Task(prompt))
         except ModelHTTPError:

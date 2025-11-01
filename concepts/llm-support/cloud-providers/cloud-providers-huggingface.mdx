@@ -17,12 +17,12 @@ Huggingface provides access to thousands of open-source models through their Inf
 export HF_TOKEN="hf_..."
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.huggingface import HuggingFaceModel
 
-model = infer_model("huggingface/meta-llama/Llama-3.3-70B-Instruct")
+model = HuggingFaceModel(model_name="meta-llama/Llama-3.3-70B-Instruct")
 ```
 
 ### Manual Configuration
@@ -46,9 +46,11 @@ model = HuggingFaceModel(
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("huggingface/meta-llama/Llama-3.3-70B-Instruct")
+from upsonic.models.huggingface import HuggingFaceModel
+
+model = HuggingFaceModel(model_name="meta-llama/Llama-3.3-70B-Instruct")
 agent = Agent(model=model)
 
 task = Task("Explain deep learning")
@@ -58,10 +60,12 @@ result = agent.do(task)
 ### With Reasoning Models
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # DeepSeek R1 reasoning model
-model = infer_model("huggingface/deepseek-ai/DeepSeek-R1")
+from upsonic.models.huggingface import HuggingFaceModel
+
+model = HuggingFaceModel(model_name="deepseek-ai/DeepSeek-R1")
 agent = Agent(model=model)
 
 task = Task("Solve this math problem step by step: ...")
@@ -71,10 +75,12 @@ result = agent.do(task)
 ### With Qwen Models
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Qwen's large model
-model = infer_model("huggingface/Qwen/Qwen3-235B-A22B")
+from upsonic.models.huggingface import HuggingFaceModel
+
+model = HuggingFaceModel(model_name="Qwen/Qwen3-235B-A22B")
 agent = Agent(model=model)
 
 task = Task("Generate Python code for web scraping")
@@ -88,14 +94,16 @@ Huggingface does not currently support native prompt caching.
 **Best Practice:** Use memory for conversation context:
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.storage.memory import Memory
 from upsonic.storage.providers.in_memory import InMemoryStorage
 
 storage = InMemoryStorage()
 memory = Memory(storage=storage, session_id="session-123")
 
-model = infer_model("huggingface/meta-llama/Llama-3.3-70B-Instruct")
+from upsonic.models.huggingface import HuggingFaceModel
+
+model = HuggingFaceModel(model_name="meta-llama/Llama-3.3-70B-Instruct")
 agent = Agent(model=model, memory=memory)
 ```
 

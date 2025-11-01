@@ -18,12 +18,12 @@ export GROQ_API_KEY="gsk_..."
 export GROQ_BASE_URL="https://api.groq.com"  # Optional
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.groq import GroqModel
 
-model = infer_model("groq/llama-3.3-70b-versatile")
+model = GroqModel(model_name="llama-3.3-70b-versatile")
 ```
 
 ### Manual Configuration
@@ -47,9 +47,11 @@ model = GroqModel(
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("groq/llama-3.3-70b-versatile")
+from upsonic.models.groq import GroqModel
+
+model = GroqModel(model_name="llama-3.3-70b-versatile")
 agent = Agent(model=model)
 
 task = Task("Explain quantum computing")
@@ -59,33 +61,40 @@ result = agent.do(task)
 ### Ultra-Fast Streaming
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Groq is exceptionally fast at streaming
-model = infer_model("groq/llama-3.3-70b-versatile")
+from upsonic.models.groq import GroqModel
+
+model = GroqModel(model_name="llama-3.3-70b-versatile")
 agent = Agent(model=model)
 
 task = Task("Write a story about space exploration")
 
 # Notice the speed!
-async for chunk in agent.do_stream(task):
-    print(chunk, end="", flush=True)
+async with agent.stream(task) as result:
+    async for text in result.stream_output():
+        print(text, end='', flush=True)
 ```
 
 ### With Web Search
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.tools.builtin_tools import WebSearchTool
 
 # Built-in web search for all models
-model = infer_model("groq/llama-3.3-70b-versatile")
+from upsonic.models.groq import GroqModel
+
+model = GroqModel(model_name="llama-3.3-70b-versatile")
+
+web_tool = WebSearchTool()
+
 agent = Agent(
-    model=model,
-    builtin_tools=[WebSearchTool()]
+    model=model
 )
 
-task = Task("What are the latest AI news today?")
+task = Task("What are the latest AI news today?", tools=[web_tool])
 result = agent.do(task)
 ```
 
@@ -114,26 +123,33 @@ result = agent.do(task)
 ### With Tools
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 def calculate(expression: str) -> float:
     """Evaluate a mathematical expression."""
     return eval(expression)
 
-model = infer_model("groq/llama-3.3-70b-versatile")
-agent = Agent(model=model, tools=[calculate])
+from upsonic.models.groq import GroqModel
 
-task = Task("What is 456 * 789?")
+model = GroqModel(model_name="llama-3.3-70b-versatile")
+agent = Agent(model=model)
+
+task = Task(
+    "What is 456 * 789?",
+    tools=[calculate]
+)
 result = agent.do(task)
 ```
 
 ### Vision Understanding
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.messages import ImageUrl
 
-model = infer_model("groq/llama-3.2-90b-vision-preview")
+from upsonic.models.groq import GroqModel
+
+model = GroqModel(model_name="llama-3.2-90b-vision-preview")
 agent = Agent(model=model)
 
 task = Task(
@@ -153,14 +169,16 @@ Groq does not currently support native prompt caching.
 **Best Practice:** Use memory for conversation context:
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.storage.memory import Memory
 from upsonic.storage.providers.in_memory import InMemoryStorage
 
 storage = InMemoryStorage()
 memory = Memory(storage=storage, session_id="session-123")
 
-model = infer_model("groq/llama-3.3-70b-versatile")
+from upsonic.models.groq import GroqModel
+
+model = GroqModel(model_name="llama-3.3-70b-versatile")
 agent = Agent(model=model, memory=memory)
 ```
 
@@ -268,9 +286,11 @@ Groq's Language Processing Unit delivers:
 
 ```python
 import time
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("groq/llama-3.3-70b-versatile")
+from upsonic.models.groq import GroqModel
+
+model = GroqModel(model_name="llama-3.3-70b-versatile")
 agent = Agent(model=model)
 
 task = Task("Write a detailed explanation of neural networks")
@@ -288,10 +308,12 @@ print(f"Generated in {elapsed:.2f}s")
 All Groq models support web search:
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.tools.builtin_tools import WebSearchTool
 
-model = infer_model("groq/llama-3.3-70b-versatile")
+from upsonic.models.groq import GroqModel
+
+model = GroqModel(model_name="llama-3.3-70b-versatile")
 agent = Agent(
     model=model,
     builtin_tools=[WebSearchTool()]

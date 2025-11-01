@@ -49,13 +49,13 @@ export LITELLM_BASE_URL="http://localhost:4000"  # LiteLLM proxy URL
 # No API key needed if proxy handles auth
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
 # Use model name from config
-model = infer_model("litellm/gpt-4o")
+model = OpenAIChatModel(model_name="gpt-4o", provider="litellm")
 ```
 
 ### Manual Configuration
@@ -80,9 +80,11 @@ model = OpenAIChatModel(
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("litellm/gpt-4o")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="gpt-4o", provider="litellm")
 agent = Agent(model=model)
 
 task = Task("Explain machine learning")
@@ -92,12 +94,12 @@ result = agent.do(task)
 ### Multi-Model Setup
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
 # Different models through same proxy
-gpt_model = infer_model("litellm/gpt-4o")
-claude_model = infer_model("litellm/claude-sonnet")
-gemini_model = infer_model("litellm/gemini-flash")
+gpt_model = OpenAIChatModel(model_name="gpt-4o", provider="litellm")
+claude_model = OpenAIChatModel(model_name="claude-sonnet", provider="litellm")
+gemini_model = OpenAIChatModel(model_name="gemini-flash", provider="litellm")
 
 # Use based on task requirements
 def get_model_for_task(task_type: str):
@@ -156,10 +158,12 @@ model_list:
 LiteLLM passes through caching support from underlying providers:
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # If using Claude through LiteLLM, caching works
-model = infer_model("litellm/claude-sonnet")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="claude-sonnet", provider="litellm")
 agent = Agent(
     model=model,
     system_prompt="Long context that will be cached..."

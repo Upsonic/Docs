@@ -18,12 +18,12 @@ export CO_API_KEY="..."
 export CO_BASE_URL="https://api.cohere.ai"  # Optional
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.cohere import CohereModel
 
-model = infer_model("cohere/command-r-plus")
+model = CohereModel(model_name="command-r-plus")
 ```
 
 ### Manual Configuration
@@ -47,9 +47,10 @@ model = CohereModel(
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
+from upsonic.models.cohere import CohereModel
 
-model = infer_model("cohere/command-r-plus")
+model = CohereModel(model_name="command-r-plus")
 agent = Agent(model=model)
 
 task = Task("Summarize the benefits of renewable energy")
@@ -59,10 +60,12 @@ result = agent.do(task)
 ### With Thinking
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Command R+ supports thinking
-model = infer_model("cohere/command-r-plus")
+from upsonic.models.cohere import CohereModel
+
+model = CohereModel(model_name="command-r-plus")
 agent = Agent(model=model)
 
 task = Task("Analyze this complex problem step by step: ...")
@@ -72,26 +75,33 @@ result = agent.do(task)
 ### With Tools
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 def search_products(query: str) -> list[dict]:
     """Search for products."""
     return [{"name": "Product 1", "price": 99.99}]
 
-model = infer_model("cohere/command-r-plus")
-agent = Agent(model=model, tools=[search_products])
+from upsonic.models.cohere import CohereModel
 
-task = Task("Find me laptops under $1000")
+model = CohereModel(model_name="command-r-plus")
+agent = Agent(model=model)
+
+task = Task(
+    "Find me laptops under $1000",
+    tools=[search_products]
+)
 result = agent.do(task)
 ```
 
 ### Multilingual Support
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Command R+ excels at multilingual tasks
-model = infer_model("cohere/command-r-plus")
+from upsonic.models.cohere import CohereModel
+
+model = CohereModel(model_name="command-r-plus")
 agent = Agent(model=model)
 
 task = Task("Translate this to French: Hello, how are you?")
@@ -105,14 +115,16 @@ Cohere does not currently support native prompt caching.
 **Best Practice:** Use memory for conversation context:
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.storage.memory import Memory
 from upsonic.storage.providers.in_memory import InMemoryStorage
 
 storage = InMemoryStorage()
 memory = Memory(storage=storage, session_id="session-123")
 
-model = infer_model("cohere/command-r-plus")
+from upsonic.models.cohere import CohereModel
+
+model = CohereModel(model_name="command-r-plus")
 agent = Agent(model=model, memory=memory)
 ```
 
@@ -124,7 +136,7 @@ agent = Agent(model=model, memory=memory)
 |-----------|------|-------------|---------|
 | `max_tokens` | `int` | Maximum tokens to generate | 4096 |
 | `temperature` | `float` | Sampling temperature (0.0-1.0) | 0.3 |
-| `p` (top_p) | `float` | Nucleus sampling | 0.75 |
+| `top_p` | `float` | Nucleus sampling | 0.75 |
 | `seed` | `int` | Random seed | None |
 | `stop_sequences` | `list[str]` | Stop sequences | None |
 | `presence_penalty` | `float` | Token presence penalty | 0.0 |

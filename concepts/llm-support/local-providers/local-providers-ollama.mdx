@@ -41,13 +41,13 @@ ollama pull mistral
 ollama pull codellama
 ```
 
-### Using infer_model
+### Direct Instantiation
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
 # Make sure Ollama is running and model is pulled
-model = infer_model("ollama/llama3.2")
+model = OpenAIChatModel(model_name="llama3.2", provider="ollama")
 ```
 
 ### Manual Configuration
@@ -72,9 +72,11 @@ model = OpenAIChatModel(
 ### Basic Usage
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("ollama/llama3.2")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="llama3.2", provider="ollama")
 agent = Agent(model=model)
 
 task = Task("Explain quantum mechanics")
@@ -84,26 +86,33 @@ result = agent.do(task)
 ### With Tools
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 def calculate(expression: str) -> float:
     """Evaluate a mathematical expression."""
     return eval(expression)
 
-model = infer_model("ollama/llama3.2")
-agent = Agent(model=model, tools=[calculate])
+from upsonic.models.openai import OpenAIChatModel
 
-task = Task("Calculate 25 * 36 + 100")
+model = OpenAIChatModel(model_name="llama3.2", provider="ollama")
+agent = Agent(model=model)
+
+task = Task(
+    "Calculate 25 * 36 + 100",
+    tools=[calculate]
+)
 result = agent.do(task)
 ```
 
 ### Code Generation
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # Use codellama for code tasks
-model = infer_model("ollama/codellama")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="codellama", provider="ollama")
 agent = Agent(model=model)
 
 task = Task("Write a Python function to find prime numbers")
@@ -113,25 +122,30 @@ result = agent.do(task)
 ### Streaming
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
-model = infer_model("ollama/llama3.2")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="llama3.2", provider="ollama")
 agent = Agent(model=model)
 
 task = Task("Write a short story about space exploration")
 
-async for chunk in agent.do_stream(task):
-    print(chunk, end="", flush=True)
+async with agent.stream(task) as result:
+    async for text in result.stream_output():
+        print(text, end='', flush=True)
 ```
 
 ### With Vision (Multi-modal Models)
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 from upsonic.messages import ImageUrl
 
 # Use a vision model like llava
-model = infer_model("ollama/llava")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="llava", provider="ollama")
 agent = Agent(model=model)
 
 task = Task(
@@ -149,10 +163,12 @@ result = agent.do(task)
 Ollama does not support prompt caching in the traditional sense, but keeps models in memory:
 
 ```python
-from upsonic import Agent, Task, infer_model
+from upsonic import Agent, Task
 
 # First request loads model into memory
-model = infer_model("ollama/llama3.2")
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="llama3.2", provider="ollama")
 agent = Agent(model=model)
 
 task1 = Task("Hello")
@@ -336,9 +352,9 @@ ollama create mycustommodel -f Modelfile
 Use custom model:
 
 ```python
-from upsonic import infer_model
+from upsonic.models.openai import OpenAIChatModel
 
-model = infer_model("ollama/mycustommodel")
+model = OpenAIChatModel(model_name="mycustommodel", provider="ollama")
 ```
 
 ## Troubleshooting
