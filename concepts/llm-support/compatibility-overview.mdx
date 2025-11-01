@@ -19,7 +19,7 @@ Complete feature availability across all providers:
 | **Cloud Providers** |
 | Azure OpenAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅* | ✅* | ✅** | ✅ |
 | AWS Bedrock | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅*** | ✅ |
-| Hugging Face | ✅ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Huggingface | ✅ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Local Providers** |
 | Ollama | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Model Gateways** |
@@ -105,7 +105,7 @@ Required credentials by provider:
 | Grok | API Key | `GROK_API_KEY` | None |
 | Azure OpenAI | API Key + Endpoint | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` | Resource setup |
 | AWS Bedrock | AWS Credentials | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | IAM permissions |
-| Hugging Face | Token | `HF_TOKEN` | None |
+| Huggingface | Token | `HF_TOKEN` | None |
 | Ollama | None (Local) | `OLLAMA_BASE_URL` (optional) | Install Ollama |
 | OpenRouter | API Key | `OPENROUTER_API_KEY` | None |
 | LiteLLM | Proxy Setup | Various (via config) | Run proxy server |
@@ -127,7 +127,7 @@ Upsonic model class to use for each provider:
 | Cohere | `CohereModel` | `Model` | `upsonic.models.cohere` |
 | Groq | `GroqModel` | `Model` | `upsonic.models.groq` |
 | AWS Bedrock | `BedrockConverseModel` | `Model` | `upsonic.models.bedrock` |
-| Hugging Face | `HuggingFaceModel` | `Model` | `upsonic.models.huggingface` |
+| Huggingface | `HuggingFaceModel` | `Model` | `upsonic.models.huggingface` |
 | Grok | `OpenAIChatModel` | `Model` | `upsonic.models.openai` |
 | Azure | `OpenAIChatModel` | `Model` | `upsonic.models.openai` |
 | Ollama | `OpenAIChatModel` | `Model` | `upsonic.models.openai` |
