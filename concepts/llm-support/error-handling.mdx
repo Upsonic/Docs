@@ -1,0 +1,137 @@
+---
+title: "Error Handling"
+description: "Comprehensive error handling for LLM operations in Upsonic"
+---
+
+The framework provides comprehensive error handling for all LLM operations.
+
+## ModelHTTPError
+
+HTTP errors during model requests:
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
+from upsonic.utils.package.exception import ModelHTTPError
+
+try:
+    model = OpenAIChatModel(model_name="gpt-4o")
+    agent = Agent(model=model)
+    task = Task("Hello")
+    result = agent.do(task)
+except ModelHTTPError as e:
+    print(f"Status Code: {e.status_code}")
+    print(f"Model: {e.model_name}")
+    print(f"Body: {e.body}")
+```
+
+## UserError
+
+Configuration or usage errors:
+
+```python
+from upsonic.models.openai import OpenAIChatModel
+from upsonic.utils.package.exception import UserError
+
+try:
+    model = OpenAIChatModel(model_name="invalid-model-name")
+except UserError as e:
+    print(f"Error: {e}")
+```
+
+## UnexpectedModelBehavior
+
+Unexpected model responses:
+
+```python
+from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.settings import ModelSettings
+from upsonic.models import ModelRequestParameters
+from upsonic.utils.package.exception import UnexpectedModelBehavior
+
+try:
+    model_settings = ModelSettings(max_tokens=2048)
+    model_request_parameters = ModelRequestParameters()
+    async with model.request_stream(messages, model_settings, model_request_parameters) as stream:
+        pass
+except UnexpectedModelBehavior as e:
+    print(f"Unexpected behavior: {e}")
+```
+
+## Rate Limit Handling
+
+Rate limit handling with exponential backoff retry:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.utils.package.exception import ModelHTTPError
+
+async def request_with_retry(agent, task, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return agent.do(task)
+        except ModelHTTPError as e:
+            if e.status_code == 429:  # Rate limit
+                wait_time = 2 ** attempt  # Exponential backoff
+                print(f"Rate limited. Waiting {wait_time}s...")
+                await asyncio.sleep(wait_time)
+            else:
+                raise
+    raise Exception("Max retries exceeded")
+```
+
+## Token Limit Handling
+
+Context length exceeded handling:
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.settings import ModelSettings
+from upsonic.utils.package.exception import ModelHTTPError
+
+try:
+    settings = ModelSettings(max_tokens=4096)
+    model = OpenAIChatModel(model_name="gpt-4o")
+    agent = Agent(model=model, settings=settings)
+    result = agent.do(very_long_task)
+except ModelHTTPError as e:
+    if "context_length_exceeded" in str(e.body):
+        print("Input too long, consider truncating")
+```
+
+## Invalid Response Handling
+
+Structured output validation:
+
+```python
+from pydantic import BaseModel, ValidationError
+from upsonic.models.openai import OpenAIChatModel
+
+class ResponseFormat(BaseModel):
+    answer: str
+    confidence: float
+
+try:
+    model = OpenAIChatModel(model_name="gpt-4o")
+    model = model.with_structured_output(ResponseFormat)
+    result = await model.ainvoke("What is AI?")
+except ValidationError as e:
+    print(f"Invalid response format: {e}")
+```
+
+## Global Error Handling
+
+Disable model requests for testing:
+
+```python
+from upsonic import Agent, Task
+from upsonic.models import override_allow_model_requests
+
+with override_allow_model_requests(False):
+    try:
+        result = agent.do(task)
+    except RuntimeError as e:
+        print("Model requests are disabled")
+```

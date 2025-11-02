@@ -44,85 +44,29 @@ result = agent.do(task)
 print(result.output)
 ```
 
-## Error Handling
+## Supported LLM Models
 
-The framework provides comprehensive error handling for all LLM operations:
+Upsonic supports a wide range of LLM providers, from native APIs to local deployments and cloud-based solutions.
 
-```python
-import asyncio
-from pydantic import BaseModel, ValidationError
-from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
-from upsonic.models.settings import ModelSettings
-from upsonic.models import ModelRequestParameters, override_allow_model_requests
-from upsonic.utils.package.exception import ModelHTTPError, UserError, UnexpectedModelBehavior
+### Native Providers
 
-# ModelHTTPError - HTTP errors during model requests
-try:
-    model = OpenAIChatModel(model_name="gpt-4o")
-    agent = Agent(model=model)
-    task = Task("Hello")
-    result = agent.do(task)
-except ModelHTTPError as e:
-    print(f"Status Code: {e.status_code}")
-    print(f"Model: {e.model_name}")
-    print(f"Body: {e.body}")
+Direct integration with major LLM provider APIs:
+- [OpenAI Chat](/concepts/llm-support/native-providers-openai-chat)
+- [OpenAI Responses](/concepts/llm-support/native-providers-openai-responses)
+- [Anthropic](/concepts/llm-support/native-providers-anthropic)
+- [Google](/concepts/llm-support/native-providers-google)
+- [Mistral](/concepts/llm-support/native-providers-mistral)
+- [Cohere](/concepts/llm-support/native-providers-cohere)
+- [Grok](/concepts/llm-support/native-providers-grok)
 
-# UserError - Configuration or usage errors
-try:
-    model = OpenAIChatModel(model_name="invalid-model-name")
-except UserError as e:
-    print(f"Error: {e}")
+### Local Providers
 
-# UnexpectedModelBehavior - Unexpected model responses
-try:
-    model_settings = ModelSettings(max_tokens=2048)
-    model_request_parameters = ModelRequestParameters()
-    async with model.request_stream(messages, model_settings, model_request_parameters) as stream:
-        pass
-except UnexpectedModelBehavior as e:
-    print(f"Unexpected behavior: {e}")
+Run models locally on your infrastructure:
+- [Ollama](/concepts/llm-support/local-providers-ollama)
 
-# Rate Limit Handling with Retry
-async def request_with_retry(agent, task, max_retries=3):
-    for attempt in range(max_retries):
-        try:
-            return agent.do(task)
-        except ModelHTTPError as e:
-            if e.status_code == 429:  # Rate limit
-                wait_time = 2 ** attempt  # Exponential backoff
-                print(f"Rate limited. Waiting {wait_time}s...")
-                await asyncio.sleep(wait_time)
-            else:
-                raise
-    raise Exception("Max retries exceeded")
+### Cloud Providers
 
-# Token Limit Handling
-try:
-    settings = ModelSettings(max_tokens=4096)
-    model = OpenAIChatModel(model_name="gpt-4o")
-    agent = Agent(model=model, settings=settings)
-    result = agent.do(very_long_task)
-except ModelHTTPError as e:
-    if "context_length_exceeded" in str(e.body):
-        print("Input too long, consider truncating")
-
-# Invalid Response Handling with Structured Output
-class ResponseFormat(BaseModel):
-    answer: str
-    confidence: float
-
-try:
-    model = OpenAIChatModel(model_name="gpt-4o")
-    model = model.with_structured_output(ResponseFormat)
-    result = await model.ainvoke("What is AI?")
-except ValidationError as e:
-    print(f"Invalid response format: {e}")
-
-# Global Error Handling - Disable requests for testing
-with override_allow_model_requests(False):
-    try:
-        result = agent.do(task)
-    except RuntimeError as e:
-        print("Model requests are disabled")
-```
+Enterprise cloud platform integrations:
+- [Azure OpenAI](/concepts/llm-support/cloud-providers-azure)
+- [AWS Bedrock](/concepts/llm-support/cloud-providers-bedrock)
+- [Hugging Face](/concepts/llm-support/cloud-providers-huggingface)
