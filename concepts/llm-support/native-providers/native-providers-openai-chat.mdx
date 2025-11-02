@@ -1,0 +1,53 @@
+---
+title: "OpenAI Chat"
+description: "Using OpenAI Chat Completions API with Upsonic"
+---
+
+## Overview
+
+OpenAI Chat Completions API provides access to GPT-4o, GPT-5, and other chat models. This is the standard API for conversational interactions.
+
+**Model Class:** `OpenAIChatModel`
+
+## Authentication
+
+```bash
+export OPENAI_API_KEY="sk-..."
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="gpt-4o")
+agent = Agent(model=model)
+
+task = Task("Hello, how are you?")
+result = agent.do(task)
+print(result.output)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model-specific | Base |
+| `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 | Base |
+| `top_p` | `float` | Nucleus sampling threshold | 1.0 | Base |
+| `seed` | `int` | Random seed for deterministic outputs | None | Base |
+| `stop_sequences` | `list[str]` | Sequences that stop generation | None | Base |
+| `presence_penalty` | `float` | Penalty for token presence (-2.0 to 2.0) | 0.0 | Base |
+| `frequency_penalty` | `float` | Penalty for token frequency (-2.0 to 2.0) | 0.0 | Base |
+| `logit_bias` | `dict[str, int]` | Modify token likelihoods | None | Base |
+| `parallel_tool_calls` | `bool` | Allow parallel tool calls | True | Base |
+| `timeout` | `float` | Request timeout in seconds | 600 | Base |
+| `extra_headers` | `dict[str, str]` | Additional HTTP headers | None | Base |
+| `extra_body` | `object` | Additional request body params | None | Base |
+| `openai_reasoning_effort` | `'low' \| 'medium' \| 'high'` | Computational effort for reasoning models | None | Specific |
+| `openai_logprobs` | `bool` | Include log probabilities in response | False | Specific |
+| `openai_top_logprobs` | `int` | Number of top log probs to return (1-20) | None | Specific |
+| `openai_user` | `str` | Unique user identifier for abuse monitoring | None | Specific |
+| `openai_service_tier` | `'auto' \| 'default' \| 'flex' \| 'priority'` | Service tier for request routing | 'auto' | Specific |
+| `openai_prediction` | `ChatCompletionPredictionContentParam` | Enable predicted outputs | None | Specific |

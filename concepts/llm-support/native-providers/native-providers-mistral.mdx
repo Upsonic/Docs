@@ -11,185 +11,33 @@ Mistral AI provides high-performance open and commercial models including Mistra
 
 ## Authentication
 
-### Environment Variables
-
 ```bash
 export MISTRAL_API_KEY="..."
 ```
 
-### Direct Instantiation
-
-```python
-from upsonic.models.mistral import MistralModel
-
-model = MistralModel(model_name="mistral-large-latest")
-```
-
-### Manual Configuration
-
-```python
-from upsonic.models.mistral import MistralModel, MistralModelSettings
-
-settings = MistralModelSettings(
-    max_tokens=2048,
-    temperature=0.7
-)
-
-model = MistralModel(
-    model_name="mistral-large-latest",
-    settings=settings
-)
-```
-
 ## Examples
 
-### Basic Usage
-
 ```python
 from upsonic import Agent, Task
-
 from upsonic.models.mistral import MistralModel
 
 model = MistralModel(model_name="mistral-large-latest")
 agent = Agent(model=model)
 
-task = Task("Explain neural networks")
+task = Task("Hello, how are you?")
 result = agent.do(task)
+print(result.output)
 ```
 
-### With Tools
+## Parameters
 
-```python
-from upsonic import Agent, Task
-
-def get_weather(city: str) -> str:
-    """Get weather for a city."""
-    return f"Weather in {city}: Sunny, 72°F"
-
-from upsonic.models.mistral import MistralModel
-
-model = MistralModel(model_name="mistral-large-latest")
-agent = Agent(model=model)
-
-task = Task(
-    "What's the weather in Paris?",
-    tools=[get_weather]
-)
-result = agent.do(task)
-```
-
-### Code Generation (Codestral)
-
-```python
-from upsonic import Agent, Task
-from upsonic.models.mistral import MistralModel
-
-model = MistralModel(model_name="codestral-latest")
-agent = Agent(model=model)
-
-task = Task("Write a Python function to calculate Fibonacci numbers")
-result = agent.do(task)
-```
-
-### Streaming
-
-```python
-async with agent.stream(task) as result:
-    async for text in result.stream_output():
-        print(text, end='', flush=True)
-```
-
-## Prompt Caching
-
-Mistral does not currently support native prompt caching.
-
-**Workaround:** Use conversation memory to maintain context:
-
-```python
-from upsonic import Agent, Task
-from upsonic.storage.memory import Memory
-from upsonic.storage.providers.in_memory import InMemoryStorage
-
-storage = InMemoryStorage()
-memory = Memory(storage=storage, session_id="session-123")
-
-from upsonic.models.mistral import MistralModel
-
-model = MistralModel(model_name="mistral-large-latest")
-agent = Agent(model=model, memory=memory)
-
-# Conversation history maintained across requests
-task1 = Task("Tell me about AI")
-result1 = agent.do(task1)
-
-task2 = Task("Can you elaborate?")
-result2 = agent.do(task2)
-```
-
-## Model Parameters
-
-### Base Settings
-
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `max_tokens` | `int` | Maximum tokens to generate | Model default |
-| `temperature` | `float` | Sampling temperature (0.0-1.0) | 0.7 |
-| `top_p` | `float` | Nucleus sampling | 1.0 |
-| `seed` | `int` | Random seed | None |
-| `stop_sequences` | `list[str]` | Stop generation sequences | None |
-| `presence_penalty` | `float` | Token presence penalty | 0.0 |
-| `frequency_penalty` | `float` | Token frequency penalty | 0.0 |
-| `timeout` | `float` | Request timeout (seconds) | 600 |
-
-### Example Configuration
-
-```python
-from upsonic.models.mistral import MistralModel, MistralModelSettings
-
-settings = MistralModelSettings(
-    max_tokens=4096,
-    temperature=0.7,
-    top_p=0.9,
-    seed=42,
-    stop_sequences=["END"],
-    presence_penalty=0.1,
-    frequency_penalty=0.1,
-    timeout=120.0
-)
-
-model = MistralModel(
-    model_name="mistral-large-latest",
-    settings=settings
-)
-```
-
-## Available Models
-
-### Commercial Models
-- `mistral-large-latest`: Most capable model
-- `mistral-small-latest`: Cost-effective option
-- `codestral-latest`: Specialized for code
-- `mistral-moderation-latest`: Content moderation
-
-### Model Features
-
-| Model | Context | Speed | Best For |
-|-------|---------|-------|----------|
-| mistral-large-latest | 128K | Medium | Complex tasks, reasoning |
-| mistral-small-latest | 32K | Fast | Simple tasks, high volume |
-| codestral-latest | 32K | Fast | Code generation |
-
-## Best Practices
-
-1. **Use Latest Versions**: Models update automatically
-2. **Codestral for Code**: Best-in-class for code generation
-3. **Temperature Control**: Lower for factual, higher for creative
-4. **Implement Memory**: For multi-turn conversations
-5. **Monitor Costs**: Track token usage
-
-## Related Resources
-
-- [Mistral API Documentation](https://docs.mistral.ai/)
-- [Mistral Models](https://docs.mistral.ai/getting-started/models/)
-- [Mistral Pricing](https://mistral.ai/technology/#pricing)
-
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model default | Base |
+| `temperature` | `float` | Sampling temperature (0.0-1.0) | 0.7 | Base |
+| `top_p` | `float` | Nucleus sampling | 1.0 | Base |
+| `seed` | `int` | Random seed | None | Base |
+| `stop_sequences` | `list[str]` | Stop generation sequences | None | Base |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 | Base |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 | Base |
+| `timeout` | `float` | Request timeout (seconds) | 600 | Base |

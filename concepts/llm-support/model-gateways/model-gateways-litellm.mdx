@@ -1,425 +1,46 @@
 ---
 title: "LiteLLM"
-description: "Using LiteLLM as a unified gateway to 100+ LLM providers"
+description: "Using LiteLLM proxy for unified LLM access with Upsonic"
 ---
 
 ## Overview
 
 LiteLLM provides a unified OpenAI-compatible interface to access 100+ LLM providers including OpenAI, Anthropic, Azure, Google, AWS Bedrock, and more. Run it as a proxy server for centralized model management.
 
-**Model Class:** `OpenAIChatModel` (OpenAI-compatible API)
+**Model Class:** `OpenAIChatModel` (OpenAI-compatible proxy)
 
 ## Authentication
 
-### Setup LiteLLM Proxy
-
-First, set up LiteLLM proxy server:
-
 ```bash
-# Install LiteLLM
-pip install litellm[proxy]
-
-# Create config file
-cat > config.yaml << EOF
-model_list:
-  - model_name: gpt-4o
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_API_KEY
-  
-  - model_name: claude-sonnet
-    litellm_params:
-      model: anthropic/claude-3-5-sonnet-20241022
-      api_key: os.environ/ANTHROPIC_API_KEY
-  
-  - model_name: gemini-flash
-    litellm_params:
-      model: gemini/gemini-2.5-flash
-      api_key: os.environ/GOOGLE_API_KEY
-EOF
-
-# Start proxy
-litellm --config config.yaml
-```
-
-### Environment Variables
-
-```bash
-export LITELLM_BASE_URL="http://localhost:4000"  # LiteLLM proxy URL
-# No API key needed if proxy handles auth
-```
-
-### Direct Instantiation
-
-```python
-from upsonic.models.openai import OpenAIChatModel
-
-# Use model name from config
-model = OpenAIChatModel(model_name="gpt-4o", provider="litellm")
-```
-
-### Manual Configuration
-
-```python
-from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
-
-settings = OpenAIChatModelSettings(
-    max_tokens=2048,
-    temperature=0.7
-)
-
-model = OpenAIChatModel(
-    model_name="gpt-4o",  # From your config
-    provider="litellm",
-    settings=settings
-)
+export LITELLM_BASE_URL="http://localhost:4000"
+# Optional: API key if proxy requires authentication
+export LITELLM_API_KEY="sk-..."
 ```
 
 ## Examples
 
-### Basic Usage
-
 ```python
 from upsonic import Agent, Task
-
 from upsonic.models.openai import OpenAIChatModel
 
 model = OpenAIChatModel(model_name="gpt-4o", provider="litellm")
 agent = Agent(model=model)
 
-task = Task("Explain machine learning")
+task = Task("Hello, how are you?")
 result = agent.do(task)
+print(result.output)
 ```
 
-### Multi-Model Setup
-
-```python
-from upsonic.models.openai import OpenAIChatModel
-
-# Different models through same proxy
-gpt_model = OpenAIChatModel(model_name="gpt-4o", provider="litellm")
-claude_model = OpenAIChatModel(model_name="claude-sonnet", provider="litellm")
-gemini_model = OpenAIChatModel(model_name="gemini-flash", provider="litellm")
-
-# Use based on task requirements
-def get_model_for_task(task_type: str):
-    if task_type == "code":
-        return claude_model
-    elif task_type == "analysis":
-        return gpt_model
-    else:
-        return gemini_model
-```
-
-### With Load Balancing
-
-LiteLLM config with multiple deployments:
-
-```yaml
-model_list:
-  # Load balance across multiple OpenAI deployments
-  - model_name: gpt-4o
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_KEY_1
-  
-  - model_name: gpt-4o
-    litellm_params:
-      model: azure/gpt-4o
-      api_base: os.environ/AZURE_ENDPOINT
-      api_key: os.environ/AZURE_KEY
-```
-
-### With Fallbacks
-
-```yaml
-model_list:
-  # Primary model
-  - model_name: main-model
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_API_KEY
-    model_info:
-      mode: fallback
-      priority: 1
-  
-  # Fallback model
-  - model_name: main-model
-    litellm_params:
-      model: anthropic/claude-3-5-sonnet
-      api_key: os.environ/ANTHROPIC_API_KEY
-    model_info:
-      mode: fallback
-      priority: 2
-```
-
-## Prompt Caching
-
-LiteLLM passes through caching support from underlying providers:
-
-```python
-from upsonic import Agent, Task
-
-# If using Claude through LiteLLM, caching works
-from upsonic.models.openai import OpenAIChatModel
-
-model = OpenAIChatModel(model_name="claude-sonnet", provider="litellm")
-agent = Agent(
-    model=model,
-    system_prompt="Long context that will be cached..."
-)
-
-# Subsequent requests benefit from Claude's caching
-task1 = Task("Question 1")
-result1 = agent.do(task1)
-
-task2 = Task("Question 2") 
-result2 = agent.do(task2)  # Cached
-```
-
-## Model Parameters
-
-### Base Settings
-
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `max_tokens` | `int` | Maximum tokens to generate | Model default |
-| `temperature` | `float` | Sampling temperature | 1.0 |
-| `top_p` | `float` | Nucleus sampling | 1.0 |
-| `seed` | `int` | Random seed | None |
-| `stop_sequences` | `list[str]` | Stop sequences | None |
-| `presence_penalty` | `float` | Token presence penalty | 0.0 |
-| `frequency_penalty` | `float` | Token frequency penalty | 0.0 |
-
-### Example Configuration
-
-```python
-from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
-
-settings = OpenAIChatModelSettings(
-    max_tokens=2048,
-    temperature=0.7,
-    top_p=0.9,
-    presence_penalty=0.1,
-    frequency_penalty=0.1
-)
-
-model = OpenAIChatModel(
-    model_name="gpt-4o",
-    provider="litellm",
-    settings=settings
-)
-```
-
-## Advanced LiteLLM Configuration
-
-### With Budget Limits
-
-```yaml
-general_settings:
-  master_key: sk-1234  # Secure your proxy
-  
-model_list:
-  - model_name: gpt-4o
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_API_KEY
-    model_info:
-      max_budget: 100  # $100 budget
-      budget_duration: 30d  # Monthly
-```
-
-### With Rate Limiting
-
-```yaml
-model_list:
-  - model_name: gpt-4o
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_API_KEY
-    model_info:
-      rpm: 60  # 60 requests per minute
-      tpm: 100000  # 100k tokens per minute
-```
-
-### With Logging
-
-```yaml
-general_settings:
-  litellm_settings:
-    success_callback: ["langfuse"]  # Log successful calls
-    failure_callback: ["slack"]  # Alert on failures
-
-model_list:
-  - model_name: gpt-4o
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_API_KEY
-```
-
-### With Caching (Redis)
-
-```yaml
-general_settings:
-  cache: true
-  cache_params:
-    type: redis
-    host: localhost
-    port: 6379
-
-model_list:
-  - model_name: gpt-4o
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_API_KEY
-    cache:
-      ttl: 3600  # Cache for 1 hour
-```
-
-## Supported Providers
-
-LiteLLM supports 100+ providers including:
-
-### Major Providers
-- OpenAI
-- Anthropic
-- Azure OpenAI
-- Google (Vertex AI, Gemini)
-- AWS Bedrock
-- Cohere
-- Mistral
-- Groq
-
-### Cloud Providers
-- AWS Bedrock
-- Azure OpenAI
-- Google Vertex AI
-- IBM watsonx.ai
-
-### Open Source Platforms
-- Ollama
-- vLLM
-- Huggingface
-- Together AI
-
-### Full list available at: [LiteLLM Providers](https://docs.litellm.ai/docs/providers)
-
-## Best Practices
-
-1. **Centralized Configuration**: Manage all models in one config
-2. **Use Load Balancing**: Distribute load across deployments
-3. **Set Up Fallbacks**: Ensure high availability
-4. **Enable Caching**: Reduce costs and latency
-5. **Monitor Usage**: Track per-model metrics
-6. **Set Budget Limits**: Prevent overspending
-7. **Secure Proxy**: Use master key in production
-8. **Health Checks**: Monitor proxy status
-
-## Features
-
-### Unified Interface
-- OpenAI-compatible API
-- Single integration for all providers
-- Consistent request/response format
-
-### Load Balancing
-- Round-robin across deployments
-- Weighted routing
-- Automatic failover
-
-### Cost Management
-- Budget tracking per model
-- Usage analytics
-- Cost optimization
-
-### Reliability
-- Automatic retries
-- Fallback routing
-- Health monitoring
-
-### Observability
-- Request logging
-- Performance metrics
-- Error tracking
-
-## Monitoring
-
-```python
-# LiteLLM proxy exposes metrics
-import requests
-
-# Check proxy health
-health = requests.get("http://localhost:4000/health")
-print(health.json())
-
-# Get model info
-models = requests.get("http://localhost:4000/models")
-print(models.json())
-
-# View usage
-usage = requests.get("http://localhost:4000/spend/keys")
-print(usage.json())
-```
-
-## Advantages
-
-1. **Unified Interface**: One API for all providers
-2. **Load Balancing**: Built-in distribution
-3. **Cost Control**: Budget and rate limits
-4. **Observability**: Comprehensive logging
-5. **Flexibility**: Easy to add/remove models
-6. **Reliability**: Automatic fallbacks
-7. **Caching**: Built-in Redis caching
-
-## Limitations
-
-1. **Extra Infrastructure**: Requires proxy server
-2. **Single Point of Failure**: Unless deployed HA
-3. **Latency**: Additional network hop
-4. **Complexity**: More moving parts
-
-## Deployment Options
-
-### Docker
-
-```dockerfile
-FROM python:3.11
-RUN pip install litellm[proxy]
-COPY config.yaml /app/config.yaml
-CMD ["litellm", "--config", "/app/config.yaml"]
-```
-
-### Kubernetes
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: litellm-proxy
-spec:
-  replicas: 3  # High availability
-  selector:
-    matchLabels:
-      app: litellm
-  template:
-    metadata:
-      labels:
-        app: litellm
-    spec:
-      containers:
-      - name: litellm
-        image: your-litellm-image
-        ports:
-        - containerPort: 4000
-        envFrom:
-        - secretRef:
-            name: litellm-secrets
-```
-
-## Related Resources
-
-- [LiteLLM Documentation](https://docs.litellm.ai/)
-- [Supported Providers](https://docs.litellm.ai/docs/providers)
-- [Proxy Server Docs](https://docs.litellm.ai/docs/proxy/quick_start)
-- [GitHub Repository](https://github.com/BerriAI/litellm)
-
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model default | Base |
+| `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 | Base |
+| `top_p` | `float` | Nucleus sampling | 1.0 | Base |
+| `seed` | `int` | Random seed | None | Base |
+| `stop_sequences` | `list[str]` | Stop sequences | None | Base |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 | Base |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 | Base |
+| `parallel_tool_calls` | `bool` | Allow parallel tools | True | Base |
+| `timeout` | `float` | Request timeout (seconds) | 600 | Base |

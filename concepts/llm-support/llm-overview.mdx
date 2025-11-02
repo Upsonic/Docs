@@ -1,13 +1,9 @@
 ---
-title: "LLM Models Overview"
+title: "Overview"
 description: "Understanding LLM models and error handling in Upsonic"
 ---
 
-## What are LLM Models?
-
 Large Language Models (LLMs) are the foundation of the Upsonic AI Agent Framework. The framework provides a unified interface to interact with various LLM providers, allowing you to build AI agents that can leverage different models without changing your code structure.
-
-### Model Architecture
 
 In Upsonic, all model classes inherit from the base `Model` class, which provides:
 
@@ -18,74 +14,23 @@ In Upsonic, all model classes inherit from the base `Model` class, which provide
 - **Structured Output**: Type-safe responses using Pydantic models
 - **Memory Management**: Built-in conversation history support
 
-### Key Components
-
-#### 1. Model Settings
-
-Model settings control the behavior of LLM requests:
-
-```python
-from upsonic.models.settings import ModelSettings
-
-settings = ModelSettings(
-    max_tokens=2048,
-    temperature=0.7,
-    top_p=0.9,
-    seed=42
-)
-```
-
-All settings are optional and provider-specific settings are prefixed with the provider name (e.g., `openai_`, `anthropic_`, `google_`).
-
-#### 2. Model Profiles
-
-Profiles define model capabilities and behaviors:
-
-```python
-from upsonic.profiles import ModelProfile
-
-profile = ModelProfile(
-    supports_tools=True,
-    supports_json_schema_output=True,
-    default_structured_output_mode='tool'
-)
-```
-
-#### 3. Model Classes
-
-Import and instantiate model classes directly:
-
-```python
-from upsonic.models.openai import OpenAIChatModel
-from upsonic.models.anthropic import AnthropicModel
-from upsonic.models.google import GoogleModel
-
-# Direct instantiation
-model = OpenAIChatModel(model_name="gpt-4o")
-model = AnthropicModel(model_name="claude-3-5-sonnet-20241022")
-model = GoogleModel(model_name="gemini-2.5-flash", provider="google-gla")
-```
-
-### Usage Patterns
-
-#### Basic Usage
+Model settings control the behavior of LLM requests. All settings are optional and provider-specific settings are prefixed with the provider name (e.g., `openai_`, `anthropic_`, `google_`).
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+from upsonic.models.anthropic import AnthropicModel
+from upsonic.models.google import GoogleModel
+from upsonic.uel import ChatPromptTemplate
 
+# Direct instantiation
 model = OpenAIChatModel(model_name="gpt-4o")
 agent = Agent(model=model)
 
 task = Task("Explain quantum computing")
 result = agent.do(task)
-```
 
-#### With Custom Settings
-
-```python
-from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
-
+# With custom settings
 settings = OpenAIChatModelSettings(
     max_tokens=1024,
     temperature=0.5,
@@ -98,14 +43,8 @@ model = OpenAIChatModel(
 )
 
 agent = Agent(model=model)
-```
 
-#### UEL Chains
-
-```python
-from upsonic.uel import ChatPromptTemplate
-from upsonic.models.openai import OpenAIChatModel
-
+# UEL Chains
 prompt = ChatPromptTemplate.from_template("Tell me about {topic}")
 model = OpenAIChatModel(model_name="gpt-4o")
 
@@ -116,64 +55,44 @@ result = await chain.invoke({"topic": "AI"})
 
 ## Error Handling
 
-The framework provides comprehensive error handling for LLM operations:
-
-### Common Exceptions
-
-#### ModelHTTPError
-
-Raised when an HTTP error occurs during model requests:
+The framework provides comprehensive error handling for all LLM operations:
 
 ```python
-from upsonic.utils.package.exception import ModelHTTPError
+import asyncio
+from pydantic import BaseModel, ValidationError
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.settings import ModelSettings
+from upsonic.models import ModelRequestParameters, override_allow_model_requests
+from upsonic.utils.package.exception import ModelHTTPError, UserError, UnexpectedModelBehavior
 
+# ModelHTTPError - HTTP errors during model requests
 try:
+    model = OpenAIChatModel(model_name="gpt-4o")
+    agent = Agent(model=model)
+    task = Task("Hello")
     result = agent.do(task)
 except ModelHTTPError as e:
     print(f"Status Code: {e.status_code}")
     print(f"Model: {e.model_name}")
     print(f"Body: {e.body}")
-```
 
-#### UserError
-
-Raised for user-facing configuration or usage errors:
-
-```python
-from upsonic.utils.package.exception import UserError
-
+# UserError - Configuration or usage errors
 try:
-    from upsonic.models.openai import OpenAIChatModel
     model = OpenAIChatModel(model_name="invalid-model-name")
 except UserError as e:
     print(f"Error: {e}")
-```
 
-#### UnexpectedModelBehavior
-
-Raised when a model responds in an unexpected way:
-
-```python
-from upsonic.utils.package.exception import UnexpectedModelBehavior
-from upsonic.models import ModelRequestParameters
-from upsonic.models.settings import ModelSettings
-
+# UnexpectedModelBehavior - Unexpected model responses
 try:
     model_settings = ModelSettings(max_tokens=2048)
     model_request_parameters = ModelRequestParameters()
     async with model.request_stream(messages, model_settings, model_request_parameters) as stream:
-        # Handle stream
         pass
 except UnexpectedModelBehavior as e:
     print(f"Unexpected behavior: {e}")
-```
 
-### Handling Rate Limits
-
-```python
-import asyncio
-from upsonic.utils.package.exception import ModelHTTPError
-
+# Rate Limit Handling with Retry
 async def request_with_retry(agent, task, max_retries=3):
     for attempt in range(max_retries):
         try:
@@ -186,75 +105,34 @@ async def request_with_retry(agent, task, max_retries=3):
             else:
                 raise
     raise Exception("Max retries exceeded")
-```
 
-### Handling Token Limits
-
-```python
-from upsonic.models.settings import ModelSettings
-
-settings = ModelSettings(
-    max_tokens=4096,
-    # Will raise error if input + output exceeds context window
-)
-
+# Token Limit Handling
 try:
-    from upsonic.models.openai import OpenAIChatModel
+    settings = ModelSettings(max_tokens=4096)
     model = OpenAIChatModel(model_name="gpt-4o")
     agent = Agent(model=model, settings=settings)
     result = agent.do(very_long_task)
 except ModelHTTPError as e:
     if "context_length_exceeded" in str(e.body):
         print("Input too long, consider truncating")
-```
 
-### Handling Invalid Responses
-
-```python
-from pydantic import BaseModel, ValidationError
-
+# Invalid Response Handling with Structured Output
 class ResponseFormat(BaseModel):
     answer: str
     confidence: float
 
 try:
-    from upsonic.models.openai import OpenAIChatModel
     model = OpenAIChatModel(model_name="gpt-4o")
     model = model.with_structured_output(ResponseFormat)
     result = await model.ainvoke("What is AI?")
 except ValidationError as e:
     print(f"Invalid response format: {e}")
-```
 
-### Global Error Handling
-
-Disable model requests globally for testing:
-
-```python
-from upsonic.models import override_allow_model_requests
-
-# Disable requests (useful for testing)
+# Global Error Handling - Disable requests for testing
 with override_allow_model_requests(False):
     try:
         result = agent.do(task)
     except RuntimeError as e:
         print("Model requests are disabled")
 ```
-
-## Best Practices
-
-1. **Always Use Environment Variables**: Store API keys in environment variables, never hardcode them
-2. **Implement Retry Logic**: Network errors and rate limits are common, implement exponential backoff
-3. **Monitor Token Usage**: Track usage to avoid unexpected costs
-4. **Handle Timeouts**: Set appropriate timeouts based on your use case
-5. **Validate Outputs**: Use structured output with Pydantic models for type safety
-6. **Log Errors**: Implement comprehensive logging for debugging
-7. **Use Streaming**: For better UX, use streaming responses when available
-8. **Test Error Paths**: Write tests that cover error scenarios
-
-## Next Steps
-
-- Explore [Compatibility Overview](/concepts/llm-support/compatibility-overview) to see feature support across providers
-- Learn about [Native Model Providers](/concepts/llm-support/native-providers/native-providers-openai) for direct API access
-- Check [Model Gateways](/concepts/llm-support/model-gateways/model-gateways-openrouter) for unified access to multiple models
 

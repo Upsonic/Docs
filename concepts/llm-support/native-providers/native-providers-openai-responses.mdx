@@ -1,0 +1,50 @@
+---
+title: "OpenAI Responses"
+description: "Using OpenAI Responses API with Upsonic"
+---
+
+## Overview
+
+OpenAI Responses API is the newer, recommended API for reasoning models (o-series) and advanced features like code execution. It provides better support for multi-turn conversations and built-in tools.
+
+**Model Class:** `OpenAIResponsesModel`
+
+## Authentication
+
+```bash
+export OPENAI_API_KEY="sk-..."
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIResponsesModel
+
+model = OpenAIResponsesModel(model_name="o1-preview")
+agent = Agent(model=model)
+
+task = Task("Hello, how are you?")
+result = agent.do(task)
+print(result.output)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model-specific | Base |
+| `seed` | `int` | Random seed for deterministic outputs | None | Base |
+| `stop_sequences` | `list[str]` | Sequences that stop generation | None | Base |
+| `timeout` | `float` | Request timeout in seconds | 600 | Base |
+| `extra_headers` | `dict[str, str]` | Additional HTTP headers | None | Base |
+| `extra_body` | `object` | Additional request body params | None | Base |
+| `openai_reasoning_effort` | `'low' \| 'medium' \| 'high'` | Computational effort for reasoning | None | Specific |
+| `openai_reasoning_summary` | `'detailed' \| 'concise'` | Reasoning summary detail level | None | Specific |
+| `openai_send_reasoning_ids` | `bool` | Send reasoning part IDs in history | False | Specific |
+| `openai_truncation` | `'disabled' \| 'auto'` | Context window truncation strategy | 'auto' | Specific |
+| `openai_text_verbosity` | `'low' \| 'medium' \| 'high'` | Text response verbosity | None | Specific |
+| `openai_previous_response_id` | `'auto' \| str` | Continue from previous response | None | Specific |
+| `openai_include_code_execution_outputs` | `bool` | Include code interpreter outputs | False | Specific |
+| `openai_include_web_search_sources` | `bool` | Include web search sources | False | Specific |
+| `openai_builtin_tools` | `Sequence[...]` | Built-in tools to enable | None | Specific |
