@@ -1,8 +1,23 @@
 ---
 sidebarTitle: "Installation"
-title: "Install The Framework"
+title: "Installation"
 description: "Get started with Upsonic - Install, configure, and build your first AI Agent"
+hideToc: true
 ---
+
+Install Upsonic and start building AI agents in minutes.
+
+Upsonic requires Python 3.10 or higher. Follow the steps below to install the framework and verify your installation.
+
+## Main Library
+
+Install the core Upsonic framework to start building AI agents:
+
+```bash
+pip install upsonic
+```
+
+This installs the main framework with all essential features including agents, tasks, teams, memory, tools, and LLM integrations.
 
 <Note>
   **Python Version Requirements**
@@ -16,44 +31,54 @@ description: "Get started with Upsonic - Install, configure, and build your firs
   If you need to update Python, visit [python.org/downloads](https://python.org/downloads)
 </Note>
 
-# Installing Upsonic
+## Optional Dependencies
 
-Now let's get you set up! 🚀
+Depending on your use case, you may need additional packages:
 
-<Steps>
-  <Step title="Install Upsonic">
-    Install Upsonic with all recommended tools using either method:
+### Loaders
 
-    ```shell Terminal
-    pip install upsonic
-    ```
-  </Step>
-  <Step title="Upgrade Upsonic (Existing Installations Only)">
-    If you have an older version of Upsonic installed, you can upgrade it:
+Install loaders to work with various file formats in your knowledge base (PDF, CSV, Markdown, etc.):
 
-    ```shell Terminal
-    pip install --upgrade Upsonic
-    ```
+```bash
+pip install "upsonic[loaders]"
+```
 
-    <Note>
-      Skip this step if you're doing a fresh installation.
-    </Note>
-  </Step>
-  <Step title="Verify Installation">
-    Check your installed versions:
+Use this when you need to build RAG pipelines and process documents from different sources.
 
-    ```shell Terminal
-    pip freeze | grep upsonic
-    ```
+### OCR
 
-    You should see something like:
+Install OCR capabilities to extract text from images and scanned documents:
 
-    ```markdown Output
-    upsonic==X.X.X
-    ```
+```bash
+pip install "upsonic[ocr]"
+```
 
-    <Check>
-      Installation successful! You're ready to create your first Agent and Task.
-    </Check>
-  </Step>
-</Steps>
+Use this when you need to process images, screenshots, or scanned documents with your agents.
+
+### All Optional Dependencies
+
+Install everything at once:
+
+```bash
+pip install "upsonic[all]"
+```
+
+This includes loaders, OCR, and all other optional features.
+
+## Verify Installation
+
+Check your installed version:
+
+```bash
+pip freeze | grep upsonic
+```
+
+You should see something like:
+
+```
+upsonic==X.X.X
+```
+
+<Check>
+  Installation successful! You're ready to create your first Agent and Task.
+</Check>
