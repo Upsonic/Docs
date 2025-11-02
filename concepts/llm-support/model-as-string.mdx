@@ -14,19 +14,19 @@ With Model as String, you can skip the boilerplate code and get straight to buil
 The string format follows this pattern:
 
 ```
-"provider:model_id"
+"provider/model_id"
 ```
 
 - **provider**: The model provider name (case-insensitive)
 - **model_id**: The specific model identifier
 
 **Examples:**
-- `"openai:gpt-4o"`
-- `"anthropic:claude-sonnet-4-20250514"`
-- `"google:gemini-2.0-flash-exp"`
-- `"groq:llama-3.3-70b-versatile"`
-- `"deepseek:deepseek-chat"`
-- `"ollama:llama3.2"`
+- `"openai/gpt-4o"`
+- `"anthropic/claude-sonnet-4-20250514"`
+- `"google/gemini-2.0-flash-exp"`
+- `"groq/llama-3.3-70b-versatile"`
+- `"deepseek/deepseek-chat"`
+- `"ollama/llama3.2"`
 
 ## Examples
 
@@ -36,7 +36,7 @@ The string format follows this pattern:
 from upsonic import Agent, Task
 
 # Simply use a string instead of a model class
-agent = Agent(model="openai:gpt-4o")
+agent = Agent(model="openai/gpt-4o")
 
 task = Task("Hello, how are you?")
 result = agent.do(task)
@@ -50,10 +50,10 @@ from upsonic import Agent, Task
 
 # Try different models without changing imports
 models = [
-    "openai:gpt-4o",
-    "anthropic:claude-3-5-sonnet-20241022",
-    "google:gemini-2.5-flash",
-    "groq:llama-3.3-70b-versatile"
+    "openai/gpt-4o",
+    "anthropic/claude-3-5-sonnet-20241022",
+    "google/gemini-2.5-flash",
+    "groq/llama-3.3-70b-versatile"
 ]
 
 for model_string in models:
@@ -69,7 +69,7 @@ import os
 from upsonic import Agent, Task
 
 # Configure via environment variable
-model_string = os.getenv("LLM_MODEL", "openai:gpt-4o")
+model_string = os.getenv("LLM_MODEL", "openai/gpt-4o")
 
 agent = Agent(model=model_string)
 task = Task("Analyze this data")
@@ -79,10 +79,10 @@ result = agent.do(task)
 **.env file:**
 ```bash
 # Switch models without code changes
-LLM_MODEL=anthropic:claude-3-5-sonnet-20241022
+LLM_MODEL=anthropic/claude-3-5-sonnet-20241022
 
 # Or use a different provider
-LLM_MODEL=groq:llama-3.3-70b-versatile
+LLM_MODEL=groq/llama-3.3-70b-versatile
 ```
 
 ### Dynamic Model Selection
@@ -93,13 +93,13 @@ from upsonic import Agent, Task
 def get_model_for_task(task_type: str) -> str:
     """Select the best model for each task type."""
     if task_type == "code":
-        return "anthropic:claude-3-5-sonnet-20241022"
+        return "anthropic/claude-3-5-sonnet-20241022"
     elif task_type == "reasoning":
-        return "openai:o1-preview"
+        return "openai/o1-preview"
     elif task_type == "fast":
-        return "groq:llama-3.3-70b-versatile"
+        return "groq/llama-3.3-70b-versatile"
     else:
-        return "openai:gpt-4o"
+        return "openai/gpt-4o"
 
 # Use different models for different tasks
 code_agent = Agent(model=get_model_for_task("code"))

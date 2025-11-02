@@ -5,116 +5,37 @@ description: "Using models that implement the OpenAI API specification"
 
 ## Overview
 
-OpenAI-compatible models are LLM providers that implement the OpenAI API specification. They expose the same REST API endpoints, request/response formats, and SDK compatibility as OpenAI, allowing drop-in replacements with minimal code changes.
+OpenAI-compatible models are LLM providers that implement the OpenAI API specification. You can use the standard `OpenAIChatModel` with custom `base_url` and `api_key` parameters to connect to any OpenAI-compatible endpoint.
 
 **Model Class:** `OpenAIChatModel`
 
-**Supported Providers:**
-
-| Provider | Base URL | Best For |
-|----------|----------|----------|
-| **DeepSeek** | `https://api.deepseek.com` | Cost-effective reasoning |
-| **Cerebras** | `https://api.cerebras.ai/v1` | Ultra-fast inference |
-| **Fireworks** | `https://api.fireworks.ai/inference/v1` | Open model access |
-| **GitHub Models** | `https://models.inference.ai.azure.com` | Developer testing |
-| **Together AI** | `https://api.together.xyz` | Collaborative serving |
-| **Ollama** | `http://localhost:11434/v1` | Local inference |
-| **Grok** | `https://api.x.ai/v1` | Real-time information |
-
 ## Authentication
 
-Each provider requires its own API key. Set the appropriate environment variable:
+```python
+from os import getenv
+from upsonic.models.openai import OpenAIChatModel
 
-```bash
-# DeepSeek
-export DEEPSEEK_API_KEY="sk-..."
-
-# Cerebras
-export CEREBRAS_API_KEY="..."
-
-# Fireworks
-export FIREWORKS_API_KEY="..."
-
-# GitHub Models
-export GITHUB_TOKEN="ghp_..."
-
-# Together AI
-export TOGETHER_API_KEY="..."
-
-# Grok
-export GROK_API_KEY="xai-..."
-
-# Ollama (local, no key needed)
-export OLLAMA_BASE_URL="http://localhost:11434"
+model = OpenAIChatModel(
+    model_name="your-model-name",
+    api_key=getenv("YOUR_API_KEY"),
+    base_url="https://your-custom-endpoint.com/v1"
+)
 ```
 
 ## Examples
 
-### DeepSeek
-
 ```python
+from os import getenv
 from upsonic import Agent, Task
 from upsonic.models.openai import OpenAIChatModel
 
-model = OpenAIChatModel(model_name="deepseek-chat", provider="deepseek")
+model = OpenAIChatModel(
+    model_name="your-model-name",
+    api_key=getenv("YOUR_API_KEY"),
+    base_url="https://your-custom-endpoint.com/v1"
+)
+
 agent = Agent(model=model)
-
-task = Task("Hello, how are you?")
-result = agent.do(task)
-print(result.output)
-```
-
-### Cerebras
-
-```python
-from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
-
-model = OpenAIChatModel(model_name="llama-3.3-70b", provider="cerebras")
-agent = Agent(model=model)
-
-task = Task("Hello, how are you?")
-result = agent.do(task)
-print(result.output)
-```
-
-### Fireworks
-
-```python
-from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
-
-model = OpenAIChatModel(model_name="llama-v3p1-70b-instruct", provider="fireworks")
-agent = Agent(model=model)
-
-task = Task("Hello, how are you?")
-result = agent.do(task)
-print(result.output)
-```
-
-### GitHub Models
-
-```python
-from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
-
-model = OpenAIChatModel(model_name="gpt-4o", provider="github")
-agent = Agent(model=model)
-
-task = Task("Hello, how are you?")
-result = agent.do(task)
-print(result.output)
-```
-
-### Together AI
-
-```python
-from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
-
-model = OpenAIChatModel(model_name="meta-llama/Llama-3.3-70B-Instruct-Turbo", provider="together")
-agent = Agent(model=model)
-
 task = Task("Hello, how are you?")
 result = agent.do(task)
 print(result.output)
@@ -122,10 +43,11 @@ print(result.output)
 
 ## Parameters
 
-All OpenAI-compatible models support these standard parameters:
-
 | Parameter | Type | Description | Default | Source |
 |-----------|------|-------------|---------|--------|
+| `model_name` | `str` | Model identifier | Required | Base |
+| `api_key` | `str` | API key for authentication | Required | Base |
+| `base_url` | `str` | Custom endpoint URL | Required | Base |
 | `max_tokens` | `int` | Maximum tokens to generate | Model default | Base |
 | `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 | Base |
 | `top_p` | `float` | Nucleus sampling threshold | 1.0 | Base |
@@ -133,6 +55,5 @@ All OpenAI-compatible models support these standard parameters:
 | `stop_sequences` | `list[str]` | Sequences that stop generation | None | Base |
 | `presence_penalty` | `float` | Penalize token presence (-2.0 to 2.0) | 0.0 | Base |
 | `frequency_penalty` | `float` | Penalize token frequency (-2.0 to 2.0) | 0.0 | Base |
-| `logit_bias` | `dict[str, int]` | Modify token likelihoods | None | Base |
 | `parallel_tool_calls` | `bool` | Allow parallel tool execution | True | Base |
 | `timeout` | `float` | Request timeout in seconds | 600 | Base |
