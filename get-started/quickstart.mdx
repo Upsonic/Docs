@@ -1,252 +1,148 @@
 ---
-title: "Upsonic Quickstart"
+title: "Quickstart"
 sidebarTitle: "Quickstart"
 ---
 
-Build your first AI agent with Upsonic in under 2 minutes! 🦔
+# Your First Agent
+Your first agent with a simple and powerful AI Agent Development framework.
 
-## 1. Installation
+Let's create your first agent with Upsonic by creating an Agent, Task, and Tool.
 
 ```bash
 pip install upsonic
 ```
 
-## 2. Basic Agent Usage
-
-```python
-from upsonic import Task, Agent
-
-# Create a task
-task = Task(
-    description="Research latest news in AI and summarize the key points",
-    tools=[]  # We'll add tools next
-)
-
-# Create an agent
-agent = Agent(
-    model="openai/gpt-4o",
-    name="Research Assistant"
-)
-
-# Execute the task
-result = agent.print_do(task)
-```
-
-## 3. Adding Tools
-
-### Built-in Tools (Provider-Native)
-
-```python
-from upsonic.tools.builtin_tools import WebSearchTool, CodeExecutionTool
-
-# Web search (works with Anthropic, OpenAI, Google, Groq)
-web_search = WebSearchTool(
-    search_context_size='high',
-    max_uses=5
-)
-
-# Code execution (works with Anthropic, OpenAI, Google)
-code_execution = CodeExecutionTool()
-
-task = Task(
-    description="Search for Python best practices and write a sample function",
-    tools=[web_search, code_execution]
-)
-```
-
-### Common Tools (Third-Party)
-
-```python
-from upsonic.tools.common_tools import tavily_search_tool, duckduckgo_search_tool
-
-# Tavily search (requires API key)
-tavily_search = tavily_search_tool(api_key="your-tavily-key")
-
-# DuckDuckGo search (free)
-ddg_search = duckduckgo_search_tool()
-
-task = Task(
-    description="Get current stock price for AAPL and search for recent news",
-    tools=[tavily_search, ddg_search]
-)
-```
-
-### Custom Tools
-
-```python
-from upsonic.tools import tool
-
-@tool
-def calculate_tip(bill_amount: float, tip_percentage: float = 15.0) -> str:
-    """Calculate tip amount and total bill.
-    
-    Args:
-        bill_amount: The total bill amount
-        tip_percentage: Tip percentage (default 15%)
-    
-    Returns:
-        Formatted string with tip and total
-    """
-    tip = bill_amount * (tip_percentage / 100)
-    total = bill_amount + tip
-    return f"Tip: ${tip:.2f}, Total: ${total:.2f}"
-
-@tool(requires_confirmation=True, cache_results=True)
-def send_email(to: str, subject: str, body: str) -> str:
-    """Send an email (requires confirmation).
-    
-    Args:
-        to: Recipient email address
-        subject: Email subject
-        body: Email body content
-    
-    Returns:
-        Confirmation message
-    """
-    # Your email sending logic here
-    return f"Email sent to {to}"
-
-task = Task(
-    description="Calculate tip for a $50 bill and send a thank you email",
-    tools=[calculate_tip, send_email]
-)
-```
-
-## 4. Advanced Agent Configuration
-
-```python
-agent = Agent(
-    model="openai/gpt-4o",
-    name="Advanced Assistant",
-    
-    # Agent personality
-    role="Senior Software Engineer",
-    goal="Help developers write better code",
-    instructions="Always provide code examples and best practices",
-    
-    # Advanced features
-    enable_thinking_tool=True,      # Multi-step planning
-    enable_reasoning_tool=True,     # Self-reflection
-    tool_call_limit=10,            # Max tool calls per task
-    show_tool_calls=True,          # Display tool execution
-    
-    # Memory and context
-    memory=memory_instance,        # Conversation history
-    compression_strategy="simple", # Context compression
-    
-    # Safety and reliability
-    user_policy=safety_policy,     # Input validation
-    agent_policy=output_policy,    # Output filtering
-    retry=3,                       # Retry attempts
-)
-```
-
-## 5. Tool Configuration Options
-
-```python
-@tool(
-    requires_user_input=True,      # Prompt for additional input
-    user_input_fields=['api_key'], # Fields to collect
-    show_result=True,              # Display result to user
-    stop_after_tool_call=True,     # Stop agent after this tool
-    sequential=True,               # No parallel execution
-    cache_results=True,            # Cache results
-    cache_ttl=3600,               # Cache for 1 hour
-    max_retries=3,                # Retry on failure
-    timeout=30.0                  # 30 second timeout
-)
-def advanced_tool(param: str) -> str:
-    """An advanced tool with full configuration."""
-    return f"Processed: {param}"
-```
-
-## 6. MCP (Model Context Protocol) Integration
-
-```python
-# Connect to any MCP server
-class FetchMCP:
-    command = "uvx"
-    args = ["mcp-server-fetch"]
-
-class GitHubMCP:
-    url = "https://github.com/modelcontextprotocol/servers"
-    # Additional MCP configuration
-
-task = Task(
-    description="Fetch data from GitHub and process it",
-    tools=[FetchMCP, GitHubMCP]
-)
-```
-
-## 7. Complete Example
-
-```python
-from upsonic import Task, Agent
-from upsonic.tools import tool
-from upsonic.tools.builtin_tools import WebSearchTool
+```python stock_analysis.py
+from upsonic import Agent, Task
 from upsonic.tools.common_tools import YFinanceTools
 
+agent = Agent(model="openai/gpt-4o", name="Stock Analyst Agent")
 
-# Custom tool
-@tool(cache_results=True)
-def analyze_sentiment(text: str) -> str:
-    """Analyze sentiment of given text."""
-    positive_words = ['good', 'great', 'excellent', 'amazing']
-    negative_words = ['bad', 'terrible', 'awful', 'horrible']
-    
-    text_lower = text.lower()
-    positive_count = sum(1 for word in positive_words if word in text_lower)
-    negative_count = sum(1 for word in negative_words if word in text_lower)
-    
-    if positive_count > negative_count:
-        return "Positive sentiment"
-    elif negative_count > positive_count:
-        return "Negative sentiment"
-    else:
-        return "Neutral sentiment"
+task = Task(description="Give me a summary about tesla stock with tesla car models", tools=[YFinanceTools()])
 
-# Create tools
-web_search = WebSearchTool()
-finance_tools = YFinanceTools(stock_price=True, company_news=True)
-finance_tools.enable_all_tools()
-
-# Create task
-task = Task(
-    description="Get current AAPL stock price, search for recent news, and analyze sentiment",
-    tools=[finance_tools, web_search, analyze_sentiment]
-)
-
-# Create agent
-agent = Agent(
-    model="openai/gpt-4o",
-    name="Financial Analyst",
-    role="Senior Financial Analyst",
-    enable_thinking_tool=True,
-    tool_call_limit=8
-)
-
-# Execute
-result = agent.print_do(task)
+agent.print_do(task)
 ```
 
-## 8. Key Features
+# Add Memory
 
-- **Multi-Model Support**: OpenAI, Anthropic, Google, Groq, and more
-- **Advanced Tool System**: Built-in, custom, and MCP tools
-- **Intelligent Planning**: Multi-step reasoning and orchestration
-- **Memory Management**: Conversation history and context
-- **Safety Policies**: Input/output validation and filtering
-- **Caching**: Built-in result caching for efficiency
-- **Streaming**: Real-time response streaming
-- **External Execution**: Defer tools for external processing
+Add conversational memory to your agent to remember past interactions.
 
-## 9. Next Steps
+```python with_memory.py
+from upsonic import Agent, Task
+from upsonic.storage import Memory, InMemoryStorage
 
-- Explore [Tool Configuration](https://docs.upsonic.ai/concepts/tools/custom-tools) for advanced tool behavior
-- Learn about [Memory Management](https://docs.upsonic.ai/concepts/memory) for conversation history
-- Discover [Safety Policies](https://docs.upsonic.ai/guides/3-add-a-safety-engine) for content filtering
-- Check out [MCP Integration](https://docs.upsonic.ai/concepts/tools/mcp-tools) for external tool connections
+memory = Memory(
+    storage=InMemoryStorage(),
+    session_id="session_001",
+    full_session_memory=True
+)
 
----
+agent = Agent(model="openai/gpt-4o", memory=memory)
 
-**Ready to build amazing AI agents?** Start with the basic example above and gradually add more sophisticated tools and configurations as you explore the framework!
+task1 = Task(description="My name is John")
+agent.print_do(task1)
+
+task2 = Task(description="What is my name?")
+agent.print_do(task2)  # Agent remembers: "Your name is John"
+```
+
+<a href="/concepts/memory/overview">
+<button type="button" className="px-5 flex items-center font-medium text-sm rounded-full py-2 shadow-sm text-white dark:text-gray-900 bg-primary-dark dark:bg-primary-light hover:opacity-[0.9] hover:bg-primary justify-center">
+Learn Details
+
+<svg className="size-3 ml-2 bg-white dark:bg-gray-900" style={{ maskImage:"url(\"https://mintlify.b-cdn.net/solid/arrow-right-long.svg\")",maskRepeat:"no-repeat",maskPosition:"center center" }} />
+
+</button>
+
+</a>
+
+# Add Knowledge Base
+
+Add a knowledge base to provide context and information to your agent.
+
+```python with_knowledge.py
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding
+from upsonic.vectordb import QdrantProvider
+from upsonic.vectordb.config import Config, CoreConfig, ProviderName, Mode
+
+embedding_provider = OpenAIEmbedding()
+
+config = Config(
+    core=CoreConfig(
+        provider_name=ProviderName.QDRANT,
+        mode=Mode.IN_MEMORY,
+        collection_name="my_knowledge",
+        vector_size=1536,
+        recreate_if_exists=True
+    )
+)
+vectordb = QdrantProvider(config)
+
+kb = KnowledgeBase(
+    sources=["company_policies.pdf"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb
+)
+
+agent = Agent(model="openai/gpt-4o")
+
+task = Task(
+    description="What is our company policy about remote work?",
+    context=[kb]
+)
+agent.print_do(task)
+```
+
+<a href="/concepts/knowledge-base">
+<button type="button" className="px-5 flex items-center font-medium text-sm rounded-full py-2 shadow-sm text-white dark:text-gray-900 bg-primary-dark dark:bg-primary-light hover:opacity-[0.9] hover:bg-primary justify-center">
+RAG and More
+
+<svg className="size-3 ml-2 bg-white dark:bg-gray-900" style={{ maskImage:"url(\"https://mintlify.b-cdn.net/solid/arrow-right-long.svg\")",maskRepeat:"no-repeat",maskPosition:"center center" }} />
+
+</button>
+
+</a>
+
+# Create Team
+
+Create a team of agents that work together to solve complex tasks.
+
+```python with_team.py
+from upsonic import Agent, Task, Team
+
+researcher = Agent(
+    model="openai/gpt-4o",
+    name="Researcher",
+    role="Research Specialist",
+    goal="Find accurate information and data"
+)
+
+writer = Agent(
+    model="openai/gpt-4o",
+    name="Writer",
+    role="Content Writer",
+    goal="Create clear and engaging content"
+)
+
+team = Team(agents=[researcher, writer], mode="sequential")
+
+tasks = [
+    Task(description="Research the latest developments in quantum computing"),
+    Task(description="Write a blog post about quantum computing for general audience")
+]
+
+result = team.do(tasks)
+print(result)
+```
+
+<a href="/concepts/team">
+<button type="button" className="px-5 flex items-center font-medium text-sm rounded-full py-2 shadow-sm text-white dark:text-gray-900 bg-primary-dark dark:bg-primary-light hover:opacity-[0.9] hover:bg-primary justify-center">
+Learn Details
+
+<svg className="size-3 ml-2 bg-white dark:bg-gray-900" style={{ maskImage:"url(\"https://mintlify.b-cdn.net/solid/arrow-right-long.svg\")",maskRepeat:"no-repeat",maskPosition:"center center" }} />
+
+</button>
+
+</a>
+
