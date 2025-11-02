@@ -3,6 +3,8 @@ title: "Overview"
 description: "Understanding LLM models and error handling in Upsonic"
 ---
 
+## What is LLM Model?
+
 Large Language Models (LLMs) are the foundation of the Upsonic AI Agent Framework. The framework provides a unified interface to interact with various LLM providers, allowing you to build AI agents that can leverage different models without changing your code structure.
 
 In Upsonic, all model classes inherit from the base `Model` class, which provides:
@@ -14,43 +16,32 @@ In Upsonic, all model classes inherit from the base `Model` class, which provide
 - **Structured Output**: Type-safe responses using Pydantic models
 - **Memory Management**: Built-in conversation history support
 
-Model settings control the behavior of LLM requests. All settings are optional and provider-specific settings are prefixed with the provider name (e.g., `openai_`, `anthropic_`, `google_`).
+## Examples
+
+### With Model Classes
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
-from upsonic.models.anthropic import AnthropicModel
-from upsonic.models.google import GoogleModel
-from upsonic.uel import ChatPromptTemplate
+from upsonic.models.openai import OpenAIChatModel
 
-# Direct instantiation
 model = OpenAIChatModel(model_name="gpt-4o")
 agent = Agent(model=model)
 
-task = Task("Explain quantum computing")
+task = Task("Hello, how are you?")
 result = agent.do(task)
+print(result.output)
+```
 
-# With custom settings
-settings = OpenAIChatModelSettings(
-    max_tokens=1024,
-    temperature=0.5,
-    openai_reasoning_effort="high"
-)
+### With Model as String
 
-model = OpenAIChatModel(
-    model_name="gpt-4o",
-    settings=settings
-)
+```python
+from upsonic import Agent, Task
 
-agent = Agent(model=model)
+agent = Agent(model="openai/gpt-4o")
 
-# UEL Chains
-prompt = ChatPromptTemplate.from_template("Tell me about {topic}")
-model = OpenAIChatModel(model_name="gpt-4o")
-
-# Chain composition with pipe operator
-chain = prompt | model
-result = await chain.invoke({"topic": "AI"})
+task = Task("Hello, how are you?")
+result = agent.do(task)
+print(result.output)
 ```
 
 ## Error Handling
@@ -135,4 +126,3 @@ with override_allow_model_requests(False):
     except RuntimeError as e:
         print("Model requests are disabled")
 ```
-
