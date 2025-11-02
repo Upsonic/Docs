@@ -31,19 +31,79 @@ This installs the main framework with all essential features including agents, t
   If you need to update Python, visit [python.org/downloads](https://python.org/downloads)
 </Note>
 
+## Made with Love 💚
+
+At Upsonic, we believe in giving developers choice and flexibility. That's why we've built our framework with a layered architecture—you only install what you need, when you need it.
+
+Want to build a simple agent? Just install the main library. Need RAG pipelines? Add the `rag` package. Building OCR workflows? Install `ocr`. Every feature is modular, every dependency is optional, and nothing bloats your project unnecessarily.
+
+We designed Upsonic this way because we know your time, disk space, and deployment speed matter. No forced dependencies, no unnecessary packages—just clean, efficient, developer-friendly architecture.
+
+Because we build Upsonic with love, for developers who love to build. 💚
+
 ## Optional Dependencies
 
 Depending on your use case, you may need additional packages:
 
+### RAG
+
+Install RAG dependencies for vector databases and knowledge base operations:
+
+```bash
+pip install "upsonic[rag]"
+```
+
+Use this when you need to build RAG pipelines with vector databases like Qdrant, ChromaDB, Pinecone, Weaviate, or FAISS.
+
+### Storage
+
+Install storage backends for memory and state persistence:
+
+```bash
+pip install "upsonic[storage]"
+```
+
+Use this when you need databases like PostgreSQL, MongoDB, Redis, or SQLite for memory management.
+
+### Models
+
+Install additional LLM provider integrations:
+
+```bash
+pip install "upsonic[models]"
+```
+
+Use this when you need providers like Anthropic, Google Gemini, Cohere, Groq, Mistral, or Azure OpenAI.
+
+### Embeddings
+
+Install embedding model providers:
+
+```bash
+pip install "upsonic[embeddings]"
+```
+
+Use this when you need embedding models from OpenAI, Anthropic, Google, Azure, HuggingFace, or local FastEmbed.
+
 ### Loaders
 
-Install loaders to work with various file formats in your knowledge base (PDF, CSV, Markdown, etc.):
+Install loaders to work with various file formats in your knowledge base:
 
 ```bash
 pip install "upsonic[loaders]"
 ```
 
-Use this when you need to build RAG pipelines and process documents from different sources.
+Use this when you need to process PDF, DOCX, CSV, Markdown, YAML, HTML, or other document formats.
+
+### Tools
+
+Install pre-built tools for web search and data retrieval:
+
+```bash
+pip install "upsonic[tools]"
+```
+
+Use this when you need tools like DuckDuckGo search, Tavily, Yahoo Finance, or web scraping capabilities.
 
 ### OCR
 
@@ -53,17 +113,17 @@ Install OCR capabilities to extract text from images and scanned documents:
 pip install "upsonic[ocr]"
 ```
 
-Use this when you need to process images, screenshots, or scanned documents with your agents.
+Use this when you need OCR providers like EasyOCR, PaddleOCR, Tesseract, or RapidOCR.
 
-### All Optional Dependencies
+### Web
 
-Install everything at once:
+Install web server dependencies for deploying agents as APIs:
 
 ```bash
-pip install "upsonic[all]"
+pip install "upsonic[web]"
 ```
 
-This includes loaders, OCR, and all other optional features.
+Use this when you need to deploy agents with FastAPI/Uvicorn or use Celery for background tasks.
 
 ## Verify Installation
 
