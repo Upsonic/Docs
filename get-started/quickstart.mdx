@@ -67,6 +67,10 @@ Learn Details
 
 Add a knowledge base to provide context and information to your agent.
 
+```bash
+pip install "upsonic[loaders]"
+```
+
 ```python with_knowledge.py
 from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding
@@ -78,16 +82,16 @@ embedding_provider = OpenAIEmbedding()
 config = Config(
     core=CoreConfig(
         provider_name=ProviderName.QDRANT,
-        mode=Mode.IN_MEMORY,
-        collection_name="my_knowledge",
-        vector_size=1536,
-        recreate_if_exists=True
+        mode=Mode.EMBEDDED,
+        db_path="./upsonic_vectors",
+        collection_name="upsonic_knowledge",
+        vector_size=1536
     )
 )
 vectordb = QdrantProvider(config)
 
 kb = KnowledgeBase(
-    sources=["company_policies.pdf"],
+    sources=["README.md"],
     embedding_provider=embedding_provider,
     vectordb=vectordb
 )
@@ -95,7 +99,7 @@ kb = KnowledgeBase(
 agent = Agent(model="openai/gpt-4o")
 
 task = Task(
-    description="What is our company policy about remote work?",
+    description="What is the telemetry information of the upsonic",
     context=[kb]
 )
 agent.print_do(task)
