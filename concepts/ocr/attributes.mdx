@@ -17,7 +17,7 @@ The OCR system is configured through `OCRConfig`, which provides the following a
 | `pdf_dpi` | int | `300` | DPI resolution for PDF rendering (higher = better quality, slower) |
 | `preserve_formatting` | bool | `True` | Try to preserve text formatting (line breaks, spacing) |
 
-## Configuration Example
+## Configuration Example 1
 
 ```python
 from upsonic.ocr import OCR
@@ -36,6 +36,14 @@ config = OCRConfig(
 )
 ocr = OCR(TesseractOCR, config=config)
 
+# Extract text from document
+text = ocr.get_text('document.pdf')
+print(text)
+```
+
+## Configuration Example 2
+
+```python
 # Method 2: Direct parameters
 ocr = OCR(
     TesseractOCR,
@@ -44,4 +52,8 @@ ocr = OCR(
     rotation_fix=True,
     enhance_contrast=True
 )
+
+# Extract text
+text = ocr.get_text('invoice.png')
+print(text)
 ```

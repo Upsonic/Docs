@@ -1,0 +1,43 @@
+---
+title: "Tools"
+sidebarTitle: "Overview"
+description: "Extend your AI agents with powerful tools"
+hideToc: true
+---
+
+## Overview
+
+Tools enable agents to perform actions beyond text generation. They can execute code, search the web, access APIs, and integrate with external systems to accomplish complex tasks.
+
+## Key Features
+
+- **Multiple Tool Types**: Custom, MCP, Model Provider, and Ready-to-Use tools
+- **Flexible Configuration**: Control execution behavior, caching, and retries
+- **Type Safety**: Automatic schema generation from Python type hints
+- **Parallel Execution**: Run multiple tools simultaneously for better performance
+
+## Example
+
+Create your own tools using Python functions or classes. Perfect for business logic, API integrations, and domain-specific functionality.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def calculate_discount(price: float, discount_percent: float) -> float:
+    """Calculate the final price after applying a discount."""
+    return price * (1 - discount_percent / 100)
+
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Calculate 20% discount on $100",
+    tools=[calculate_discount]
+)
+
+# Execute task
+result = agent.do(task)
+print(result)
+```
+

@@ -1,6 +1,8 @@
 ---
-title: "Overview"
+title: "OCR"
 description: "Extract text from images and PDFs with multiple OCR provider support"
+sidebarTitle: Overview
+hideToc: true
 ---
 
 ## What is Unified OCR?
@@ -14,6 +16,16 @@ The OCR class serves as a high-level orchestrator that:
 - Tracks confidence scores and bounding box detection
 - Collects performance metrics and processing statistics
 - Provides provider-specific features and optimizations
+
+<Note>
+  **OCR Installation**
+
+  ```bash
+  pip install upsonic[ocr]
+  ```
+
+  This installs Upsonic with OCR dependencies including EasyOCR, RapidOCR, Tesseract, PaddleOCR, and image processing libraries. You'll have access to all OCR providers through a unified interface without needing to configure each one separately.
+</Note>
 
 ```python
 from upsonic.ocr import OCR
@@ -59,3 +71,9 @@ print(f"Confidence: {result.confidence:.2%}")
 print(f"Pages: {result.page_count}")
 print(f"Processing time: {result.processing_time_ms:.2f}ms")
 ```
+
+---
+
+Made with Love 💚
+
+We believe that document processing should be simple and accessible to everyone. By unifying multiple OCR engines under one interface, we're giving developers the freedom to choose the best tool for their needs without rewriting code. Whether you're building an invoice processor or analyzing historical documents, we've built this with care so you can focus on what matters most - your application.

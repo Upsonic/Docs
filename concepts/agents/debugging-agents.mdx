@@ -1,0 +1,66 @@
+---
+title: "Debugging Agents"
+description: "Debug and troubleshoot agent execution"
+---
+
+## Debugging Agents
+
+Debug agents by enabling debug mode to see detailed execution information including tool calls, context processing, and model interactions.
+
+## Enable Debug Mode
+
+The simplest way to debug is enabling the `debug` flag when running a task.
+
+```python
+from upsonic import Agent, Task
+
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task("Calculate 25 * 4 and explain the steps")
+
+# Execute with debug mode
+result = agent.do(task, debug=True)
+print(result)
+```
+
+When debug mode is enabled, you'll see detailed logs including:
+- Pipeline step execution
+- Tool call information
+- Context management
+- Model request/response details
+- Cache hits/misses
+- Safety policy checks
+
+## Debug Agent Configuration
+
+You can also enable debug mode at the agent level for persistent debugging across all tasks.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+# Create a custom tool
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
+
+# Create agent with debug enabled
+agent = Agent(
+    model="openai/gpt-4o",
+    debug=True,
+    show_tool_calls=True
+)
+
+# Execute task - debug info shown automatically
+task = Task(
+    description="Use the multiply tool to calculate 15 * 8",
+    tools=[multiply]
+)
+
+result = agent.do(task)
+print(f"Result: {result}")
+```
+
+With agent-level debug mode, every execution provides detailed insights into the agent's decision-making process and tool usage.
+

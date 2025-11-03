@@ -7,25 +7,43 @@ description: "Configuration options for Direct LLM Call"
 
 The `Direct` class accepts the following attributes during initialization:
 
-| Attribute | Type | Description | Default |
-|-----------|------|-------------|---------|
-| **model** | `Union[str, Any, None]` | Model identifier (e.g., "openai/gpt-4o"), Model instance, or None | `"openai/gpt-4o"` (when None) |
-| **settings** | `Optional[ModelSettings]` | Model-specific configuration including temperature, max_tokens, etc. | `None` |
-| **profile** | `Optional[ModelProfileSpec]` | Model profile configuration for advanced customization | `None` |
-| **provider** | `Optional[Union[str, Provider]]` | Provider name or Provider instance for custom provider integration | `None` |
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `model` | Union[str, Any, None] | `"openai/gpt-4o"` | Model identifier or Model instance |
+| `settings` | ModelSettings \| None | `None` | Model-specific configuration including temperature, max_tokens, etc. |
+| `profile` | ModelProfileSpec \| None | `None` | Model profile configuration for advanced customization |
+| `provider` | Union[str, Provider] \| None | `None` | Provider name or Provider instance for custom provider integration |
 
-## Fluent Interface Methods
+## Configuration Example
 
-The Direct class provides immutable configuration methods that return new instances:
+```python
+from upsonic import Direct, Task
+from upsonic.models.settings import ModelSettings
+from pydantic import BaseModel
 
-- `with_model(model)`: Create new instance with specified model
-- `with_settings(settings)`: Create new instance with specified settings
-- `with_profile(profile)`: Create new instance with specified profile
-- `with_provider(provider)`: Create new instance with specified provider
+# Define structured output
+class ExtractedData(BaseModel):
+    company_name: str
+    tax_number: str
+    total_amount: float
 
-## Execution Methods
+# Create Direct instance with configuration
+settings = ModelSettings(temperature=0.1, max_tokens=500)
+direct = Direct(
+    model="openai/gpt-4o",
+    settings=settings
+)
 
-- `do(task, show_output=True)`: Execute task synchronously
-- `do_async(task, show_output=True)`: Execute task asynchronously
-- `print_do(task)`: Execute task synchronously with visual output
-- `print_do_async(task)`: Execute task asynchronously with visual output
+# Create task with PDF attachment
+task = Task(
+    description="Extract company name, tax number, and total amount from the invoice",
+    attachments=["invoice.pdf"],
+    response_format=ExtractedData
+)
+
+# Execute
+result = direct.do(task)
+print(f"Company: {result.company_name}")
+print(f"Tax Number: {result.tax_number}")
+print(f"Amount: ${result.total_amount}")
+```

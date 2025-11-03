@@ -15,31 +15,37 @@ The `Agent` class is the core agent implementation in Upsonic, providing a power
 
 The `Agent` can be created with minimal configuration or with extensive customization to suit your specific needs. The agent provides a robust foundation for AI-powered applications with built-in support for various advanced features.
 
-### Key Features
+## Key Features
 
 - **Memory Management**: Built-in support for session memory, user profiles, and conversation history
 - **Safety Policies**: Configurable user and agent policies for content filtering and validation
 - **Reliability Layer**: Advanced hallucination prevention and content validation
 - **Tool Integration**: Sophisticated tool processing with behavioral wrappers
 - **Thinking & Reasoning**: Optional advanced reasoning capabilities for complex tasks
+- **Multi-Model Support**: Works with OpenAI, Anthropic, Google, and others!
+- **Streaming**: Real-time response streaming for better user experience
 - **Caching**: Built-in caching system for improved performance
 - **Canvas Integration**: Support for persistent text editing and collaboration
 
-## Basic Example
-
-The simplest way to create an agent is with default settings:
+## Example
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 
-# Create agent with default settings
-agent = Agent()
+# Create an agent
+agent = Agent("openai/gpt-4o")
+
+# Create a task
+task = Task("What is 2 + 2?")
+
+# Execute the task
+result = agent.do(task)
+print(result)  # Output: 4
 ```
 
 **Warning**: When creating an agent without specifying a model, it defaults to `"openai/gpt-4o"`. Make sure you have the appropriate API key set in your environment.
 
 ## Navigation
-
 - [Creating an Agent](/concepts/agents/creating-an-agent) - Learn how to create agents with different configurations
 - [Agent Attributes](/concepts/agents/attributes) - Comprehensive guide to all agent configuration options
 - [Adding a Memory](/concepts/agents/advanced/adding-a-memory) - Set up memory management for your agents

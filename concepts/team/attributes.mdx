@@ -7,12 +7,55 @@ description: "Configuration options for the Team class"
 
 The Team class accepts the following parameters:
 
-| Parameter | Type | Default | Description |
+| Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `agents` | `list[Any]` | Required | List of Agent instances to use as team members |
-| `tasks` | `list[Task] \| None` | `None` | List of tasks to execute (optional) |
-| `model` | `Optional[Any]` | `None` | Model provider for internal agents (leader, router) |
-| `response_format` | `Any` | `str` | Response format for the final output |
-| `ask_other_team_members` | `bool` | `False` | Flag to add other agents as tools |
-| `mode` | `Literal["sequential", "coordinate", "route"]` | `"sequential"` | Operational mode for the team |
-| `memory` | `Optional[Memory]` | `None` | Shared memory for team coordination |
+| `agents` | list[Any] | (required) | List of Agent instances to use as team members |
+| `tasks` | list[Task] \| None | `None` | List of tasks to execute (optional) |
+| `model` | Any \| None | `None` | Model provider for internal agents (leader, router) |
+| `response_format` | Any | `str` | Response format for the final output |
+| `ask_other_team_members` | bool | `False` | Flag to add other agents as tools |
+| `mode` | str | `"sequential"` | Operational mode: 'sequential', 'coordinate', or 'route' |
+| `memory` | Memory \| None | `None` | Shared memory for team coordination |
+
+## Configuration Example
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic import Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
+
+# Create storage and memory
+storage = SqliteStorage("sessions", "profiles", "team_memory.db")
+memory = Memory(storage=storage, session_id="team_001")
+
+# Create specialized agents
+data_analyst = Agent(
+    "openai/gpt-4o",
+    name="DataAnalyst",
+    role="Data analysis expert"
+)
+
+report_writer = Agent(
+    "openai/gpt-4o",
+    name="ReportWriter",
+    role="Technical writer"
+)
+
+# Create team with configuration
+team = Team(
+    agents=[data_analyst, report_writer],
+    mode="coordinate",
+    memory=memory,
+    ask_other_team_members=True
+)
+
+# Define tasks
+tasks = [
+    Task("Analyze quarterly sales data"),
+    Task("Write a comprehensive report based on the analysis")
+]
+
+# Execute team
+result = team(tasks)
+print(result)
+```
