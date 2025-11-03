@@ -1,20 +1,55 @@
 ---
-title: "Overview"
+title: "Team"
 description: "Build teams of AI agents that work together"
+sidebarTitle: Overview
+hideToc: true
 ---
 
-## What is Team?
 
-The Team class is a callable class for multi-agent operations using the Upsonic client. It enables you to create teams of specialized AI agents that can work together to accomplish complex tasks that would be difficult for a single agent to handle.
+## Overview
 
-## How Team Works?
+Team enables multiple specialized agents to work together on complex tasks. Teams automatically coordinate work, share context, and combine results through different operational modes.
 
-Teams handle all the complexity automatically through several key mechanisms:
+## Key Features
 
-- **Smart Assignment** - Automatically picks the right agent for each task based on their roles and capabilities
-- **Context Sharing** - Agents receive context from previous tasks and can see what other agents have accomplished
-- **Result Combining** - Combines all outputs from multiple agents into one coherent final answer
-- **Coordination** (in coordinate mode) - A leader agent plans and delegates work strategically
-- **Routing** (in route mode) - Intelligent expert selection for specialized queries
+- **Multiple Operation Modes**: Sequential, coordinate, or route execution
+- **Smart Assignment**: Automatically picks the right agent for each task
+- **Context Sharing**: Agents receive context from previous tasks
+- **Result Combining**: Combines outputs into coherent final answer
+- **Flexible Coordination**: Leader-based planning or expert routing
+- **Shared Memory**: Optional memory sharing across team
 
-You just define your agents and tasks - the team handles the rest.
+## Example
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create specialized agents
+researcher = Agent(
+    "openai/gpt-4o",
+    name="Researcher",
+    role="Research specialist"
+)
+
+writer = Agent(
+    "openai/gpt-4o",
+    name="Writer",
+    role="Content writer"
+)
+
+# Create team
+team = Team(
+    agents=[researcher, writer],
+    mode="sequential"
+)
+
+# Create tasks
+tasks = [
+    Task("Research latest AI trends"),
+    Task("Write a blog post about the research")
+]
+
+# Execute team
+result = team(tasks)
+print(result)
+```

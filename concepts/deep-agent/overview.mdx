@@ -1,37 +1,36 @@
 ---
-title: "Overview"
+title: "Deep Agent"
 description: "Give your agents advanced capabilities for complex, multi-step tasks"
+sidebarTitle: Overview
+hideToc: true
 ---
 
-## What is Deep Agent?
+## Overview
 
-Deep Agent extends the base Agent with powerful capabilities for handling complex, multi-step tasks that require planning, file management, and task delegation. It provides:
+DeepAgent extends the base Agent with advanced capabilities for handling complex, multi-step tasks. It automatically manages todo lists, provides a virtual filesystem, and can spawn subagents for focused work.
 
-- **Planning and Todo Management** - Break down multi-step objectives into manageable todos with status tracking
-- **Virtual Filesystem** - Create, read, edit, and organize files in an isolated filesystem
-- **Subagent System** - Spawn specialized agents for focused, isolated work
-- **Automatic Completion Loop** - Ensures all todos are completed before finishing (up to 10 iterations)
-- **Persistent Memory** - Maintains context and files across complex workflows using InMemoryStorage
+## Key Features
 
-## How Deep Agent Works
+- **Planning and Todo Management**: Break down multi-step objectives with automatic status tracking
+- **Virtual Filesystem**: Create, read, edit files in an isolated environment
+- **Subagent System**: Spawn specialized agents for focused tasks
+- **Automatic Completion Loop**: Ensures all todos are completed (up to 10 iterations)
+- **Persistent Memory**: Maintains context and files across workflows
 
-Deep Agent operates with an automatic completion loop that ensures all tasks are finished:
+## Example
 
-**Before Each Task:**
-1. Sets up todo management tools (write_todos)
-2. Initializes virtual filesystem (ls, read_file, write_file, edit_file)
-3. Prepares subagent delegation system (task tool)
-4. Loads any existing state from DeepAgentState
+```python
+from upsonic import DeepAgent, Task
 
-**During Task Execution:**
-1. Agent creates todos for complex tasks using write_todos
-2. Works through todos systematically
-3. Uses virtual files to organize work
-4. Delegates to subagents when beneficial
-5. Updates todo status in real-time (pending → in_progress → completed)
+# Create a deep agent
+agent = DeepAgent("openai/gpt-4o")
 
-**After Task Execution:**
-1. Checks if all todos are completed
-2. If incomplete, creates continuation tasks automatically
-3. Repeats until all work is finished (max 10 iterations)
-4. Ensures all deliverables are created
+# Create a complex task
+task = Task(
+    description="Research Python web frameworks and create a comparison report"
+)
+
+# Execute - agent will automatically create todos and manage the workflow
+result = agent.do(task)
+print(result)
+```

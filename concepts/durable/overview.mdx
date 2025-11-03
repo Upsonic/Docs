@@ -1,57 +1,58 @@
 ---
-title: "Overview"
+title: "Durable Execution"
 description: "Build resilient AI agents with automatic state preservation and recovery"
+sidebarTitle: Overview
+hideToc: true
 ---
 
-## What is Durable Execution
 
-Durable Execution provides fault-tolerant execution for AI agents by automatically saving execution state at each pipeline step. This enables agents to recover from failures, resume from interruptions, and maintain consistency across restarts.
+## Overview
 
-The DurableExecution system manages:
+Durable Execution provides fault-tolerant execution for AI agents by automatically saving state at each step. Agents can recover from failures, resume from interruptions, and maintain consistency across restarts.
 
-- Automatic checkpoint creation after each pipeline step
-- State persistence across multiple storage backends
-- Execution recovery from the point of failure
-- Error tracking and debugging information
-- Execution history and analytics
-- Cleanup of old execution data
+## Key Features
 
-## How Durable Execution Works
+- **Automatic Checkpoints**: State saved after each pipeline step
+- **Multiple Storage Backends**: File, SQLite, Redis, or in-memory storage
+- **Automatic Recovery**: Resume from failure point
+- **Error Tracking**: Debug information preserved in checkpoints
+- **Execution History**: Analytics and monitoring
+- **Auto Cleanup**: Automatic cleanup of old execution data
 
-When an agent executes a task with durable execution enabled:
+## Example
 
-1. **Checkpoint Creation**: After each successful pipeline step, the system saves a checkpoint containing:
-   - Task state (description, configuration, response format)
-   - Execution context (messages, agent state, step information)
-   - Current step index and name
-   - Execution status (running, paused, failed, completed)
+```python
+from upsonic import Agent, Task, DurableExecution
+from upsonic.durable import FileDurableStorage
 
-2. **Failure Handling**: When a step fails:
-   - The system saves a checkpoint at the failed step with status="failed"
-   - Error details are preserved in the checkpoint
-   - Execution metadata is updated
+# Create storage
+storage = FileDurableStorage("./checkpoints")
 
-3. **Recovery**: To resume execution:
-   - Load the checkpoint from storage
-   - Reconstruct the task and execution context
-   - Retry the failed step (if status="failed") or continue from the next step
-   - Complete remaining pipeline steps
+# Create durable execution
+durable = DurableExecution(storage=storage)
 
-### Checkpoint Strategy
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Analyze quarterly financial reports",
+    durable_execution=durable
+)
 
-The system uses an **overwrite strategy** - each execution has ONE checkpoint that is continuously updated:
-
+# Execute with automatic checkpointing
+try:
+    result = agent.do(task)
+    print(result)
+except Exception as e:
+    # Resume from checkpoint
+    result = agent.continue_durable(
+        durable_execution_id=task.durable_execution_id,
+        storage=storage
+    )
+    print(result)
 ```
-Step 0 ✅ → Checkpoint: {step: 0, status: "running"}    OVERWRITE
-Step 1 ✅ → Checkpoint: {step: 1, status: "running"}    OVERWRITE
-Step 2 ✅ → Checkpoint: {step: 2, status: "running"}    OVERWRITE
-Step 3 ❌ → Checkpoint: {step: 3, status: "failed"}     OVERWRITE
-```
 
-**Status Values:**
-- **`running`**: Individual step in progress or completed successfully (intermediate state)
-- **`failed`**: Step failed with error
-- **`paused`**: Execution paused (e.g., human-in-the-loop)
-- **`completed`**: All steps finished successfully (final state)
+---
 
-Result: ONE file/record per execution_id with the latest state.
+Made with Love 💚
+
+We believe that AI agents should be reliable and resilient in production. Failures shouldn't mean starting over or losing valuable progress. With Durable Execution, we've crafted a system that respects your time and resources by automatically preserving every step of your agent's journey. When things go wrong, you can pick up right where you left off - because we understand that reliability isn't a luxury, it's a necessity.

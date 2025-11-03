@@ -1,0 +1,66 @@
+---
+title: "Running Agents"
+description: "Execute agents with different methods"
+---
+
+## Running Agents
+
+Agents can be executed using different methods depending on your needs - synchronous, asynchronous, or streaming.
+
+## Synchronous Execution
+
+The simplest way to run an agent is using the `do()` method, which executes synchronously and returns the result.
+
+```python
+from upsonic import Agent, Task
+
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task("What is the capital of France?")
+
+# Execute synchronously
+result = agent.do(task)
+print(result)  # Output: Paris
+```
+
+## Asynchronous Execution
+
+For concurrent operations or async applications, use `do_async()` which returns a coroutine.
+
+```python
+from upsonic import Agent, Task
+import asyncio
+
+async def main():
+    # Create agent and task
+    agent = Agent("openai/gpt-4o")
+    task = Task("Explain quantum computing in simple terms")
+    
+    # Execute asynchronously
+    result = await agent.do_async(task)
+    print(result)
+
+# Run async function
+asyncio.run(main())
+```
+
+## Streaming Execution
+
+For real-time output, use `stream()` to get responses as they're generated.
+
+```python
+from upsonic import Agent, Task
+
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task("Write a short poem about coding")
+    
+# Stream the output
+async with agent.stream(task) as result:
+    async for text_chunk in result.stream_output():
+        print(text_chunk, end='', flush=True)
+    print()  # New line after streaming
+
+
+```
+

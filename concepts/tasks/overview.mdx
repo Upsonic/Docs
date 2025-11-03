@@ -13,15 +13,27 @@ Detailed guide on managing and creating tasks within the Upsonic framework.
 
 In the Upsonic framework, a `Task` is a specific assignment completed by an `Agent`. Tasks provide all necessary details for execution, such as a description, tools, response format, caching options, and more, facilitating a wide range of action complexities. Tasks within Upsonic can be collaborative, requiring multiple agents to work together through context sharing and task dependencies. Tasks are executed by agents in a single-threaded manner, with each task processed sequentially. The execution flow includes task validation, context processing, tool processing, agent execution, response processing, and caching.
 
-## Basic Task Creation
+## Key Features
 
-Tasks in Upsonic are created directly in code using the `Task` class constructor. Each task can be customized with specific tools, response formats, caching options, and validation rules to meet your exact requirements.
+- **Flexible Description**: Define what needs to be done in natural language
+- **Tool Integration**: Attach specific tools the agent can use
+- **Structured Output**: Define response format using Pydantic models
+- **Context Support**: Add files, images, or other tasks as context
+- **Caching**: Built-in caching for repeated executions
+- **Guardrails**: Validate output before accepting results
+
+## Example
 
 ```python
-from upsonic import Task
+from upsonic import Agent, Task
 
-# Simple task with just a description
-task = Task(description="What is the capital of France?")
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task("Calculate the square root of 144")
+
+# Execute task
+result = agent.do(task)
+print(result)  # Output: 12
 ```
 
 ## Navigation

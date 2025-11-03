@@ -1,13 +1,50 @@
 ---
 title: "Attributes"
-description: "Configuration options for Durable Execution"
+description: "Configuration options for the Durable Execution system"
 ---
 
 ## Attributes
 
-| Attribute          | Type                        | Description                                               |
-| ------------------ | --------------------------- | --------------------------------------------------------- |
-| **storage**        | DurableExecutionStorage     | Storage backend for checkpoint persistence                |
-| **execution_id**   | str                         | Unique identifier for this execution (auto-generated)     |
-| **auto_cleanup**   | bool                        | Automatically cleanup on completion (default: True)       |
-| **debug**          | bool                        | Enable debug logging (default: False)                     |
+The Durable Execution system is configured through the `DurableExecution` class, which provides the following attributes:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `storage` | DurableExecutionStorage | (required) | Storage backend for checkpoint persistence |
+| `execution_id` | str | Auto-generated | Unique identifier for this execution |
+| `auto_cleanup` | bool | `True` | Automatically cleanup checkpoints on completion |
+| `debug` | bool | `False` | Enable debug logging |
+
+## Configuration Example
+
+```python
+from upsonic import Agent, Task, DurableExecution
+from upsonic.durable import FileDurableStorage
+
+# Create storage backend
+storage = FileDurableStorage("./durable_checkpoints")
+
+# Create durable execution
+durable = DurableExecution(
+    storage=storage,
+    auto_cleanup=False,
+    debug=True
+)
+
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Process large dataset and generate report",
+    durable_execution=durable
+)
+
+# Execute with checkpointing
+result = agent.do(task)
+print(f"Execution ID: {task.durable_execution_id}")
+print(result)
+
+# If execution fails, resume from checkpoint
+# result = agent.continue_durable(
+#     durable_execution_id=task.durable_execution_id,
+#     storage=storage
+# )
+```

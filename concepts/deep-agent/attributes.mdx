@@ -1,6 +1,6 @@
 ---
 title: "Attributes"
-description: "Configuration options for Deep Agent"
+description: "Configuration options for the DeepAgent system"
 ---
 
 ## Attributes
@@ -9,23 +9,44 @@ The DeepAgent class accepts the following initialization parameters:
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `model` | `str` or `Model` | `"openai/gpt-4o"` | Model identifier or Model instance |
-| `subagents` | `List[Agent]` | `None` | List of Agent instances to use as subagents (each must have a name) |
-| `instructions` | `str` | `None` | Additional instructions to append to system prompt |
-| `tool_call_limit` | `int` | `100` | Maximum tool calls per execution |
-| `memory` | `Memory` | Auto-created | Memory instance (auto-created with InMemoryStorage if not provided) |
-| `**kwargs` | | | Additional arguments passed to base Agent |
+| `model` | str \| Model | `"openai/gpt-4o"` | Model identifier or Model instance |
+| `subagents` | List[Agent] \| None | `None` | List of Agent instances to use as subagents (each must have a name) |
+| `instructions` | str \| None | `None` | Additional instructions to append to system prompt |
+| `tool_call_limit` | int | `100` | Maximum tool calls per execution |
+| `memory` | Memory \| None | Auto-created | Memory instance (auto-created with InMemoryStorage if not provided) |
 
-## DeepAgentState Attributes
+## Configuration Example
 
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `todos` | `List[Todo]` | List of todo items for task planning and tracking |
-| `files` | `Dict[str, str]` | Virtual filesystem mapping file paths to content |
+```python
+from upsonic import DeepAgent, Agent, Task
 
-## Todo Model
+# Create specialized subagents
+researcher = Agent(
+    "openai/gpt-4o",
+    name="researcher",
+    system_prompt="You are a research expert"
+)
 
-| Attribute | Type | Values | Description |
-|-----------|------|--------|-------------|
-| `content` | `str` | | Description of the task to complete |
-| `status` | `Literal` | `"pending"`, `"in_progress"`, `"completed"` | Current status of the task |
+writer = Agent(
+    "openai/gpt-4o",
+    name="writer",
+    system_prompt="You are a technical writer"
+)
+
+# Create deep agent with subagents
+agent = DeepAgent(
+    model="openai/gpt-4o",
+    subagents=[researcher, writer],
+    instructions="Focus on clarity and accuracy",
+    tool_call_limit=150
+)
+
+# Create task
+task = Task(
+    description="Research AI frameworks and write a comprehensive comparison"
+)
+
+# Execute
+result = agent.do(task)
+print(result)
+```

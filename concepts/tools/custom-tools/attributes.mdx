@@ -7,18 +7,20 @@ description: "Configuration options for custom tools"
 
 Custom tools support comprehensive configuration through the `@tool` decorator:
 
-- **requires_confirmation**: Require user confirmation before execution
-- **requires_user_input**: Prompt user for input during execution
-- **user_input_fields**: Specify which fields require user input
-- **external_execution**: Mark tool for external execution
-- **show_result**: Display output to user instead of sending to LLM
-- **stop_after_tool_call**: Terminate agent run after tool execution
-- **sequential**: Enforce sequential execution (no parallelization)
-- **cache_results**: Enable result caching
-- **cache_dir**: Directory for cache storage
-- **cache_ttl**: Cache time-to-live in seconds
-- **tool_hooks**: Before/after execution hooks
-- **max_retries**: Maximum retry attempts
-- **timeout**: Execution timeout in seconds
-- **strict**: Enforce strict JSON schema validation
-- **docstring_format**: Docstring parsing format ('google', 'numpy', 'sphinx', 'auto')
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `requires_confirmation` | bool | `False` | Require user confirmation before execution |
+| `requires_user_input` | bool | `False` | Prompt user for input during execution |
+| `user_input_fields` | List[str] \| None | `None` | Specify which fields require user input |
+| `external_execution` | bool | `False` | Mark tool for external execution |
+| `show_result` | bool | `False` | Display output to user instead of sending to LLM |
+| `stop_after_tool_call` | bool | `False` | Terminate agent run after tool execution |
+| `sequential` | bool | `False` | Enforce sequential execution (no parallelization) |
+| `cache_results` | bool | `False` | Enable result caching |
+| `cache_dir` | str \| None | `None` | Directory for cache storage |
+| `cache_ttl` | int \| None | `None` | Cache time-to-live in seconds |
+| `tool_hooks` | Dict \| None | `None` | Before/after execution hooks |
+| `max_retries` | int | `0` | Maximum retry attempts |
+| `timeout` | int \| None | `None` | Execution timeout in seconds |
+| `strict` | bool | `False` | Enforce strict JSON schema validation |
+| `docstring_format` | str | `"auto"` | Docstring parsing format: 'google', 'numpy', 'sphinx', 'auto' |

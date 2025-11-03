@@ -1,33 +1,61 @@
 ---
-title: "Overview"
+title: "Memory"
 description: "Give your agents memory - remember conversations and users"
+sidebarTitle: Overview
+hideToc: true
 ---
 
 ![Concepts Memory](/images/concepts-memory.png)
 
-## What is Memory?
+## Overview
 
-Memory gives your agents the ability to remember. Without memory, every conversation starts fresh - your agent doesn't remember what you talked about before or who you are. With memory, your agents can:
+Memory enables agents to remember conversations and learn about users. It maintains conversation history, creates summaries, and builds user profiles to provide context across interactions.
 
-- **Remember conversations** - Reference previous messages and maintain context
-- **Learn about users** - Understand preferences, expertise level, and communication style
-- **Improve over time** - Build a complete picture of each user across all interactions
-- **Reduce repetition** - Never ask for the same information twice
+<Note>
+  **Storage Installation**
 
-## How Memory Works
+  ```bash
+  pip install upsonic[storage]
+  ```
 
-Memory works in two phases - before and after each conversation:
+  This installs Upsonic with storage dependencies including SQLite, PostgreSQL, Redis, MongoDB, and Mem0 for memory management. These backends enable persistent conversation history, user profiles, and automatic memory management across agent sessions.
+</Note>
 
-**Before Each Conversation:**
-1. Loads the user's profile (if you're using user analysis memory)
-2. Retrieves the conversation summary (if you're using summary memory)
-3. Pulls up previous messages (if you're using conversation memory)
-4. Gives all this context to your agent automatically
+## Key Features
 
-**After Each Conversation:**
-1. Saves the new messages to history
-2. Updates the conversation summary
-3. Analyzes what the agent learned about the user
-4. Stores everything for next time
+- **Conversation History**: Remember previous messages and maintain context
+- **User Profiles**: Learn user preferences and communication style
+- **Automatic Summaries**: Generate conversation summaries
+- **Multiple Storage Backends**: SQLite, Redis, PostgreSQL, or in-memory
+- **Flexible Memory Types**: Choose full history, summaries, or user analysis
+- **Automatic Management**: Memory is saved and loaded automatically
 
-You don't have to do anything - memory handles it all automatically.
+## Example
+
+```python
+from upsonic import Agent, Task, Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
+
+# Create storage and memory
+storage = SqliteStorage("sessions", "profiles", "memory.db")
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True
+)
+
+# Create agent with memory
+agent = Agent("openai/gpt-4o", memory=memory)
+
+# First conversation
+task1 = Task("My name is Alice and I love Python")
+result1 = agent.do(task1)
+
+# Second conversation - agent remembers
+task2 = Task("What's my name and favorite language?")
+result2 = agent.do(task2)
+print(result2)  # Output: Your name is Alice and you love Python
+```
