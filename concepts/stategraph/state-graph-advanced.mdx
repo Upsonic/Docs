@@ -441,47 +441,6 @@ print(result.keys())  # Only ['response', 'timestamp']
 **Output Schema:** Filters the final state to only include specified fields.
 </Warning>
 
-## Runtime Configuration
-
-Pass runtime context to nodes:
-
-```python
-class State(TypedDict):
-    input: str
-    output: str
-
-def configurable_node(state: State, config: dict) -> dict:
-    """Node that uses runtime configuration."""
-    context = config.get("context", {})
-    
-    model_name = context.get("model", "default")
-    temperature = context.get("temperature", 0.7)
-    max_tokens = context.get("max_tokens", 100)
-    
-    # Use configuration
-    model = infer_model(model_name)
-    result = model.invoke(
-        state["input"],
-        temperature=temperature,
-        max_tokens=max_tokens
-    )
-    
-    return {"output": result}
-
-# Pass context at runtime
-result = graph.invoke(
-    {"input": "test"},
-    context={
-        "model": "openai/gpt-4o",
-        "temperature": 0.9,
-        "max_tokens": 500
-    }
-)
-```
-
-<Tip>
-Use `context` for runtime configuration like model selection, API keys, feature flags, or user preferences.
-</Tip>
 
 ## Recursion Control
 

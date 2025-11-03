@@ -430,29 +430,6 @@ graph = builder.compile()
 Parallel execution is automatic when multiple nodes have the same parent and no dependencies on each other.
 </Info>
 
-## Runtime Configuration
-
-Pass runtime context to nodes via the `context` parameter:
-
-```python
-def node_with_context(state: MyState, config: dict) -> dict:
-    context = config.get("context", {})
-    model_name = context.get("model", "default")
-    temperature = context.get("temperature", 0.7)
-    
-    # Use runtime config
-    model = infer_model(model_name)
-    return {"output": model.invoke(state["input"])}
-
-# Pass context at runtime
-result = graph.invoke(
-    initial_state,
-    context={
-        "model": "openai/gpt-4o",
-        "temperature": 0.9
-    }
-)
-```
 
 ## Best Practices
 
