@@ -44,7 +44,8 @@ memory = Memory(
     user_id="user_123",
     full_session_memory=True,
     summary_memory=True,
-    user_analysis_memory=True
+    user_analysis_memory=True,
+    model="openai/gpt-4o"  # Required for summary_memory and user_analysis_memory
 )
 
 # Create agent with memory
@@ -59,3 +60,11 @@ task2 = Task("What's my name and favorite language?")
 result2 = agent.do(task2)
 print(result2)  # Output: Your name is Alice and you love Python
 ```
+
+## Navigation
+
+- [Memory Attributes](/concepts/memory/attributes) - Comprehensive guide to all memory configuration options
+- [Choosing the Right Memory Types](/concepts/memory/choosing-right-memory-types) - Select appropriate memory types for your use case
+- [Memory Types](/concepts/memory/memory-types/conversation-memory) - Detailed guides on conversation, summary, and focus memory
+- [Storage Options](/concepts/memory/storage-options/sqlite-storage) - Configure SQLite, PostgreSQL, Redis, MongoDB, and other storage backends
+- [Basic Memory Example](/concepts/memory/examples/basic-memory-example) - Get started with memory integration

@@ -29,6 +29,8 @@ The `Agent` can be created with minimal configuration or with extensive customiz
 
 ## Example
 
+### Basic Example
+
 ```python
 from upsonic import Agent, Task
 
@@ -44,6 +46,24 @@ print(result)  # Output: 4
 ```
 
 **Warning**: When creating an agent without specifying a model, it defaults to `"openai/gpt-4o"`. Make sure you have the appropriate API key set in your environment.
+
+### Deep Agent Example
+
+```python
+from upsonic import DeepAgent, Task
+
+# Create a deep agent
+agent = DeepAgent("openai/gpt-4o")
+
+# Create a complex task
+task = Task(
+    description="Research Python web frameworks and create a comparison report"
+)
+
+# Execute - agent will automatically create todos and manage the workflow
+result = agent.do(task)
+print(result)
+```
 
 ## Navigation
 - [Creating an Agent](/concepts/agents/creating-an-agent) - Learn how to create agents with different configurations

@@ -21,12 +21,12 @@ export OPENAI_API_KEY="sk-..."
 from upsonic import Agent, Task
 from upsonic.models.openai import OpenAIResponsesModel
 
-model = OpenAIResponsesModel(model_name="o1-preview")
+model = OpenAIResponsesModel(model_name="gpt-4o-mini")
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")
 result = agent.do(task)
-print(result.output)
+print(result)
 ```
 
 ## Parameters

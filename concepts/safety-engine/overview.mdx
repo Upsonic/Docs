@@ -33,10 +33,17 @@ agent = Agent(
 
 # User input with PII
 task = Task(
-    description="My email is john.doe@example.com and phone is 555-1234"
+    description="My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
 )
 
 # Execute - PII will be anonymized in output
 result = agent.do(task)
 print(result)  # PII like email and phone will be anonymized
 ```
+
+## Navigation
+
+- [Pre-built Policies](/concepts/safety-engine/prebuilt-policies/pii-policies) - Ready-to-use policies for PII, adult content, hate speech, and more
+- [Custom Policy](/concepts/safety-engine/custom-policy/creating-policy) - Create your own safety policies with custom rules and actions
+- [Creating Rules](/concepts/safety-engine/custom-policy/creating-rule) - Define custom detection rules for content filtering
+- [Creating Actions](/concepts/safety-engine/custom-policy/creating-action) - Configure actions for policy violations
