@@ -40,7 +40,7 @@ agent = Agent(model="openai/gpt-4o")
 
 task = Task("Hello, how are you?")
 result = agent.do(task)
-print(result.output)
+print(result)
 ```
 
 ### Switching Models Easily
@@ -59,7 +59,7 @@ models = [
 for model_string in models:
     agent = Agent(model=model_string)
     result = agent.do(Task("What is AI?"))
-    print(f"{model_string}: {result.output[:100]}...")
+    print(f"{model_string}: {result[:100]}...")
 ```
 
 ### Environment-Based Configuration
