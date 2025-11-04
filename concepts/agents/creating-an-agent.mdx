@@ -1,163 +1,99 @@
 ---
-title: Creating an Agent
-sidebarTitle: Creating Agent
-description: Learn how to create agents with different configurations and capabilities
+title: Creating Agents
+sidebarTitle: Creating Agents
+description: Learn how to build Agents with Upsonic
 hideToc: false
 ---
 
-The `Agent` can be created with minimal configuration or with extensive customization to suit your specific needs. The agent provides a robust foundation for AI-powered applications with built-in support for various advanced features.
+To build effective agents, start simple -- just a model, tools, and instructions. Once that works, layer in more functionality as needed.
 
-## Basic Agent Creation
+It's also best to begin with well-defined tasks like report generation, data extraction, classification, summarization, knowledge search, and document processing. These early wins help you identify what works, validate user needs, and set the stage for advanced systems.
 
-The simplest way to create an agent is with default settings:
-
-```python
-from upsonic import Agent
-
-# Create agent with default settings
-agent = Agent()
-```
-
-**Warning**: When creating an agent without specifying a model, it defaults to `"openai/gpt-4o"`. Make sure you have the appropriate API key set in your environment.
-
-## Agent with Custom Configuration
-
-For more control over your agent's behavior, you can specify various parameters:
+Here's the simplest possible report generation agent:
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
+from upsonic.tools import tool
 
-# Create agent with custom settings for financial analysis
+@tool
+def search_web(query: str) -> str:
+    """Search the web for information about a topic."""
+    # Simulated web search - replace with actual implementation
+    return f"Search results for '{query}': Found relevant information about the topic."
+
 agent = Agent(
-    name="FinancialAnalyst",
-    model="openai/gpt-4o-mini",
-    debug=True,
-    retry=3,
-    mode="raise"
-)
-```
-
-## Agent with Company Information
-
-You can provide company context to help the agent understand your organization:
-
-```python
-agent = Agent(
-    name="BankingAgent",
-    company_url="https://fintechbank.com",
-    company_objective="To provide secure, innovative financial services",
-    company_description="A leading digital bank specializing in AI-powered financial solutions and personalized banking experiences"
-)
-```
-
-## Complete Example: Advanced Agent Configuration
-
-Here's a comprehensive example showing how to create a fully-featured agent with all capabilities:
-
-```python
-from upsonic import Agent, Task, Memory
-from upsonic.storage.providers.sqlite import SqliteStorage
-from upsonic.models.openai import OpenAIChatModel
-from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
-from upsonic.safety_engine.policies.phone_policies import AnonymizePhoneNumbersPolicy
-from upsonic.reliability_layer.reliability_layer import ReliabilityProcessor
-
-
-# Create storage and memory
-storage = SqliteStorage("sessions", "profiles", "advanced_agent.db")
-memory = Memory(
-    storage=storage,
-    session_id="advanced_session",
-    user_id="user_001",
-    full_session_memory=True,
-    summary_memory=True,
-    user_analysis_memory=True,
-    model=OpenAIChatModel("gpt-4o-mini")
+    model="openai/gpt-4o",
+    instructions="Write a report on the topic. Output only the report.",
 )
 
-# Create reliability layer
-reliability_layer = ReliabilityProcessor(confidence_threshold=0.8)
-
-# Create fully-featured banking agent
-agent = Agent(
-    # Identity
-    name="BankingRiskAnalyst",
-    agent_id_="banking_analyst_001",
-    
-    # Model and performance
-    model="openai/gpt-4o-mini",
-    retry=3,
-    mode="raise",
-    debug=True,
-    
-    # Company context
-    company_url="https://securebank.com",
-    company_objective="Providing secure, AI-powered financial services",
-    company_description="Leading digital bank with advanced risk management",
-    
-    # Professional context
-    role="Senior Financial Risk Analyst",
-    goal="To provide accurate risk assessments and regulatory compliance analysis",
-    instructions="Always follow banking regulations and provide detailed risk documentation",
-    education="Finance and Risk Management PhD",
-    work_experience="10 years in banking and financial risk analysis",
-    
-    # System configuration
-    system_prompt="You are an expert financial AI assistant with advanced risk assessment and regulatory compliance capabilities.",
-    
-    # Memory and storage
-    memory=memory,
-    feed_tool_call_results=True,
-    
-    # Safety and reliability
-    user_policy=CryptoBlockPolicy,
-    agent_policy=AnonymizePhoneNumbersPolicy,
-    reliability_layer=reliability_layer,
-    
-    # Tool configuration
-    show_tool_calls=True,
-    tool_call_limit=10,
-    enable_thinking_tool=True,
-    enable_reasoning_tool=True
-)
-
-# Create and execute a complex banking task
 task = Task(
-    description="""
-    Analyze the following banking scenario and provide strategic risk management recommendations:
-    
-    A regional bank has $100M in capital and needs to decide between:
-    1. Expanding digital banking services to new markets
-    2. Developing AI-powered fraud detection systems
-    3. Acquiring a smaller fintech startup
-    
-    Consider regulatory requirements, market conditions, competition, and risk exposure.
-    """,
-    enable_thinking_tool=True,
-    enable_reasoning_tool=True,
-    enable_cache=True,
-    cache_method="vector_search",
-    cache_threshold=0.8
+    description="Trending startups and products.",
+    tools=[search_web]
 )
 
-# Execute the task
-result = agent.print_do(task)
-
-# Check cache statistics
-print(f"Cache stats: {agent.get_cache_stats()}")
+agent.print_do(task)
 ```
 
-This comprehensive configuration demonstrates how to leverage all the major features of the Agent for sophisticated banking and fintech applications.
+## Run your Agent
 
-## Best Practices
+When running your agent, use the `Agent.print_do()` method to print the response in the terminal. This is only for development purposes and not recommended for production use. In production, use the `Agent.do()` or `Agent.do_async()` methods. For example:
 
-1. **Start Simple**: Begin with basic configuration and add features as needed for your banking use case
-2. **Monitor Performance**: Use debug mode to understand token usage and costs in financial applications
-3. **Memory Management**: Choose appropriate memory settings for customer relationship management and compliance tracking
-4. **Safety First**: Always implement appropriate safety policies for financial data and regulatory compliance
-5. **Error Handling**: Configure retry settings based on your reliability requirements for critical banking operations
-6. **Resource Management**: Be mindful of token consumption with reasoning capabilities in risk assessment scenarios
-7. **Regulatory Compliance**: Ensure all AI outputs meet banking regulations and compliance requirements
-8. **Data Security**: Implement proper data encryption and access controls for sensitive financial information
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
 
-The Agent provides a powerful foundation for building sophisticated banking and fintech applications with enterprise-grade features, regulatory compliance, and advanced risk management capabilities.
+@tool
+def search_web(query: str) -> str:
+    """Search the web for information about a topic."""
+    # Simulated web search - replace with actual implementation
+    return f"Search results for '{query}': Found relevant information about the topic."
+
+agent = Agent(
+    model="openai/gpt-4o",
+    instructions="Write a report on the topic. Output only the report.",
+)
+
+task = Task(
+    description="Trending startups and products.",
+    tools=[search_web]
+)
+
+# Run agent and return the response as a variable
+result = agent.do(task)
+
+# Print the response
+print(result)
+
+################ STREAM RESPONSE #################
+async with agent.stream(task) as result:
+    async for text_chunk in result.stream_output():
+        print(text_chunk, end='', flush=True)
+    print()  # New line after streaming
+```
+
+Next, continue building your agent by adding functionality as needed. Common questions:
+
+* **How do I run my agent?** -> See the [running agents](/concepts/agents/running-agents) documentation.
+
+* **How do I manage sessions?** -> See the [memory](/concepts/memory/overview) documentation.
+
+* **How do I manage input and capture output?** -> See the [running agents](/concepts/agents/running-agents) documentation.
+
+* **How do I add tools?** -> See the [tools](/concepts/tools/overview) documentation.
+
+* **How do I give the agent context?** -> See the [agent attributes](/concepts/agents/attributes) documentation.
+
+* **How do I add knowledge?** -> See the [knowledge base](/concepts/knowledge-base) documentation.
+
+* **How do I handle images, audio, video, and files?** -> See the [OCR](/concepts/ocr/overview) documentation.
+
+* **How do I add guardrails?** -> See the [safety engine](/concepts/safety-engine/overview) documentation.
+
+* **How do I cache model responses during development?** -> See the [task attributes](/concepts/tasks/attributes) documentation for cache configuration.
+
+## Developer Resources
+
+* View the [Agent reference](/reference/agent/agent)
+
+* View the [Agent overview](/concepts/agents/overview)
+
