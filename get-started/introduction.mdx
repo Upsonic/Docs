@@ -16,15 +16,63 @@ You are able to create complex and basic agents in one unified system. Our devel
 pip install upsonic
 ```
 
-```python
+Put your API keys into your .env file
+
+<CodeGroup>
+
+```shellscript OpenAI
+OPENAI_API_KEY=sk-***
+```
+
+
+```shellscript Anthropic
+ANTHROPIC_API_KEY=sk-***
+```
+
+
+```shellscript Ollama
+OLLAMA_BASE_URL="http://localhost:11434/v1/"
+```
+
+</CodeGroup>
+
+<CodeGroup>
+
+```python OpenAI
 from upsonic import Task, Agent
 
 task = Task("Who developed you?")
 
-agent = Agent(name="Coder")
+agent = Agent(name="Coder", model="openai/gpt-4o")
 
 agent.print_do(task)
 ```
+
+
+```python Anthropic
+
+from upsonic import Task, Agent
+
+task = Task("Who developed you?")
+
+agent = Agent(name="Coder", model="anthropic/claude-sonnet-3.5")
+
+agent.print_do(task)
+```
+
+
+```python Ollama
+
+from upsonic import Task, Agent
+
+task = Task("Who developed you?")
+
+agent = Agent(name="Coder", model="ollama/llama3.2")
+
+agent.print_do(task)
+```
+
+</CodeGroup>
 
 <a href="/get-started/quickstart">
 <button type="button" className="px-5 flex items-center font-medium text-sm rounded-full py-2 shadow-sm text-white dark:text-gray-900 bg-primary-dark dark:bg-primary-light hover:opacity-[0.9] hover:bg-primary justify-center">
@@ -37,6 +85,7 @@ Get started
 </a>
 
 <br />
+
 <br />
 
 # Upsonic AgentOS
@@ -62,10 +111,10 @@ AgentOS
 </a>
 
 <br />
+
 <br />
 
 # Upsonic: Your Complete AI Agent Infrastructure
-
 
 Together, the Upsonic Framework and AgentOS provide everything a financial institution needs to build, deploy, and manage production-grade AI agents. From development to deployment, from local testing to enterprise-scale operations, from single agents to complex multi-agent systems. Upsonic delivers the complete infrastructure for your AI agent initiatives.
 
@@ -82,6 +131,7 @@ Read More
 </a>
 
 <br />
+
 <br />
 
 # Upsonic Framework 101
@@ -97,6 +147,7 @@ See our guides to jumpstart your AI agent within minutes. We design them to onbo
 7. [Creating a Team of Agents](https://docs.upsonic.ai/guides/7-creating-a-team-of-agents)
 
 <br />
+
 <br />
 
 ## Why Upsonic?
