@@ -1,0 +1,75 @@
+---
+title: "Ollama Embeddings"
+description: "Using Ollama local embedding models with Upsonic"
+---
+
+## Overview
+
+Ollama provides local embedding models that run entirely on your machine. Supports models like nomic-embed-text, mxbai-embed-large, and snowflake-arctic-embed. No API costs and works offline. Requires an Ollama server running locally.
+
+**Provider Class:** `OllamaEmbedding`
+
+**Config Class:** `OllamaEmbeddingConfig`
+
+## Dependencies
+
+```bash
+pip install aiohttp requests
+```
+
+Requires Ollama server running locally. Install from [ollama.ai](https://ollama.ai).
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OllamaEmbedding, OllamaEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Create embedding provider
+embedding = OllamaEmbedding(OllamaEmbeddingConfig(
+    model_name="nomic-embed-text",
+    base_url="http://localhost:11434",
+    auto_pull_model=True
+))
+
+# Setup KnowledgeBase
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="ollama_docs",
+    vector_size=768,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.txt"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("What is this document about?", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `model_name` | `str` | Ollama embedding model name | `"nomic-embed-text"` | Specific |
+| `base_url` | `str` | Ollama server URL | `"http://localhost:11434"` | Specific |
+| `auto_pull_model` | `bool` | Automatically pull model if not available | `True` | Specific |
+| `keep_alive` | `str \| None` | Keep model loaded for duration | `"5m"` | Specific |
+| `temperature` | `float \| None` | Model temperature | `None` | Specific |
+| `top_p` | `float \| None` | Top-p sampling | `None` | Specific |
+| `num_ctx` | `int \| None` | Context window size | `None` | Specific |
+| `request_timeout` | `float` | Request timeout in seconds | `120.0` | Specific |
+| `connection_timeout` | `float` | Connection timeout in seconds | `10.0` | Specific |
+| `enable_keep_alive` | `bool` | Keep model loaded between requests | `True` | Specific |
+| `enable_model_preload` | `bool` | Preload model on startup | `True` | Specific |
+| `batch_size` | `int` | Batch size for document embedding | `100` | Base |
+| `max_retries` | `int` | Maximum number of retries on failure | `3` | Base |
+| `normalize_embeddings` | `bool` | Whether to normalize embeddings to unit length | `True` | Base |
+| `show_progress` | `bool` | Whether to show progress during batch operations | `True` | Base |
+

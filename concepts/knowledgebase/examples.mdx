@@ -1,0 +1,317 @@
+---
+title: "Examples"
+description: "Practical examples using KnowledgeBase with Agent and Task"
+---
+
+## Overview
+
+This page provides practical, runnable examples demonstrating how to use KnowledgeBase with Agent and Task in various scenarios.
+
+## Basic RAG Query
+
+Query a knowledge base with a simple question:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup components
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="example_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+# Create knowledge base
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="What are the main topics in the document?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Multiple Documents
+
+Process multiple documents and query across all of them:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="multi_doc_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./kb_db")
+))
+
+kb = KnowledgeBase(
+    sources=["doc1.pdf", "doc2.md", "doc3.docx"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Compare the information across all documents",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Directory Processing
+
+Process all files in a directory:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="directory_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./kb_db")
+))
+
+kb = KnowledgeBase(
+    sources=["data/"],  # Processes all supported files in directory
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Summarize the key information from all files",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Custom Loaders and Splitters
+
+Use specific loaders and splitters for better control:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import PdfLoader, PdfLoaderConfig
+from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup custom components
+loader = PdfLoader(PdfLoaderConfig())
+splitter = RecursiveChunker(RecursiveChunkingConfig(
+    chunk_size=512,
+    chunk_overlap=50
+))
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="custom_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[splitter]
+)
+
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Extract key information from the document",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Indexed Processing
+
+Use different loaders and splitters for different sources:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import PdfLoader, PdfLoaderConfig, MarkdownLoader, MarkdownLoaderConfig
+from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig, SemanticChunker, SemanticChunkingConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+
+# Different loader for each source
+loaders = [
+    PdfLoader(PdfLoaderConfig()),
+    MarkdownLoader(MarkdownLoaderConfig())
+]
+
+# Different splitter for each source
+splitters = [
+    RecursiveChunker(RecursiveChunkingConfig(chunk_size=512)),
+    SemanticChunker(SemanticChunkingConfig(
+        embedding_provider=embedding,
+        chunk_size=1024
+    ))
+]
+
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="indexed_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["manual.pdf", "guide.md"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=loaders,
+    splitters=splitters
+)
+
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="What information is available in both documents?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Async Usage
+
+Use async/await for better performance:
+
+```python
+import asyncio
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+async def main():
+    embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+    vectordb = ChromaProvider(ChromaConfig(
+        collection_name="async_kb",
+        vector_size=1536,
+        connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+    ))
+
+    kb = KnowledgeBase(
+        sources=["document.pdf"],
+        embedding_provider=embedding,
+        vectordb=vectordb
+    )
+
+    agent = Agent("openai/gpt-4o")
+    task = Task(
+        description="Summarize the document",
+        context=[kb]
+    )
+
+    result = await agent.do_async(task)
+    print(result)
+
+asyncio.run(main())
+```
+
+## Streaming Response
+
+Stream the agent's response while querying the knowledge base:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="streaming_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Explain the main concepts",
+    context=[kb]
+)
+
+async with agent.stream(task) as result:
+    async for text_chunk in result.stream_output():
+        print(text_chunk, end='', flush=True)
+    print()
+
+final_output = result.get_final_output()
+```
+
+## Multiple Knowledge Bases
+
+Query multiple knowledge bases in a single task:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+
+# Create multiple knowledge bases
+kb1 = KnowledgeBase(
+    sources=["technical_docs/"],
+    embedding_provider=embedding,
+    vectordb=ChromaProvider(ChromaConfig(
+        collection_name="tech_kb",
+        vector_size=1536,
+        connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+    ))
+)
+
+kb2 = KnowledgeBase(
+    sources=["user_guides/"],
+    embedding_provider=embedding,
+    vectordb=ChromaProvider(ChromaConfig(
+        collection_name="guides_kb",
+        vector_size=1536,
+        connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+    ))
+)
+
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Compare technical documentation with user guides",
+    context=[kb1, kb2]
+)
+
+result = agent.do(task)
+print(result)
+```
+

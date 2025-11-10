@@ -1,0 +1,78 @@
+---
+title: "YAML Loader"
+description: "Load YAML files with jq-based query system for flexible extraction"
+---
+
+## Overview
+
+YAML loader processes YAML files using jq-style queries to split documents and extract content. Supports multiple document files, metadata flattening, and flexible content synthesis modes.
+
+**Loader Class:** `YAMLLoader`
+
+**Config Class:** `YAMLLoaderConfig`
+
+## Dependencies
+
+```bash
+pip install "upsonic[loaders]"
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import YAMLLoader, YAMLLoaderConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Configure loader
+loader_config = YAMLLoaderConfig(
+    split_by_jq_query=".articles[]",
+    content_synthesis_mode="smart_text",
+    metadata_jq_queries={"author": ".author", "date": ".published"}
+)
+loader = YAMLLoader(loader_config)
+
+# Setup KnowledgeBase
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+chunker = RecursiveChunker(RecursiveChunkingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="yaml_data",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["data.yaml"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[chunker]
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("Find articles about machine learning", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `encoding` | `str \| None` | File encoding (auto-detected if None) | None | Base |
+| `error_handling` | `"ignore" \| "warn" \| "raise"` | How to handle loading errors | "warn" | Base |
+| `include_metadata` | `bool` | Whether to include file metadata | True | Base |
+| `custom_metadata` | `dict` | Additional metadata to include | {} | Base |
+| `max_file_size` | `int \| None` | Maximum file size in bytes | None | Base |
+| `skip_empty_content` | `bool` | Skip documents with empty content | True | Base |
+| `split_by_jq_query` | `str` | jq query to select document objects | "." | Specific |
+| `handle_multiple_docs` | `bool` | Process multiple documents separated by '---' | True | Specific |
+| `content_synthesis_mode` | `"canonical_yaml" \| "json" \| "smart_text"` | Content format | "canonical_yaml" | Specific |
+| `yaml_indent` | `int` | Indentation level for YAML output | 2 | Specific |
+| `json_indent` | `int \| None` | Indentation level for JSON output | 2 | Specific |
+| `flatten_metadata` | `bool` | Flatten nested structure into metadata | True | Specific |
+| `metadata_jq_queries` | `dict[str, str] \| None` | Map metadata keys to jq queries | None | Specific |
+

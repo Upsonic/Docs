@@ -1,0 +1,83 @@
+---
+title: "Google Gemini Embeddings"
+description: "Using Google Gemini embedding models with Upsonic"
+---
+
+## Overview
+
+Google Gemini provides embedding models including gemini-embedding-001, text-embedding-005, and text-multilingual-embedding-002. Supports both Gemini Developer API and Vertex AI with advanced features like safety filtering, task-specific embeddings, and configurable dimensionality.
+
+**Provider Class:** `GeminiEmbedding`
+
+**Config Class:** `GeminiEmbeddingConfig`
+
+## Dependencies
+
+```bash
+pip install google-genai
+```
+
+For Vertex AI support:
+```bash
+pip install google-auth
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import GeminiEmbedding, GeminiEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Create embedding provider (Developer API)
+embedding = GeminiEmbedding(GeminiEmbeddingConfig(
+    model_name="gemini-embedding-001",
+    task_type="RETRIEVAL_DOCUMENT"
+))
+
+# Setup KnowledgeBase
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="gemini_docs",
+    vector_size=3072,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.txt"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("What is this document about?", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `model_name` | `str` | Gemini embedding model name | `"gemini-embedding-001"` | Specific |
+| `api_key` | `str \| None` | Google AI API key (uses GOOGLE_API_KEY env var if None) | `None` | Specific |
+| `task_type` | `str` | Embedding task type (RETRIEVAL_DOCUMENT, RETRIEVAL_QUERY, etc.) | `"SEMANTIC_SIMILARITY"` | Specific |
+| `title` | `str \| None` | Optional title for context | `None` | Specific |
+| `enable_safety_filtering` | `bool` | Enable Google's safety filtering | `True` | Specific |
+| `safety_settings` | `Dict[str, str]` | Safety filtering settings | Default dict | Specific |
+| `use_vertex_ai` | `bool` | Use Vertex AI API instead of Gemini Developer API | `False` | Specific |
+| `use_google_cloud_auth` | `bool` | Use Google Cloud authentication | `False` | Specific |
+| `project_id` | `str \| None` | Google Cloud project ID | `None` | Specific |
+| `location` | `str` | Google Cloud location | `"us-central1"` | Specific |
+| `api_version` | `str` | API version to use (v1beta, v1, v1alpha) | `"v1beta"` | Specific |
+| `output_dimensionality` | `int \| None` | Output embedding dimension (128-3072) | `None` | Specific |
+| `embedding_config` | `Dict[str, Any] \| None` | Additional embedding configuration | `None` | Specific |
+| `enable_batch_processing` | `bool` | Enable batch processing optimization | `True` | Specific |
+| `enable_caching` | `bool` | Enable response caching | `False` | Specific |
+| `cache_ttl_seconds` | `int` | Cache TTL in seconds | `3600` | Specific |
+| `requests_per_minute` | `int` | Requests per minute limit | `60` | Specific |
+| `batch_size` | `int` | Batch size for document embedding | `100` | Base |
+| `max_retries` | `int` | Maximum number of retries on failure | `3` | Base |
+| `normalize_embeddings` | `bool` | Whether to normalize embeddings to unit length | `True` | Base |
+| `show_progress` | `bool` | Whether to show progress during batch operations | `True` | Base |
+

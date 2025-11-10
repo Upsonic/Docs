@@ -1,0 +1,78 @@
+---
+title: "Semantic Splitter"
+description: "Split text based on semantic topic shifts using embeddings"
+---
+
+## Overview
+
+Semantic splitter identifies boundaries by embedding sentences and finding points of high cosine distance between adjacent sentences, indicating topic changes. Uses statistical methods to determine breakpoint thresholds. Requires an embedding provider.
+
+**Splitter Class:** `SemanticChunker`
+
+**Config Class:** `SemanticChunkingConfig`
+
+## Dependencies
+
+```bash
+pip install numpy
+```
+
+Also requires an embedding provider (e.g., OpenAIEmbedding).
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import TextLoader, TextLoaderConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.text_splitter import SemanticChunker, SemanticChunkingConfig, BreakpointThresholdType
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Configure splitter with embedding provider
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+splitter_config = SemanticChunkingConfig(
+    chunk_size=512,
+    chunk_overlap=50,
+    embedding_provider=embedding,
+    breakpoint_threshold_type=BreakpointThresholdType.PERCENTILE,
+    breakpoint_threshold_amount=95.0
+)
+splitter = SemanticChunker(splitter_config)
+
+# Setup KnowledgeBase
+loader = TextLoader(TextLoaderConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="semantic_docs",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.txt"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[splitter]
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("Identify different topics", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `chunk_size` | `int` | Target size of each chunk | 1024 | Base |
+| `chunk_overlap` | `int` | Overlapping units between chunks | 200 | Base |
+| `min_chunk_size` | `int \| None` | Minimum size for a chunk | None | Base |
+| `length_function` | `Callable[[str], int]` | Function to measure text length | `len` | Base |
+| `strip_whitespace` | `bool` | Strip leading/trailing whitespace | False | Base |
+| `embedding_provider` | `EmbeddingProvider` | Required embedding provider instance | Required | Specific |
+| `breakpoint_threshold_type` | `BreakpointThresholdType` | Statistical method for breakpoints | `PERCENTILE` | Specific |
+| `breakpoint_threshold_amount` | `float` | Numeric value for threshold type | 95.0 | Specific |
+| `sentence_splitter` | `Callable[[str], list[str]]` | Function to split text into sentences | Default regex | Specific |
+

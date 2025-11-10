@@ -1,0 +1,94 @@
+---
+title: "Putting Files"
+description: "How to add documents to your KnowledgeBase"
+---
+
+## Overview
+
+KnowledgeBase accepts multiple types of sources: individual files, directories, or direct string content. It automatically detects file types and uses appropriate loaders.
+
+## Dependencies
+
+```bash
+pip install "upsonic[rag]"
+```
+
+## Examples
+
+### Single File
+
+```python
+from upsonic import KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+config = ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+)
+vectordb = ChromaProvider(config)
+
+kb = KnowledgeBase(
+    sources="document.pdf",
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+```
+
+### Multiple Files
+
+```python
+kb = KnowledgeBase(
+    sources=["doc1.pdf", "doc2.md", "doc3.docx"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+```
+
+### Directory
+
+```python
+kb = KnowledgeBase(
+    sources="data/",
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+```
+
+### Mixed Sources
+
+```python
+kb = KnowledgeBase(
+    sources=["doc1.pdf", "data/", "This is direct content text."],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+```
+
+### Using with Task
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Summarize the documents",
+    context=[kb]
+)
+
+result = agent.do(task)
+```
+
+## Supported File Types
+
+- **PDF**: `.pdf` (PyPDF, PDFPlumber, PyMuPDF)
+- **Markdown**: `.md`, `.markdown`
+- **Documents**: `.docx`
+- **Spreadsheets**: `.csv`
+- **Data**: `.json`, `.jsonl`, `.xml`, `.yaml`, `.yml`
+- **Code**: `.py`, `.js`, `.ts`, `.java`, `.c`, `.cpp`, `.h`, `.cs`, `.go`, `.rs`, `.php`, `.rb`
+- **Web**: `.html`, `.htm`, `.xhtml`, `.css`
+- **Text**: `.txt`, `.log`, `.rst`
+

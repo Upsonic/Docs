@@ -1,0 +1,91 @@
+---
+title: "Docling Loader"
+description: "Enterprise-grade document processing with advanced ML models"
+---
+
+## Overview
+
+Docling loader provides enterprise-grade document processing with support for PDF, DOCX, XLSX, PPTX, HTML, Markdown, CSV, and images. Features intelligent chunking and advanced layout understanding.
+
+**Loader Class:** `DoclingLoader`
+
+**Config Class:** `DoclingLoaderConfig`
+
+## Dependencies
+
+```bash
+pip install docling
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import DoclingLoader, DoclingLoaderConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Configure loader for semantic chunks
+loader_config = DoclingLoaderConfig(
+    extraction_mode="chunks",
+    chunker_type="hybrid",
+    ocr_enabled=True
+)
+loader = DoclingLoader(loader_config)
+
+# Setup KnowledgeBase
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+chunker = RecursiveChunker(RecursiveChunkingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="docling_docs",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["report.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[chunker]
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("Extract key insights", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `encoding` | `str \| None` | File encoding (auto-detected if None) | None | Base |
+| `error_handling` | `"ignore" \| "warn" \| "raise"` | How to handle loading errors | "warn" | Base |
+| `include_metadata` | `bool` | Whether to include file metadata | True | Base |
+| `custom_metadata` | `dict` | Additional metadata to include | {} | Base |
+| `max_file_size` | `int \| None` | Maximum file size in bytes | None | Base |
+| `skip_empty_content` | `bool` | Skip documents with empty content | True | Base |
+| `extraction_mode` | `"markdown" \| "chunks"` | Content extraction strategy | "chunks" | Specific |
+| `chunker_type` | `"hybrid" \| "hierarchical"` | Chunking algorithm (for chunks mode) | "hybrid" | Specific |
+| `allowed_formats` | `list[str] \| None` | Restrict input formats | None | Specific |
+| `markdown_image_placeholder` | `str` | Placeholder text for images | "" | Specific |
+| `ocr_enabled` | `bool` | Enable OCR for scanned documents | True | Specific |
+| `ocr_force_full_page` | `bool` | Force full-page OCR | False | Specific |
+| `ocr_backend` | `"rapidocr" \| "tesseract"` | OCR engine to use | "rapidocr" | Specific |
+| `ocr_lang` | `list[str]` | OCR languages | ["english"] | Specific |
+| `ocr_backend_engine` | `"onnxruntime" \| "openvino" \| "paddle" \| "torch"` | Backend engine for RapidOCR | "onnxruntime" | Specific |
+| `ocr_text_score` | `float` | Minimum confidence score (0.0-1.0) | 0.5 | Specific |
+| `enable_table_structure` | `bool` | Enable table structure detection | True | Specific |
+| `table_structure_cell_matching` | `bool` | Enable cell-level matching | True | Specific |
+| `max_pages` | `int \| None` | Maximum pages to process | None | Specific |
+| `page_range` | `tuple[int, int] \| None` | Page range to process (start, end) | None | Specific |
+| `parallel_processing` | `bool` | Enable parallel processing | True | Specific |
+| `batch_size` | `int` | Batch size for parallel processing (1-100) | 10 | Specific |
+| `extract_document_metadata` | `bool` | Extract document properties | True | Specific |
+| `confidence_threshold` | `float` | Minimum confidence for chunks (0.0-1.0) | 0.5 | Specific |
+| `support_urls` | `bool` | Allow loading from URLs | True | Specific |
+| `url_timeout` | `int` | Timeout for URL downloads (seconds) | 30 | Specific |
+

@@ -1,0 +1,73 @@
+---
+title: "Use as Context Manager"
+description: "Using Chat as an async context manager"
+---
+
+## Use as Context Manager
+
+Chat implements async context manager protocol for automatic resource cleanup.
+
+## Basic Usage
+
+```python
+from upsonic import Agent, Chat
+
+agent = Agent("openai/gpt-4o")
+
+async with Chat(session_id="session1", user_id="user1", agent=agent) as chat:
+    response = await chat.invoke("Hello")
+    print(response)
+    # Storage connection automatically closed on exit
+```
+
+## With Custom Storage
+
+```python
+from upsonic import Agent, Chat
+from upsonic.storage.providers import SqliteStorage
+
+storage = SqliteStorage("sessions", "profiles", "chat.db")
+agent = Agent("openai/gpt-4o")
+
+async with Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    storage=storage
+) as chat:
+    response = await chat.invoke("Hello")
+    print(response)
+    # Storage automatically disconnected
+```
+
+## Error Handling with Context Manager
+
+```python
+from upsonic import Agent, Chat
+
+agent = Agent("openai/gpt-4o")
+
+try:
+    async with Chat(session_id="session1", user_id="user1", agent=agent) as chat:
+        response = await chat.invoke("Hello")
+        print(response)
+except Exception as e:
+    print(f"Error: {e}")
+    # Resources still cleaned up automatically
+```
+
+## Multiple Sessions
+
+```python
+from upsonic import Agent, Chat
+
+agent = Agent("openai/gpt-4o")
+
+async with Chat(session_id="session1", user_id="user1", agent=agent) as chat1:
+    await chat1.invoke("Hello")
+
+async with Chat(session_id="session2", user_id="user1", agent=agent) as chat2:
+    await chat2.invoke("Hi")
+    # Each session manages its own resources
+```
+

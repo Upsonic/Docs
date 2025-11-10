@@ -1,0 +1,211 @@
+---
+title: "Custom Storage Backend"
+description: "Using custom storage backends with Chat"
+---
+
+## Custom Storage Backend
+
+Chat supports multiple storage backends for persistent memory and session data.
+
+## Available Storage Providers
+
+- **InMemoryStorage**: Ephemeral in-memory storage (default)
+- **SqliteStorage**: SQLite database for local persistence
+- **PostgresStorage**: PostgreSQL for production
+- **MongoStorage**: MongoDB for scalable deployments
+- **RedisStorage**: Redis for high-performance caching
+- **JSONStorage**: File-based JSON storage
+- **Mem0Storage**: Mem0 platform for advanced memory management
+
+## Using SQLite Storage
+
+```python
+from upsonic import Agent, Chat
+from upsonic.storage.providers import SqliteStorage
+
+# SQLite storage (sessions_table_name, profiles_table_name, db_file)
+storage = SqliteStorage("sessions", "profiles", "chat.db")
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    storage=storage
+)
+
+await chat.invoke("Hello")
+```
+
+## Using PostgreSQL Storage
+
+```python
+from upsonic import Agent, Chat
+from upsonic.storage.providers import PostgresStorage
+
+# PostgreSQL storage
+storage = PostgresStorage(
+    sessions_table_name="sessions",
+    profiles_table_name="profiles",
+    db_url="postgresql://user:pass@localhost:5432/dbname",
+    schema="public"
+)
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    storage=storage
+)
+```
+
+## Using MongoDB Storage
+
+```python
+from upsonic import Agent, Chat
+from upsonic.storage.providers import MongoStorage
+
+# MongoDB storage
+storage = MongoStorage(
+    db_url="mongodb://localhost:27017",
+    database_name="chat_db",
+    sessions_collection_name="sessions",
+    profiles_collection_name="profiles"
+)
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    storage=storage
+)
+```
+
+## Using Redis Storage
+
+```python
+from upsonic import Agent, Chat
+from upsonic.storage.providers import RedisStorage
+
+# Redis storage with TTL
+storage = RedisStorage(
+    prefix="chat",
+    host="localhost",
+    port=6379,
+    expire=3600  # 1 hour TTL
+)
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    storage=storage
+)
+```
+
+## Using JSON Storage
+
+```python
+from upsonic import Agent, Chat
+from upsonic.storage.providers import JSONStorage
+
+# JSON file-based storage
+storage = JSONStorage(
+    directory_path="./chat_data",
+    pretty_print=True
+)
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    storage=storage
+)
+```
+
+## Using Mem0 Storage
+
+```python
+from upsonic import Agent, Chat
+from upsonic.storage.providers import Mem0Storage
+
+# Mem0 Platform storage
+storage = Mem0Storage(
+    api_key="your-api-key",
+    org_id="your-org-id",
+    project_id="your-project-id",
+    namespace="upsonic"
+)
+
+# Or Mem0 Open Source
+storage = Mem0Storage(
+    local_config={"vector_store": {"provider": "chroma"}},
+    namespace="upsonic"
+)
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    storage=storage
+)
+```
+
+## Using In-Memory Storage
+
+```python
+from upsonic import Agent, Chat
+from upsonic.storage.providers import InMemoryStorage
+
+# In-memory storage with LRU cache limits
+storage = InMemoryStorage(
+    max_sessions=1000,
+    max_profiles=100
+)
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    storage=storage
+)
+```
+
+## Storage Connection Management
+
+Chat automatically manages storage connections:
+
+```python
+from upsonic import Agent, Chat
+from upsonic.storage.providers import SqliteStorage
+
+storage = SqliteStorage("sessions", "profiles", "chat.db")
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    storage=storage
+)
+
+# Storage connection managed automatically
+await chat.invoke("Hello")
+
+# Close connection when done
+await chat.close()
+```
+

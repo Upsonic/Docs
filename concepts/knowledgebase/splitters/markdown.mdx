@@ -1,0 +1,74 @@
+---
+title: "Markdown Splitter"
+description: "Split Markdown documents using syntax-aware structural boundaries"
+---
+
+## Overview
+
+Markdown splitter parses Markdown syntax to identify structural boundaries like headers, code blocks, tables, and lists. Segments content by semantic blocks and preserves document hierarchy through header tracking.
+
+**Splitter Class:** `MarkdownChunker`
+
+**Config Class:** `MarkdownChunkingConfig`
+
+## Dependencies
+
+No additional dependencies required. Uses standard library.
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import MarkdownLoader, MarkdownLoaderConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.text_splitter import MarkdownChunker, MarkdownChunkingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Configure splitter
+splitter_config = MarkdownChunkingConfig(
+    chunk_size=512,
+    chunk_overlap=50,
+    split_on_elements=["h1", "h2", "h3"],
+    preserve_whole_elements=["code_block", "table"]
+)
+splitter = MarkdownChunker(splitter_config)
+
+# Setup KnowledgeBase
+loader = MarkdownLoader(MarkdownLoaderConfig())
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="markdown_docs",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.md"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[splitter]
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("Extract all code examples", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `chunk_size` | `int` | Target size of each chunk | 1024 | Base |
+| `chunk_overlap` | `int` | Overlapping units between chunks | 200 | Base |
+| `min_chunk_size` | `int \| None` | Minimum size for a chunk | None | Base |
+| `length_function` | `Callable[[str], int]` | Function to measure text length | `len` | Base |
+| `strip_whitespace` | `bool` | Strip leading/trailing whitespace | False | Base |
+| `split_on_elements` | `list[str]` | Elements that signify boundaries | `["h1", "h2", "h3", "code_block", "table", "horizontal_rule"]` | Specific |
+| `preserve_whole_elements` | `list[str]` | Indivisible element types | `["code_block", "table"]` | Specific |
+| `strip_elements` | `bool` | Strip Markdown syntax characters | True | Specific |
+| `preserve_original_content` | `bool` | Preserve original markdown content | False | Specific |
+| `text_chunker_to_use` | `BaseChunker` | Chunker for oversized blocks | RecursiveChunker | Specific |
+

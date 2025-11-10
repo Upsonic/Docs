@@ -1,0 +1,77 @@
+---
+title: "Weaviate"
+description: "Using Weaviate as a vector database provider"
+---
+
+## Overview
+
+Weaviate is an open-source vector database with a GraphQL API. It supports embedded, local, and cloud deployments with schema-based collections and module configurations.
+
+**Provider Class:** `WeaviateProvider`  
+**Config Class:** `WeaviateConfig`
+
+## Dependencies
+
+```bash
+pip install "upsonic[rag]"
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings.openai_provider import OpenAIEmbeddingProvider
+from upsonic.vectordb import WeaviateProvider, WeaviateConfig, ConnectionConfig, Mode, HNSWIndexConfig
+
+# Setup embedding provider
+embedding = OpenAIEmbeddingProvider(api_key="your-api-key")
+
+# Embedded mode
+config = WeaviateConfig(
+    collection_name="my_collection",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./weaviate_db"),
+    index=HNSWIndexConfig(m=16, ef_construction=200)
+)
+vectordb = WeaviateProvider(config)
+
+# Create knowledge base
+kb = KnowledgeBase(
+    sources="document.pdf",
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Query the documents",
+    context=[kb]
+)
+result = agent.do(task)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `collection_name` | `str` | Name of the collection | `"default_collection"` | Base |
+| `vector_size` | `int` | Dimension of vectors | Required | Base |
+| `distance_metric` | `DistanceMetric` | Similarity metric (`COSINE`, `EUCLIDEAN`, `DOT_PRODUCT`) | `COSINE` | Base |
+| `recreate_if_exists` | `bool` | Recreate collection if it exists | `False` | Base |
+| `default_top_k` | `int` | Default number of results | `10` | Base |
+| `default_similarity_threshold` | `Optional[float]` | Minimum similarity score | `None` | Base |
+| `connection` | `ConnectionConfig` | Connection configuration | Required | Specific |
+| `index` | `Union[HNSWIndexConfig, FlatIndexConfig]` | Index type configuration | `HNSWIndexConfig()` | Specific |
+| `description` | `Optional[str]` | Collection description | `None` | Specific |
+| `namespace` | `Optional[str]` | Tenant name for multi-tenancy | `None` | Specific |
+| `multi_tenancy_enabled` | `bool` | Enable multi-tenancy | `False` | Specific |
+| `properties` | `Optional[List[Dict[str, Any]]]` | Schema properties | `None` | Specific |
+| `references` | `Optional[List[Dict[str, Any]]]` | Cross-references to other collections | `None` | Specific |
+| `inverted_index_config` | `Optional[Dict[str, Any]]` | Inverted index configuration | `None` | Specific |
+| `replication_config` | `Optional[Dict[str, Any]]` | Replication configuration | `None` | Specific |
+| `sharding_config` | `Optional[Dict[str, Any]]` | Sharding configuration | `None` | Specific |
+| `generative_config` | `Optional[Dict[str, Any]]` | Generative AI module configuration | `None` | Specific |
+| `reranker_config` | `Optional[Dict[str, Any]]` | Reranker module configuration | `None` | Specific |
+| `api_keys` | `Optional[Dict[str, str]]` | API keys for AI modules | `None` | Specific |
+

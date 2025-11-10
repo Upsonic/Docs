@@ -1,0 +1,86 @@
+---
+title: "Agentic Splitter"
+description: "Split documents using AI agents for cognitive processing"
+---
+
+## Overview
+
+Agentic splitter uses AI agents to extract atomic propositions, group them into coherent topics, and create semantically meaningful chunks. Features comprehensive caching, quality validation, error handling with fallbacks, and rich metadata enrichment.
+
+**Splitter Class:** `AgenticChunker`
+
+**Config Class:** `AgenticChunkingConfig`
+
+## Dependencies
+
+Requires a pre-configured Agent instance for cognitive processing.
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import TextLoader, TextLoaderConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.text_splitter import AgenticChunker, AgenticChunkingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Create agent for cognitive processing
+agent = Agent("openai/gpt-4o")
+
+# Configure splitter
+splitter_config = AgenticChunkingConfig(
+    chunk_size=512,
+    chunk_overlap=50,
+    max_agent_retries=3,
+    enable_proposition_caching=True
+)
+splitter = AgenticChunker(agent, splitter_config)
+
+# Setup KnowledgeBase
+loader = TextLoader(TextLoaderConfig())
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="agentic_docs",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.txt"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[splitter]
+)
+
+# Query with Agent
+query_agent = Agent("openai/gpt-4o")
+task = Task("What are the main propositions?", context=[kb])
+result = query_agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `chunk_size` | `int` | Target size of each chunk | 1024 | Base |
+| `chunk_overlap` | `int` | Overlapping units between chunks | 200 | Base |
+| `min_chunk_size` | `int \| None` | Minimum size for a chunk | None | Base |
+| `length_function` | `Callable[[str], int]` | Function to measure text length | `len` | Base |
+| `strip_whitespace` | `bool` | Strip leading/trailing whitespace | False | Base |
+| `max_agent_retries` | `int` | Maximum retries for agent calls | 3 | Specific |
+| `min_proposition_length` | `int` | Minimum length for valid propositions | 20 | Specific |
+| `max_propositions_per_chunk` | `int` | Maximum propositions in a chunk | 15 | Specific |
+| `min_propositions_per_chunk` | `int` | Minimum propositions to form a chunk | 3 | Specific |
+| `enable_proposition_caching` | `bool` | Cache proposition extraction results | True | Specific |
+| `enable_topic_caching` | `bool` | Cache topic assignment results | True | Specific |
+| `enable_refinement_caching` | `bool` | Cache topic refinement results | True | Specific |
+| `enable_proposition_validation` | `bool` | Validate proposition quality | True | Specific |
+| `enable_topic_optimization` | `bool` | Optimize topic assignments | True | Specific |
+| `enable_coherence_scoring` | `bool` | Score chunk coherence | True | Specific |
+| `fallback_to_recursive` | `bool` | Fallback to recursive chunking on failure | True | Specific |
+| `include_proposition_metadata` | `bool` | Include proposition-level metadata | True | Specific |
+| `include_topic_scores` | `bool` | Include topic coherence scores | True | Specific |
+| `include_agent_metadata` | `bool` | Include agent processing metadata | True | Specific |
+

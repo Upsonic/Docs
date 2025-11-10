@@ -1,0 +1,93 @@
+---
+title: "Memory Management Strategies"
+description: "Advanced memory configuration and optimization"
+---
+
+## Memory Management Strategies
+
+Configure memory behavior for optimal performance and cost.
+
+## Limiting Message History
+
+```python
+from upsonic import Agent, Chat
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    num_last_messages=20  # Only keep last 20 messages in context
+)
+```
+
+## Memory with Summarization
+
+```python
+from upsonic import Agent, Chat
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    full_session_memory=True,
+    summary_memory=True  # Automatically summarize long conversations
+)
+```
+
+## Tool Call Results in Memory
+
+```python
+from upsonic import Agent, Chat
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    feed_tool_call_results=True  # Include tool execution results in memory
+)
+```
+
+## User Profile Management
+
+```python
+from upsonic import Agent, Chat
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    user_analysis_memory=True,
+    user_memory_mode="update"  # Incrementally update profiles
+)
+```
+
+## Dynamic Profile Schema
+
+```python
+from upsonic import Agent, Chat
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    dynamic_user_profile=True  # Generate profile schema automatically
+)
+```
+
+## Memory Optimization Tips
+
+1. Use `num_last_messages` to limit context size
+2. Enable `summary_memory` for long conversations
+3. Use `user_memory_mode="update"` for incremental profiles
+4. Disable `feed_tool_call_results` if tool outputs are large
+

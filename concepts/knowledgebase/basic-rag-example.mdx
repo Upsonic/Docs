@@ -1,0 +1,182 @@
+---
+title: "Basic RAG Example"
+description: "A complete example of building a RAG system with KnowledgeBase"
+---
+
+## Overview
+
+This guide demonstrates how to build a complete Retrieval-Augmented Generation (RAG) system using KnowledgeBase, Agent, and Task.
+
+## Complete Example
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Step 1: Setup embedding provider
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig(
+    model_name="text-embedding-3-small"
+))
+
+# Step 2: Setup vector database
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_rag_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(
+        mode=Mode.EMBEDDED,
+        db_path="./rag_database"
+    )
+))
+
+# Step 3: Create knowledge base with documents
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Step 4: Create agent
+agent = Agent("openai/gpt-4o")
+
+# Step 5: Create task with knowledge base context
+task = Task(
+    description="What are the main topics discussed in the document?",
+    context=[kb]
+)
+
+# Step 6: Execute and get results
+result = agent.do(task)
+print(result)
+```
+
+## Step-by-Step Explanation
+
+### 1. Setup Embedding Provider
+
+The embedding provider converts text into vector representations for semantic search.
+
+```python
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig(
+    model_name="text-embedding-3-small"
+))
+```
+
+### 2. Setup Vector Database
+
+The vector database stores the embedded documents for fast similarity search.
+
+```python
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_rag_kb",
+    vector_size=1536,  # Must match embedding model dimension
+    connection=ConnectionConfig(
+        mode=Mode.EMBEDDED,
+        db_path="./rag_database"
+    )
+))
+```
+
+### 3. Create Knowledge Base
+
+KnowledgeBase automatically processes documents, creates chunks, generates embeddings, and stores them.
+
+```python
+from upsonic import KnowledgeBase
+
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+```
+
+### 4. Create Agent
+
+Create an agent that will use the knowledge base to answer questions.
+
+```python
+from upsonic import Agent
+
+agent = Agent("openai/gpt-4o")
+```
+
+### 5. Create Task with Context
+
+Pass the knowledge base as context to the task. The agent will automatically query it.
+
+```python
+from upsonic import Task
+
+task = Task(
+    description="What are the main topics discussed in the document?",
+    context=[kb]
+)
+```
+
+### 6. Execute Task
+
+Execute the task to get the answer with RAG context.
+
+```python
+result = agent.do(task)
+print(result)
+```
+
+## Async Version
+
+For better performance, use async/await:
+
+```python
+import asyncio
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+async def main():
+    embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+    vectordb = ChromaProvider(ChromaConfig(
+        collection_name="my_rag_kb",
+        vector_size=1536,
+        connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+    ))
+
+    kb = KnowledgeBase(
+        sources=["document.pdf"],
+        embedding_provider=embedding,
+        vectordb=vectordb
+    )
+
+    agent = Agent("openai/gpt-4o")
+    task = Task(
+        description="What are the main topics discussed in the document?",
+        context=[kb]
+    )
+
+    result = await agent.do_async(task)
+    print(result)
+
+asyncio.run(main())
+```
+
+## What Happens Behind the Scenes
+
+1. **Document Loading**: KnowledgeBase detects the file type and loads the PDF
+2. **Text Chunking**: The document is split into smaller chunks for better retrieval
+3. **Embedding Generation**: Each chunk is converted to a vector embedding
+4. **Vector Storage**: Embeddings are stored in the vector database
+5. **Query Processing**: When you ask a question, it's embedded and matched against stored chunks
+6. **Context Retrieval**: The most relevant chunks are retrieved
+7. **Response Generation**: The agent uses the retrieved context to generate an answer
+
+## Next Steps
+
+- Learn about [advanced features](/knowledgebase/advanced) like indexed processing
+- Explore [different examples](/knowledgebase/examples) for various use cases
+- Check [storage providers](/knowledgebase/storage-providers/chroma) for other vector databases
+- See [embedding providers](/knowledgebase/embedding-providers/openai) for other embedding models
+

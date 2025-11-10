@@ -1,0 +1,63 @@
+---
+title: "Attributes"
+description: "Configuration options for the KnowledgeBase"
+---
+
+## Attributes
+
+The KnowledgeBase system is configured through the `KnowledgeBase` class, which provides the following attributes:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sources` | `Union[str, Path, List[Union[str, Path]]]` | (required) | File paths, directory paths, or string content to process |
+| `embedding_provider` | `EmbeddingProvider` | (required) | Provider instance for creating vector embeddings |
+| `vectordb` | `BaseVectorDBProvider` | (required) | Vector database provider instance for storage |
+| `splitters` | `Union[BaseChunker, List[BaseChunker]] \| None` | `None` | Text chunking strategies (auto-detected if None) |
+| `loaders` | `Union[BaseLoader, List[BaseLoader]] \| None` | `None` | Document loaders for different file types (auto-detected if None) |
+| `name` | `str \| None` | `None` | Human-readable name for the knowledge base (auto-generated if None) |
+| `use_case` | `str` | `"rag_retrieval"` | Use case for chunking optimization |
+| `quality_preference` | `str` | `"balanced"` | Speed vs quality preference: `"fast"`, `"balanced"`, or `"quality"` |
+| `loader_config` | `Dict[str, Any] \| None` | `None` | Configuration options specifically for loaders |
+| `splitter_config` | `Dict[str, Any] \| None` | `None` | Configuration options specifically for splitters |
+
+## Configuration Example
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup embedding provider
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+
+# Setup vector database
+config = ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+)
+vectordb = ChromaProvider(config)
+
+# Create knowledge base with configuration
+kb = KnowledgeBase(
+    sources=["document.pdf", "data/"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    name="my_custom_kb",
+    use_case="rag_retrieval",
+    quality_preference="balanced",
+    loader_config={"chunk_size": 1000},
+    splitter_config={"chunk_overlap": 200}
+)
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="What are the main topics in the documents?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+

@@ -1,0 +1,66 @@
+---
+title: "KnowledgeBase"
+sidebarTitle: "Overview"
+description: "Build intelligent RAG systems with vector databases"
+hideToc: true
+---
+
+## Overview
+
+KnowledgeBase enables you to build Retrieval-Augmented Generation (RAG) systems by automatically processing documents, creating embeddings, and storing them in vector databases. It integrates seamlessly with Agent and Task to provide relevant context for AI-powered queries.
+
+## Key Features
+
+- **Automatic Processing**: Loads documents, chunks text, creates embeddings, and stores in vector databases
+- **Multiple Formats**: Supports PDFs, Markdown, DOCX, CSV, JSON, HTML, and more
+- **Intelligent Chunking**: Auto-detects optimal text splitting strategies
+- **Flexible Storage**: Works with Chroma, Milvus, Qdrant, Pinecone, Weaviate, FAISS, and PGVector
+- **Hybrid Search**: Combines dense vector search with full-text search for better results
+
+## Example
+
+Create a KnowledgeBase from documents and use it with an Agent:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup embedding provider
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+
+# Setup vector database
+config = ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+)
+vectordb = ChromaProvider(config)
+
+# Create knowledge base
+kb = KnowledgeBase(
+    sources=["document.pdf", "data/"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="What are the main topics in the documents?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Navigation
+
+- [Attributes](/knowledgebase/attributes) - Configuration options for KnowledgeBase
+- [Putting Files](/knowledgebase/putting-files) - How to add documents to your knowledge base
+- [Storage Providers](/knowledgebase/storage-providers/chroma) - Vector database providers
+- [Embedding Providers](/knowledgebase/embedding-providers/openai) - Embedding model providers
+- [Splitters](/knowledgebase/splitters/recursive) - Text chunking strategies
+- [Loaders](/knowledgebase/loaders/pypdf) - Document loading strategies
+

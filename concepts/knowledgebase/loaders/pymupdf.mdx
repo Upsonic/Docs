@@ -1,0 +1,90 @@
+---
+title: "PyMuPDF Loader"
+description: "Load PDF documents using PyMuPDF for high performance"
+---
+
+## Overview
+
+PyMuPDF loader provides high-performance PDF processing with advanced features like structured text extraction, image handling, and annotation extraction. Ideal for large-scale document processing.
+
+**Loader Class:** `PyMuPDFLoader`
+
+**Config Class:** `PyMuPDFLoaderConfig`
+
+## Dependencies
+
+```bash
+pip install "upsonic[loaders]"
+```
+
+For OCR functionality:
+```bash
+pip install rapidocr-onnxruntime
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import PyMuPDFLoader, PyMuPDFLoaderConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Configure loader
+loader_config = PyMuPDFLoaderConfig(
+    extraction_mode="hybrid",
+    text_extraction_method="dict",
+    preserve_layout=True
+)
+loader = PyMuPDFLoader(loader_config)
+
+# Setup KnowledgeBase
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+chunker = RecursiveChunker(RecursiveChunkingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="pymupdf_docs",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[chunker]
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("Summarize the document", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `encoding` | `str \| None` | File encoding (auto-detected if None) | None | Base |
+| `error_handling` | `"ignore" \| "warn" \| "raise"` | How to handle loading errors | "warn" | Base |
+| `include_metadata` | `bool` | Whether to include file metadata | True | Base |
+| `custom_metadata` | `dict` | Additional metadata to include | {} | Base |
+| `max_file_size` | `int \| None` | Maximum file size in bytes | None | Base |
+| `skip_empty_content` | `bool` | Skip documents with empty content | True | Base |
+| `extraction_mode` | `"hybrid" \| "text_only" \| "ocr_only"` | Content extraction strategy | "hybrid" | Specific |
+| `start_page` | `int \| None` | First page to process (1-indexed) | None | Specific |
+| `end_page` | `int \| None` | Last page to process (inclusive) | None | Specific |
+| `clean_page_numbers` | `bool` | Remove page numbers from headers/footers | True | Specific |
+| `page_num_start_format` | `str \| None` | Format string for page start markers | None | Specific |
+| `page_num_end_format` | `str \| None` | Format string for page end markers | None | Specific |
+| `extra_whitespace_removal` | `bool` | Normalize whitespace | True | Specific |
+| `pdf_password` | `str \| None` | Password for encrypted PDFs | None | Specific |
+| `text_extraction_method` | `"text" \| "dict" \| "html" \| "xml"` | Text extraction method | "text" | Specific |
+| `include_images` | `bool` | Extract and include image information | False | Specific |
+| `image_dpi` | `int` | DPI for image rendering (72-600) | 150 | Specific |
+| `preserve_layout` | `bool` | Preserve text layout and positioning | True | Specific |
+| `extract_annotations` | `bool` | Extract annotations and comments | False | Specific |
+| `annotation_format` | `"text" \| "json"` | Format for extracted annotations | "text" | Specific |
+
