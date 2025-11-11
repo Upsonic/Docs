@@ -1,0 +1,75 @@
+---
+title: "DOCX Loader"
+description: "Load Microsoft Word documents with table and formatting support"
+---
+
+## Overview
+
+DOCX loader extracts content from Microsoft Word documents (.docx). Supports extraction of text, tables, headers, and footers with flexible formatting options.
+
+**Loader Class:** `DOCXLoader`
+
+**Config Class:** `DOCXLoaderConfig`
+
+## Dependencies
+
+```bash
+pip install "upsonic[loaders]"
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import DOCXLoader, DOCXLoaderConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Configure loader
+loader_config = DOCXLoaderConfig(
+    include_tables=True,
+    include_headers=True,
+    table_format="markdown"
+)
+loader = DOCXLoader(loader_config)
+
+# Setup KnowledgeBase
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+chunker = RecursiveChunker(RecursiveChunkingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="docx_docs",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.docx"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[chunker]
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("Extract key points from the document", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `encoding` | `str \| None` | File encoding (auto-detected if None) | None | Base |
+| `error_handling` | `"ignore" \| "warn" \| "raise"` | How to handle loading errors | "warn" | Base |
+| `include_metadata` | `bool` | Whether to include file metadata | True | Base |
+| `custom_metadata` | `dict` | Additional metadata to include | {} | Base |
+| `max_file_size` | `int \| None` | Maximum file size in bytes | None | Base |
+| `skip_empty_content` | `bool` | Skip documents with empty content | True | Base |
+| `include_tables` | `bool` | Include table content | True | Specific |
+| `include_headers` | `bool` | Include header content | True | Specific |
+| `include_footers` | `bool` | Include footer content | True | Specific |
+| `table_format` | `"text" \| "markdown" \| "html"` | How to format tables | "text" | Specific |
+

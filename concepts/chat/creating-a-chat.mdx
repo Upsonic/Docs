@@ -1,0 +1,85 @@
+---
+title: "Creating a Chat"
+description: "How to initialize and configure a Chat session"
+---
+
+## Creating a Chat
+
+A Chat session requires an Agent and session/user identifiers. Optionally configure memory, storage, and retry settings.
+
+## Basic Creation
+
+```python
+from upsonic import Agent, Chat
+
+# Create agent
+agent = Agent("openai/gpt-4o")
+
+# Create chat with minimal configuration
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent
+)
+```
+
+## With Memory Configuration
+
+```python
+from upsonic import Agent, Chat
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True
+)
+```
+
+## With Custom Storage
+
+```python
+from upsonic import Agent, Chat
+from upsonic.storage.providers import SqliteStorage
+
+# Setup persistent storage
+storage = SqliteStorage("sessions", "profiles", "chat.db")
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    storage=storage
+)
+```
+
+## With Retry Configuration
+
+```python
+from upsonic import Agent, Chat
+
+agent = Agent("openai/gpt-4o")
+
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    retry_attempts=5,
+    retry_delay=2.0,
+    max_concurrent_invocations=2
+)
+```
+
+## Session ID and User ID
+
+- `session_id`: Unique per conversation session
+- `user_id`: Unique per user (can have multiple sessions)
+
+Use consistent identifiers to maintain conversation context across application restarts.
+

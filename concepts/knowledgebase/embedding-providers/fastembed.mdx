@@ -1,0 +1,72 @@
+---
+title: "FastEmbed Embeddings"
+description: "Using FastEmbed local embedding models with Upsonic"
+---
+
+## Overview
+
+FastEmbed provides fast, local embedding models powered by ONNX runtime. Supports GPU acceleration, sparse embeddings, and multiple model architectures including BGE, E5, and multilingual models. No API costs - runs entirely locally.
+
+**Provider Class:** `FastEmbedProvider`
+
+**Config Class:** `FastEmbedConfig`
+
+## Dependencies
+
+```bash
+pip install fastembed
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import FastEmbedProvider, FastEmbedConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Create embedding provider
+embedding = FastEmbedProvider(FastEmbedConfig(
+    model_name="BAAI/bge-small-en-v1.5",
+    enable_gpu=True
+))
+
+# Setup KnowledgeBase
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="fastembed_docs",
+    vector_size=384,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.txt"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("What is this document about?", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `model_name` | `str` | FastEmbed model name | `"BAAI/bge-small-en-v1.5"` | Specific |
+| `cache_dir` | `str \| None` | Model cache directory | `None` | Specific |
+| `threads` | `int \| None` | Number of threads (auto-detected if None) | `None` | Specific |
+| `providers` | `list[str]` | ONNX execution providers | `["CPUExecutionProvider"]` | Specific |
+| `enable_gpu` | `bool` | Enable GPU acceleration if available | `False` | Specific |
+| `enable_parallel_processing` | `bool` | Enable parallel text processing | `True` | Specific |
+| `doc_embed_type` | `str` | Document embedding type (default, passage) | `"default"` | Specific |
+| `max_memory_mb` | `int \| None` | Maximum memory usage in MB | `None` | Specific |
+| `model_warmup` | `bool` | Warm up model on initialization | `True` | Specific |
+| `enable_sparse_embeddings` | `bool` | Use sparse embeddings for better performance | `False` | Specific |
+| `sparse_model_name` | `str \| None` | Sparse model name if different from dense | `None` | Specific |
+| `batch_size` | `int` | Batch size for document embedding | `100` | Base |
+| `max_retries` | `int` | Maximum number of retries on failure | `3` | Base |
+| `normalize_embeddings` | `bool` | Whether to normalize embeddings to unit length | `True` | Base |
+| `show_progress` | `bool` | Whether to show progress during batch operations | `True` | Base |
+

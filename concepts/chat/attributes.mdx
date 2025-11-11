@@ -1,0 +1,59 @@
+---
+title: "Attributes"
+description: "Configuration options for the Chat"
+---
+
+## Attributes
+
+The Chat system is configured through the `Chat` class, which provides the following attributes:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `session_id` | `str` | (required) | Unique identifier for this chat session |
+| `user_id` | `str` | (required) | Unique identifier for the user |
+| `agent` | `Agent` | (required) | The Agent instance to handle conversations |
+| `storage` | `Storage \| None` | `None` | Storage backend (defaults to InMemoryStorage) |
+| `full_session_memory` | `bool` | `True` | Enable full conversation history storage |
+| `summary_memory` | `bool` | `False` | Enable conversation summarization |
+| `user_analysis_memory` | `bool` | `False` | Enable user profile analysis |
+| `user_profile_schema` | `type \| None` | `None` | Custom user profile schema |
+| `dynamic_user_profile` | `bool` | `False` | Enable dynamic profile schema generation |
+| `num_last_messages` | `int \| None` | `None` | Limit conversation history to last N messages |
+| `feed_tool_call_results` | `bool` | `False` | Include tool calls in memory |
+| `user_memory_mode` | `Literal['update', 'replace']` | `'update'` | How to update user profiles |
+| `debug` | `bool` | `False` | Enable debug logging |
+| `max_concurrent_invocations` | `int` | `1` | Maximum concurrent invoke calls |
+| `retry_attempts` | `int` | `3` | Number of retry attempts for failed calls |
+| `retry_delay` | `float` | `1.0` | Delay between retry attempts |
+
+## Configuration Example
+
+```python
+from upsonic import Agent, Task, Chat
+from upsonic.storage.providers import SqliteStorage
+
+# Setup storage
+storage = SqliteStorage("sessions", "profiles", "chat.db")
+
+# Create agent
+agent = Agent("openai/gpt-4o")
+
+# Create chat with configuration
+chat = Chat(
+    session_id="session1",
+    user_id="user1",
+    agent=agent,
+    storage=storage,
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    num_last_messages=50,
+    retry_attempts=3,
+    retry_delay=1.0
+)
+
+# Use chat
+response = await chat.invoke("Hello!")
+print(response)
+```
+

@@ -1,0 +1,71 @@
+---
+title: "Recursive Splitter"
+description: "Split text recursively using prioritized separators to preserve semantic boundaries"
+---
+
+## Overview
+
+Recursive splitter intelligently splits text using a prioritized list of separators. It tries the first separator, and if segments are still too large, recursively applies the next separator. Highly effective for structured text like code and markdown, ensuring logical units stay together.
+
+**Splitter Class:** `RecursiveChunker`
+
+**Config Class:** `RecursiveChunkingConfig`
+
+## Dependencies
+
+No additional dependencies required. Uses standard library.
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import TextLoader, TextLoaderConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Configure splitter
+splitter_config = RecursiveChunkingConfig(
+    chunk_size=512,
+    chunk_overlap=50,
+    separators=["\n\n", "\n", ". ", " "]
+)
+splitter = RecursiveChunker(splitter_config)
+
+# Setup KnowledgeBase
+loader = TextLoader(TextLoaderConfig())
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="recursive_docs",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.txt"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[splitter]
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("Summarize the main points", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `chunk_size` | `int` | Target size of each chunk | 1024 | Base |
+| `chunk_overlap` | `int` | Overlapping units between chunks | 200 | Base |
+| `min_chunk_size` | `int \| None` | Minimum size for a chunk | None | Base |
+| `length_function` | `Callable[[str], int]` | Function to measure text length | `len` | Base |
+| `strip_whitespace` | `bool` | Strip leading/trailing whitespace | False | Base |
+| `separators` | `list[str]` | Prioritized list of separators | `["\n\n", "\n", ". ", "? ", "! ", " ", ""]` | Specific |
+| `keep_separator` | `bool` | Keep separator in chunks | True | Specific |
+| `is_separator_regex` | `bool` | Treat separators as regex patterns | False | Specific |
+

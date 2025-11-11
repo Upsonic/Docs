@@ -1,0 +1,86 @@
+---
+title: "HTML Loader"
+description: "Load HTML files and web URLs with structured content extraction"
+---
+
+## Overview
+
+HTML loader extracts content from local HTML files and web URLs. Uses BeautifulSoup4 for parsing with options to extract text, tables, links, and images while preserving document structure.
+
+**Loader Class:** `HTMLLoader`
+
+**Config Class:** `HTMLLoaderConfig`
+
+## Dependencies
+
+```bash
+pip install "upsonic[loaders]"
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import HTMLLoader, HTMLLoaderConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Configure loader
+loader_config = HTMLLoaderConfig(
+    extract_text=True,
+    extract_tables=True,
+    table_format="markdown",
+    include_links=True
+)
+loader = HTMLLoader(loader_config)
+
+# Setup KnowledgeBase
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+chunker = RecursiveChunker(RecursiveChunkingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="html_docs",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["https://example.com/article"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[chunker]
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("Summarize the article", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `encoding` | `str \| None` | File encoding (auto-detected if None) | None | Base |
+| `error_handling` | `"ignore" \| "warn" \| "raise"` | How to handle loading errors | "warn" | Base |
+| `include_metadata` | `bool` | Whether to include file metadata | True | Base |
+| `custom_metadata` | `dict` | Additional metadata to include | {} | Base |
+| `max_file_size` | `int \| None` | Maximum file size in bytes | None | Base |
+| `skip_empty_content` | `bool` | Skip documents with empty content | True | Base |
+| `extract_text` | `bool` | Extract text content from HTML | True | Specific |
+| `preserve_structure` | `bool` | Preserve document structure in output | True | Specific |
+| `include_links` | `bool` | Include links in extracted content | True | Specific |
+| `include_images` | `bool` | Include image information | False | Specific |
+| `remove_scripts` | `bool` | Remove script tags | True | Specific |
+| `remove_styles` | `bool` | Remove style tags | True | Specific |
+| `extract_metadata` | `bool` | Extract metadata from HTML head | True | Specific |
+| `clean_whitespace` | `bool` | Clean up whitespace in output | True | Specific |
+| `extract_headers` | `bool` | Extract heading elements | True | Specific |
+| `extract_paragraphs` | `bool` | Extract paragraph content | True | Specific |
+| `extract_lists` | `bool` | Extract list content | True | Specific |
+| `extract_tables` | `bool` | Extract table content | True | Specific |
+| `table_format` | `"text" \| "markdown" \| "html"` | How to format extracted tables | "text" | Specific |
+| `user_agent` | `str` | User agent for web requests | "Upsonic HTML Loader 1.0" | Specific |
+

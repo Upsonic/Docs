@@ -1,0 +1,152 @@
+---
+title: "Advanced"
+description: "Advanced KnowledgeBase features and capabilities"
+---
+
+## Overview
+
+KnowledgeBase provides advanced features for intelligent document processing, including automatic loader/splitter selection, indexed processing for multiple sources, and flexible content handling.
+
+## Intelligent Auto-Detection
+
+When `loaders` and `splitters` are not provided, KnowledgeBase automatically detects and creates appropriate components for each source based on file type and content analysis.
+
+```python
+from upsonic import KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="auto_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+# Auto-detects loaders and splitters for each source
+kb = KnowledgeBase(
+    sources=["document.pdf", "code.py", "data.json"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    use_case="rag_retrieval",
+    quality_preference="balanced"
+)
+```
+
+## Indexed Processing
+
+When multiple sources are provided with multiple loaders/splitters, KnowledgeBase uses **indexed processing** where each source is matched with its corresponding loader and splitter by index.
+
+### Single Loader/Splitter (Shared)
+
+```python
+from upsonic.loaders import PdfLoader, PdfLoaderConfig
+from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+
+loader = PdfLoader(PdfLoaderConfig())
+splitter = RecursiveChunker(RecursiveChunkingConfig())
+
+kb = KnowledgeBase(
+    sources=["doc1.pdf", "doc2.pdf", "doc3.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],  # Single loader used for all sources
+    splitters=[splitter]  # Single splitter used for all sources
+)
+```
+
+### Multiple Loaders/Splitters (Indexed)
+
+```python
+from upsonic.loaders import PdfLoader, PdfLoaderConfig, MarkdownLoader, MarkdownLoaderConfig
+from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig, SemanticChunker, SemanticChunkingConfig
+
+# Different loader for each source
+loaders = [
+    PdfLoader(PdfLoaderConfig()),
+    MarkdownLoader(MarkdownLoaderConfig()),
+    PdfLoader(PdfLoaderConfig())
+]
+
+# Different splitter for each source
+splitters = [
+    RecursiveChunker(RecursiveChunkingConfig(chunk_size=512)),
+    SemanticChunker(SemanticChunkingConfig(embedding_provider=embedding)),
+    RecursiveChunker(RecursiveChunkingConfig(chunk_size=1024))
+]
+
+kb = KnowledgeBase(
+    sources=["doc1.pdf", "guide.md", "doc2.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=loaders,  # Index 0 -> doc1.pdf, Index 1 -> guide.md, Index 2 -> doc2.pdf
+    splitters=splitters  # Index 0 -> doc1.pdf, Index 1 -> guide.md, Index 2 -> doc2.pdf
+)
+```
+
+**Important:** When using multiple loaders/splitters, the count must match the number of file sources (string content sources don't need loaders).
+
+## Direct Content Support
+
+KnowledgeBase can process direct string content without requiring loaders. String content is automatically detected and converted to documents.
+
+```python
+kb = KnowledgeBase(
+    sources=[
+        "document.pdf",  # File path - needs loader
+        "This is direct content that will be processed without a loader.",  # String - no loader needed
+        "data/"  # Directory - files inside need loaders
+    ],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+```
+
+## Quality Preferences
+
+Control the speed vs quality trade-off for intelligent splitter selection:
+
+- **`"fast"`**: Optimized for speed, may sacrifice some quality
+- **`"balanced"`**: Good balance between speed and quality (default)
+- **`"quality"`**: Optimized for quality, may be slower
+
+```python
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    quality_preference="quality"  # Prioritize chunking quality
+)
+```
+
+## Use Cases
+
+Optimize chunking strategy for specific use cases:
+
+- **`"rag_retrieval"`**: Optimized for RAG retrieval (default)
+- Other use cases may be added in future versions
+
+```python
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    use_case="rag_retrieval"
+)
+```
+
+## Configuration Options
+
+Pass configuration options to loaders and splitters via `loader_config` and `splitter_config`:
+
+```python
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loader_config={"chunk_size": 1000},
+    splitter_config={"chunk_overlap": 200, "chunk_size": 512}
+)
+```
+
+

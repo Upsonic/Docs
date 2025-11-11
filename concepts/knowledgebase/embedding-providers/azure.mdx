@@ -1,0 +1,79 @@
+---
+title: "Azure OpenAI Embeddings"
+description: "Using Azure OpenAI embedding models with Upsonic"
+---
+
+## Overview
+
+Azure OpenAI provides managed access to OpenAI embedding models through Azure infrastructure. Supports both API key and Managed Identity authentication with enterprise-grade security and compliance features.
+
+**Provider Class:** `AzureOpenAIEmbedding`
+
+**Config Class:** `AzureOpenAIEmbeddingConfig`
+
+## Dependencies
+
+```bash
+pip install openai
+```
+
+For Managed Identity support:
+```bash
+pip install azure-identity
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import AzureOpenAIEmbedding, AzureOpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Create embedding provider with API key
+embedding = AzureOpenAIEmbedding(AzureOpenAIEmbeddingConfig(
+    azure_endpoint="https://your-resource.openai.azure.com/",
+    deployment_name="text-embedding-ada-002",
+    model_name="text-embedding-ada-002"
+))
+
+# Setup KnowledgeBase
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="azure_docs",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.txt"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("What is this document about?", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `azure_endpoint` | `str \| None` | Azure OpenAI endpoint URL | `None` | Specific |
+| `api_key` | `str \| None` | Azure OpenAI API key (uses AZURE_OPENAI_API_KEY env var if None) | `None` | Specific |
+| `deployment_name` | `str \| None` | Azure deployment name | `None` | Specific |
+| `api_version` | `str` | Azure OpenAI API version | `"2024-02-01"` | Specific |
+| `use_managed_identity` | `bool` | Use Azure Managed Identity | `False` | Specific |
+| `tenant_id` | `str \| None` | Azure tenant ID | `None` | Specific |
+| `client_id` | `str \| None` | Azure client ID for managed identity | `None` | Specific |
+| `model_name` | `str` | Embedding model name | `"text-embedding-ada-002"` | Specific |
+| `enable_content_filtering` | `bool` | Enable Azure content filtering | `True` | Specific |
+| `data_residency_region` | `str \| None` | Data residency region | `None` | Specific |
+| `parallel_requests` | `int` | Parallel requests (Azure has lower limits) | `3` | Specific |
+| `requests_per_minute` | `int` | Requests per minute for Azure | `240` | Specific |
+| `tokens_per_minute` | `int` | Tokens per minute for Azure | `240000` | Specific |
+| `batch_size` | `int` | Batch size for document embedding | `100` | Base |
+| `max_retries` | `int` | Maximum number of retries on failure | `3` | Base |
+| `normalize_embeddings` | `bool` | Whether to normalize embeddings to unit length | `True` | Base |
+

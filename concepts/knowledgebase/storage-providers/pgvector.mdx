@@ -1,0 +1,78 @@
+---
+title: "PGVector"
+description: "Using PostgreSQL with pgvector extension as a vector database provider"
+---
+
+## Overview
+
+PGVector is a PostgreSQL extension that enables vector similarity search. It supports HNSW and IVFFlat indexes and integrates seamlessly with existing PostgreSQL infrastructure.
+
+**Provider Class:** `PgvectorProvider`  
+**Config Class:** `PgVectorConfig`
+
+## Dependencies
+
+```bash
+pip install "upsonic[rag]"
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings.openai_provider import OpenAIEmbeddingProvider
+from upsonic.vectordb import PgvectorProvider, PgVectorConfig, HNSWIndexConfig
+from pydantic import SecretStr
+
+# Setup embedding provider
+embedding = OpenAIEmbeddingProvider(api_key="your-api-key")
+
+# Create PGVector configuration
+config = PgVectorConfig(
+    collection_name="my_collection",
+    vector_size=1536,
+    connection_string=SecretStr("postgresql://user:password@localhost/dbname"),
+    schema_name="public",
+    index=HNSWIndexConfig(m=16, ef_construction=200)
+)
+vectordb = PgvectorProvider(config)
+
+# Create knowledge base
+kb = KnowledgeBase(
+    sources="document.pdf",
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Search the database",
+    context=[kb]
+)
+result = agent.do(task)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `collection_name` | `str` | Name of the collection | `"default_collection"` | Base |
+| `vector_size` | `int` | Dimension of vectors | Required | Base |
+| `distance_metric` | `DistanceMetric` | Similarity metric (`COSINE`, `EUCLIDEAN`, `DOT_PRODUCT`) | `COSINE` | Base |
+| `recreate_if_exists` | `bool` | Recreate collection if it exists | `False` | Base |
+| `default_top_k` | `int` | Default number of results | `10` | Base |
+| `default_similarity_threshold` | `Optional[float]` | Minimum similarity score | `None` | Base |
+| `connection_string` | `SecretStr` | PostgreSQL connection string | Required | Specific |
+| `schema_name` | `str` | PostgreSQL schema name | `"public"` | Specific |
+| `table_name` | `Optional[str]` | Table name | Uses `collection_name` | Specific |
+| `index` | `Union[HNSWIndexConfig, IVFIndexConfig]` | Index type configuration | `HNSWIndexConfig()` | Specific |
+| `content_language` | `str` | Language for full-text search | `"english"` | Specific |
+| `prefix_match` | `bool` | Enable prefix matching for full-text search | `False` | Specific |
+| `schema_version` | `int` | Schema version for migrations | `1` | Specific |
+| `batch_size` | `int` | Batch size for upsert operations | `100` | Specific |
+| `pool_size` | `int` | Connection pool size | `5` | Specific |
+| `max_overflow` | `int` | Maximum pool overflow | `10` | Specific |
+| `pool_timeout` | `float` | Pool timeout in seconds | `30.0` | Specific |
+| `pool_recycle` | `int` | Pool recycle time in seconds | `3600` | Specific |
+

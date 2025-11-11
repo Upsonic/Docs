@@ -1,0 +1,78 @@
+---
+title: "XML Loader"
+description: "Load XML files with XPath-based splitting and content extraction"
+---
+
+## Overview
+
+XML loader processes XML files using XPath expressions to split documents and extract content. Supports namespace handling, attribute extraction, and flexible content synthesis modes.
+
+**Loader Class:** `XMLLoader`
+
+**Config Class:** `XMLLoaderConfig`
+
+## Dependencies
+
+```bash
+pip install "upsonic[loaders]"
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders import XMLLoader, XMLLoaderConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Configure loader
+loader_config = XMLLoaderConfig(
+    split_by_xpath="//item",
+    content_xpath="./description",
+    metadata_xpaths={"title": "./title", "author": "./author"}
+)
+loader = XMLLoader(loader_config)
+
+# Setup KnowledgeBase
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+chunker = RecursiveChunker(RecursiveChunkingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="xml_data",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["data.xml"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],
+    splitters=[chunker]
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("Find items matching 'technology'", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `encoding` | `str \| None` | File encoding (auto-detected if None) | None | Base |
+| `error_handling` | `"ignore" \| "warn" \| "raise"` | How to handle loading errors | "warn" | Base |
+| `include_metadata` | `bool` | Whether to include file metadata | True | Base |
+| `custom_metadata` | `dict` | Additional metadata to include | {} | Base |
+| `max_file_size` | `int \| None` | Maximum file size in bytes | None | Base |
+| `skip_empty_content` | `bool` | Skip documents with empty content | True | Base |
+| `split_by_xpath` | `str` | XPath expression to identify document elements | `"//*[not(*)] \| //item \| //product \| //book"` | Specific |
+| `content_xpath` | `str \| None` | Relative XPath to select content | None | Specific |
+| `content_synthesis_mode` | `"smart_text" \| "xml_snippet"` | Content format | "smart_text" | Specific |
+| `include_attributes` | `bool` | Include element attributes in metadata | True | Specific |
+| `metadata_xpaths` | `dict[str, str] \| None` | Map metadata keys to XPath expressions | None | Specific |
+| `strip_namespaces` | `bool` | Remove XML namespaces | True | Specific |
+| `recover_mode` | `bool` | Parse malformed XML | False | Specific |
+

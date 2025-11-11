@@ -1,0 +1,70 @@
+---
+title: "OpenAI Embeddings"
+description: "Using OpenAI embedding models with Upsonic"
+---
+
+## Overview
+
+OpenAI provides high-quality embedding models including text-embedding-3-small, text-embedding-3-large, and text-embedding-ada-002. These models offer excellent performance for document and query embeddings with automatic batching and rate limiting.
+
+**Provider Class:** `OpenAIEmbedding`
+
+**Config Class:** `OpenAIEmbeddingConfig`
+
+## Dependencies
+
+```bash
+pip install openai
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Create embedding provider
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig(
+    model_name="text-embedding-3-small",
+    batch_size=100
+))
+
+# Setup KnowledgeBase
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="openai_docs",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.txt"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("What is this document about?", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `model_name` | `str` | OpenAI embedding model name | `"text-embedding-3-small"` | Specific |
+| `api_key` | `str \| None` | OpenAI API key (uses OPENAI_API_KEY env var if None) | `None` | Specific |
+| `organization` | `str \| None` | OpenAI organization ID | `None` | Specific |
+| `base_url` | `str \| None` | Custom OpenAI API base URL | `None` | Specific |
+| `enable_rate_limiting` | `bool` | Enable intelligent rate limiting | `True` | Specific |
+| `requests_per_minute` | `int` | Max requests per minute | `3000` | Specific |
+| `tokens_per_minute` | `int` | Max tokens per minute | `1000000` | Specific |
+| `parallel_requests` | `int` | Number of parallel requests | `5` | Specific |
+| `request_timeout` | `float` | Request timeout in seconds | `60.0` | Specific |
+| `batch_size` | `int` | Batch size for document embedding | `100` | Base |
+| `max_retries` | `int` | Maximum number of retries on failure | `3` | Base |
+| `normalize_embeddings` | `bool` | Whether to normalize embeddings to unit length | `True` | Base |
+| `show_progress` | `bool` | Whether to show progress during batch operations | `True` | Base |
+

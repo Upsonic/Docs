@@ -1,0 +1,74 @@
+---
+title: "AWS Bedrock Embeddings"
+description: "Using AWS Bedrock embedding models with Upsonic"
+---
+
+## Overview
+
+AWS Bedrock provides access to multiple embedding models including Amazon Titan, Cohere, and Marengo through a unified API. Offers enterprise-grade security, guardrails, and CloudWatch integration.
+
+**Provider Class:** `BedrockEmbedding`
+
+**Config Class:** `BedrockEmbeddingConfig`
+
+## Dependencies
+
+```bash
+pip install boto3
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import BedrockEmbedding, BedrockEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Create embedding provider
+embedding = BedrockEmbedding(BedrockEmbeddingConfig(
+    model_name="amazon.titan-embed-text-v1",
+    region_name="us-east-1"
+))
+
+# Setup KnowledgeBase
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="bedrock_docs",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["document.txt"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Query with Agent
+agent = Agent("openai/gpt-4o")
+task = Task("What is this document about?", context=[kb])
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `model_name` | `str` | Bedrock embedding model name | `"amazon.titan-embed-text-v1"` | Specific |
+| `model_id` | `str \| None` | Full Bedrock model ID (overrides model_name) | `None` | Specific |
+| `aws_access_key_id` | `str \| None` | AWS access key ID | `None` | Specific |
+| `aws_secret_access_key` | `str \| None` | AWS secret access key | `None` | Specific |
+| `aws_session_token` | `str \| None` | AWS session token | `None` | Specific |
+| `region_name` | `str` | AWS region | `"us-east-1"` | Specific |
+| `profile_name` | `str \| None` | AWS profile name | `None` | Specific |
+| `inference_profile` | `str \| None` | Bedrock inference profile | `None` | Specific |
+| `enable_guardrails` | `bool` | Enable Bedrock guardrails | `True` | Specific |
+| `guardrail_id` | `str \| None` | Custom guardrail ID | `None` | Specific |
+| `enable_model_caching` | `bool` | Enable model response caching | `True` | Specific |
+| `prefer_provisioned_throughput` | `bool` | Prefer provisioned throughput models | `False` | Specific |
+| `enable_cloudwatch_logging` | `bool` | Enable CloudWatch logging | `True` | Specific |
+| `log_group_name` | `str \| None` | CloudWatch log group name | `None` | Specific |
+| `batch_size` | `int` | Batch size for document embedding | `100` | Base |
+| `max_retries` | `int` | Maximum number of retries on failure | `3` | Base |
+| `normalize_embeddings` | `bool` | Whether to normalize embeddings to unit length | `True` | Base |
+
