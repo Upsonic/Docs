@@ -1,0 +1,201 @@
+---
+title: "Quick Start"
+description: "Build your first StateGraph in 5 minutes"
+---
+
+## Installation
+
+StateGraph is included in Upsonic. Make sure you have it installed:
+
+```bash
+pip install upsonic
+```
+
+## Your First Graph
+
+Let's build a simple conversational AI that processes user messages.
+
+### Step 1: Define Your State
+
+States are typed dictionaries that flow through your graph:
+
+```python
+from typing_extensions import TypedDict
+
+class ConversationState(TypedDict):
+    messages: list
+    response: str
+```
+
+### Step 2: Create Node Functions
+
+Nodes are functions that process state and return updates:
+
+```python
+def process_node(state: ConversationState) -> dict:
+    """Process the user's message."""
+    user_message = state["messages"][-1] if state["messages"] else "Hello"
+    response = f"Echo: {user_message}"
+    return {
+        "response": response,
+        "messages": [response]
+    }
+```
+
+### Step 3: Build the Graph
+
+Connect your nodes with edges:
+
+```python
+from upsonic.graphv2 import StateGraph, START, END
+
+# Create the graph builder
+builder = StateGraph(ConversationState)
+
+# Add nodes
+builder.add_node("process", process_node)
+
+# Add edges
+builder.add_edge(START, "process")
+builder.add_edge("process", END)
+
+# Compile the graph
+graph = builder.compile()
+```
+
+<Info>
+**START** and **END** are special constants representing the entry and exit points of your graph.
+</Info>
+
+### Step 4: Execute the Graph
+
+Now invoke your graph with initial state:
+
+```python
+result = graph.invoke({
+    "messages": ["Hello, world!"],
+    "response": ""
+})
+
+print(f"Response: {result['response']}")
+# Output: Response: Echo: Hello, world!
+```
+
+## Complete Example
+
+Here's the full code in one place:
+
+```python
+from typing_extensions import TypedDict
+from upsonic.graphv2 import StateGraph, START, END
+
+# 1. Define state
+class ConversationState(TypedDict):
+    messages: list
+    response: str
+
+# 2. Define nodes
+def process_node(state: ConversationState) -> dict:
+    user_message = state["messages"][-1] if state["messages"] else "Hello"
+    response = f"Echo: {user_message}"
+    return {
+        "response": response,
+        "messages": [response]
+    }
+
+# 3. Build graph
+builder = StateGraph(ConversationState)
+builder.add_node("process", process_node)
+builder.add_edge(START, "process")
+builder.add_edge("process", END)
+
+# 4. Compile and execute
+graph = builder.compile()
+
+result = graph.invoke({
+    "messages": ["Tell me a joke"],
+    "response": ""
+})
+
+print(result["response"])
+```
+
+## Adding Conditional Logic
+
+Let's extend our graph to route based on user intent:
+
+```python
+from upsonic.graphv2 import Command, END
+
+class ConversationState(TypedDict):
+    messages: list
+    intent: str
+    response: str
+
+def classify_intent(state: ConversationState) -> Command:
+    """Classify user intent and route accordingly."""
+    user_message = state["messages"][-1].lower() if state["messages"] else ""
+    
+    if "joke" in user_message:
+        return Command(
+            update={"intent": "joke"},
+            goto="tell_joke"
+        )
+    elif "?" in user_message:
+        return Command(
+            update={"intent": "question"},
+            goto="answer_question"
+        )
+    else:
+        return Command(
+            update={"intent": "unknown", "response": "I'm not sure how to help."},
+            goto=END
+        )
+
+def tell_joke(state: ConversationState) -> dict:
+    return {"response": "Why do programmers prefer dark mode? Light attracts bugs!"}
+
+def answer_question(state: ConversationState) -> dict:
+    return {"response": "That's an interesting question. Let me think about it."}
+
+# Build with routing
+builder = StateGraph(ConversationState)
+builder.add_node("classify", classify_intent)
+builder.add_node("tell_joke", tell_joke)
+builder.add_node("answer_question", answer_question)
+
+builder.add_edge(START, "classify")
+builder.add_edge("tell_joke", END)
+builder.add_edge("answer_question", END)
+
+graph = builder.compile()
+
+# Test different intents
+result1 = graph.invoke({
+    "messages": ["Tell me a joke!"],
+    "intent": "",
+    "response": ""
+})
+print(f"Joke: {result1['response']}")
+
+result2 = graph.invoke({
+    "messages": ["What is Python?"],
+    "intent": "",
+    "response": ""
+})
+print(f"Answer: {result2['response']}")
+```
+
+<Tip>
+**Command** allows nodes to both update state **and** specify where to go next.
+</Tip>
+
+## What's Next?
+
+Now that you've built your first graph, explore more advanced features:
+
+- [Core Concepts](/concepts/stategraph/core-concepts) - Learn states, nodes, and edges in depth
+- [Building Agents](/concepts/stategraph/advanced/building-agents) - Create AI agents with tools
+- [Persistence](/concepts/stategraph/advanced/persistence) - Add checkpointing and state history
+- [Human-in-Loop](/concepts/stategraph/advanced/human-in-loop) - Pause for human approval
+

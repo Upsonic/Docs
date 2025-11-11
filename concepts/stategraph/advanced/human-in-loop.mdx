@@ -1,0 +1,224 @@
+---
+title: "Human-in-the-Loop"
+description: "Build approval workflows with interrupts and human oversight"
+---
+
+## Overview
+
+Human-in-the-Loop (HITL) patterns let you pause execution for human review, approval, or input. This is essential for:
+
+- ✅ **Content Moderation** - Review AI-generated content before publishing
+- 🎯 **Decision Approval** - Require human sign-off on critical actions
+- ✏️ **Content Editing** - Let humans refine AI outputs
+- 🔍 **Quality Control** - Inspect intermediate results
+
+## The Interrupt Primitive
+
+The `interrupt()` function pauses execution and returns control to the caller:
+
+```python
+from upsonic.graphv2 import interrupt
+
+def review_node(state: MyState) -> dict:
+    # Pause and show data to human
+    human_response = interrupt({
+        "action": "review",
+        "data": state["draft"],
+        "options": ["approve", "edit", "reject"]
+    })
+    
+    # Execution resumes here when graph.invoke() is called with Command(resume=...)
+    if human_response.get("action") == "approve":
+        return {"approved": True}
+    else:
+        return {"approved": False}
+```
+
+### How Interrupts Work
+
+1. **Node calls interrupt()** - Execution pauses
+2. **Graph returns with `__interrupt__` key** - Contains interrupt data
+3. **Application shows data to human** - Display UI, wait for input
+4. **Resume with Command(resume=...)** - Continue execution with human response
+
+## Basic Interrupt Example
+
+```python
+from typing_extensions import TypedDict
+from upsonic.graphv2 import StateGraph, START, END, MemorySaver, Command, interrupt
+
+class ApprovalState(TypedDict):
+    content: str
+    approved: bool
+    feedback: str
+
+def generate_content(state: ApprovalState) -> dict:
+    draft = "This is AI-generated content about " + state["content"]
+    return {"content": draft}
+
+def review_node(state: ApprovalState) -> dict:
+    response = interrupt({
+        "action": "review_content",
+        "content": state["content"],
+        "instruction": "Please review and approve or provide feedback"
+    })
+    
+    if response.get("action") == "approve":
+        return {"approved": True, "feedback": ""}
+    else:
+        return {"approved": False, "feedback": response.get("feedback", "")}
+
+builder = StateGraph(ApprovalState)
+builder.add_node("generate", generate_content)
+builder.add_node("review", review_node)
+
+builder.add_edge(START, "generate")
+builder.add_edge("generate", "review")
+builder.add_edge("review", END)
+
+checkpointer = MemorySaver()
+graph = builder.compile(checkpointer=checkpointer)
+
+config = {"configurable": {"thread_id": "approval-1"}}
+result = graph.invoke(
+    {"content": "Python programming", "approved": False, "feedback": ""},
+    config=config
+)
+
+# Check if interrupted
+if "__interrupt__" in result:
+    print("⏸️  Execution paused for review")
+    interrupt_data = result["__interrupt__"][0]["value"]
+    print(f"Content to review: {interrupt_data['content']}")
+    
+    # Simulate human approval
+    human_decision = {"action": "approve"}
+    
+    # Resume execution
+    final_result = graph.invoke(
+        Command(resume=human_decision),
+        config=config
+    )
+    
+    print(f"Approved: {final_result['approved']}")
+```
+
+<Info>
+**Interrupts require checkpointers** because execution state must be persisted between the interrupt and resume calls.
+</Info>
+
+## Interrupt Patterns
+
+### Pattern 1: Approve/Reject
+
+```python
+def approval_node(state: State) -> dict:
+    approved = interrupt({
+        "action": "approve_action",
+        "data": state["action_details"]
+    })
+    
+    return {"status": "approved" if approved else "rejected"}
+
+# Resume with boolean
+graph.invoke(Command(resume=True), config=config)  # Approve
+```
+
+### Pattern 2: Edit Content
+
+```python
+def edit_node(state: State) -> dict:
+    edited_text = interrupt({
+        "action": "edit_content",
+        "original": state["draft"]
+    })
+    
+    return {"final_content": edited_text}
+
+# Resume with edited text
+graph.invoke(
+    Command(resume="Human-edited content here"),
+    config=config
+)
+```
+
+### Pattern 3: Iterative Refinement
+
+```python
+from upsonic.graphv2 import Command, END
+
+def generate_and_review(state: State) -> Command:
+    draft = generate_content(state)
+    
+    feedback = interrupt({
+        "action": "review_and_refine",
+        "draft": draft
+    })
+    
+    if feedback["action"] == "approve":
+        return Command(
+            update={"final": draft, "approved": True},
+            goto=END
+        )
+    else:
+        return Command(
+            update={"feedback": feedback["comments"]},
+            goto="generate_and_review"  # Loop back
+        )
+```
+
+## Interrupt Configuration
+
+Configure where interrupts can happen:
+
+```python
+# Interrupt before specific nodes
+graph = builder.compile(
+    checkpointer=checkpointer,
+    interrupt_before=["critical_action"]
+)
+
+# Interrupt after specific nodes
+graph = builder.compile(
+    checkpointer=checkpointer,
+    interrupt_after=["data_processing"]
+)
+```
+
+## Best Practices
+
+### 1. Provide Clear Context
+
+```python
+# ✅ Good - rich context
+interrupt({
+    "action": "review",
+    "content": state["draft"],
+    "metadata": {
+        "author": "AI Assistant",
+        "word_count": len(state["draft"].split())
+    },
+    "instructions": "Review for accuracy and tone"
+})
+```
+
+### 2. Handle Resume Values Safely
+
+```python
+def review_node(state: State) -> dict:
+    response = interrupt({"action": "review"})
+    
+    # ✅ Good - validate response
+    if not isinstance(response, dict):
+        response = {"action": "approve"}  # Default
+    
+    action = response.get("action", "approve")
+    return {"status": action}
+```
+
+## Next Steps
+
+- [Building Agents](/concepts/stategraph/advanced/building-agents) - Create AI agents with tools
+- [Advanced Features](/concepts/stategraph/advanced/advanced-features) - Explore Send API and parallel execution
+- [Reliability](/concepts/stategraph/advanced/reliability) - Add retry and cache policies
+

@@ -1,0 +1,218 @@
+---
+title: "Building AI Agents"
+description: "Create intelligent agents with tools and agentic workflows"
+---
+
+## Overview
+
+StateGraph is perfect for building AI agents - systems that can reason, use tools, and make decisions autonomously. An agent workflow typically follows this pattern:
+
+```
+User Input → [LLM Reasoning] → [Tool Calls] → [Tool Results] → [LLM Processing] → Response
+```
+
+This is known as the **ReAct pattern** (Reasoning + Acting).
+
+## Basic Agent Pattern
+
+Here's the simplest agent structure:
+
+```python
+from typing import Annotated, List
+from typing_extensions import TypedDict
+import operator
+
+from upsonic.graphv2 import StateGraph, START, END
+from upsonic.models import infer_model
+from upsonic.messages import ModelRequest, UserPromptPart, SystemPromptPart
+from upsonic.tools import tool
+
+# Define state
+class AgentState(TypedDict):
+    messages: Annotated[List, operator.add]
+    result: str
+
+# Define tools
+@tool
+def calculator(a: float, b: float, operation: str) -> float:
+    """Perform basic math operations."""
+    if operation == "add":
+        return a + b
+    elif operation == "multiply":
+        return a * b
+    elif operation == "divide":
+        return a / b if b != 0 else 0
+    return 0
+
+# LLM node
+def llm_node(state: AgentState) -> dict:
+    """Let the LLM reason and use tools."""
+    model = infer_model("openai/gpt-4o-mini")
+    
+    # Bind tools to the model
+    model_with_tools = model.bind_tools([calculator])
+    
+    # Create request
+    request = ModelRequest(parts=[
+        SystemPromptPart(content="You are a helpful assistant."),
+        UserPromptPart(content=state["messages"][-1] if state["messages"] else "Hello")
+    ])
+    
+    # Invoke (Upsonic automatically handles tool execution)
+    response = model_with_tools.invoke([request])
+    
+    return {
+        "messages": [response],
+        "result": str(response)
+    }
+
+# Build graph
+builder = StateGraph(AgentState)
+builder.add_node("llm", llm_node)
+builder.add_edge(START, "llm")
+builder.add_edge("llm", END)
+
+graph = builder.compile()
+
+# Execute
+result = graph.invoke({
+    "messages": [
+        UserPromptPart(content="What is 23 multiplied by 17?")
+    ],
+    "result": ""
+})
+
+print(result["result"])
+```
+
+<Info>
+**Automatic Tool Execution:** When you use `model.bind_tools()`, Upsonic automatically executes tool calls and feeds results back to the LLM. The final response is already processed.
+</Info>
+
+## Agentic Loop with Conditional Exit
+
+Create agents that loop until they complete the task:
+
+```python
+from typing import Annotated, List, Literal
+from typing_extensions import TypedDict
+import operator
+from upsonic.graphv2 import StateGraph, START, END, Command
+from upsonic.models import infer_model
+
+class LoopingAgentState(TypedDict):
+    task: str
+    steps_completed: Annotated[List[str], operator.add]
+    iterations: Annotated[int, lambda a, b: a + b]
+    max_iterations: int
+    status: str
+
+def agent_loop(state: LoopingAgentState) -> Command[Literal["agent_loop", END]]:
+    """Agent that loops until task is complete."""
+    model = infer_model("openai/gpt-4o-mini")
+    
+    # Check if we should continue
+    if state["iterations"] >= state["max_iterations"]:
+        return Command(
+            update={"status": "max_iterations_reached"},
+            goto=END
+        )
+    
+    # Perform reasoning
+    prompt = f"""
+    Task: {state['task']}
+    Steps completed: {state['steps_completed']}
+    
+    What's the next step? If task is complete, respond with "COMPLETE".
+    """
+    
+    response = model.invoke(prompt)
+    response_text = str(response) if response else ""
+    
+    if "COMPLETE" in response_text.upper():
+        return Command(
+            update={"status": "completed", "steps_completed": [response_text]},
+            goto=END
+        )
+    else:
+        return Command(
+            update={"steps_completed": [response_text], "iterations": 1},
+            goto="agent_loop"  # Continue looping
+        )
+
+# Build
+builder = StateGraph(LoopingAgentState)
+builder.add_node("agent_loop", agent_loop)
+builder.add_edge(START, "agent_loop")
+
+graph = builder.compile()
+
+result = graph.invoke(
+    {
+        "task": "Research Python web frameworks and recommend one",
+        "steps_completed": [],
+        "iterations": 0,
+        "max_iterations": 5,
+        "status": ""
+    },
+    config={"recursion_limit": 10}
+)
+
+print(f"Status: {result['status']}")
+print(f"Steps: {result['steps_completed']}")
+```
+
+<Warning>
+Always set `max_iterations` and `recursion_limit` to prevent infinite loops in agentic workflows.
+</Warning>
+
+## Best Practices
+
+### 1. Clear System Prompts
+
+```python
+SystemPromptPart(content="""
+You are a research assistant. Your goal is to:
+1. Break down complex questions into sub-questions
+2. Use tools when needed
+3. Synthesize findings into a clear answer
+
+Always think step-by-step.
+""")
+```
+
+### 2. Limit Tool Sets
+
+Only provide relevant tools:
+
+```python
+# ✅ Good - focused tools
+if task_type == "math":
+    tools = [calculator, statistics_tool]
+elif task_type == "research":
+    tools = [search_web, summarize_tool]
+```
+
+### 3. Set Guardrails
+
+Protect against runaway agents:
+
+```python
+class SafeAgentState(TypedDict):
+    messages: Annotated[List, operator.add]
+    iterations: int
+    max_iterations: int
+
+def safe_agent(state: SafeAgentState) -> dict:
+    if state["iterations"] >= state["max_iterations"]:
+        return {"messages": ["Max iterations reached"], "status": "stopped"}
+    # Continue normally
+    ...
+```
+
+## Next Steps
+
+- [Advanced Features](/concepts/stategraph/advanced/advanced-features) - Explore Send API and parallel patterns
+- [Reliability](/concepts/stategraph/advanced/reliability) - Add retry and cache policies
+- [Human-in-Loop](/concepts/stategraph/advanced/human-in-loop) - Add human oversight
+

@@ -1,0 +1,183 @@
+---
+title: "Conditional Routing"
+description: "Route execution to different chains based on conditions"
+---
+
+## Overview
+
+`RunnableBranch` allows you to route execution to different chains based on input conditions. This enables dynamic workflows that adapt based on the input data.
+
+## Basic Usage
+
+```python
+from upsonic.uel import RunnableBranch, ChatPromptTemplate, StrOutputParser
+from upsonic.models import infer_model
+
+model = infer_model("openai/gpt-4o")
+parser = StrOutputParser()
+
+# Define specialized chains
+technical_chain = (
+    ChatPromptTemplate.from_template(
+        "Provide a technical, expert-level answer: {question}"
+    ) | model | parser
+)
+
+simple_chain = (
+    ChatPromptTemplate.from_template(
+        "Provide a simple, easy-to-understand answer: {question}"
+    ) | model | parser
+)
+
+default_chain = (
+    ChatPromptTemplate.from_template(
+        "Provide a general answer: {question}"
+    ) | model | parser
+)
+
+# Create conditional routing
+branch = RunnableBranch(
+    (lambda x: x.get("expert_mode"), technical_chain),
+    (lambda x: x.get("simple_mode"), simple_chain),
+    default_chain  # Default branch
+)
+
+# Use in chain
+result = branch.invoke({
+    "question": "How does async work?",
+    "expert_mode": True
+})
+
+print(result)
+```
+
+## With Classification
+
+```python
+from upsonic.uel import RunnableBranch, ChatPromptTemplate, StrOutputParser, RunnableLambda
+from upsonic.models import infer_model
+
+model = infer_model("openai/gpt-4o")
+parser = StrOutputParser()
+
+# Define specialized chains
+technical_chain = (
+    ChatPromptTemplate.from_template(
+        "Provide a technical, expert-level answer: {question}"
+    ) | model | parser
+)
+
+simple_chain = (
+    ChatPromptTemplate.from_template(
+        "Provide a simple, easy-to-understand answer: {question}"
+    ) | model | parser
+)
+
+default_chain = (
+    ChatPromptTemplate.from_template(
+        "Provide a general answer: {question}"
+    ) | model | parser
+)
+
+# Classify first, then route
+classifier = (
+    ChatPromptTemplate.from_template(
+        "Classify this question as 'technical', 'general', or 'simple': {question}\n\nRespond with only one word: technical, general, or simple."
+    ) | model | parser
+)
+
+def classify_and_route(input_dict):
+    # Get classification
+    classification = classifier.invoke({"question": input_dict["question"]}).lower().strip()
+    
+    # Route based on classification
+    if "technical" in classification:
+        return technical_chain.invoke(input_dict)
+    elif "simple" in classification:
+        return simple_chain.invoke(input_dict)
+    else:
+        return default_chain.invoke(input_dict)
+
+# Use the routing function
+from upsonic.uel import RunnableLambda
+
+chain = RunnableLambda(classify_and_route)
+
+result = chain.invoke({"question": "Explain quantum computing"})
+print(result)
+```
+
+## Complex Conditional Logic
+
+```python
+from upsonic.uel import RunnableLambda, ChatPromptTemplate, StrOutputParser
+from upsonic.models import infer_model
+
+model = infer_model("openai/gpt-4o")
+parser = StrOutputParser()
+
+# Multiple conditions with different logic
+def route_by_topic(input_dict):
+    topic = input_dict.get("topic", "").lower()
+    question = input_dict.get("question", "")
+    
+    if "python" in topic:
+        return (
+            ChatPromptTemplate.from_template(
+                "As a Python expert, answer: {question}"
+            ) | model | parser
+        ).invoke({"question": question})
+    elif "javascript" in topic:
+        return (
+            ChatPromptTemplate.from_template(
+                "As a JavaScript expert, answer: {question}"
+            ) | model | parser
+        ).invoke({"question": question})
+    else:
+        return (
+            ChatPromptTemplate.from_template(
+                "Answer this question: {question}"
+            ) | model | parser
+        ).invoke({"question": question})
+
+chain = RunnableLambda(route_by_topic)
+
+result = chain.invoke({
+    "topic": "Python",
+    "question": "What are decorators?"
+})
+print(result)
+```
+
+## Async Conditional Routing
+
+```python
+import asyncio
+from upsonic.uel import RunnableLambda, ChatPromptTemplate, StrOutputParser
+from upsonic.models import infer_model
+
+model = infer_model("openai/gpt-4o")
+parser = StrOutputParser()
+
+async def async_route(input_dict):
+    if input_dict.get("async_mode"):
+        return await (
+            ChatPromptTemplate.from_template("Async answer: {question}") | model | parser
+        ).ainvoke(input_dict)
+    else:
+        return await (
+            ChatPromptTemplate.from_template("Sync answer: {question}") | model | parser
+        ).ainvoke(input_dict)
+
+chain = RunnableLambda(async_route)
+
+async def main():
+    result = await chain.ainvoke({
+        "question": "What is async?",
+        "async_mode": True
+    })
+    print(result)
+
+asyncio.run(main())
+```
+
