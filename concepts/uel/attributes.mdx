@@ -1,0 +1,109 @@
+---
+title: "Attributes"
+description: "Configuration options for the UEL system"
+---
+
+## Attributes
+
+The UEL system is configured through various components. The following table provides a comprehensive overview of all attributes and methods:
+
+| Component | Attribute/Method | Type | Default | Description |
+|-----------|----------------|------|---------|-------------|
+| **Runnable** (Base) | `invoke(input, config)` | Method | - | Execute runnable synchronously |
+| | `ainvoke(input, config)` | Method | - | Execute runnable asynchronously |
+| | `__or__(other)` | Method | - | Pipe operator for chaining (`\|`) |
+| **ChatPromptTemplate** | `template` | str \| None | `None` | Template string with {variable} placeholders |
+| | `input_variables` | list[str] | `[]` | List of variable names in the template |
+| | `messages` | List[Tuple] \| None | `None` | List of (role, template) tuples for message-based templates |
+| | `is_message_template` | bool | `False` | Whether this is a message-based template |
+| | `from_template(template: str)` | ClassMethod | - | Create from a template string |
+| | `from_messages(messages: List[Tuple])` | ClassMethod | - | Create from message tuples |
+| | `invoke(input: dict, config)` | Method | - | Format template with variables |
+| | `ainvoke(input: dict, config)` | Method | - | Async format template |
+| **RunnableSequence** | `steps` | list[Runnable] | Required | List of runnables to execute in sequence |
+| | `invoke(input, config)` | Method | - | Execute all steps in sequence |
+| | `ainvoke(input, config)` | Method | - | Async sequential execution |
+| | `__or__(other)` | Method | - | Extend sequence with another runnable |
+| | `get_graph()` | Method | - | Get graph representation |
+| | `get_prompts()` | Method | - | Extract all ChatPromptTemplate instances |
+| **RunnableParallel** | `steps` | Dict[str, Runnable] | `{}` | Dictionary of named runnables to execute in parallel |
+| | `from_dict(steps: Dict)` | ClassMethod | - | Create from dictionary |
+| | `invoke(input, config)` | Method | - | Execute all runnables in parallel |
+| | `ainvoke(input, config)` | Method | - | Async parallel execution |
+| | `__or__(other)` | Method | - | Chain after parallel execution |
+| **RunnablePassthrough** | `assignments` | Dict[str, Runnable] | `{}` | Dictionary of key-runnable pairs to assign |
+| | `assign(**kwargs)` | ClassMethod | - | Create with assignments |
+| | `invoke(input, config)` | Method | - | Pass through input with optional assignments |
+| | `ainvoke(input, config)` | Method | - | Async passthrough |
+| **RunnableLambda** | `func` | Callable | Required | Function or coroutine to wrap |
+| | `is_coroutine` | bool | `False` | Whether the function is a coroutine |
+| | `invoke(input, config)` | Method | - | Execute wrapped function |
+| | `ainvoke(input, config)` | Method | - | Async execution |
+| **RunnableBranch** | `conditions_and_runnables` | List[Tuple] | `[]` | List of (condition, runnable) tuples |
+| | `default_runnable` | Runnable | Required | Default runnable when no conditions match |
+| | `invoke(input, config)` | Method | - | Evaluate conditions and execute matching branch |
+| | `ainvoke(input, config)` | Method | - | Async conditional execution |
+| **@chain Decorator** | `func` | Callable | Required | Function being decorated |
+| | `is_async` | bool | `False` | Whether the function is async |
+| | `invoke(input, config)` | Method | - | Execute decorated function (auto-invokes returned Runnables) |
+| | `ainvoke(input, config)` | Method | - | Async execution |
+| **RunnableGraph** | `root` | Runnable | Required | Root runnable of the graph |
+| | `nodes` | Dict[int, RunnableNode] | `{}` | Dictionary of graph nodes |
+| | `node_counter` | int | `0` | Counter for node IDs |
+| | `print_ascii()` | Method | - | Print ASCII representation of graph |
+| | `to_ascii()` | Method | - | Generate ASCII string representation |
+| | `to_mermaid()` | Method | - | Generate Mermaid diagram code |
+| | `get_structure_details()` | Method | - | Get detailed structure information |
+| **Model Integration** | `add_memory(history=True, memory=None)` | Method | - | Add conversation history management |
+| | `bind_tools(tools, tool_call_limit=5)` | Method | - | Attach tools to model |
+| | `with_structured_output(schema)` | Method | - | Configure Pydantic output validation |
+
+## Configuration Example
+
+```python
+from upsonic.uel import ChatPromptTemplate, RunnableParallel, RunnablePassthrough
+from upsonic.models import infer_model
+from operator import itemgetter
+
+# Create model with features
+model = infer_model("openai/gpt-4o").add_memory(history=True)
+
+# Create prompt template
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful assistant."),
+    ("placeholder", {"variable_name": "chat_history"}),
+    ("human", "{question}")
+])
+
+# Create parallel execution
+parallel = RunnableParallel(
+    joke=ChatPromptTemplate.from_template("Tell a joke about {topic}") | model,
+    fact=ChatPromptTemplate.from_template("Share a fact about {topic}") | model
+)
+
+# Create passthrough with assignments
+passthrough = RunnablePassthrough.assign(
+    question=itemgetter("question"),
+    context=lambda x: f"Context for: {x['question']}"
+)
+
+# Combine into full chain
+chain = (
+    passthrough
+    | prompt
+    | model
+)
+
+# Execute
+from upsonic.uel import StrOutputParser
+
+chain_with_parser = chain | StrOutputParser()
+
+result = chain_with_parser.invoke({
+    "question": "What is AI?",
+    "chat_history": []
+})
+
+print(result)
+```
+

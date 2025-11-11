@@ -1,0 +1,167 @@
+---
+title: "Attributes"
+description: "Configuration options for the StateGraph system"
+---
+
+## Attributes
+
+The StateGraph system is configured through the `StateGraph` class and its methods, which provide the following attributes:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| **StateGraph Constructor** ||||
+| `state_schema` | TypedDict | Required | The state schema that flows through the graph |
+| `input_schema` | TypedDict \| None | `None` | Optional input schema for validation |
+| `output_schema` | TypedDict \| None | `None` | Optional output schema for filtering |
+| **Builder Methods** ||||
+| `add_node(name, node_func, retry_policy, cache_policy)` | Method | - | Add a node to the graph |
+| `add_edge(source, target)` | Method | - | Add a simple edge between nodes |
+| `add_conditional_edges(source, condition, targets)` | Method | - | Add conditional edges with routing function |
+| **Node Configuration** ||||
+| `name` | str | Required | Unique node identifier |
+| `node_func` | Callable | Required | Function that processes state |
+| `retry_policy` | RetryPolicy \| None | `None` | Retry policy for the node |
+| `cache_policy` | CachePolicy \| None | `None` | Cache policy for the node |
+| **Compile Configuration** ||||
+| `checkpointer` | Checkpointer \| None | `None` | Checkpointer for state persistence |
+| `cache` | Cache \| None | `None` | Cache implementation for caching |
+| `durability` | str | `"async"` | Durability mode: 'sync', 'async', or 'exit' |
+| `interrupt_before` | List[str] \| None | `None` | Nodes to interrupt before execution |
+| `interrupt_after` | List[str] \| None | `None` | Nodes to interrupt after execution |
+| **Graph Execution Methods** ||||
+| `invoke(input_state, config)` | Method | - | Execute the graph with initial state |
+| `get_state(config)` | Method | - | Get current state of a thread |
+| `get_state_history(config, limit)` | Method | - | Get execution history for a thread |
+| `update_state(config, values, as_node)` | Method | - | Manually update state without execution |
+| **Invoke Config Options** ||||
+| `config["configurable"]["thread_id"]` | str | Required | Thread identifier for persistence |
+| `config["configurable"]["checkpoint_id"]` | str \| None | `None` | Specific checkpoint to resume from |
+| `config["recursion_limit"]` | int | `100` | Maximum graph execution steps |
+| **RetryPolicy** ||||
+| `max_attempts` | int | `3` | Maximum number of retry attempts |
+| `initial_interval` | float | `0.5` | Initial wait time in seconds |
+| `backoff_factor` | float | `2.0` | Multiplier for exponential backoff |
+| `max_interval` | float | `128.0` | Maximum wait time between retries |
+| `jitter` | bool | `True` | Add randomness to prevent thundering herd |
+| `retry_on` | Exception \| Tuple[Exception] \| Callable | `Exception` | Exceptions that trigger retry |
+| **CachePolicy** ||||
+| `ttl` | int \| None | `None` | Time-to-live in seconds (None = forever) |
+| `key_func` | Callable \| None | `None` | Custom cache key generation function |
+| **Command** ||||
+| `update` | dict | Required | State updates to apply |
+| `goto` | str \| END | Required | Next node to execute |
+| `resume` | Any | - | Value to return from interrupt() |
+| **Send** ||||
+| `node_name` | str | Required | Target node to send state to |
+| `state` | dict | Required | State to send to the worker node |
+| **Checkpointers** ||||
+| `MemorySaver` | Class | - | In-memory checkpointer (lost on restart) |
+| `SqliteCheckpointer` | Class | - | SQLite-based checkpointer (persistent) |
+| **Caches** ||||
+| `InMemoryCache` | Class | - | In-memory cache (lost on restart) |
+| `SqliteCache` | Class | - | SQLite-based cache (persistent) |
+| **Constants** ||||
+| `START` | Constant | - | Entry point of the graph |
+| `END` | Constant | - | Exit point of the graph |
+| **Functions** ||||
+| `interrupt(data)` | Function | - | Pause execution and wait for human input |
+| `@task(retry_policy, cache_policy)` | Decorator | - | Create durable function with retry/cache |
+
+## Configuration Example
+
+```python
+from typing_extensions import TypedDict
+from upsonic.graphv2 import (
+    StateGraph, START, END,
+    RetryPolicy, CachePolicy,
+    MemorySaver, InMemoryCache,
+    Command
+)
+
+# Define state schema
+class MyState(TypedDict):
+    input: str
+    output: str
+    count: int
+
+# Define input/output schemas
+class InputState(TypedDict):
+    input: str
+
+class OutputState(TypedDict):
+    output: str
+
+# Define node function
+def process_node(state: MyState) -> dict:
+    """Process the input and return output."""
+    return {
+        "output": f"Processed: {state['input']}",
+        "count": state["count"] + 1
+    }
+
+# Create graph builder with schemas
+builder = StateGraph(
+    MyState,
+    input_schema=InputState,
+    output_schema=OutputState
+)
+
+# Add node with retry and cache policies
+builder.add_node(
+    "process",
+    process_node,
+    retry_policy=RetryPolicy(
+        max_attempts=3,
+        initial_interval=1.0,
+        backoff_factor=2.0,
+        jitter=True
+    ),
+    cache_policy=CachePolicy(ttl=300)  # 5 minutes
+)
+
+# Add edges
+builder.add_edge(START, "process")
+builder.add_edge("process", END)
+
+# Compile with checkpointer and cache
+checkpointer = MemorySaver()
+cache = InMemoryCache()
+
+graph = builder.compile(
+    checkpointer=checkpointer,
+    cache=cache,
+    durability="async",  # or "sync" or "exit"
+    interrupt_before=None,  # Optional: pause before these nodes
+    interrupt_after=None  # Optional: pause after these nodes
+)
+
+# Execute the graph
+config = {
+    "configurable": {
+        "thread_id": "session-1"
+    },
+    "recursion_limit": 50  # Optional: limit execution steps
+}
+
+result = graph.invoke(
+    {
+        "input": "test",
+        "output": "",
+        "count": 0
+    },
+    config=config
+)
+
+print(result["output"])  # Output: Processed: test
+
+# Get current state
+state = graph.get_state(config={"configurable": {"thread_id": "session-1"}})
+print(f"Current state: {state.values}")
+
+# Get execution history
+history = graph.get_state_history(
+    config={"configurable": {"thread_id": "session-1"}},
+    limit=10
+)
+print(f"History: {len(history)} checkpoints")
+```
