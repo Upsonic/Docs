@@ -1,10 +1,10 @@
 ---
 title: "Classify Emails"
 description: "Build a lightweight Upsonic LLM agent that classifies fintech operation emails into specific categories."
+
 ---
 
 This example demonstrates how to build a lightweight **Upsonic LLM agent** that classifies incoming fintech operation emails into specific categories — helping operations teams automatically sort and respond to critical messages.
-
 
 
 <iframe src="https://www.youtube.com/embed/1aLcd0fSgfI" title="YouTube video player" frameborder="0" className="w-full aspect-video rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen />
@@ -16,7 +16,7 @@ In this example, the agent classifies emails into one of two categories:
 1. **Information Requests** — messages requesting data such as account statements, balance history, or audit documents.
 2. **Lien on Bank Account** — notifications indicating a lien, freeze, or court order on a customer account.
 
-The agent uses a single LLM Task to perform the classification.\
+The agent uses a single LLM Task to perform the classification.  
 There are no external integrations — just intelligent reasoning based on email content.
 
 ## Key Features
@@ -55,7 +55,6 @@ task = Task(
 The script includes two sample emails:
 
 **Email 1 - Information Request:**
-
 ```python
 email_1 = """
 Dear Operations Team,
@@ -70,7 +69,6 @@ Ministry of Finance - Audit Department
 ```
 
 **Email 2 - Lien on Bank Account:**
-
 ```python
 email_2 = """
 To Whom It May Concern,
@@ -199,7 +197,6 @@ uv run task_examples/classify_emails/classify_emails.py --email_id 2
 ### Example Output
 
 **Email 1:**
-
 ```json
 {
   "category": "information_request"
@@ -207,7 +204,6 @@ uv run task_examples/classify_emails/classify_emails.py --email_id 2
 ```
 
 **Email 2:**
-
 ```json
 {
   "category": "lien_on_bank_account"
@@ -232,3 +228,4 @@ task_examples/classify_emails/
 ## Repository
 
 View the complete example: [Classify Emails Example](https://github.com/Upsonic/Examples/tree/master/task_examples/classify_emails)
+
