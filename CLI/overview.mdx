@@ -1,0 +1,32 @@
+---
+title: "Starting an Agent Project"
+description: "Learn about Agent Projects and how they work in Upsonic"
+---
+
+## What is Agent Project?
+
+An Agent Project is a structured way to build production-ready AI agents using Upsonic. It provides a standardized project structure with:
+
+- **Agent Logic**: Your agent's core functionality defined in `agent.py`
+- **Configuration**: Project settings, input/output schemas, and dependencies in `upsonic_config.json`
+- **FastAPI Integration**: Automatic API generation from your agent configuration
+- **Dependency Management**: Organized dependency sections for API, Streamlit, and development tools
+
+Agent Projects enable you to quickly scaffold, develop, and deploy AI agents as RESTful APIs with minimal boilerplate code.
+
+## How Agent Project Works
+
+When you initialize an Agent Project, Upsonic creates two essential files:
+
+1. **`agent.py`**: Contains your agent's `main()` function that processes inputs and returns outputs
+2. **`upsonic_config.json`**: Defines your agent's metadata, input/output schemas, dependencies, and runtime configuration
+
+The framework automatically:
+- Generates a FastAPI server from your configuration
+- Creates OpenAPI documentation with interactive forms
+- Handles both JSON and multipart/form-data requests
+- Validates inputs and outputs based on your schema definitions
+- Manages dependencies across different environments
+
+Your agent's `main()` function receives inputs as a dictionary, processes them using Upsonic's Agent class, and returns a dictionary with results. The FastAPI server exposes this as a `/call` endpoint that can be consumed by any HTTP client.
+
