@@ -1,0 +1,90 @@
+---
+title: "Initialization"
+description: "Set up your development environment and initialize an Agent Project"
+---
+
+## Overview
+
+Initializing an Agent Project sets up the foundation for building your AI agent. This process involves creating a virtual environment, installing the Upsonic CLI, and generating the project structure with template files.
+
+<Info>
+If you don't have `uv` installed, you can install it by following the instructions at [this link](https://docs.astral.sh/uv/getting-started/installation/).
+</Info>
+
+## Creating Virtual Environment
+
+Before installing Upsonic, create a virtual environment to isolate your project dependencies:
+
+
+```bash
+# Initializing uv
+uv init
+
+# Using uv
+uv venv
+
+# Naming
+uv venv my-name
+
+# Setting up python version
+uv venv --python 3.11
+
+
+# Activate the virtual environment
+source .venv/bin/activate  # On macOS/Linux
+
+.venv\Scripts\activate # On Windows
+```
+
+## Installing Upsonic CLI
+
+Install Upsonic using pip:
+
+```bash
+uv add upsonic
+```
+
+This installs the `upsonic` command-line tool globally or within your virtual environment. Verify the installation:
+
+```bash
+upsonic
+```
+
+## Initialize your Agent Project
+
+Navigate to your project directory and run:
+
+```bash
+upsonic init
+```
+
+The CLI will prompt you for an agent name. This creates:
+- `agent.py`: Template agent file with a basic `main()` function
+- `upsonic_config.json`: Configuration file with your agent's metadata, schemas, and dependencies
+
+The generated `agent.py` includes a simple example that uses Upsonic's Agent class to process questions. You can customize this file to implement your agent's specific logic.
+
+## Run your Agent Project
+
+After initialization, install the required dependencies:
+
+```bash
+upsonic install
+```
+
+This installs all dependencies listed in the `api` section of `upsonic_config.json`, including FastAPI and uvicorn.
+
+Then start your agent as a FastAPI server:
+
+```bash
+upsonic run
+```
+
+By default, the server runs on `http://localhost:8000`. You can customize the host and port:
+
+```bash
+upsonic run --host 0.0.0.0 --port 8080
+```
+
+Access the interactive API documentation at `http://localhost:8000/docs` to test your agent's endpoint.
+

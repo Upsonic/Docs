@@ -1,0 +1,79 @@
+---
+title: "Start Agent API"
+description: "Configure inputs, outputs, and run your agent as a FastAPI server"
+---
+
+## Overview
+
+The Agent API automatically generates a FastAPI server from your `upsonic_config.json` configuration. The server exposes a `/call` endpoint that accepts inputs defined in your input schema and returns outputs matching your output schema.
+
+The API supports both `application/json` and `multipart/form-data` content types, making it compatible with web forms, file uploads, and JSON-based clients.
+
+## Configure Inputs
+
+Inputs are defined in the `input_schema` section of `upsonic_config.json`:
+
+```json
+{
+    "input_schema": {
+        "inputs": {
+            "question": {
+                "type": "string",
+                "description": "The question of the User",
+                "required": True,
+                "default": None
+            }
+        }
+    }
+}
+```
+
+Supported input types include:
+- `string`: Text input
+- `number`: Numeric values
+- `integer`: Whole numbers
+- `boolean`: True/false values
+- `array` or `list`: Arrays of values
+- `json` or `object`: JSON objects
+- `file` or `binary`: File uploads
+
+Set `required: true` for mandatory inputs and provide `default` values for optional fields.
+
+## Configure Outputs
+
+Outputs are defined in the `output_schema` section:
+
+```json
+{
+    "output_schema": {
+        "answer": {
+            "type": "string",
+            "description": "Answer of the agent"
+        }
+    }
+}
+```
+
+Your agent's `main()` function should return a dictionary matching the output schema structure. The API automatically validates and formats the response according to these definitions.
+
+## Run FastAPI of your Agent
+
+Start the FastAPI server with:
+
+```bash
+upsonic run
+```
+
+The server starts on `http://localhost:8000` by default. Customize the host and port:
+
+```bash
+upsonic run --host 0.0.0.0 --port 8080
+```
+
+Once running, you can:
+- Access interactive API docs at `http://localhost:8000/docs`
+- Test the `/call` endpoint directly from the Swagger UI
+- Send HTTP requests to `POST http://localhost:8000/call`
+
+The API automatically generates OpenAPI schemas from your input/output configurations, enabling full type validation and interactive testing through the documentation interface.
+
