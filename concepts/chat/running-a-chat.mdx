@@ -10,92 +10,131 @@ Chat supports both blocking and streaming interactions. Use `invoke()` for block
 ## Blocking Response
 
 ```python
+import asyncio
 from upsonic import Agent, Task, Chat
 
-agent = Agent("openai/gpt-4o")
-chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
-# Send string message
-response = await chat.invoke("What is 2+2?")
-print(response)
+async def main():
+    agent = Agent("openai/gpt-4o")
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
-# Send Task object
-task = Task(description="Explain quantum computing")
-response = await chat.invoke(task)
-print(response)
+    # Send string message
+    response = await chat.invoke("What is 2+2?")
+    print(response)
+
+    # Send Task object
+    task = Task(description="Explain quantum computing")
+    response = await chat.invoke(task)
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Streaming Response
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
-chat = Chat(session_id="session1", user_id="user1", agent=agent)
+async def main():
+    agent = Agent("openai/gpt-4o")
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
-# Stream using invoke with stream=True
-async for chunk in chat.invoke("Tell me a story", stream=True):
-    print(chunk, end='', flush=True)
+    # Stream using invoke with stream=True
+    # Note: invoke is async, so we need to await it to get the AsyncIterator
+    stream_iterator = await chat.invoke("Tell me a story", stream=True)
+    async for chunk in stream_iterator:
+        print(chunk, end='', flush=True)
+    
+    print()  # New line after first stream
+    
+    # Or use dedicated stream method
+    async for chunk in chat.stream("Tell me a story"):
+        print(chunk, end='', flush=True)
 
-# Or use dedicated stream method
-async for chunk in chat.stream("Tell me a story"):
-    print(chunk, end='', flush=True)
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## With Attachments
 
 ```python
+import asyncio
 from upsonic import Agent, Task, Chat
 
-agent = Agent("openai/gpt-4o")
-chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
-# Send message with file attachments
-response = await chat.invoke(
-    "Analyze this document",
-    attachments=["document.pdf", "data.csv"]
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
+
+    # Send message with file context
+    response = await chat.invoke(
+        "Analyze this document",
+        context=["document.pdf", "data.csv"]
+    )
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Accessing History
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
-chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
-# Send messages
-await chat.invoke("Hello")
-await chat.invoke("How are you?")
+async def main():
+    agent = Agent("openai/gpt-4o")
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
-# Access all messages
-messages = chat.all_messages
-for msg in messages:
-    print(f"{msg.role}: {msg.content}")
+    # Send messages
+    await chat.invoke("Hello")
+    await chat.invoke("How are you?")
 
-# Get recent messages
-recent = chat.get_recent_messages(count=5)
+    # Access all messages
+    messages = chat.all_messages
+    for msg in messages:
+        print(f"{msg.role}: {msg.content}")
+
+    # Get recent messages
+    recent = chat.get_recent_messages(count=5)
+    return recent
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Session Management
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
-chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
-# Check session state
-print(chat.state)  # IDLE, AWAITING_RESPONSE, STREAMING, or ERROR
+async def main():
+    agent = Agent("openai/gpt-4o")
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
-# Clear history
-chat.clear_history()
+    # Check session state
+    print(chat.state)  # IDLE, AWAITING_RESPONSE, STREAMING, or ERROR
 
-# Reset session
-chat.reset_session()
+    # Clear history
+    chat.clear_history()
 
-# Close session
-await chat.close()
+    # Reset session
+    chat.reset_session()
+
+    # Close session
+    await chat.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 

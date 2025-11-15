@@ -55,7 +55,7 @@ def llm_node(state: AgentState) -> dict:
     # Create request
     request = ModelRequest(parts=[
         SystemPromptPart(content="You are a helpful assistant."),
-        UserPromptPart(content=state["messages"][-1] if state["messages"] else "Hello")
+        UserPromptPart(content=state["messages"][-1].content if state["messages"] else "Hello")
     ])
     
     # Invoke (Upsonic automatically handles tool execution)

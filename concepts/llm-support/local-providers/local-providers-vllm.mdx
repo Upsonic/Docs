@@ -1,0 +1,47 @@
+---
+title: "vLLM"
+description: "Using vLLM for local high-throughput LLM serving with Upsonic"
+---
+
+## Overview
+
+vLLM is a high-throughput serving engine for large language models that provides an OpenAI-compatible API. Perfect for running models locally with excellent performance and throughput.
+
+**Model Class:** `OpenAIChatModel` (OpenAI-compatible API)
+
+## Authentication
+
+```bash
+export VLLM_BASE_URL="http://localhost:8000/v1"  # Required
+export VLLM_API_KEY="your-api-key"  # Optional, vLLM doesnt not require authentication
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="Qwen/Qwen2.5-0.5B-Instruct", provider="vllm")
+
+agent = Agent(model=model)
+task = Task("Hello, how are you?")
+result = agent.do(task)
+
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model default | Base |
+| `temperature` | `float` | Sampling temperature | Model default | Base |
+| `top_p` | `float` | Nucleus sampling | Model default | Base |
+| `seed` | `int` | Random seed | None | Base |
+| `stop_sequences` | `list[str]` | Stop sequences | None | Base |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 | Base |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 | Base |
+| `parallel_tool_calls` | `bool` | Allow parallel tools | True | Base |
+| `timeout` | `float` | Request timeout (seconds) | Model default | Base |
+

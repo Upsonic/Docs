@@ -20,22 +20,30 @@ Chat supports multiple storage backends for persistent memory and session data.
 ## Using SQLite Storage
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 from upsonic.storage.providers import SqliteStorage
 
-# SQLite storage (sessions_table_name, profiles_table_name, db_file)
-storage = SqliteStorage("sessions", "profiles", "chat.db")
 
-agent = Agent("openai/gpt-4o")
+async def main():
+    # SQLite storage (sessions_table_name, profiles_table_name, db_file)
+    storage = SqliteStorage("sessions", "profiles", "chat.db")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    storage=storage
-)
+    agent = Agent("openai/gpt-4o")
 
-await chat.invoke("Hello")
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        storage=storage
+    )
+
+    response = await chat.invoke("Hello")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Using PostgreSQL Storage
@@ -189,23 +197,31 @@ chat = Chat(
 Chat automatically manages storage connections:
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 from upsonic.storage.providers import SqliteStorage
 
-storage = SqliteStorage("sessions", "profiles", "chat.db")
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    storage=storage
-)
+async def main():
+    storage = SqliteStorage("sessions", "profiles", "chat.db")
+    agent = Agent("openai/gpt-4o")
 
-# Storage connection managed automatically
-await chat.invoke("Hello")
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        storage=storage
+    )
 
-# Close connection when done
-await chat.close()
+    # Storage connection managed automatically
+    response = await chat.invoke("Hello")
+    print(response)
+
+    # Close connection when done
+    await chat.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 

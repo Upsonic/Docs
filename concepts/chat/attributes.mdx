@@ -29,31 +29,38 @@ The Chat system is configured through the `Chat` class, which provides the follo
 ## Configuration Example
 
 ```python
+import asyncio
 from upsonic import Agent, Task, Chat
-from upsonic.storage.providers import SqliteStorage
+from upsonic.storage.providers import InMemoryStorage
 
-# Setup storage
-storage = SqliteStorage("sessions", "profiles", "chat.db")
 
-# Create agent
-agent = Agent("openai/gpt-4o")
+async def main():
+    # Setup storage (in-memory, no dependencies required)
+    storage = InMemoryStorage()
 
-# Create chat with configuration
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    storage=storage,
-    full_session_memory=True,
-    summary_memory=True,
-    user_analysis_memory=True,
-    num_last_messages=50,
-    retry_attempts=3,
-    retry_delay=1.0
-)
+    # Create agent
+    agent = Agent("openai/gpt-4o")
 
-# Use chat
-response = await chat.invoke("Hello!")
-print(response)
+    # Create chat with configuration
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        storage=storage,
+        full_session_memory=True,
+        summary_memory=True,
+        user_analysis_memory=True,
+        num_last_messages=50,
+        retry_attempts=3,
+        retry_delay=1.0
+    )
+
+    # Use chat
+    response = await chat.invoke("Hello!")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 

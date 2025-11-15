@@ -79,7 +79,8 @@ async def main():
     
     # Stream response
     print("Assistant: ", end="")
-    async for chunk in chat.invoke("Tell me a story", stream=True):
+    stream = await chat.invoke("Tell me a story", stream=True)
+    async for chunk in stream:
         print(chunk, end="", flush=True)
     print()
     
