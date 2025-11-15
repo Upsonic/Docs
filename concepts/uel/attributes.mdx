@@ -61,46 +61,42 @@ The UEL system is configured through various components. The following table pro
 ## Configuration Example
 
 ```python
-from upsonic.uel import ChatPromptTemplate, RunnableParallel, RunnablePassthrough
+from upsonic.uel import ChatPromptTemplate, RunnableParallel, StrOutputParser
 from upsonic.models import infer_model
 from operator import itemgetter
 
 # Create model with features
 model = infer_model("openai/gpt-4o").add_memory(history=True)
 
-# Create prompt template
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful assistant."),
+# Create parallel execution that generates joke and fact
+# RunnableParallel with explicit passthrough of input variables
+parallel = RunnableParallel(
+    topic=itemgetter("topic"),  # Pass through the topic
+    chat_history=itemgetter("chat_history"),  # Pass through the chat_history
+    joke=ChatPromptTemplate.from_template("Tell a joke about {topic}") | model,  # Generate joke in parallel
+    fact=ChatPromptTemplate.from_template("Share a fact about {topic}") | model  # Generate fact in parallel
+)
+
+# Create prompt template that uses parallel results
+synthesis_prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful assistant. You will receive a joke and a fact about a topic. Combine them into an interesting response."),
     ("placeholder", {"variable_name": "chat_history"}),
-    ("human", "{question}")
+    ("human", "Topic: {topic}\n\nJoke: {joke}\n\nFact: {fact}\n\nPlease synthesize this information into an engaging response about {topic}.")
 ])
 
-# Create parallel execution
-parallel = RunnableParallel(
-    joke=ChatPromptTemplate.from_template("Tell a joke about {topic}") | model,
-    fact=ChatPromptTemplate.from_template("Share a fact about {topic}") | model
-)
-
-# Create passthrough with assignments
-passthrough = RunnablePassthrough.assign(
-    question=itemgetter("question"),
-    context=lambda x: f"Context for: {x['question']}"
-)
-
-# Combine into full chain
+# Combine into full chain with parallel processing
+# RunnableParallel outputs: {topic, chat_history, joke, fact}
 chain = (
-    passthrough
-    | prompt
+    parallel
+    | synthesis_prompt
     | model
+    | StrOutputParser()
 )
 
-# Execute
-from upsonic.uel import StrOutputParser
-
-chain_with_parser = chain | StrOutputParser()
-
-result = chain_with_parser.invoke({
-    "question": "What is AI?",
+# Execute the chain
+print("=== Chain with Parallel Processing ===")
+result = chain.invoke({
+    "topic": "artificial intelligence",
     "chat_history": []
 })
 
