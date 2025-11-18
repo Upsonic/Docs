@@ -269,7 +269,8 @@ builder.add_edge("needs_improvement", END)
 Create loops by routing back to earlier nodes:
 
 ```python
-from upsonic.graphv2 import Command, END
+from typing import TypedDict
+from upsonic.graphv2 import Command, END, StateGraph, START
 
 class LoopState(TypedDict):
     counter: int

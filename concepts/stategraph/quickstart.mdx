@@ -87,15 +87,16 @@ Here's the full code in one place:
 
 ```python
 from typing_extensions import TypedDict
+from typing import Dict, Any
 from upsonic.graphv2 import StateGraph, START, END
 
 # 1. Define state
 class ConversationState(TypedDict):
-    messages: list
+    messages: list[str]
     response: str
 
 # 2. Define nodes
-def process_node(state: ConversationState) -> dict:
+def process_node(state: ConversationState) -> Dict[str, Any]:
     user_message = state["messages"][-1] if state["messages"] else "Hello"
     response = f"Echo: {user_message}"
     return {
@@ -125,10 +126,11 @@ print(result["response"])
 Let's extend our graph to route based on user intent:
 
 ```python
-from upsonic.graphv2 import Command, END
+from typing import TypedDict, List
+from upsonic.graphv2 import Command, END, StateGraph, START
 
 class ConversationState(TypedDict):
-    messages: list
+    messages: List[str]
     intent: str
     response: str
 
