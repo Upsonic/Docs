@@ -71,47 +71,84 @@ Workers execute in parallel and their results are automatically merged using red
 ### Map-Reduce Pattern
 
 ```python
+"""
+MapReduce pattern implementation using StateGraph with Send objects.
+
+This demonstrates:
+1. Dynamic parallelization using Send objects
+2. State merging with reducers (operator.add for lists)
+3. Automatic deduplication of next nodes after Send execution
+"""
+
+from typing import List, Annotated
+from typing_extensions import TypedDict
+import operator
+from upsonic.graphv2 import StateGraph, START, END, Send
+
 class MapReduceState(TypedDict):
     data: List[int]
     mapped: Annotated[List[int], operator.add]
     reduced: int
 
 def map_phase(state: MapReduceState) -> List[Send]:
-    """Map: send each item to a worker."""
+    """Map: send each item to a worker.
+    
+    Returns a list of Send objects, one for each data item.
+    All Send objects will execute the "mapper" node in parallel.
+    """
     return [
         Send("mapper", {"value": val})
         for val in state["data"]
     ]
 
 def mapper(state: dict) -> dict:
-    """Map function: square the value."""
+    """Map function: square the value.
+    
+    Each mapper receives a single value and returns the squared result.
+    The results are merged using the operator.add reducer.
+    """
     squared = state["value"] ** 2
     return {"mapped": [squared]}
 
 def reduce_phase(state: MapReduceState) -> dict:
-    """Reduce: sum all mapped values."""
+    """Reduce: sum all mapped values.
+    
+    This executes ONCE after all mappers complete, thanks to deduplication.
+    Even though 5 mappers all route to "reduce", it executes only once.
+    """
     total = sum(state["mapped"])
     return {"reduced": total}
 
+# Build the graph
 builder = StateGraph(MapReduceState)
 builder.add_node("start", lambda s: {"data": s["data"]})
 builder.add_node("mapper", mapper)
 builder.add_node("reduce", reduce_phase)
 
+# Define edges
 builder.add_edge(START, "start")
-builder.add_conditional_edges("start", map_phase, ["mapper"])
-builder.add_edge("mapper", "reduce")
+builder.add_conditional_edges("start", map_phase, ["mapper"])  # Returns Send objects
+builder.add_edge("mapper", "reduce")  # All mappers route here (deduplicated)
 builder.add_edge("reduce", END)
 
+# Compile the graph
 graph = builder.compile()
 
+# Execute
 result = graph.invoke({
     "data": [1, 2, 3, 4, 5],
     "mapped": [],
     "reduced": 0
 })
 
-print(f"Sum of squares: {result['reduced']}")  # 1+4+9+16+25 = 55
+# Verify result
+expected = sum(x**2 for x in [1, 2, 3, 4, 5])  # 1+4+9+16+25 = 55
+assert result['reduced'] == expected, f"Expected {expected}, got {result['reduced']}"
+assert result['mapped'] == [1, 4, 9, 16, 25], f"Expected [1,4,9,16,25], got {result['mapped']}"
+
+print(f"✓ Sum of squares: {result['reduced']}")  # 1+4+9+16+25 = 55
+print(f"✓ Mapped values: {result['mapped']}")
+print(f"✓ All tests passed!")
 ```
 
 ## Parallel Node Execution
@@ -120,7 +157,9 @@ StateGraph automatically executes nodes in parallel when they have no dependenci
 
 ```python
 from typing import Annotated, List
+from typing_extensions import TypedDict
 import operator
+from upsonic.graphv2 import StateGraph, START, END
 
 class ParallelState(TypedDict):
     input: str
