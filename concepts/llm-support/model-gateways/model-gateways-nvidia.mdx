@@ -1,0 +1,47 @@
+---
+title: "NVIDIA NIM"
+description: "Using NVIDIA NIM for cloud-based LLM inference with Upsonic"
+---
+
+## Overview
+
+NVIDIA NIM (NVIDIA Inference Microservices) provides access to various models from different vendors through an OpenAI-compatible API. Access models from Meta, Google, Mistral, DeepSeek, Qwen, and more through NVIDIA's optimized inference platform.
+
+**Model Class:** `OpenAIChatModel` (OpenAI-compatible API)
+
+## Authentication
+
+```bash
+export NVIDIA_API_KEY="nvapi-..."  # Required (or use NGC_API_KEY)
+export NVIDIA_BASE_URL="https://integrate.api.nvidia.com/v1"  # Optional, this is the default
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel
+
+model = OpenAIChatModel(model_name="meta/llama-3.1-8b-instruct", provider="nvidia")
+
+agent = Agent(model=model)
+task = Task("Hello, how are you?")
+result = agent.do(task)
+
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model default | Base |
+| `temperature` | `float` | Sampling temperature | Model default | Base |
+| `top_p` | `float` | Nucleus sampling | Model default | Base |
+| `seed` | `int` | Random seed | None | Base |
+| `stop_sequences` | `list[str]` | Stop sequences | None | Base |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 | Base |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 | Base |
+| `parallel_tool_calls` | `bool` | Allow parallel tools | True | Base |
+| `timeout` | `float` | Request timeout (seconds) | Model default | Base |
+

@@ -48,18 +48,23 @@ asyncio.run(main())
 For real-time output, use `stream()` to get responses as they're generated.
 
 ```python
+import asyncio
 from upsonic import Agent, Task
 
-# Create agent and task
-agent = Agent("openai/gpt-4o")
-task = Task("Write a short poem about coding")
+
+async def main():
+    # Create agent and task
+    agent = Agent("openai/gpt-4o")
+    task = Task("Write a short poem about coding")
     
-# Stream the output
-async with agent.stream(task) as result:
-    async for text_chunk in result.stream_output():
-        print(text_chunk, end='', flush=True)
+    # Stream the output
+    async with agent.stream(task) as result:
+        async for text_chunk in result.stream_output():
+            print(text_chunk, end='', flush=True)
     print()  # New line after streaming
 
 
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 

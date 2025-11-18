@@ -35,11 +35,13 @@ from typing_extensions import TypedDict
 from upsonic.graphv2 import StateGraph, START, END
 
 class ConversationState(TypedDict):
-    messages: list
+    messages: list[str]
     response: str
 
 def process_node(state: ConversationState) -> dict:
     """Process the user's message."""
+    if not state["messages"]:
+        return {"response": "No messages to process"}
     user_message = state["messages"][-1]
     response = f"Echo: {user_message}"
     return {"response": response}
@@ -73,7 +75,7 @@ from typing_extensions import TypedDict
 import operator
 from upsonic.graphv2 import StateGraph, START, END
 from upsonic.models import infer_model
-from upsonic.messages import ModelRequest, UserPromptPart, SystemPromptPart
+from upsonic.messages import ModelRequest, UserPromptPart, SystemPromptPart, TextPart
 from upsonic.tools import tool
 
 class AgentState(TypedDict):
@@ -82,7 +84,16 @@ class AgentState(TypedDict):
 
 @tool
 def calculator(a: float, b: float, operation: str) -> float:
-    """Perform basic math operations."""
+    """Perform basic math operations. Use this tool to calculate mathematical expressions.
+    
+    Args:
+        a: First number
+        b: Second number
+        operation: Operation to perform - either "add" or "multiply"
+    
+    Returns:
+        The result of the calculation
+    """
     if operation == "add":
         return a + b
     elif operation == "multiply":
@@ -101,7 +112,18 @@ def agent_node(state: AgentState) -> dict:
     ])
     
     response = model_with_tools.invoke([request])
-    return {"messages": [response], "result": str(response)}
+    
+    # Extract text content from response
+    text_content = ""
+    for part in response.parts:
+        if isinstance(part, TextPart):
+            text_content += part.content
+    
+    # If no text content, use the string representation
+    if not text_content:
+        text_content = str(response)
+    
+    return {"messages": [response], "result": text_content}
 
 # Build graph
 builder = StateGraph(AgentState)
