@@ -79,7 +79,20 @@ Cache policies avoid re-executing expensive operations.
 ### Basic Caching
 
 ```python
-from upsonic.graphv2 import CachePolicy, InMemoryCache
+from typing_extensions import TypedDict
+from upsonic.graphv2 import StateGraph, START, END, CachePolicy, InMemoryCache
+import time
+
+# Define the State schema
+class State(TypedDict):
+    input: str
+    output: str
+
+def complex_calculation(input_value: str) -> str:
+    """Simulate an expensive computation."""
+    # Simulate some computation time
+    time.sleep(0.1)
+    return f"processed_{input_value}"
 
 def expensive_node(state: State) -> dict:
     """Expensive computation - results are cached."""
@@ -95,15 +108,53 @@ builder.add_node(
     cache_policy=CachePolicy(ttl=300)  # Cache for 5 minutes
 )
 
+# Add edges to connect the graph
+builder.add_edge(START, "compute")
+builder.add_edge("compute", END)
+
 # Compile with cache
 cache = InMemoryCache()
 graph = builder.compile(cache=cache)
 
 # First call - executes and caches
+print("First call (should be slow)...")
+start_time = time.time()
 result1 = graph.invoke({"input": "test"})
+first_duration = time.time() - start_time
+print(f"First call took {first_duration:.3f} seconds")
+print(f"Result: {result1}")
 
 # Second call with same input - uses cache
+print("\nSecond call (should be instant from cache)...")
+start_time = time.time()
 result2 = graph.invoke({"input": "test"})  # Instant!
+second_duration = time.time() - start_time
+print(f"Second call took {second_duration:.3f} seconds")
+print(f"Result: {result2}")
+
+# Verify results are the same
+assert result1 == result2, "Results should be identical"
+assert second_duration < first_duration, "Second call should be faster (cached)"
+
+# Test with different input to ensure cache key is working correctly
+print("\nThird call with different input (should be slow again)...")
+start_time = time.time()
+result3 = graph.invoke({"input": "different"})
+third_duration = time.time() - start_time
+print(f"Third call took {third_duration:.3f} seconds")
+print(f"Result: {result3}")
+assert result3["output"] == "processed_different", "Different input should produce different output"
+
+# Test cache hit again with original input
+print("\nFourth call with original input (should be instant from cache)...")
+start_time = time.time()
+result4 = graph.invoke({"input": "test"})
+fourth_duration = time.time() - start_time
+print(f"Fourth call took {fourth_duration:.3f} seconds")
+print(f"Result: {result4}")
+assert result4 == result1, "Cached result should match original"
+assert fourth_duration < third_duration, "Cached call should be faster"
+
 ```
 
 <Tip>

@@ -24,7 +24,7 @@ import operator
 
 from upsonic.graphv2 import StateGraph, START, END
 from upsonic.models import infer_model
-from upsonic.messages import ModelRequest, UserPromptPart, SystemPromptPart
+from upsonic.messages import ModelRequest, UserPromptPart, SystemPromptPart, get_text_content
 from upsonic.tools import tool
 
 # Define state
@@ -35,7 +35,16 @@ class AgentState(TypedDict):
 # Define tools
 @tool
 def calculator(a: float, b: float, operation: str) -> float:
-    """Perform basic math operations."""
+    """Perform basic math operations. Use this tool for all calculations.
+    
+    Args:
+        a: First number
+        b: Second number
+        operation: The operation to perform - must be one of: "add", "multiply", "divide"
+    
+    Returns:
+        The result of the calculation
+    """
     if operation == "add":
         return a + b
     elif operation == "multiply":
@@ -52,18 +61,24 @@ def llm_node(state: AgentState) -> dict:
     # Bind tools to the model
     model_with_tools = model.bind_tools([calculator])
     
-    # Create request
+    # Get the last message content
+    last_message_content = state["messages"][-1].content if state["messages"] else "Hello"
+    
+    # Create request with improved prompt to encourage tool usage
     request = ModelRequest(parts=[
-        SystemPromptPart(content="You are a helpful assistant."),
-        UserPromptPart(content=state["messages"][-1].content if state["messages"] else "Hello")
+        SystemPromptPart(content="You are a helpful assistant. When asked to perform calculations, you MUST use the calculator tool. Do not calculate in your head - always use the tool for math operations."),
+        UserPromptPart(content=last_message_content)
     ])
     
     # Invoke (Upsonic automatically handles tool execution)
     response = model_with_tools.invoke([request])
     
+    # Extract text content from response
+    text_content = get_text_content(response) or response.text or str(response)
+    
     return {
         "messages": [response],
-        "result": str(response)
+        "result": text_content
     }
 
 # Build graph
@@ -77,7 +92,7 @@ graph = builder.compile()
 # Execute
 result = graph.invoke({
     "messages": [
-        UserPromptPart(content="What is 23 multiplied by 17?")
+        UserPromptPart(content="What is 23 multiplied by 17? Please use the calculator tool to compute this.")
     ],
     "result": ""
 })
@@ -120,18 +135,32 @@ def agent_loop(state: LoopingAgentState) -> Command[Literal["agent_loop", END]]:
     
     # Perform reasoning
     prompt = f"""
-    Task: {state['task']}
-    Steps completed: {state['steps_completed']}
-    
-    What's the next step? If task is complete, respond with "COMPLETE".
-    """
+You are an autonomous agent completing a multi-step task.
+
+TASK: {state['task']}
+
+COMPLETED STEPS:
+{chr(10).join(f"{i+1}. {step}" for i, step in enumerate(state['steps_completed'])) if state['steps_completed'] else "None yet"}
+
+CURRENT ITERATION: {state['iterations'] + 1} of {state['max_iterations']}
+
+INSTRUCTIONS:
+- Perform the NEXT concrete action toward completing the task
+- Provide actual results, not just plans or proposals
+- Be specific and actionable
+- When ALL steps are complete (you've done at least 3 iterations), end your response with "TASK_COMPLETE"
+- Do NOT ask for user input or approval
+- Take your time - don't rush to completion
+
+Your response (the actual work for this step):
+"""
     
     response = model.invoke(prompt)
-    response_text = str(response) if response else ""
+    response_text = response.text if response and response.text else ""
     
-    if "COMPLETE" in response_text.upper():
+    if "TASK_COMPLETE" in response_text.upper() and state['iterations'] >= 2:
         return Command(
-            update={"status": "completed", "steps_completed": [response_text]},
+            update={"status": "completed", "steps_completed": [response_text], "iterations": 1},
             goto=END
         )
     else:
