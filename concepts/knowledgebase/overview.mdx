@@ -17,6 +17,23 @@ KnowledgeBase enables you to build Retrieval-Augmented Generation (RAG) systems 
 - **Flexible Storage**: Works with Chroma, Milvus, Qdrant, Pinecone, Weaviate, FAISS, and PGVector
 - **Hybrid Search**: Combines dense vector search with full-text search for better results
 
+<Note>
+  **RAG Installation**
+
+  ```bash
+  pip install upsonic[vectordb]
+  pip install upsonic[loaders]
+  pip install upsonic[embeddings]
+  ```
+
+  These install Upsonic with RAG dependencies:
+  - `[vectordb]` - Vector database clients (Chroma, Milvus, Qdrant, Pinecone, Weaviate, FAISS, PGVector)
+  - `[loaders]` - Document loaders for PDFs, Markdown, DOCX, CSV, JSON, HTML, and more
+  - `[embeddings]` - Embedding providers for creating vector representations
+
+  You'll have access to all knowledge base components through a unified interface without needing to configure each one separately.
+</Note>
+
 ## Example
 
 Create a KnowledgeBase from documents and use it with an Agent:
