@@ -14,11 +14,11 @@ OpenAI-like models are LLM providers that implement the OpenAI API specification
 ```python
 from os import getenv
 from upsonic.models.openai import OpenAIChatModel
+from upsonic.providers.openai import OpenAIProvider
 
 model = OpenAIChatModel(
     model_name="your-model-name",
-    api_key=getenv("YOUR_API_KEY"),
-    base_url="https://your-custom-endpoint.com/v1"
+    provider=OpenAIProvider(api_key=getenv("YOUR_API_KEY"), base_url="https://your-custom-endpoint.com/v1")
 )
 ```
 
@@ -28,11 +28,11 @@ model = OpenAIChatModel(
 from os import getenv
 from upsonic import Agent, Task
 from upsonic.models.openai import OpenAIChatModel
+from upsonic.providers.openai import OpenAIProvider
 
 model = OpenAIChatModel(
     model_name="your-model-name",
-    api_key=getenv("YOUR_API_KEY"),
-    base_url="https://your-custom-endpoint.com/v1"
+    provider=OpenAIProvider(api_key=getenv("YOUR_API_KEY"), base_url="https://your-custom-endpoint.com/v1")
 )
 
 agent = Agent(model=model)
