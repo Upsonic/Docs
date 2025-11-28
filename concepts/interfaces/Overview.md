@@ -20,7 +20,7 @@ Interfaces enable exposing Upsonic agents through various communication protocol
 
   </Card>
 
-  <Card title="Gmail" icon="mail" href="/concepts/interfaces/Gmail">
+  <Card title="📧 Gmail" icon="mail" href="/concepts/interfaces/Gmail">
 
     Connect agents to Gmail for automated email processing and replies
 
