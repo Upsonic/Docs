@@ -5,67 +5,127 @@ description: "Isolated filesystem for file operations during task execution"
 
 ## Usage
 
-Deep Agent provides an isolated virtual filesystem for file operations during task execution.
+DeepAgent provides an isolated virtual filesystem. Files persist across the task execution and can be stored in memory (ephemeral) or persistent storage.
 
-Files are stored in the `deep_agent_state.files` dictionary and persist across the completion loop.
-
-## Params
+## Filesystem Tools
 
 ### ls
-List all files in the virtual filesystem.
+List directory contents.
 
 ```python
-ls() -> List[str]
+ls(path: str = "/") -> str
 ```
-
-**Return Value:** List of file paths.
 
 ### read_file
-Read a file from the virtual filesystem with optional pagination.
+Read file content with pagination.
 
 ```python
-read_file(file_path: str, offset: int = 0, limit: int = 2000) -> str
+read_file(file_path: str, offset: int = None, limit: int = 500) -> str
 ```
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `file_path` | `str` | Required | Absolute path to the file to read |
-| `offset` | `int` | `0` | Line number to start reading from (0-based) |
-| `limit` | `int` | `2000` | Maximum number of lines to read |
-
-**Return Value:** File content with line numbers (cat -n format), or error message if file not found.
-
-**Notes:**
-- Line numbers start at 1
-- Lines longer than 2000 characters are truncated
-- Empty files return system reminder
 
 ### write_file
-Create or overwrite a file in the virtual filesystem.
+Create or overwrite a file.
 
 ```python
 write_file(file_path: str, content: str) -> str
 ```
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `file_path` | `str` | Absolute path where the file should be written |
-| `content` | `str` | Content to write to the file |
-
-**Return Value:** Confirmation message.
-
 ### edit_file
-Perform exact string replacement in a file.
+Perform exact string replacement.
 
 ```python
 edit_file(file_path: str, old_string: str, new_string: str, replace_all: bool = False) -> str
 ```
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `file_path` | `str` | Required | Absolute path to the file to edit |
-| `old_string` | `str` | Required | Exact string to find and replace |
-| `new_string` | `str` | Required | String to replace old_string with |
-| `replace_all` | `bool` | `False` | If True, replace all occurrences; if False, require uniqueness |
+**Important:** You must read a file before editing it.
 
-**Return Value:** Confirmation message or error if string not found/not unique.
+### glob
+Find files matching a pattern.
+
+```python
+glob(pattern: str) -> str
+```
+
+**Pattern Examples:**
+- `"*.txt"` - All text files in root
+- `"/docs/**/*.md"` - All markdown files under /docs/
+- `"/**/*.py"` - All Python files recursively
+
+### grep
+Search for text within files.
+
+```python
+grep(
+    pattern: str,
+    path: str = "/",
+    glob_pattern: str = None,
+    output_mode: str = "files_with_matches",
+    max_results: int = 100
+) -> str
+```
+
+
+## Example
+
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Task
+
+async def main():
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    task = Task(description="""
+    Create a file /workspace/notes.txt with content "Initial notes"
+    Then read the file
+    Then edit it to change "Initial" to "Updated"
+    List all files in /workspace/
+    """)
+    
+    result = await agent.do_async(task)
+    print(result)
+    
+    # Verify file exists
+    exists = await agent.filesystem_backend.exists("/workspace/notes.txt")
+    print(f"\nFile exists: {exists}")
+    
+    if exists:
+        content = await agent.filesystem_backend.read("/workspace/notes.txt")
+        print(f"File content: {content}")
+
+asyncio.run(main())
+```
+
+## Advanced Example
+
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Task
+
+async def main():
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    task = Task(description="""
+    Create multiple files:
+    1. /docs/python.md with content about Python
+    2. /docs/javascript.md with content about JavaScript
+    3. /scripts/helper.py with Python code
+    
+    Then:
+    4. Find all .md files
+    5. Find all files under /docs/
+    6. Search for "Python" in all files
+    7. Show matching lines with content output mode
+    """)
+    
+    result = await agent.do_async(task)
+    print(result)
+    
+    # List all files
+    all_files = await agent.filesystem_backend.glob("/**/*")
+    print(f"\nAll files: {all_files}")
+
+asyncio.run(main())
+```

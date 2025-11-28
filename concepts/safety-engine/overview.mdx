@@ -13,6 +13,7 @@ Safety Engine provides content filtering and policy enforcement for AI agents. I
 ## Key Features
 
 - **Input/Output Filtering**: Validate user input and agent responses
+- **Tool Safety Policies**: Validate tools at registration and before execution
 - **Pre-built Policies**: Ready-to-use policies for PII, adult content, hate speech, etc.
 - **Custom Policies**: Create your own rules and actions
 - **Multiple Actions**: Block, anonymize, replace, or raise exceptions
@@ -39,6 +40,25 @@ task = Task(
 # Execute - PII will be anonymized in output
 result = agent.do(task)
 print(result)  # PII like email and phone will be anonymized
+```
+
+## Tool Safety Policies
+
+Tool safety policies provide two validation points:
+
+- **Pre-execution (`tool_policy_pre`)**: Validates tools during registration before task execution
+- **Post-execution (`tool_policy_post`)**: Validates tool calls before execution when LLM invokes a tool
+
+```python
+from upsonic import Agent
+from upsonic.safety_engine.policies.tool_safety_policies import HarmfulToolBlockPolicy
+
+# Apply tool safety policies
+agent = Agent(
+    "openai/gpt-4o",
+    tool_policy_pre=HarmfulToolBlockPolicy,   # Validate at registration
+    tool_policy_post=HarmfulToolBlockPolicy     # Validate before execution
+)
 ```
 
 ## Navigation

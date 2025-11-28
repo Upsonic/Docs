@@ -37,11 +37,13 @@ from upsonic import Agent, Task
 # Create an agent
 agent = Agent("openai/gpt-4o")
 
-# Create a task
+# Execute with Task object
 task = Task("What is 2 + 2?")
-
-# Execute the task
 result = agent.do(task)
+print(result)  # Output: 4
+
+# Or execute directly with a string (auto-converted to Task)
+result = agent.do("What is 2 + 2?")
 print(result)  # Output: 4
 ```
 
@@ -52,19 +54,28 @@ When creating an agent without specifying a model, it defaults to `"openai/gpt-4
 ### Deep Agent Example
 
 ```python
-from upsonic import DeepAgent, Task
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Task
 
-# Create a deep agent
-agent = DeepAgent("openai/gpt-4o")
+async def main():
+    # Create a deep agent
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    # Create a complex task
+    task = Task(
+        description="Research Python web frameworks and create a comparison report. Save findings to /research/frameworks.txt and create /reports/comparison.txt"
+    )
+    
+    # Execute - agent will automatically create todos and manage the workflow
+    result = await agent.do_async(task)
+    print(result)
+    
+    # Check files created
+    files = await agent.filesystem_backend.glob("/**/*.txt")
+    print(f"Files created: {files}")
 
-# Create a complex task
-task = Task(
-    description="Research Python web frameworks and create a comparison report"
-)
-
-# Execute - agent will automatically create todos and manage the workflow
-result = agent.do(task)
-print(result)
+asyncio.run(main())
 ```
 
 ## Navigation

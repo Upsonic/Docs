@@ -1,38 +1,161 @@
 ---
 title: "Advanced"
-description: "Performance optimization and quality assurance for Deep Agent"
+description: "Performance optimization and advanced configuration for Deep Agent"
 ---
 
-## Performance Optimization
+## Backend Configuration
 
-### Parallelization
-- Launch multiple subagents concurrently for independent tasks
-- Use general-purpose agents to isolate context and reduce token usage
-- Each subagent processes work independently and returns synthesized results
+### StateBackend (Ephemeral)
+In-memory storage that persists only during the agent session.
 
-### Model Selection
-- Use appropriate models based on task complexity
-- DeepAgent inherits all model selection capabilities from base Agent
-- Can override model for specific executions
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic.agent.deepagent.backends import StateBackend
+from upsonic import Task
 
-### Monitoring
-- Track todo status with `get_todos()`
-- Monitor completion progress in debug mode
-- Access files at any time with `get_files()`
+async def main():
+    backend = StateBackend()
+    agent = DeepAgent(
+        model="openai/gpt-4o",
+        filesystem_backend=backend
+    )
+    
+    task = Task(description="Analyze the theoretical foundations of transformer attention mechanisms, comparing multi-head attention variants and their computational complexity trade-offs, then document your findings in /workspace/attention_analysis.txt")
+    result = await agent.do_async(task)
+    
+    # Files exist only during this session
+    exists = await backend.exists("/workspace/attention_analysis.txt")
+    print(f"File exists: {exists}")
 
-## Quality Assurance
+asyncio.run(main())
+```
 
-### Todo Completion Enforcement
-- Automatic verification that all todos are completed
-- Up to 10 continuation iterations if todos remain incomplete
-- Debug warnings if max iterations reached with incomplete todos
+### MemoryBackend (Persistent)
+Persistent storage that survives process restarts.
 
-### File Validation
-- All file operations return confirmation or error messages
-- Read before edit enforcement in prompts
-- Exact string matching for edit operations
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic.agent.deepagent.backends import MemoryBackend
+from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic import Task
+import tempfile
 
-### Subagent Quality
-- Subagents can be specialized for review and validation
-- Results can be verified by main agent before proceeding
-- Isolated context prevents subagent errors from affecting main agent
+async def main():
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+        db_path = tmp.name
+    
+    try:
+        storage = SqliteStorage(db_file=db_path)
+        backend = MemoryBackend(storage)
+        
+        agent = DeepAgent(
+            model="openai/gpt-4o",
+            filesystem_backend=backend
+        )
+        
+        task = Task(description="Investigate the convergence properties of gradient-based optimization in non-convex landscapes, analyzing escape mechanisms from local minima and saddle point dynamics, then save your comprehensive analysis to /memory/optimization_analysis.txt")
+        result = await agent.do_async(task)
+        
+        # Files persist across sessions
+        content = await backend.read("/memory/optimization_analysis.txt")
+        print(f"Persistent content: {content[:50]}...")
+        
+        await storage.disconnect_async()
+    finally:
+        import os
+        os.unlink(db_path)
+
+asyncio.run(main())
+```
+
+### CompositeBackend (Hybrid)
+Route different paths to different backends.
+
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic.agent.deepagent.backends import StateBackend, MemoryBackend, CompositeBackend
+from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic import Task
+import tempfile
+
+async def main():
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+        db_path = tmp.name
+    
+    try:
+        storage = SqliteStorage(db_file=db_path)
+        backend = CompositeBackend(
+            default=StateBackend(),  # Ephemeral for /tmp/
+            routes={
+                "/research/": MemoryBackend(storage),  # Persistent
+                "/reports/": MemoryBackend(storage)   # Persistent
+            }
+        )
+        
+        agent = DeepAgent(
+            model="openai/gpt-4o",
+            filesystem_backend=backend
+        )
+        
+        task = Task(description="Examine the information-theoretic limits of federated learning, investigating communication-efficient aggregation protocols and differential privacy guarantees, then save temporary calculations to /tmp/computations.txt, research findings to /research/federated_analysis.txt, and final synthesis to /reports/federated_summary.txt")
+        
+        result = await agent.do_async(task)
+        print(result)
+        
+        await storage.disconnect_async()
+    finally:
+        import os
+        os.unlink(db_path)
+
+asyncio.run(main())
+```
+
+## Monitoring
+
+### Get Current Plan
+Track todo status during execution.
+
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Task
+
+async def main():
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    task = Task(description="Model the phase transitions in deep learning optimization landscapes, investigating critical phenomena in loss function geometry and gradient flow dynamics, then plan your analysis, execute the research, and save your findings to /analysis/phase_transitions.txt")
+    
+    result = await agent.do_async(task)
+    
+    # Get current plan
+    plan = agent.get_current_plan()
+    print(f"\nPlan Status:")
+    for todo in plan:
+        print(f"  [{todo['status']}] {todo['content']}")
+
+asyncio.run(main())
+```
+
+### Get Filesystem Stats
+Monitor filesystem usage.
+
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Task
+
+async def main():
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    task = Task(description="Derive provable defense mechanisms against adaptive adversarial attacks in deep learning, analyzing the fundamental trade-offs between model accuracy and robustness certificates, then document your theoretical framework in /docs/adversarial_defense.txt, implementation strategies in /docs/implementation.txt, and experimental results in /docs/experiments.txt")
+    result = await agent.do_async(task)
+    
+    # Get filesystem statistics
+    stats = agent.get_filesystem_stats()
+    print(f"\nFilesystem Stats: {stats}")
+
+asyncio.run(main())
+```

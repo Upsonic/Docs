@@ -5,32 +5,78 @@ description: "Automatic todo tracking and completion enforcement"
 
 ## Usage
 
-Deep Agent provides automatic todo tracking and completion enforcement.
+DeepAgent provides automatic todo tracking. Todos follow a strict lifecycle: `pending` → `in_progress` → `completed`.
 
-Todos follow a strict lifecycle:
-1. Created as `"pending"` or `"in_progress"`
-2. Marked `"in_progress"` before starting work
-3. Marked `"completed"` immediately after finishing
-4. Agent continues until ALL todos are `"completed"`
+## Todo Lifecycle
 
-## Params
+1. **Created** as `"pending"` or `"in_progress"`
+2. **Marked** `"in_progress"` before starting work
+3. **Marked** `"completed"` immediately after finishing
+4. **Agent continues** until ALL todos are `"completed"`
 
-### Automatic Completion Loop
-
-The agent automatically:
-- Checks todo completion after each execution
-- Creates continuation tasks for incomplete todos
-- Repeats up to 10 iterations (MAX_COMPLETION_ITERATIONS)
-- Provides debug output showing progress (completed/total)
-
-### Managing Todos Programmatically
+## Example
 
 ```python
-# Get current todos
-todos = agent.get_todos()
-# Returns: [{"content": "...", "status": "..."}, ...]
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Task
 
-# Access state directly
-state = agent.deep_agent_state
-todos = state.todos  # List[Todo]
+async def main():
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    task = Task(description="""
+    Research Python frameworks, compare their features, and write a comparison report.
+    
+    Execute all tasks and ensure everything is completed.
+    Save findings to /research/frameworks.txt and report to /reports/comparison.txt
+    """)
+    
+    result = await agent.do_async(task)
+    
+    # Get current todos
+    todos = agent.get_current_plan()
+    
+    print(f"\nTodo Status:")
+    completed = sum(1 for t in todos if t['status'] == 'completed')
+    total = len(todos)
+    print(f"  Completed: {completed}/{total}")
+    
+    for todo in todos:
+        status_icon = "✅" if todo['status'] == 'completed' else "⏳"
+        print(f"  {status_icon} [{todo['status']}] {todo['content']}")
+
+asyncio.run(main())
 ```
+
+## Programmatic Access
+
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Task
+
+async def main():
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    task = Task(description="Create a 5-step plan and execute it")
+    result = await agent.do_async(task)
+    
+    # Get current todos
+    todos = agent.get_current_plan()
+    
+    # Access todo details
+    for todo in todos:
+        print(f"ID: {todo['id']}")
+        print(f"Content: {todo['content']}")
+        print(f"Status: {todo['status']}")
+        print()
+
+asyncio.run(main())
+```
+
+## Key Points
+
+- Todos are automatically tracked per task
+- Agent updates todos after each completion
+- Use `get_current_plan()` to monitor progress
+- All todos must be completed before task finishes

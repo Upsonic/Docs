@@ -37,6 +37,7 @@ The Agent system is configured through the `Agent` class, which provides the fol
 | `tool_call_limit` | int | `5` | Maximum tool calls per execution |
 | `enable_thinking_tool` | bool | `False` | Enable orchestrated thinking |
 | `enable_reasoning_tool` | bool | `False` | Enable reasoning capabilities |
+| `tools` | List[Any] \| None | `None` | Agent-level tools (can also be added via `add_tools()`) |
 | `user_policy` | Policy \| List[Policy] \| None | `None` | User input safety policy |
 | `agent_policy` | Policy \| List[Policy] \| None | `None` | Agent output safety policy |
 | `settings` | ModelSettings \| None | `None` | Model-specific settings |

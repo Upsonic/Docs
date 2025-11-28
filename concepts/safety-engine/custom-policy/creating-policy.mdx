@@ -92,6 +92,28 @@ except Exception as e:
     print(f"Blocked: {e}")
 ```
 
+## Tool Safety Policies
+
+Tool safety policies validate tools at two stages:
+
+- **`tool_policy_pre`**: Validates tools during registration (before task execution)
+- **`tool_policy_post`**: Validates tool calls before execution (when LLM calls a tool)
+
+```python
+from upsonic import Agent, Task
+
+# Apply tool safety policies
+agent = Agent(
+    model="openai/gpt-4o",
+    tool_policy_pre=company_security_policy,   # Validate at registration
+    tool_policy_post=company_security_policy  # Validate before execution
+)
+
+# Harmful tools will be blocked at registration or execution
+task = Task("Delete all files", tools=[harmful_tool])
+result = agent.do(task)  # Blocked if tool violates policy
+```
+
 ## Async Support
 
 All policies automatically support async operations:

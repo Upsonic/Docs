@@ -13,12 +13,16 @@ The simplest way to run an agent is using the `do()` method, which executes sync
 ```python
 from upsonic import Agent, Task
 
-# Create agent and task
+# Create agent
 agent = Agent("openai/gpt-4o")
-task = Task("What is the capital of France?")
 
-# Execute synchronously
+# Execute with Task object
+task = Task("What is the capital of France?")
 result = agent.do(task)
+print(result)  # Output: Paris
+
+# Or execute directly with a string
+result = agent.do("What is the capital of France?")
 print(result)  # Output: Paris
 ```
 
@@ -31,12 +35,11 @@ from upsonic import Agent, Task
 import asyncio
 
 async def main():
-    # Create agent and task
+    # Create agent
     agent = Agent("openai/gpt-4o")
-    task = Task("Explain quantum computing in simple terms")
     
-    # Execute asynchronously
-    result = await agent.do_async(task)
+    # Execute asynchronously (accepts Task or string)
+    result = await agent.do_async("Explain quantum computing in simple terms")
     print(result)
 
 # Run async function
@@ -66,5 +69,28 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+## Tool Management
+
+Tools can be added to agents during initialization or dynamically using `add_tools()`. Use `get_tool_defs()` to retrieve all registered tool definitions.
+
+```python
+from upsonic import Agent
+from upsonic.tools import tool
+
+@tool
+def calculate(x: int, y: int) -> int:
+    """Add two numbers."""
+    return x + y
+
+# Add tools during initialization
+agent = Agent("openai/gpt-4o", tools=[calculate])
+
+# Or add tools after initialization
+agent.add_tools([another_tool])
+
+# Get all registered tool definitions
+tool_defs = agent.get_tool_defs()
 ```
 

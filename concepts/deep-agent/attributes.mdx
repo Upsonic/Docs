@@ -10,43 +10,86 @@ The DeepAgent class accepts the following initialization parameters:
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `model` | str \| Model | `"openai/gpt-4o"` | Model identifier or Model instance |
-| `subagents` | List[Agent] \| None | `None` | List of Agent instances to use as subagents (each must have a name) |
-| `instructions` | str \| None | `None` | Additional instructions to append to system prompt |
-| `tool_call_limit` | int | `100` | Maximum tool calls per execution |
-| `memory` | Memory \| None | Auto-created | Memory instance (auto-created with InMemoryStorage if not provided) |
+| `filesystem_backend` | BackendProtocol \| None | `StateBackend()` | Backend for filesystem storage |
+| `enable_planning` | bool | `True` | Enable write_todos planning tool |
+| `enable_filesystem` | bool | `True` | Enable filesystem tools |
+| `enable_subagents` | bool \| None | `None` | Enable task tool (auto-set based on subagents) |
+| `subagents` | List[Agent] \| None | `None` | List of Agent instances to use as subagents |
+| `tool_call_limit` | int | `20` | Maximum tool calls per execution |
+| `system_prompt` | str \| None | `None` | Custom system prompt |
+| `debug` | bool | `False` | Enable debug logging |
+| `name` | str \| None | `None` | Agent name |
+| `memory` | Memory \| None | `None` | Memory instance |
+| `db` | DatabaseBase \| None | `None` | Database instance |
+| `tools` | List \| None | `None` | Additional user tools |
 
 ## Configuration Example
 
 ```python
-from upsonic import DeepAgent, Agent, Task
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic.agent.deepagent.backends import StateBackend, MemoryBackend, CompositeBackend
+from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic import Agent, Task
+import tempfile
 
-# Create specialized subagents
-researcher = Agent(
-    "openai/gpt-4o",
-    name="researcher",
-    system_prompt="You are a research expert"
-)
+async def main():
+    # Create specialized subagents
+    researcher = Agent(
+        model="openai/gpt-4o-mini",
+        name="researcher",
+        role="Research Specialist",
+        system_prompt="You are a research expert focused on gathering information"
+    )
+    
+    writer = Agent(
+        model="openai/gpt-4o-mini",
+        name="writer",
+        role="Technical Writer",
+        system_prompt="You are a technical writing expert"
+    )
+    
+    # Create persistent storage backend
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+        db_path = tmp.name
+    
+    try:
+        storage = SqliteStorage(db_file=db_path)
+        backend = CompositeBackend(
+            default=StateBackend(),
+            routes={
+                "/research/": MemoryBackend(storage),
+                "/reports/": MemoryBackend(storage)
+            }
+        )
+        
+        # Create deep agent with subagents and custom backend
+        agent = DeepAgent(
+            model="openai/gpt-4o",
+            name="Research Agent",
+            subagents=[researcher, writer],
+            filesystem_backend=backend,
+            tool_call_limit=50,
+            debug=False
+        )
+        
+        # Create task
+        task = Task(
+            description="Research AI frameworks and write a comprehensive comparison. Save research to /research/frameworks.txt and final report to /reports/comparison.txt"
+        )
+        
+        # Execute
+        result = await agent.do_async(task)
+        print(result)
+        
+        # Check plan
+        plan = agent.get_current_plan()
+        print(f"\nPlan: {len(plan)} tasks")
+        
+        await storage.disconnect_async()
+    finally:
+        import os
+        os.unlink(db_path)
 
-writer = Agent(
-    "openai/gpt-4o",
-    name="writer",
-    system_prompt="You are a technical writer"
-)
-
-# Create deep agent with subagents
-agent = DeepAgent(
-    model="openai/gpt-4o",
-    subagents=[researcher, writer],
-    instructions="Focus on clarity and accuracy",
-    tool_call_limit=150
-)
-
-# Create task
-task = Task(
-    description="Research AI frameworks and write a comprehensive comparison"
-)
-
-# Execute
-result = agent.do(task)
-print(result)
+asyncio.run(main())
 ```

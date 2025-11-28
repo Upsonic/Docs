@@ -7,37 +7,45 @@ hideToc: true
 
 ## Overview
 
-DeepAgent extends the base Agent with advanced capabilities for handling complex, multi-step tasks. It automatically manages todo lists, provides a virtual filesystem, and can spawn subagents for focused work.
+DeepAgent extends the base Agent with advanced capabilities for handling complex, multi-step tasks. It provides automatic task planning, a virtual filesystem, subagent delegation, and configurable storage backends.
 
 ## Key Features
 
-- **Planning and Todo Management**: Break down multi-step objectives with automatic status tracking
-- **Virtual Filesystem**: Create, read, edit files in an isolated environment
-- **Subagent System**: Spawn specialized agents for focused tasks
-- **Automatic Completion Loop**: Ensures all todos are completed (up to 10 iterations)
-- **Persistent Memory**: Maintains context and files across workflows
+- **Planning System**: Break down complex tasks with automatic todo management
+- **Virtual Filesystem**: Create, read, edit files in isolated environment
+- **Subagent System**: Delegate tasks to specialized agents
+- **Configurable Backends**: Choose ephemeral or persistent storage
 
-## Example
+## Quick Start
 
 ```python
-from upsonic import DeepAgent, Task
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Task
 
-# Create a deep agent
-agent = DeepAgent("openai/gpt-4o")
+async def main():
+    # Create a deep agent
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    # Create a complex task
+    task = Task(
+        description="Research Python web frameworks and create a comparison report. Save findings to /research/frameworks.txt and create /reports/comparison.txt"
+    )
+    
+    # Execute - agent will automatically create todos and manage the workflow
+    result = await agent.do_async(task)
+    print(result)
+    
+    # Check files created
+    files = await agent.filesystem_backend.glob("/**/*.txt")
+    print(f"Files created: {files}")
 
-# Create a complex task
-task = Task(
-    description="Research Python web frameworks and create a comparison report"
-)
-
-# Execute - agent will automatically create todos and manage the workflow
-result = agent.do(task)
-print(result)
+asyncio.run(main())
 ```
 
 ## Navigation
 
-- [Deep Agent Attributes](/concepts/deep-agent/attributes) - Comprehensive guide to all DeepAgent configuration options
-- [Advanced Features](/concepts/deep-agent/advanced) - Advanced configuration and customization
-- [Capabilities](/concepts/deep-agent/capabilities/planning) - Planning, todo management, file system, and subagent capabilities
-- [Examples](/concepts/deep-agent/examples/basic-deep-agent-example) - Real-world examples and use cases
+- [Deep Agent Attributes](/concepts/deep-agent/attributes) - Configuration options
+- [Advanced Features](/concepts/deep-agent/advanced) - Backend configuration and monitoring
+- [Capabilities](/concepts/deep-agent/capabilities/planning) - Planning, filesystem, backends, and subagent capabilities
+- [Examples](/concepts/deep-agent/examples/basic-deep-agent-example) - Real-world examples
