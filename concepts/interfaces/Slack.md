@@ -1,0 +1,93 @@
+# Slack
+
+> Host agents as Slack applications
+
+Use the Slack interface to serve Agents via Slack. It mounts webhook routes on a FastAPI app and sends responses back to Slack channels and direct messages.
+
+## Setup
+
+Required environment variables:
+
+* `SLACK_SIGNING_SECRET` (for request signature validation)
+
+* `SLACK_TOKEN` (Bot User OAuth Token, required by SlackTools for sending messages)
+
+* Optional: `SLACK_VERIFICATION_TOKEN`
+
+## Example Usage
+
+Create an agent, expose it with the `SlackInterface` interface, and serve via `InterfaceManager`:
+
+```python
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, SlackInterface
+
+# Create an agent
+agent = Agent(
+    model="openai/gpt-4o-mini",  # Ensure OPENAI_API_KEY is set
+    name="SlackBot"
+)
+
+# Create Slack interface
+slack = SlackInterface(
+    agent=agent,
+    reply_to_mentions_only=True,  # Only reply to @mentions and DMs
+    name="Slack"
+)
+
+# Create and start the interface manager
+manager = InterfaceManager(interfaces=[slack])
+
+if __name__ == "__main__":
+    manager.serve(host="0.0.0.0", port=8000, reload=False)
+```
+
+## Core Components
+
+* `SlackInterface` (interface): Wraps an Upsonic `Agent` for Slack via FastAPI.
+
+* `InterfaceManager.serve`: Serves the FastAPI app using Uvicorn.
+
+## `SlackInterface` Interface
+
+Main entry point for Upsonic Slack applications.
+
+### Initialization Parameters
+
+| Parameter | Type              | Default | Description            |
+| --------- | ----------------- | ------- | ---------------------- |
+| `agent`   | `Agent`           | Required | Upsonic `Agent` instance. |
+| `signing_secret` | `Optional[str]` | `None`  | Slack signing secret (or set `SLACK_SIGNING_SECRET`). |
+| `verification_token` | `Optional[str]` | `None`  | Slack verification token (or set `SLACK_VERIFICATION_TOKEN`). |
+| `name` | `str` | `"Slack"` | Interface name. |
+| `reply_to_mentions_only` | `bool` | `True` | Whether to only reply to @mentions and DMs. |
+
+### Key Method
+
+| Method       | Parameters               | Return Type | Description                                        |
+| ------------ | ------------------------ | ----------- | -------------------------------------------------- |
+| `attach_routes` | None | `APIRouter` | Returns the FastAPI router and attaches endpoints. |
+
+## Endpoints
+
+Mounted under the `/slack` prefix:
+
+### `POST /slack/events`
+
+* Receives Slack events and messages.
+
+* Validates signature (`X-Slack-Signature` and `X-Slack-Request-Timestamp`).
+
+* Handles URL verification challenge for webhook setup.
+
+* Processes `app_mention` and `message` events via the agent.
+
+* Sends replies in threads or directly in channels/DMs.
+
+* Responses: `200 {"status": "ok"}` for events, `200 {"challenge": "..."}` for URL verification, `400` missing headers, `403` invalid signature, `500` errors.
+
+### `GET /slack/health`
+
+* Health/status of the interface.
+

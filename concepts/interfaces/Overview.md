@@ -1,0 +1,61 @@
+# Interfaces
+
+> Expose Upsonic agents through various communication protocols and platforms
+
+Interfaces enable exposing Upsonic agents through various communication protocols and platforms. Each interface provides a standardized way to connect Upsonic agents to external systems, messaging platforms, and frontend applications.
+
+## Available Interfaces
+
+<CardGroup cols={2}>
+
+  <Card title="Slack" icon="slack" href="/interfaces/Slack">
+
+    Deploy agents as Slack applications for team collaboration
+
+  </Card>
+
+  <Card title="WhatsApp" icon="whatsapp" href="/interfaces/Whatsapp">
+
+    Serve agents via WhatsApp for direct messaging interactions
+
+  </Card>
+
+  <Card title="Gmail" icon="mail" href="/interfaces/Gmail">
+
+    Connect agents to Gmail for automated email processing and replies
+
+  </Card>
+
+</CardGroup>
+
+## How Interfaces Work
+
+Interfaces are FastAPI routers that mount protocol-specific endpoints on an InterfaceManager instance. Each interface:
+
+* Wraps Upsonic agents into protocol-compatible endpoints
+
+* Handles authentication and request validation for the target platform
+
+* Manages session tracking and context preservation
+
+* Streams responses back to clients in the appropriate format
+
+## Using Interfaces
+
+Interfaces are added to an InterfaceManager instance through the `interfaces` parameter:
+
+```python
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, SlackInterface
+
+agent = Agent(model="openai/gpt-4o-mini")
+
+manager = InterfaceManager(
+    interfaces=[SlackInterface(agent=agent)],
+)
+
+manager.serve(port=8000)
+```
+
+Multiple interfaces can be added to a single InterfaceManager instance, allowing the same agents to be exposed through different protocols simultaneously.
+

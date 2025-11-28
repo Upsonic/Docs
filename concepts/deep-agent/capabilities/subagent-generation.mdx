@@ -5,29 +5,19 @@ description: "Spawn specialized agents for complex, independent tasks"
 
 ## Usage
 
-Deep Agent can spawn specialized subagents to handle complex, multi-step independent tasks with isolated context.
+DeepAgent can spawn subagents to handle complex, multi-step independent tasks with isolated context. The `task` tool is automatically available.
 
-The `task` tool is automatically created and injected into the agent's toolset. It allows spawning:
-- **general-purpose agents** - Full-featured agents with all tools for research and complex tasks
-- **Custom named agents** - Specialized agents you define and pass to DeepAgent
-
-## Params
+## Tool Signature
 
 ```python
-task(description: str, subagent_type: str) -> str
+task(description: str, subagent_type: str = "general-purpose") -> str
 ```
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `description` | `str` | Detailed task description for the subagent to complete autonomously |
-| `subagent_type` | `str` | Type of subagent: `"general-purpose"` or custom agent name |
-
-**Return Value:** The final result from the subagent's execution.
 
 ## Available Subagent Types
 
-1. **general-purpose**: Automatically available, created with same model as parent agent
-2. **Custom agents**: Agents you provide in the `subagents` parameter
+1. **general-purpose**: Automatically available, created with same model as parent
+2. **Custom agents**: Agents provided in the `subagents` parameter
 
 ## When to Use Subagents
 
@@ -35,50 +25,141 @@ task(description: str, subagent_type: str) -> str
 - Parallel processing of multiple related tasks
 - Specialized expertise requiring focused knowledge
 - Context isolation for heavy token usage
-- Quality assurance with review and validation
 
-## Creating Custom Subagents
+## Basic Example
 
 ```python
-from upsonic import DeepAgent, Agent, Task
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Task
 
-# Create specialized agents with names
-researcher = Agent(
-    "openai/gpt-4o",
-    name="researcher",
-    system_prompt="You are a research expert focused on gathering information"
-)
+async def main():
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    task = Task(description="""
+    Research Python web frameworks and return a summary.
+    
+    Then create /reports/frameworks.txt with the summary.
+    """)
+    
+    result = await agent.do_async(task)
+    print(result)
 
-code_reviewer = Agent(
-    "openai/gpt-4o",
-    name="code-reviewer",
-    system_prompt="You are a code review expert focused on quality and best practices"
-)
+asyncio.run(main())
+```
 
-# Create Deep Agent with subagents
-agent = DeepAgent(
-    "openai/gpt-4o",
-    subagents=[researcher, code_reviewer]
-)
+## Custom Subagents Example
 
-task = Task("Research AI trends and create a technical report with code examples")
-result = agent.do(task)
-# Agent can delegate research to researcher and code review to code-reviewer
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Agent, Task
+
+async def main():
+    # Create specialized subagents
+    researcher = Agent(
+        model="openai/gpt-4o-mini",
+        name="researcher",
+        role="Research Specialist",
+        system_prompt="You are a research expert focused on gathering information"
+    )
+    
+    writer = Agent(
+        model="openai/gpt-4o-mini",
+        name="writer",
+        role="Technical Writer",
+        system_prompt="You are a technical writing expert"
+    )
+    
+    # Create DeepAgent with subagents
+    agent = DeepAgent(
+        model="openai/gpt-4o",
+        subagents=[researcher, writer]
+    )
+    
+    task = Task(description="""
+    Research AI trends and write a technical report based on research
+    
+    Save the final report to /reports/ai_trends.txt
+    """)
+    
+    result = await agent.do_async(task)
+    print(result)
+
+asyncio.run(main())
+```
+
+## Parallel Subagents Example
+
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Agent, Task
+
+async def main():
+    # Create multiple specialized subagents
+    python_expert = Agent(
+        model="openai/gpt-4o-mini",
+        name="python-expert",
+        system_prompt="Python programming expert"
+    )
+    
+    js_expert = Agent(
+        model="openai/gpt-4o-mini",
+        name="js-expert",
+        system_prompt="JavaScript programming expert"
+    )
+    
+    agent = DeepAgent(
+        model="openai/gpt-4o",
+        subagents=[python_expert, js_expert]
+    )
+    
+    task = Task(description="""
+    Research Python web frameworks and JavaScript web frameworks in parallel.
+    
+    Then synthesize findings into /reports/comparison.txt
+    """)
+    
+    result = await agent.do_async(task)
+    print(result)
+
+asyncio.run(main())
 ```
 
 ## Adding Subagents Dynamically
 
 ```python
-agent = DeepAgent("openai/gpt-4o")
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Agent, Task
 
-# Add subagent after creation
-analyst = Agent("openai/gpt-4o", name="analyst", system_prompt="Data analysis expert")
-agent.add_subagent(analyst)
+async def main():
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    # Add subagent after creation
+    analyst = Agent(
+        model="openai/gpt-4o-mini",
+        name="analyst",
+        role="Data Analyst",
+        system_prompt="Data analysis expert"
+    )
+    agent.add_subagent(analyst)
+    
+    task = Task(description="""
+    Analyze data trends.
+    Save results to /analysis/trends.txt
+    """)
+    
+    result = await agent.do_async(task)
+    print(result)
+
+asyncio.run(main())
 ```
 
-## Important Notes
+## Key Points
 
 - Subagents execute autonomously and return a single result
 - Subagents have isolated context (no memory sharing)
-- Subagent results are not visible to the user directly
-- Each subagent must have a `name` attribute set
+- Each subagent must have a `name` attribute
+- Use parallel subagents for independent tasks

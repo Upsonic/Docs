@@ -1,0 +1,97 @@
+# Gmail
+
+> Host agents as Gmail email assistants
+
+Use the Gmail interface to serve Agents via Gmail. It mounts API routes on a FastAPI app and enables automated email processing and replies.
+
+## Setup
+
+Required environment variables:
+
+* `GMAIL_API_SECRET` (optional, for endpoint protection)
+
+* Gmail OAuth credentials (via `credentials.json` and `token.json` files)
+
+<Note>
+
+  The interface uses a pull-based model - you manually trigger email checks via the `/gmail/check` endpoint, and the agent processes unread emails.
+
+</Note>
+
+## Example Usage
+
+Create an agent, expose it with the `GmailInterface` interface, and serve via `InterfaceManager`:
+
+```python
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, GmailInterface
+
+# Create an agent
+agent = Agent(
+    model="openai/gpt-4o-mini",  # Ensure OPENAI_API_KEY is set
+    name="EmailAssistant"
+)
+
+# Create Gmail interface
+gmail = GmailInterface(
+    agent=agent,
+    credentials_path="credentials.json",  # Gmail OAuth credentials
+    token_path="token.json",  # Gmail OAuth token
+    api_secret=os.getenv("GMAIL_API_SECRET"),  # Optional, for endpoint protection
+)
+
+# Create and start the interface manager
+manager = InterfaceManager(interfaces=[gmail])
+
+if __name__ == "__main__":
+    manager.serve(host="0.0.0.0", port=8000, reload=False)
+```
+
+## Core Components
+
+* `GmailInterface` (interface): Wraps an Upsonic `Agent` for Gmail via FastAPI.
+
+* `InterfaceManager.serve`: Serves the FastAPI app using Uvicorn.
+
+## `GmailInterface` Interface
+
+Main entry point for Upsonic Gmail applications.
+
+### Initialization Parameters
+
+| Parameter | Type              | Default | Description            |
+| --------- | ----------------- | ------- | ---------------------- |
+| `agent`   | `Agent`           | Required | Upsonic `Agent` instance. |
+| `name` | `str` | `"Gmail"` | Interface name. |
+| `credentials_path` | `Optional[str]` | `None`  | Path to Gmail OAuth credentials.json. |
+| `token_path` | `Optional[str]` | `None`  | Path to Gmail OAuth token.json. |
+| `api_secret` | `Optional[str]` | `None`  | Secret token for API authentication (or set `GMAIL_API_SECRET`). |
+
+### Key Method
+
+| Method       | Parameters               | Return Type | Description                                        |
+| ------------ | ------------------------ | ----------- | -------------------------------------------------- |
+| `attach_routes` | None | `APIRouter` | Returns the FastAPI router and attaches endpoints. |
+| `check_and_process_emails` | `count: int = 10` | `CheckEmailsResponse` | Manually trigger email check and processing. |
+
+## Endpoints
+
+Mounted under the `/gmail` prefix:
+
+### `POST /gmail/check`
+
+* Manually triggers a check for unread emails and processes them.
+
+* Query parameter: `count` (default: 10) - maximum number of emails to process.
+
+* Requires `X-Upsonic-Gmail-Secret` header if `GMAIL_API_SECRET` is configured.
+
+* Fetches unread emails, processes each with the agent, sends replies if agent decides to reply, marks emails as read.
+
+* Returns: `200 CheckEmailsResponse` with `status`, `processed_count`, and `message_ids`.
+
+### `GET /gmail/health`
+
+* Health/status of the interface.
+

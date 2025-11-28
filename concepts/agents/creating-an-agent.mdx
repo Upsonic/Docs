@@ -24,13 +24,10 @@ def search_web(query: str) -> str:
 agent = Agent(
     model="openai/gpt-4o",
     instructions="Write a report on the topic. Output only the report.",
+    tools=[search_web]  # Tools can be added during initialization
 )
 
-task = Task(
-    description="Trending startups and products.",
-    tools=[search_web]
-)
-
+task = Task(description="Trending startups and products.")
 agent.print_do(task)
 ```
 
@@ -51,15 +48,16 @@ def search_web(query: str) -> str:
 agent = Agent(
     model="openai/gpt-4o",
     instructions="Write a report on the topic. Output only the report.",
+    tools=[search_web]  # Tools can be added during initialization
 )
 
-task = Task(
-    description="Trending startups and products.",
-    tools=[search_web]
-)
+# You can also add tools after initialization
+# agent.add_tools([another_tool])
 
-# Run agent and return the response as a variable
+# do() and do_async() methods accept both Task objects and strings
+task = Task(description="Trending startups and products.")
 result = agent.do(task)
+# Or: result = agent.do("Trending startups and products.")
 
 # Print the response
 print(result)

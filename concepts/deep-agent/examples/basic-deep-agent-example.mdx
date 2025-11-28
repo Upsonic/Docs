@@ -3,40 +3,57 @@ title: "Basic Deep Agent Example"
 description: "Simple example demonstrating core capabilities"
 ---
 
-## About Example Scenario
+## About Example
 
-A simple example demonstrating Deep Agent's core capabilities: automatic todo creation, file management, and completion tracking for building a basic application.
-
-## Deep Agent Configuration
-
-```python
-from upsonic import DeepAgent, Task
-
-agent = DeepAgent("openai/gpt-4o")
-```
-
-This creates a basic Deep Agent with:
-- Default model: GPT-4o
-- Auto-created InMemoryStorage-based memory
-- Tool call limit: 100
-- All default Deep Agent tools enabled
+A simple example demonstrating DeepAgent's core capabilities: automatic todo creation, file management, and task execution.
 
 ## Full Code
 
 ```python
-from upsonic import DeepAgent, Task
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Task
 
-# Create a Deep Agent
-agent = DeepAgent("openai/gpt-4o")
+async def main():
+    # Create a Deep Agent
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    # Complex task that benefits from planning
+    task = Task(description="""
+    Analyze Python web frameworks and create a comprehensive report.
+    
+    Requirements:
+    1. Research Django, Flask, and FastAPI
+    2. Compare their features
+    3. Create /reports/frameworks_analysis.txt with:
+       - Executive summary
+       - Feature comparison
+       - Recommendations
+    
+    Ensure all tasks are completed.
+    """)
+    
+    # Execute
+    result = await agent.do_async(task)
+    print(result)
+    
+    # Check plan created
+    plan = agent.get_current_plan()
+    print(f"\n📋 Execution Plan ({len(plan)} tasks):")
+    for todo in plan:
+        status_icon = "✅" if todo['status'] == 'completed' else "⏳"
+        print(f"  {status_icon} [{todo['status']}] {todo['content']}")
+    
+    # Check files created
+    files = await agent.filesystem_backend.glob("/**/*.txt")
+    print(f"\n📁 Files Created: {files}")
 
-# Complex task that benefits from planning
-task = Task("Analyze the codebase and create a comprehensive report with recommendations")
-result = agent.do(task)
-
-# The agent will automatically:
-# 1. Create a todo list to plan the work
-# 2. Use virtual files to organize findings
-# 3. Complete all tasks before finishing
-
-print(result)
+asyncio.run(main())
 ```
+
+## What Happens
+
+1. **Planning**: Agent creates a todo list automatically
+2. **Execution**: Agent works through each todo item
+3. **File Management**: Agent creates files in virtual filesystem
+4. **Completion**: Agent ensures all todos are completed

@@ -5,41 +5,56 @@ description: "Create and manage structured task lists for complex work"
 
 ## Usage
 
-Deep Agent uses the `write_todos` tool to create and manage structured task lists for complex work sessions.
+DeepAgent uses the `write_todos` tool to create and manage structured task lists. The agent automatically uses this tool when tasks require 3+ steps or are non-trivial.
 
-The agent automatically uses this tool when:
-- Tasks require 3 or more distinct steps
-- Tasks are non-trivial and require careful planning
-- User explicitly requests todo list
-- User provides multiple tasks
-- Future revisions may be needed based on intermediate results
-
-## Params
+## Tool Signature
 
 ```python
-write_todos(todos: List[Todo]) -> str
+write_todos(todos: List[Dict[str, Any]]) -> str
 ```
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `todos` | `List[Todo]` | Yes | List of Todo objects with 'content' and 'status' fields |
 
-**Return Value:** Confirmation message with the updated todo list.
+**Todo Fields:**
+- `content`: Description of the task
+- `status`: One of `"pending"`, `"in_progress"`, `"completed"`, `"cancelled"`
+- `id`: Unique identifier (string)
 
 ## Example
 
 ```python
-from upsonic import DeepAgent, Task
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic import Task
 
-agent = DeepAgent("openai/gpt-4o")
-task = Task("""
+async def main():
+    agent = DeepAgent(model="openai/gpt-4o")
+    
+    task = Task(description="""
 Create a complete web application with:
 - User authentication system
 - Product catalog with search
 - Shopping cart functionality
 - Payment processing
+
+Plan the implementation, then execute all tasks.
+Save each component to separate files in /app/ directory.
 """)
 
-result = agent.do(task)
-# Agent creates todos, works through them, and ensures all are completed
+    result = await agent.do_async(task)
+    print(result)
+    
+    # Check the plan created
+    plan = agent.get_current_plan()
+    print(f"\nExecution Plan ({len(plan)} tasks):")
+    for todo in plan:
+        print(f"  [{todo['status']}] {todo['content']}")
+
+asyncio.run(main())
 ```
+
+## Key Points
+
+- Minimum 2 todos required for initial plan
+- Agent must update todos after each task completion
+- Todos are stored per task instance
+- Use `get_current_plan()` to access todos programmatically

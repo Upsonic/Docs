@@ -1,0 +1,97 @@
+# WhatsApp
+
+> Host agents as WhatsApp applications
+
+Use the WhatsApp interface to serve Agents via WhatsApp. It mounts webhook routes on a FastAPI app and sends responses back to WhatsApp users and threads.
+
+## Setup
+
+Required environment variables:
+
+* `WHATSAPP_VERIFY_TOKEN` (for webhook verification)
+
+* `WHATSAPP_ACCESS_TOKEN` (required by WhatsAppTools for sending messages)
+
+* `WHATSAPP_PHONE_NUMBER_ID` (required by WhatsAppTools for sending messages)
+
+* Optional (production): `WHATSAPP_APP_SECRET` (for webhook signature validation)
+
+## Example Usage
+
+Create an agent, expose it with the `WhatsAppInterface` interface, and serve via `InterfaceManager`:
+
+```python
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, WhatsAppInterface
+
+# Create an agent
+agent = Agent(
+    model="openai/gpt-4o-mini",  # Ensure OPENAI_API_KEY is set
+    name="WhatsAppBot"
+)
+
+# Create WhatsApp interface
+whatsapp = WhatsAppInterface(
+    agent=agent,
+    verify_token=os.getenv("WHATSAPP_VERIFY_TOKEN"),
+    app_secret=os.getenv("WHATSAPP_APP_SECRET"),  # Optional
+)
+
+# Create and start the interface manager
+manager = InterfaceManager(interfaces=[whatsapp])
+
+if __name__ == "__main__":
+    manager.serve(host="0.0.0.0", port=8000, reload=False)
+```
+
+## Core Components
+
+* `WhatsAppInterface` (interface): Wraps an Upsonic `Agent` for WhatsApp via FastAPI.
+
+* `InterfaceManager.serve`: Serves the FastAPI app using Uvicorn.
+
+## `WhatsAppInterface` Interface
+
+Main entry point for Upsonic WhatsApp applications.
+
+### Initialization Parameters
+
+| Parameter | Type              | Default | Description            |
+| --------- | ----------------- | ------- | ---------------------- |
+| `agent`   | `Agent`           | Required | Upsonic `Agent` instance. |
+| `verify_token` | `Optional[str]` | `None`  | WhatsApp webhook verification token (or set `WHATSAPP_VERIFY_TOKEN`). |
+| `app_secret` | `Optional[str]` | `None`  | WhatsApp app secret for signature validation (or set `WHATSAPP_APP_SECRET`). |
+| `name` | `str` | `"WhatsApp"` | Interface name. |
+
+### Key Method
+
+| Method       | Parameters               | Return Type | Description                                        |
+| ------------ | ------------------------ | ----------- | -------------------------------------------------- |
+| `attach_routes` | None | `APIRouter` | Returns the FastAPI router and attaches endpoints. |
+
+## Endpoints
+
+Mounted under the `/whatsapp` prefix:
+
+### `GET /whatsapp/webhook`
+
+* Verifies WhatsApp webhook (`hub.challenge`).
+
+* Returns `hub.challenge` on success; `403` on token mismatch; `500` if `WHATSAPP_VERIFY_TOKEN` missing.
+
+### `POST /whatsapp/webhook`
+
+* Receives WhatsApp messages and events.
+
+* Validates signature (`X-Hub-Signature-256`); skipped if `WHATSAPP_APP_SECRET` not configured.
+
+* Processes text, image, video, audio, and document messages via the agent.
+
+* Sends replies (splits long messages; uploads and sends generated images).
+
+* Responses: `200 {"status": "processing"}`, `200 {"status": "ignored"}`, or `200 {"status": "invalid_payload"}`, `403` invalid signature, `500` errors.
+
+### `GET /whatsapp/health`
+
+* Health/status of the interface.

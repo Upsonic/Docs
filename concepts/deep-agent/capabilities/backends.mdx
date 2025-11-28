@@ -1,0 +1,145 @@
+---
+title: "Storage Backends"
+description: "Configure filesystem storage with different backends"
+---
+
+## Usage
+
+DeepAgent supports three types of storage backends for the virtual filesystem: ephemeral (StateBackend), persistent (MemoryBackend), and hybrid routing (CompositeBackend).
+
+## Backend Types
+
+### StateBackend (Ephemeral)
+In-memory storage that persists only during the agent session.
+
+**Use when:**
+- Temporary working files
+- No persistence needed
+- Fast operations required
+
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic.agent.deepagent.backends import StateBackend
+from upsonic import Task
+
+async def main():
+    backend = StateBackend()
+    agent = DeepAgent(
+        model="openai/gpt-4o",
+        filesystem_backend=backend
+    )
+    
+    task = Task(description="Create /tmp/scratch.txt with temporary data")
+    result = await agent.do_async(task)
+    
+    # Files exist only during this session
+    exists = await backend.exists("/tmp/scratch.txt")
+    print(f"File exists: {exists}")
+
+asyncio.run(main())
+```
+
+### MemoryBackend (Persistent)
+Persistent storage that survives process restarts.
+
+**Use when:**
+- Long-term memory needed
+- Files must persist across sessions
+- Important data storage
+
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic.agent.deepagent.backends import MemoryBackend
+from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic import Task
+import tempfile
+
+async def main():
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+        db_path = tmp.name
+    
+    try:
+        storage = SqliteStorage(db_file=db_path)
+        backend = MemoryBackend(storage)
+        
+        agent = DeepAgent(
+            model="openai/gpt-4o",
+            filesystem_backend=backend
+        )
+        
+        task = Task(description="Save important research findings to /memory/research.txt")
+        result = await agent.do_async(task)
+        
+        # Files persist across sessions
+        content = await backend.read("/memory/research.txt")
+        print(f"Persistent content: {content[:50]}...")
+        
+        await storage.disconnect_async()
+    finally:
+        import os
+        os.unlink(db_path)
+
+asyncio.run(main())
+```
+
+### CompositeBackend (Hybrid)
+Route different paths to different backends.
+
+**Use when:**
+- Mix ephemeral and persistent storage
+- Different storage strategies for different paths
+- Optimize storage based on file importance
+
+```python
+import asyncio
+from upsonic.agent.deepagent import DeepAgent
+from upsonic.agent.deepagent.backends import StateBackend, MemoryBackend, CompositeBackend
+from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic import Task
+import tempfile
+
+async def main():
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+        db_path = tmp.name
+    
+    try:
+        storage = SqliteStorage(db_file=db_path)
+        backend = CompositeBackend(
+            default=StateBackend(),  # Ephemeral for default paths
+            routes={
+                "/research/": MemoryBackend(storage),  # Persistent
+                "/reports/": MemoryBackend(storage)   # Persistent
+            }
+        )
+        
+        agent = DeepAgent(
+            model="openai/gpt-4o",
+            filesystem_backend=backend
+        )
+        
+        task = Task(description="""
+        Create /tmp/temp.txt (ephemeral)
+        Create /research/findings.txt (persistent)
+        Create /reports/summary.txt (persistent)
+        """)
+        
+        result = await agent.do_async(task)
+        print(result)
+        
+        await storage.disconnect_async()
+    finally:
+        import os
+        os.unlink(db_path)
+
+asyncio.run(main())
+```
+
+## Key Points
+
+- StateBackend: Fast, ephemeral, no persistence
+- MemoryBackend: Persistent, survives restarts, requires Storage
+- CompositeBackend: Route by path, mix strategies
+- Default backend is StateBackend if not specified
+
