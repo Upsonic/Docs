@@ -8,19 +8,19 @@ Interfaces enable exposing Upsonic agents through various communication protocol
 
 <CardGroup cols={2}>
 
-  <Card title="Slack" icon="slack" href="/interfaces/Slack">
+  <Card title="Slack" icon="slack" href="/concepts/interfaces/Slack">
 
     Deploy agents as Slack applications for team collaboration
 
   </Card>
 
-  <Card title="WhatsApp" icon="whatsapp" href="/interfaces/Whatsapp">
+  <Card title="WhatsApp" icon="whatsapp" href="/concepts/interfaces/Whatsapp">
 
     Serve agents via WhatsApp for direct messaging interactions
 
   </Card>
 
-  <Card title="Gmail" icon="mail" href="/interfaces/Gmail">
+  <Card title="Gmail" icon="mail" href="/concepts/interfaces/Gmail">
 
     Connect agents to Gmail for automated email processing and replies
 
