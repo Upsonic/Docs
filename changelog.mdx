@@ -6,6 +6,58 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 > Product updates, improvements, and bug fixes for Upsonic
 
 
+<Update label="Dec 2, 2025">
+	## v0.68.0
+
+	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/tag/v0.68.0)
+
+	## New Features:
+
+	- **Dynamic Tool Management via Agent Class**: Added `add_tools()` and `remove_tools()` methods to the Agent class and Task class, enabling runtime tool configuration and dynamic tool lifecycle management.
+
+	- **KnowledgeBase as Tool (RAG as Tool)**: KnowledgeBase can now be injected as a tool, allowing RAG capabilities to be seamlessly integrated into agent workflows through the tool system.
+
+	- **Gmail Integration Interface**: New Gmail tools and interface with OAuth 2.0 authentication support, enabling agents to send and manage emails through Gmail API.
+
+	- **WhatsApp Integration Interface**: New WhatsApp tools and interface for sending messages and managing WhatsApp communications programmatically.
+
+	- **Slack Integration Interface**: New Slack tools and interface for interacting with Slack workspaces, channels, and messages.
+
+	- **Tool Safety Policy Framework**: Introduced `ToolPolicyManager` with pre-execution and post-execution validation capabilities, providing robust security layers for tool registration and invocation.
+
+	- **String Task Auto-Conversion**: Agents now support string task descriptions that are automatically converted to Task objects, simplifying the API with `agent.do("task description")` and `agent.do_async("task description")` syntax.
+
+	## Improvements:
+
+	- **DeepAgent Architecture Refactoring**: Complete refactoring of DeepAgent from monolithic structure to modular architecture with clear separation of concerns, including new backend abstractions (BackendProtocol, StateBackend, MemoryBackend) and toolkit-based design.
+
+	- **Centralized Tool Handling**: Tool management has been centralized and streamlined, removing unnecessary complexity and providing better organization through the improved ToolManager system.
+
+	- **Import Error Handling**: Added comprehensive `import_error()` helper function across 73 files to provide better user experience and clearer error messages when optional dependencies are missing.
+
+	- **Tool Deduplication**: Enhanced tool registration system with smart deduplication logic to prevent duplicate tool registrations and improve tool lifecycle management.
+
+	- **Async Tool Validation**: Improved async/await patterns in tool policy validation.
+
+	## Bug Fixes:
+
+	- **Groq Client Import Fix**: Fixed import issues with Groq client to ensure proper module loading and error handling.
+
+	- **Test Suite Fixes**: Fixed various unit tests to align with the refactored architecture and new tool management system.
+
+	- **Conftest Configuration Fix**: Resolved configuration issues in test setup files to ensure proper test execution.
+
+	- **Tool Registration Edge Cases**: Fixed issues with tool registration duplication and improved handling of edge cases in the tool management system.
+
+	Full Changelog: https://github.com/Upsonic/Upsonic/compare/v0.67.4...v0.68.0
+
+	### Pull Requests:
+
+	- New features: [@DoganK01](https://github.com/DoganK01) in [#488](https://github.com/Upsonic/Upsonic/pull/488)
+
+</Update>
+
+
 <Update label="Nov 27, 2025">
 	## v0.67.4
 	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.67.4)
