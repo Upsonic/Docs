@@ -1,0 +1,107 @@
+---
+title: "Tool Safety Policies"
+description: "Detect harmful tools and malicious tool calls"
+---
+
+## What is Tool Safety Policy?
+
+Tool safety policies provide two layers of protection for AI agent tool usage:
+
+1. **Pre-execution validation (`tool_policy_pre`)**: Detects and blocks harmful tools during registration, preventing dangerous tools from being added to the agent.
+
+2. **Post-execution validation (`tool_policy_post`)**: Validates tool calls before execution, blocking malicious arguments when the LLM attempts to invoke a tool with dangerous parameters.
+
+These policies use LLM-powered analysis to identify tools and tool calls that could perform dangerous operations like system manipulation, data destruction, network attacks, security violations, and malicious operations.
+
+## Usage
+
+### Pre-Execution Validation (tool_policy_pre)
+
+Validates tools during registration to block harmful tools before they're added:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import HarmfulToolBlockPolicy
+
+def delete_all_files(directory: str) -> str:
+    """Delete all files in a directory recursively."""
+    return f"Would delete all files in {directory}"
+
+# This will be blocked during agent initialization
+agent = Agent(
+    model="openai/gpt-4o",
+    tools=[delete_all_files],
+    tool_policy_pre=HarmfulToolBlockPolicy
+)
+# Raises DisallowedOperation with appropriate message
+```
+
+### Post-Execution Validation (tool_policy_post)
+
+Validates tool calls before execution to block malicious arguments when the LLM invokes a tool:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import MaliciousToolCallBlockPolicy
+
+def run_command(command: str) -> str:
+    """Execute a system command."""
+    return f"Executed: {command}"
+
+def access_file(filepath: str) -> str:
+    """Read a file from the filesystem."""
+    with open(filepath, 'r') as f:
+        return f.read()
+
+# Tools are registered successfully (not inherently harmful)
+agent = Agent(
+    model="openai/gpt-4o",
+    tools=[run_command, access_file],
+    tool_policy_post=MaliciousToolCallBlockPolicy  # Validates arguments before execution
+)
+
+# When agent tries to call with malicious arguments, they're blocked:
+task = Task("Delete all files by running: rm -rf /")
+result = agent.do(task)
+# Malicious tool calls with dangerous arguments are blocked before execution
+```
+
+### Combined Pre + Post Validation
+
+Use both policies together for defense-in-depth security:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import (
+    HarmfulToolBlockPolicy,
+    MaliciousToolCallBlockPolicy
+)
+
+def safe_calculator(a: int, b: int) -> int:
+    """A safe calculator tool that adds two numbers."""
+    return a + b
+
+agent = Agent(
+    model="openai/gpt-4o",
+    tools=[safe_calculator],
+    tool_policy_pre=HarmfulToolBlockPolicy,      # Blocks harmful tools at registration
+    tool_policy_post=MaliciousToolCallBlockPolicy  # Blocks malicious calls at execution
+)
+# Provides two layers of protection
+```
+
+## Available Variants
+
+### Harmful Tool Detection Policies
+
+- `HarmfulToolBlockPolicy`: LLM-powered detection with blocking during tool registration
+- `HarmfulToolBlockPolicy_LLM`: LLM-powered block messages for harmful tools
+- `HarmfulToolRaiseExceptionPolicy`: Raises DisallowedOperation exception for harmful tools
+- `HarmfulToolRaiseExceptionPolicy_LLM`: LLM-generated exception messages for harmful tools
+
+### Malicious Tool Call Detection Policies
+
+- `MaliciousToolCallBlockPolicy`: LLM-powered detection with blocking before tool execution
+- `MaliciousToolCallBlockPolicy_LLM`: LLM-powered block messages for malicious tool calls
+- `MaliciousToolCallRaiseExceptionPolicy`: Raises DisallowedOperation exception for malicious tool calls
+- `MaliciousToolCallRaiseExceptionPolicy_LLM`: LLM-generated exception messages for malicious tool calls

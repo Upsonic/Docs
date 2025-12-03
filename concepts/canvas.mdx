@@ -5,53 +5,41 @@ description: "Create and manage persistent text documents with AI-powered editin
 
 ## Overview
 
-Canvas provides a persistent text document system that allows you to create, edit, and manage text content with AI assistance. Without Canvas, text editing requires manual file management and lacks intelligent content organization. With Canvas, you can:
+Canvas provides a persistent text document system that integrates seamlessly with Agent. When you pass a Canvas to an Agent, the agent automatically receives tools to read and edit the canvas, enabling intelligent document management through natural language tasks.
 
-* **Create persistent documents** - Build and maintain text documents that persist across sessions
-* **Intelligent editing** - Use AI to intelligently update and modify document sections
-* **Automatic organization** - Let AI handle content placement and document structure
-* **Clean formatting** - Automatically remove code blocks and maintain clean text
-* **Flexible content management** - Add, update, or replace sections as needed
+**How it works:**
+- Create a Canvas with a name (documents persist as `.txt` files)
+- Pass the Canvas to Agent during initialization via the `canvas` parameter
+- The Agent automatically registers canvas tools (`get_current_state_of_canvas` and `change_in_canvas`) 
+- During task execution, the agent can intelligently read, update, and organize canvas content
+- Canvas content is automatically cleaned (code blocks removed) and persisted to disk
 
 ## Quick Start
 
-### Your First Canvas
+### Basic Canvas Integration
 
 ```python
-import asyncio
-from upsonic import Canvas, Task, Agent
+from upsonic import Canvas, Agent, Task
 
+# Create canvas and pass it to agent
+canvas = Canvas("My Project Notes")
+agent = Agent("openai/gpt-4o", canvas=canvas)
 
-async def main():
-    # Create a canvas with a name
-    canvas = Canvas("My Project Notes")
-
-    # Get current state (starts empty)
-    current_content = canvas.get_current_state_of_canvas()
-    print(current_content)  # "Empty Canvas"
-
-    # Add initial content
-    result_canvas = await canvas.change_in_canvas(
-        new_text_of_part="# Project Overview\nThis is my project documentation",
-        part_definition="overview"
-    )
-    print(result_canvas)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+# Agent automatically has access to canvas tools
+task = Task("Add a project overview section to the canvas")
+result = agent.do(task)
 ```
 
-### Using Canvas with Agent and Task
+### Meeting Notes Example
 
 ```python
-import asyncio
-from upsonic import Canvas, Task, Agent
+from upsonic import Canvas, Agent, Task
 
-# Create canvas and agent
+# Create canvas-enabled agent
 canvas = Canvas("Meeting Notes")
-agent = Agent("openai/gpt-4o")
+agent = Agent("openai/gpt-4o", canvas=canvas)
 
-# Task to create meeting notes
+# Agent can create and organize meeting notes
 task = Task("""
 Create comprehensive meeting notes for our weekly team standup including:
 - Attendees and their roles
@@ -60,126 +48,69 @@ Create comprehensive meeting notes for our weekly team standup including:
 - Next meeting agenda
 """)
 
-# Execute task and update canvas
 result = agent.do(task)
-asyncio.run(canvas.change_in_canvas(
-    new_text_of_part=result,
-    part_definition="weekly standup"
-))
-```
-
-### Document Updates with AI
-
-```python
-import asyncio
-from upsonic import Canvas, Task, Agent
-
-async def main():
-    canvas = Canvas("Project Documentation")
-    agent = Agent("openai/gpt-4o")
-
-    # Update existing document
-    task = Task("""
-    Review and update the project documentation with:
-    - Latest technical specifications
-    - Updated API endpoints
-    - New deployment procedures
-    - Security best practices
-    """)
-
-    result = agent.do(task)
-    result_canvas = await canvas.change_in_canvas(
-        new_text_of_part=result,
-        part_definition="technical updates"
-    )
-    print(result_canvas)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+# Agent automatically updates the canvas during execution
 ```
 
 ## Configuration Guide
 
-### Basic Canvas Setup
+### Canvas with Custom Model
 
 ```python
-import asyncio
-from upsonic import Canvas, Task, Agent
+from upsonic import Canvas, Agent, Task
 
-async def main():
-    # Simple canvas with default model
-    canvas = Canvas("My Document")
-    
-    # Canvas with custom model
-    canvas = Canvas("Technical Notes", model="openai/gpt-4o")
-    
-    # Using canvas with agent
-    agent = Agent("openai/gpt-4o")
-    task = Task("Create a project summary document")
-    result = agent.do(task)
-    canvas_result = await canvas.change_in_canvas(str(result), "project summary")
-    print(canvas_result)
+# Canvas can use a different model for editing operations
+canvas = Canvas("Technical Notes", model="openai/gpt-4o-mini")
+agent = Agent("openai/gpt-4o", canvas=canvas)
 
-if __name__ == "__main__":
-    asyncio.run(main())
+task = Task("Create a project summary document")
+result = agent.do(task)
 ```
 
 ## Real-World Examples
 
-### Meeting Notes with Agent
+### Document Updates
 
 ```python
-import asyncio
-from upsonic import Canvas, Task, Agent
+from upsonic import Canvas, Agent, Task
 
-async def main():
-    canvas = Canvas("Weekly Standup")
-    agent = Agent("openai/gpt-4o")
+canvas = Canvas("Project Documentation")
+agent = Agent("openai/gpt-4o", canvas=canvas)
 
-    task = Task("""
-            Create meeting notes for our weekly standup including:
-            - Team updates and blockers
-            - Action items with owners
-            - Next week priorities
-            """)
+# Agent can review and update existing canvas content
+task = Task("""
+Review and update the project documentation with:
+- Latest technical specifications
+- Updated API endpoints
+- New deployment procedures
+- Security best practices
+""")
 
-    result = await agent.do_async(task)
-    canvas_result = await canvas.change_in_canvas(result, "weekly standup")
-    print(canvas_result)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+result = agent.do(task)
 ```
 
 ### Technical Documentation
 
 ```python
-import asyncio
-from upsonic import Canvas, Task, Agent
+from upsonic import Canvas, Agent, Task
 
-async def main():
-    canvas = Canvas("API Documentation")
-    agent = Agent("openai/gpt-4o")
-    
-    task = Task("""
-    Create comprehensive API documentation for our user management endpoints:
-    - Authentication methods
-    - Request/response examples
-    - Error handling
-    - Rate limiting
-    """)
-    
-    result = agent.do(task)
-    canvas_result = await canvas.change_in_canvas(result, "API docs")
-    print(canvas_result)
+canvas = Canvas("API Documentation")
+agent = Agent("openai/gpt-4o", canvas=canvas)
 
-if __name__ == "__main__":
-    asyncio.run(main())
+task = Task("""
+Create comprehensive API documentation for our user management endpoints:
+- Authentication methods
+- Request/response examples
+- Error handling
+- Rate limiting
+""")
+
+result = agent.do(task)
 ```
 
 ## Tips and Best Practices
 
 - **Use descriptive canvas names** - "Project Documentation" vs "Doc1"
-- **Structure content logically** - Use clear section headers
-- **Update incrementally** - Build documents progressively
-- **Use appropriate models** - Choose models that fit your content complexity
+- **Let the agent organize content** - The agent intelligently places and updates sections
+- **Canvas persists automatically** - Documents are saved as `.txt` files in your working directory
+- **Agent handles formatting** - Code blocks and formatting are automatically cleaned

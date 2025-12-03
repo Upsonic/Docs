@@ -1,0 +1,122 @@
+---
+title: "Using as Tool"
+description: "Use KnowledgeBase as a tool in Agent or Task"
+---
+
+## Overview
+
+KnowledgeBase can be used as a tool, allowing the agent to actively search and retrieve information from your knowledge base during task execution. When added as a tool, the agent gains access to a `search` method that it can call to query the knowledge base.
+
+## Key Benefits
+
+- **Active Retrieval**: Agent decides when and how to search the knowledge base
+- **Dynamic Queries**: Agent can formulate multiple queries based on context
+- **Tool Integration**: Works seamlessly with other tools in the agent's toolkit
+- **Automatic Setup**: KnowledgeBase is automatically set up when first used
+
+## Basic Usage
+
+Add KnowledgeBase to the `tools` parameter of a Task or Agent:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Step 1: Setup embedding provider
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig(
+    model_name="text-embedding-3-small"
+))
+
+# Step 2: Setup vector database
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_rag_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(
+        mode=Mode.EMBEDDED,
+        db_path="./rag_database"
+    )
+))
+
+# Step 3: Create knowledge base with documents
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Step 4: Create agent
+agent = Agent("openai/gpt-4o")
+
+# Step 5: Create task with knowledge base as a tool
+task = Task(
+    description="What are the main topics discussed in the document?",
+    tools=[kb]
+)
+
+# Step 6: Execute and get results
+result = agent.do(task)
+print(result)
+```
+
+## How It Works
+
+1. **Tool Registration**: When you add KnowledgeBase to `tools`, the agent automatically registers the `search` method as an available tool
+2. **Automatic Setup**: The KnowledgeBase is automatically set up.
+3. **Agent Control**: The agent decides when to call the search tool and what queries to make
+4. **Results Integration**: Search results are returned to the agent, which uses them to answer your questions
+
+## Tool vs Context
+
+**Using as Tool** (this feature):
+- Agent actively searches when needed
+- Agent can make multiple queries
+- Agent controls the search strategy
+- Best for: Complex tasks requiring multiple searches
+
+**Using as Context** (traditional RAG):
+- Knowledge base is queried once before task execution
+- Results are added to the context automatically
+- Simpler, but less flexible
+- Best for: Simple Q&A tasks
+
+## Multiple Knowledge Bases
+
+You can add multiple KnowledgeBase instances as tools:
+
+```python
+kb1 = KnowledgeBase(
+    sources=["technical_docs/"],
+    embedding_provider=embedding,
+    vectordb=ChromaProvider(ChromaConfig(...))
+)
+
+kb2 = KnowledgeBase(
+    sources=["user_guides/"],
+    embedding_provider=embedding,
+    vectordb=ChromaProvider(ChromaConfig(...))
+)
+
+task = Task(
+    description="Compare information from technical docs and user guides",
+    tools=[kb1, kb2]
+)
+
+result = agent.do(task)
+```
+
+## Cleanup
+
+Always close the KnowledgeBase when done to free resources:
+
+```python
+await kb.close()
+```
+
+Or use async context manager:
+
+```python
+async with kb:
+    result = agent.do(task)
+```
+

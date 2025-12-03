@@ -1,0 +1,189 @@
+---
+title: "MultiMCPHandler"
+description: "Connect to multiple MCP servers simultaneously"
+---
+
+## Overview
+
+`MultiMCPHandler` allows you to connect to multiple MCP servers at once, aggregating all their tools into a unified interface.
+
+## Basic Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MultiMCPHandler
+
+# Create multi-handler with multiple servers
+multi_handler = MultiMCPHandler(
+    commands=[
+        "uvx mcp-server-sqlite --db-path /tmp/db1.db",
+        "uvx mcp-server-sqlite --db-path /tmp/db2.db",
+    ],
+    timeout_seconds=60
+)
+
+# Create agent
+agent = Agent(
+    name="Multi-MCP Agent",
+    role="Multi-database operations specialist",
+    goal="Demonstrate MultiMCPHandler with multiple SQLite databases",
+    tool_call_limit=10
+)
+
+# Create task
+task = Task(
+    description="""
+    IMPORTANT: You have access to TWO separate SQLite databases.
+    - Database 1: Use tools from the first MCP server connection
+    - Database 2: Use tools from the second MCP server connection
+    
+    Step 1: Using Database 1, create a 'users' table with:
+    - id (integer primary key)
+    - username (text)
+    - email (text)
+    - created_at (text)
+    
+    Insert 3 sample users into Database 1.
+    
+    Step 2: Using Database 2, create a 'posts' table with:
+    - id (integer primary key)
+    - user_id (integer)
+    - title (text)
+    - content (text)
+    - published (boolean)
+    
+    Insert 4 sample posts into Database 2.
+    
+    Step 3: Query Database 1 to show all users.
+    Step 4: Query Database 2 to show all posts.
+    """,
+    tools=[multi_handler]
+)
+
+# Execute
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+- `commands` (List[str]): List of command strings for each server
+- `server_params_list`: List of server parameter objects
+- `timeout_seconds` (int): Connection timeout for all servers (default: 5)
+- `include_tools` (List[str]): Optional list of tool names to include from all servers
+- `exclude_tools` (List[str]): Optional list of tool names to exclude from all servers
+
+## Features
+
+- **Multiple Connections**: Connect to multiple servers simultaneously
+- **Unified Interface**: All tools from all servers available in one place
+- **Server Introspection**: Get information about each server and its tools
+- **Automatic Cleanup**: Properly closes all connections after task completion
+
+## Server Introspection
+
+```python
+from upsonic.tools.mcp import MultiMCPHandler
+
+multi_handler = MultiMCPHandler(
+    commands=[
+        "uvx mcp-server-sqlite --db-path /tmp/db1.db",
+        "uvx mcp-server-sqlite --db-path /tmp/db2.db",
+    ],
+    timeout_seconds=60
+)
+
+# Get tools first (this triggers connection if needed)
+tools = multi_handler.get_tools()
+
+# Get server information
+print(f"Server Count: {multi_handler.get_server_count()}")
+print(f"Tool Count: {multi_handler.get_tool_count()}")
+print(f"Tools by Server: {multi_handler.get_tools_by_server()}")
+
+# Get detailed server info
+server_info = multi_handler.get_server_info()
+for info in server_info:
+    print(f"Server {info['index']}: {info['server_name']} ({len(info['tools'])} tools)")
+```
+
+## Example with Structured Output
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MultiMCPHandler
+from pydantic import BaseModel
+
+class MultiDatabaseReport(BaseModel):
+    """Structured output for multi-database operations."""
+    databases_used: int
+    total_tables: int
+    total_records: int
+    operations_summary: str
+
+# Create multi-handler
+multi_handler = MultiMCPHandler(
+    commands=[
+        "uvx mcp-server-sqlite --db-path /tmp/companies.db",
+        "uvx mcp-server-sqlite --db-path /tmp/employees.db",
+    ],
+    timeout_seconds=60
+)
+
+# Create agent
+agent = Agent(
+    name="Multi-MCP Structured Agent",
+    role="Multi-database operations with structured reporting",
+    goal="Demonstrate structured output with MultiMCPHandler",
+    tool_call_limit=10
+)
+
+# Create task with structured output
+task = Task(
+    description="""
+    IMPORTANT: You have access to TWO separate SQLite databases.
+    - Database 1: Use tools from the first MCP server connection
+    - Database 2: Use tools from the second MCP server connection
+    
+    Step 1: Using Database 1, create a 'companies' table with:
+    - id (integer primary key)
+    - name (text)
+    - industry (text)
+    - revenue (real)
+    
+    Insert 3 tech companies into Database 1.
+    
+    Step 2: Using Database 2, create an 'employees' table with:
+    - id (integer primary key)
+    - name (text)
+    - position (text)
+    - salary (real)
+    - company_id (integer)
+    
+    Insert 5 sample employees into Database 2.
+    
+    Step 3: Provide a structured report with:
+    - Number of databases used (should be 2)
+    - Total tables created (should be 2)
+    - Total records inserted (should be 8: 3 companies + 5 employees)
+    - Operations summary describing what was done
+    """,
+    tools=[multi_handler],
+    response_format=MultiDatabaseReport
+)
+
+# Execute
+result = agent.do(task)
+print(f"Databases Used: {result.databases_used}")
+print(f"Total Tables: {result.total_tables}")
+print(f"Total Records: {result.total_records}")
+print(f"Operations Summary: {result.operations_summary}")
+```
+
+## When to Use
+
+- Need to work with multiple MCP servers simultaneously
+- Want to aggregate tools from different servers
+- Need to coordinate operations across multiple databases/services
+- Want unified tool interface for multiple connections
+
