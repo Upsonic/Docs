@@ -15,7 +15,7 @@ Tools can be added during initialization or dynamically at runtime. Remove tools
 from upsonic import Agent
 from upsonic.tools import tool
 
-@tool()
+@tool
 def add(a: int, b: int) -> int:
     return a + b
 
@@ -57,7 +57,7 @@ agent.remove_tools(["add", multiply])
 ### Function Tools
 
 ```python
-@tool()
+@tool
 def search(query: str) -> str:
     return f"Results: {query}"
 
@@ -72,7 +72,7 @@ agent.remove_tools(search)         # By object
 from upsonic.tools import ToolKit
 
 class MathToolKit(ToolKit):
-    @tool()
+    @tool
     def add(self, a: int, b: int) -> int:
         return a + b
 
