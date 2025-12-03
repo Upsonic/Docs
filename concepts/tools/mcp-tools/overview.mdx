@@ -23,6 +23,74 @@ MCP creates a bridge between your AI agents and external tool servers:
 - **Standardized Protocol**: Consistent interface across different tool providers
 - **Live Updates**: Servers can update tools without changing your code
 
+## Three Ways to Use MCP
+
+### 1. Class-Based
+
+```python
+from upsonic import Agent, Task
+
+class DatabaseMCP:
+    command = "uvx"
+    args = ["mcp-server-sqlite", "--db-path", "/tmp/test_mcp_v7.db"]
+
+agent = Agent(
+    name="Legacy MCP Agent",
+    role="Database operations specialist using legacy MCP class",
+    goal="Demonstrate backward compatibility with class-based MCP",
+    tool_call_limit=10
+)
+
+task = Task(
+    description="""
+    Create a 'products' table with columns: 
+    - id (integer primary key)
+    - name (text)
+    - price (real)
+    - category (text)
+    - stock (integer)
+    
+    Insert 5 sample products with different categories (electronics, books, clothing).
+    Then query and show all products sorted by price.
+    """,
+    tools=[DatabaseMCP]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+### 2. MCPHandler Class
+
+```python
+from upsonic import Task
+from upsonic.tools.mcp import MCPHandler
+
+mcp_handler = MCPHandler(
+    command="uvx mcp-server-sqlite --db-path /tmp/db.db",
+    timeout_seconds=60
+)
+
+task = Task(description="Query database", tools=[mcp_handler])
+```
+
+### 3. MultiMCPHandler Class (Multiple Servers)
+
+```python
+from upsonic import Task
+from upsonic.tools.mcp import MultiMCPHandler
+
+multi_handler = MultiMCPHandler(
+    commands=[
+        "uvx mcp-server-sqlite --db-path /tmp/db1.db",
+        "uvx mcp-server-sqlite --db-path /tmp/db2.db",
+    ],
+    timeout_seconds=60
+)
+
+task = Task(description="Use multiple databases", tools=[multi_handler])
+```
+
 ## MCP Server Resources
 
 Discover available MCP servers:
@@ -32,5 +100,7 @@ Discover available MCP servers:
 
 ## Navigation
 
+- [MCPHandler](/concepts/tools/mcp-tools/mcp-handler) - Use MCPHandler class for single server
+- [MultiMCPHandler](/concepts/tools/mcp-tools/multi-mcp-handler) - Use MultiMCPHandler for multiple servers
 - [MCP Types](/concepts/tools/mcp-tools/mcp-types/docker) - Configure Docker, NPX, SSE, and UVX-based MCP servers
 - [Advanced Features](/concepts/tools/mcp-tools/advanced/authentication) - Configure authentication for MCP servers

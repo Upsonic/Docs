@@ -91,6 +91,56 @@ task = Task(
 | **show_result** | bool | Display result directly to user without LLM processing |
 | **stop_after_tool_call** | bool | Terminate agent after this tool call |
 
+## Dynamic Tool Management
+
+You can add or remove tools after task creation:
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def web_search(query: str) -> str:
+    """Search the web for information."""
+    return f"Search results for: {query}"
+
+@tool
+def calculator(a: float, b: float) -> float:
+    """Add two numbers."""
+    return a + b
+
+# Create task
+task = Task(description="Search and calculate")
+agent = Agent("openai/gpt-4o")
+
+# Add tools dynamically
+task.add_tools([web_search, calculator])
+
+# Remove tools
+task.remove_tools([web_search], agent=agent)
+```
+
+## Accessing Registered Tools
+
+After execution, access registered tools via the `registered_task_tools` attribute:
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def calculator(a: float, b: float) -> float:
+    """Add two numbers."""
+    return a + b
+
+task = Task(description="Calculate 5 + 3", tools=[calculator])
+agent = Agent("openai/gpt-4o")
+agent.do(task)
+
+# Access registered tools
+print(task.registered_task_tools)  # Dict mapping tool names to wrapped tools
+```
+
 ## Best Practices
 
 - **Tool Validation**: All tools must have type hints and docstrings

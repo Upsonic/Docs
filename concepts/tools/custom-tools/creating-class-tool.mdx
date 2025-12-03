@@ -1,0 +1,66 @@
+---
+title: "Creating Class Tool"
+description: "Create tools from class instances with automatic method registration"
+---
+
+## Overview
+
+Class-based tools automatically register all public methods (not starting with `_`) as tools. Simply create a class instance and pass it to your agent or task.
+
+## Example
+
+```python
+from upsonic import Agent, Task
+
+class Calculator:
+    """A simple calculator class. All public methods become tools."""
+    
+    def add(self, a: float, b: float) -> float:
+        """
+        Add two numbers together.
+
+        Args:
+            a: First number
+            b: Second number
+
+        Returns:
+            The sum of a and b
+        """
+        return a + b
+    
+    def multiply(self, a: float, b: float) -> float:
+        """
+        Multiply two numbers.
+
+        Args:
+            a: First number
+            b: Second number
+
+        Returns:
+            The product of a and b
+        """
+        return a * b
+    
+    def _private_helper(self):
+        """This method won't become a tool (starts with _)."""
+        pass
+
+# Create task with the class instance
+calculator = Calculator()
+task = Task(
+    description="Calculate 15 + 27 and then multiply the result by 3",
+    tools=[calculator]
+)
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", name="Calculator Agent")
+
+# Execute
+agent.print_do(task)
+```
+
+## Key Points
+
+- **Public methods only**: Methods starting with `_` are ignored
+- **Automatic registration**: All public methods become tools automatically
+

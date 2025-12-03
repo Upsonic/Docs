@@ -1,0 +1,71 @@
+---
+title: Adding Tools
+sidebarTitle: Adding Tools
+description: Managing tools for agents in the Upsonic framework
+hideToc: false
+---
+
+Agents can use tools during initialization or add/remove them dynamically.
+
+## During Initialization
+
+```python
+from upsonic import Agent
+from upsonic.tools import tool
+
+@tool
+def web_search(query: str) -> str:
+    """Search the web for information."""
+    return f"Search results for: {query}"
+
+agent = Agent(
+    model="openai/gpt-4o",
+    tools=[web_search]
+)
+```
+
+## Dynamic Tool Management
+
+```python
+from upsonic import Agent
+from upsonic.tools import tool
+
+@tool
+def calculator(a: float, b: float) -> float:
+    """Add two numbers."""
+    return a + b
+
+# Create agent
+agent = Agent("openai/gpt-4o")
+
+# Add tools dynamically
+agent.add_tools([calculator])
+
+# Remove tools (by name or object)
+agent.remove_tools([calculator])
+# Or: agent.remove_tools(["calculator"])
+```
+
+## Accessing Registered Tools
+
+Access registered tools via the `registered_agent_tools` attribute:
+
+```python
+from upsonic import Agent
+from upsonic.tools import tool
+
+@tool
+def calculator(a: float, b: float) -> float:
+    """Add two numbers."""
+    return a + b
+
+agent = Agent("openai/gpt-4o")
+agent.add_tools([calculator])
+
+# Access registered tools
+print(agent.registered_agent_tools)  # Dict mapping tool names to wrapped tools
+
+# Get tool definitions
+tool_defs = agent.get_tool_defs()  # List[ToolDefinition]
+```
+

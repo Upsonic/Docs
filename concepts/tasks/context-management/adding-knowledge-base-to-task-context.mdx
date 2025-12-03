@@ -88,6 +88,27 @@ knowledge_base = KnowledgeBase(
 )
 ```
 
+## Vector Search Filters
+
+Filter vector search results when using knowledge bases:
+
+```python
+from upsonic import Task, KnowledgeBase
+
+knowledge_base = KnowledgeBase(
+    sources=["documents/"],
+    embedding_provider=embedding_provider,
+    vectordb=vectordb
+)
+
+# Task with search filter
+task = Task(
+    description="Find information about Q4 sales",
+    context=[knowledge_base],
+    vector_search_filter={"department": "sales", "year": 2024}
+)
+```
+
 ## Supported Sources
 
 Knowledge bases support various source types:

@@ -1,0 +1,157 @@
+---
+title: "Tool Management"
+description: "Add and remove tools dynamically from agents and tasks"
+---
+
+## Overview
+
+Tools can be added during initialization or dynamically at runtime. Remove tools by name, object reference, or a mix of both.
+
+## Adding Tools
+
+### On Initialization
+
+```python
+from upsonic import Agent
+from upsonic.tools import tool
+
+@tool()
+def add(a: int, b: int) -> int:
+    return a + b
+
+agent = Agent("openai/gpt-4o", tools=[add])
+```
+
+### Dynamically
+
+```python
+agent.add_tools(multiply)              # Single tool
+agent.add_tools([divide, subtract])    # Multiple tools
+```
+
+## Removing Tools
+
+### By Name (String)
+
+```python
+agent.remove_tools("add")
+agent.remove_tools(["add", "multiply"])
+```
+
+### By Object Reference
+
+```python
+agent.remove_tools(multiply)
+agent.remove_tools([add, multiply])
+```
+
+### Mixed (Name + Object)
+
+```python
+agent.remove_tools([add, "multiply"])
+agent.remove_tools(["add", multiply])
+```
+
+## Tool Types
+
+### Function Tools
+
+```python
+@tool()
+def search(query: str) -> str:
+    return f"Results: {query}"
+
+agent.add_tools(search)
+agent.remove_tools("search")        # By name
+agent.remove_tools(search)         # By object
+```
+
+### ToolKit
+
+```python
+from upsonic.tools import ToolKit
+
+class MathToolKit(ToolKit):
+    @tool()
+    def add(self, a: int, b: int) -> int:
+        return a + b
+
+toolkit = MathToolKit()
+agent.add_tools(toolkit)
+
+agent.remove_tools("add")          # Remove method (keeps toolkit)
+agent.remove_tools(toolkit)        # Remove entire toolkit
+```
+
+### Regular Class (Auto-tools)
+
+```python
+class Calculator:
+    def add(self, a: int, b: int) -> int:
+        return a + b
+
+calc = Calculator()
+agent.add_tools(calc)
+
+agent.remove_tools("add")          # Remove method (keeps class)
+agent.remove_tools(calc)           # Remove entire class
+```
+
+### Agent as Tool
+
+```python
+math_agent = Agent("openai/gpt-4o", name="Math Agent")
+agent.add_tools(math_agent)
+
+agent.remove_tools(math_agent)              # By object
+agent.remove_tools("ask_math_agent")        # By name (auto-prefixed)
+```
+
+### MCP Handler
+
+```python
+from upsonic.tools.mcp import MCPHandler
+
+handler = MCPHandler("sqlite", command="uvx", args=["mcp-server-sqlite"])
+agent.add_tools(handler)
+
+agent.remove_tools(handler)        # Remove entire handler + all tools
+agent.remove_tools("read_query")   # Remove specific tool provided by mcp (keeps handler)
+```
+
+### Thinking Tool (plan_and_execute)
+
+```python
+# Auto-added with enable_thinking_tool=True
+agent = Agent("openai/gpt-4o", enable_thinking_tool=True)
+agent.remove_tools("plan_and_execute")
+
+# Or add explicitly
+from upsonic.tools.orchestration import plan_and_execute
+agent.add_tools(plan_and_execute)
+agent.remove_tools(plan_and_execute)
+```
+
+## Task Tools
+
+Tasks have the same tool manager that requires the agent reference:
+
+```python
+from upsonic import Task
+
+task = Task(description="Calculate", tools=[add])
+task.add_tools(multiply)
+
+task.remove_tools("add", agent)         # By name
+task.remove_tools(multiply, agent)      # By object
+task.remove_tools([add, "multiply"], agent)  # Mixed
+```
+
+## Key Points
+
+- **Agent tools**: Persist across all tasks
+- **Task tools**: Task-specific, isolated per task
+- **Remove by name**: Works for all tool types
+- **Remove by object**: Removes entire container (ToolKit/Class/MCP/Agent) or single function
+- **Mixed removal**: Combine names and objects in one call
+

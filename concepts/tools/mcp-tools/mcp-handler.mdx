@@ -1,0 +1,178 @@
+---
+title: "MCPHandler"
+description: "Use MCPHandler class to connect to a single MCP server"
+---
+
+## Overview
+
+`MCPHandler` is the recommended way to connect to a single MCP server. It provides more control and flexibility than the class-based approach.
+
+## Basic Usage
+
+### Command String
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+
+# Create MCP handler with command string
+mcp_handler = MCPHandler(
+    command="uvx mcp-server-sqlite --db-path /tmp/db.db",
+    timeout_seconds=60
+)
+
+# Create agent
+agent = Agent(
+    name="MCPHandler Command Agent",
+    role="Database operations specialist using MCPHandler with command",
+    goal="Demonstrate MCPHandler with command string",
+    tool_call_limit=10
+)
+
+# Create task with handler
+task = Task(
+    description="""
+    Create a 'customers' table with columns:
+    - id (integer primary key)
+    - name (text)
+    - email (text)
+    - phone (text)
+    - registration_date (text)
+    
+    Insert 4 sample customers with different names and emails.
+    Then query and show all customers.
+    """,
+    tools=[mcp_handler]
+)
+
+# Execute
+result = agent.do(task)
+print(result)
+```
+
+### Server Parameters
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+from mcp.client.stdio import StdioServerParameters
+
+# Create MCP handler with server parameters
+mcp_handler = MCPHandler(
+    server_params=StdioServerParameters(
+        command="uvx",
+        args=["mcp-server-sqlite", "--db-path", "/tmp/db.db"],
+        env=None
+    ),
+    timeout_seconds=60
+)
+
+# Create agent
+agent = Agent(
+    name="MCPHandler Params Agent",
+    role="Database operations specialist using MCPHandler with server params",
+    goal="Demonstrate MCPHandler with StdioServerParameters",
+    tool_call_limit=10
+)
+
+# Create task
+task = Task(
+    description="""
+    Create an 'orders' table with columns:
+    - id (integer primary key)
+    - customer_id (integer)
+    - product_name (text)
+    - quantity (integer)
+    - total_price (real)
+    - order_date (text)
+    
+    Insert 3 sample orders with different products and quantities.
+    Then query and show all orders sorted by total_price descending.
+    """,
+    tools=[mcp_handler]
+)
+
+# Execute
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+- `command` (str): Command string to run MCP server
+- `server_params`: Pre-configured server parameters (StdioServerParameters, SSEClientParams, or StreamableHTTPClientParams)
+- `timeout_seconds` (int): Connection timeout in seconds (default: 5)
+- `include_tools` (List[str]): Optional list of tool names to include
+- `exclude_tools` (List[str]): Optional list of tool names to exclude
+
+## Features
+
+- **Automatic Tool Discovery**: Discovers all available tools from the server
+- **Resource Management**: Automatically cleans up connections after task completion
+- **Error Handling**: Graceful error handling with proper cleanup
+- **Tool Filtering**: Include or exclude specific tools
+
+## Example with Structured Output
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+from pydantic import BaseModel
+
+class DatabaseReport(BaseModel):
+    """Structured output for database operations."""
+    tables_created: int
+    records_inserted: int
+    sample_data: str
+    summary: str
+
+# Create MCP handler
+mcp_handler = MCPHandler(
+    command="uvx mcp-server-sqlite --db-path /tmp/db.db",
+    timeout_seconds=60
+)
+
+# Create agent
+agent = Agent(
+    name="Structured Output Agent",
+    role="Database operations with structured reporting",
+    goal="Demonstrate structured output with MCPHandler",
+    tool_call_limit=10
+)
+
+# Create task with structured output
+task = Task(
+    description="""
+    Create a 'inventory' table with columns:
+    - id (integer primary key)
+    - item_name (text)
+    - category (text)
+    - quantity (integer)
+    - unit_price (real)
+    
+    Insert 6 sample inventory items across different categories.
+    Then provide a structured report including:
+    - Number of tables created
+    - Number of records inserted
+    - Sample data (first 3 items)
+    - Summary of operations
+    """,
+    tools=[mcp_handler],
+    response_format=DatabaseReport
+)
+
+# Execute
+result = agent.do(task)
+print(f"Tables Created: {result.tables_created}")
+print(f"Records Inserted: {result.records_inserted}")
+print(f"Sample Data: {result.sample_data}")
+print(f"Summary: {result.summary}")
+```
+
+## When to Use
+
+- Single MCP server connection
+- Need more control over connection parameters
+- Want automatic resource cleanup
+- Need tool filtering capabilities
+

@@ -55,24 +55,49 @@ result = agent.do(task)
 
 ## Parameters
 
-| Parameter | Type | Description | Default | Source |
-|-----------|------|-------------|---------|--------|
-| `collection_name` | `str` | Name of the collection | `"default_collection"` | Base |
-| `vector_size` | `int` | Dimension of vectors | Required | Base |
-| `distance_metric` | `DistanceMetric` | Similarity metric (`COSINE`, `EUCLIDEAN`, `DOT_PRODUCT`) | `COSINE` | Base |
-| `recreate_if_exists` | `bool` | Recreate collection if it exists | `False` | Base |
-| `default_top_k` | `int` | Default number of results | `10` | Base |
-| `default_similarity_threshold` | `Optional[float]` | Minimum similarity score | `None` | Base |
-| `api_key` | `SecretStr` | Pinecone API key | Required | Specific |
-| `spec` | `Optional[Union[Dict, ServerlessSpec, PodSpec]]` | Index specification | `None` | Specific |
-| `environment` | `Optional[str]` | Environment/region (backward compatibility) | `None` | Specific |
-| `namespace` | `Optional[str]` | Namespace for data isolation | `None` | Specific |
-| `metric` | `Literal['cosine', 'euclidean', 'dotproduct']` | Distance metric | `'cosine'` | Specific |
-| `pods` | `Optional[int]` | Number of pods (PodSpec) | `None` | Specific |
-| `pod_type` | `Optional[str]` | Pod type specification | `None` | Specific |
-| `replicas` | `Optional[int]` | Number of replicas (PodSpec) | `None` | Specific |
-| `shards` | `Optional[int]` | Number of shards (PodSpec) | `None` | Specific |
-| `use_sparse_vectors` | `bool` | Enable sparse vector support | `False` | Specific |
-| `batch_size` | `int` | Batch size for upsert operations | `100` | Specific |
-| `timeout` | `Optional[int]` | Request timeout in seconds | `None` | Specific |
+### Base Parameters (from BaseVectorDBConfig)
+
+| Parameter | Type | Description | Default | Required |
+|-----------|------|-------------|---------|----------|
+| `collection_name` | `str` | Name of the collection | `"default_collection"` | No |
+| `vector_size` | `int` | Dimension of vectors | - | **Yes** |
+| `distance_metric` | `DistanceMetric` | Similarity metric (`COSINE`, `EUCLIDEAN`, `DOT_PRODUCT`) | `COSINE` | No |
+| `recreate_if_exists` | `bool` | Recreate collection if it exists | `False` | No |
+| `default_top_k` | `int` | Default number of results | `10` | No |
+| `default_similarity_threshold` | `Optional[float]` | Minimum similarity score (0.0-1.0) | `None` | No |
+| `dense_search_enabled` | `bool` | Enable dense vector search | `True` | No |
+| `full_text_search_enabled` | `bool` | Enable full-text search | `True` | No |
+| `hybrid_search_enabled` | `bool` | Enable hybrid search | `True` | No |
+| `default_hybrid_alpha` | `float` | Default alpha for hybrid search (0.0-1.0) | `0.5` | No |
+| `default_fusion_method` | `Literal['rrf', 'weighted']` | Default fusion method for hybrid search | `'weighted'` | No |
+| `provider_name` | `Optional[str]` | Provider name | `None` | No |
+| `provider_description` | `Optional[str]` | Provider description | `None` | No |
+| `provider_id` | `Optional[str]` | Provider ID | `None` | No |
+| `default_metadata` | `Optional[Dict[str, Any]]` | Default metadata for all records | `None` | No |
+| `auto_generate_content_id` | `bool` | Auto-generate content IDs | `True` | No |
+| `indexed_fields` | `Optional[List[Union[str, Dict[str, Any]]]]` | Fields to index for filtering | `None` | No |
+
+### Pinecone-Specific Parameters
+
+| Parameter | Type | Description | Default | Required |
+|-----------|------|-------------|---------|----------|
+| `api_key` | `SecretStr` | Pinecone API key | - | **Yes** |
+| `spec` | `Optional[Union[Dict[str, Any], ServerlessSpec, PodSpec]]` | Index specification (ServerlessSpec or PodSpec) | `None` | No |
+| `environment` | `Optional[str]` | Environment/region for backward compatibility (e.g., "aws-us-east-1") | `None` | No |
+| `namespace` | `Optional[str]` | Namespace for data isolation | `None` | No |
+| `metric` | `Literal['cosine', 'euclidean', 'dotproduct']` | Distance metric (auto-mapped from `distance_metric`) | `'cosine'` | No |
+| `pods` | `Optional[int]` | Number of pods (for PodSpec) | `None` | No |
+| `pod_type` | `Optional[str]` | Pod type specification (for PodSpec) | `None` | No |
+| `replicas` | `Optional[int]` | Number of replicas (for PodSpec) | `None` | No |
+| `shards` | `Optional[int]` | Number of shards (for PodSpec) | `None` | No |
+| `host` | `Optional[str]` | Custom Pinecone host | `None` | No |
+| `additional_headers` | `Optional[Dict[str, str]]` | Additional HTTP headers | `None` | No |
+| `pool_threads` | `Optional[int]` | Thread pool size | `1` | No |
+| `index_api` | `Optional[Any]` | Custom index API instance | `None` | No |
+| `use_sparse_vectors` | `bool` | Enable sparse vector support (requires `hybrid_search_enabled=True`, sets metric to `dotproduct`) | `False` | No |
+| `sparse_encoder_model` | `str` | Model for sparse vector generation | `"pinecone-sparse-english-v0"` | No |
+| `batch_size` | `int` | Batch size for upsert operations | `100` | No |
+| `show_progress` | `bool` | Show progress during batch operations | `False` | No |
+| `timeout` | `Optional[int]` | Request timeout in seconds | `None` | No |
+| `reranker` | `Optional[Any]` | Reranker instance for post-processing results | `None` | No |
 
