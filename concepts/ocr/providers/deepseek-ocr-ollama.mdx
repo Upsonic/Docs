@@ -1,0 +1,41 @@
+---
+title: "DeepSeek OCR (Ollama)"
+description: "Simple and easy-to-use OCR powered by Ollama and DeepSeek model"
+---
+
+## What is DeepSeek OCR (Ollama)?
+
+DeepSeek OCR with Ollama backend provides a simple, easy-to-use OCR solution that runs locally through Ollama. Perfect for users who want high-quality OCR without complex GPU setups.
+
+## Usage
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.deepseek_ollama import DeepSeekOllamaOCR
+
+# Create DeepSeek OCR with Ollama
+ocr = OCR(
+    DeepSeekOllamaOCR,
+    host="http://localhost:11434",
+    model="deepseek-ocr:3b",
+    rotation_fix=True
+)
+
+# Extract text from image or PDF
+text = ocr.get_text('document.pdf')
+print(text)
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `host` | str | `"http://localhost:11434"` | Ollama server host URL |
+| `model` | str | `"deepseek-ocr:3b"` | Ollama model name to use |
+| `prompt` | str | `"<image>\nFree OCR."` | OCR prompt template |
+
+## Features
+
+- **Simple Setup**: Just install Ollama and pull the model
+- **Local Processing**: All processing happens on your machine
+- **Multi-language Support**: Supports 20+ languages including English, Chinese, Japanese, Korean
