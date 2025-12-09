@@ -20,9 +20,9 @@ export NVIDIA_BASE_URL="https://integrate.api.nvidia.com/v1"  # Optional, this i
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.nvidia import NvidiaModel
 
-model = OpenAIChatModel(model_name="meta/llama-3.1-8b-instruct", provider="nvidia")
+model = NvidiaModel(model_name="meta/llama-3.1-8b-instruct")
 
 agent = Agent(model=model)
 task = Task("Hello, how are you?")

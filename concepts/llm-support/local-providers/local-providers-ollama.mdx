@@ -12,16 +12,16 @@ Ollama allows you to run large language models locally on your machine. Perfect 
 ## Authentication
 
 ```bash
-export OLLAMA_BASE_URL="http://localhost:11434/v1/"  # Optional, this is the default
+export OLLAMA_BASE_URL="http://localhost:11434/v1/" # Required
 ```
 
 ## Examples
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.ollama import OllamaModel
 
-model = OpenAIChatModel(model_name="llama3.2", provider="ollama")
+model = OllamaModel(model_name="llama3.2")
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")

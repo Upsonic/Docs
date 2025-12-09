@@ -12,7 +12,7 @@ LiteLLM provides a unified OpenAI-compatible interface to access 100+ LLM provid
 ## Authentication
 
 ```bash
-export LITELLM_BASE_URL="http://localhost:4000"
+export LITELLM_BASE_URL="..." # Required
 # Optional: API key if proxy requires authentication
 export LITELLM_API_KEY="sk-..."
 ```
@@ -21,9 +21,9 @@ export LITELLM_API_KEY="sk-..."
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.litellm import LiteLLMModel
 
-model = OpenAIChatModel(model_name="gpt-4o", provider="litellm")
+model = LiteLLMModel(model_name="gpt-4o")
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")

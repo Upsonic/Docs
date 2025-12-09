@@ -19,9 +19,9 @@ export OPENROUTER_API_KEY="sk-or-..."
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.openrouter import OpenRouterModel
 
-model = OpenAIChatModel(model_name="anthropic/claude-3-5-sonnet", provider="openrouter")
+model = OpenRouterModel(model_name="anthropic/claude-3-5-sonnet")
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")
