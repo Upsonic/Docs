@@ -20,9 +20,9 @@ export VLLM_API_KEY="your-api-key"  # Optional, vLLM doesnt not require authenti
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.vllm import VLLMModel
 
-model = OpenAIChatModel(model_name="Qwen/Qwen2.5-0.5B-Instruct", provider="vllm")
+model = VLLMModel(model_name="Qwen/Qwen2.5-0.5B-Instruct")
 
 agent = Agent(model=model)
 task = Task("Hello, how are you?")
