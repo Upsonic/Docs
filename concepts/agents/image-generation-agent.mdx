@@ -1,0 +1,92 @@
+---
+title: Image Generation
+sidebarTitle: Image Generation
+description: Generating and managing images with Agent class
+hideToc: false
+---
+
+`Agent` can generate images using the `ImageGenerationTool` and save them using image utility functions.
+
+## Basic Image Generation
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import ImageGenerationTool
+from upsonic.utils.image import save_image_to_folder
+
+# Create agent with image generation capability
+agent = Agent(
+    model="openai-responses/gpt-4o",
+)
+
+# Create task with ImageGenerationTool
+task = Task(
+    description="Generate a beautiful landscape image of a sunset over mountains.",
+    tools=[ImageGenerationTool()]
+)
+
+# Execute task - result will be image bytes
+result = agent.do(task)
+
+# Save the generated image (folder created automatically)
+saved_path = save_image_to_folder(
+    image_data=result,
+    folder_path="my_images",
+    filename="sunset.png",
+    is_base64=False  # Agent returns bytes directly
+)
+
+print(f"Image saved to: {saved_path}")
+```
+
+## Opening Generated Images
+
+```python
+from upsonic.utils.image import open_image_file, open_images_from_folder
+
+# Open a single image
+open_image_file("my_images/sunset.png")
+
+# Open all images in a folder (limit to 3)
+opened_files = open_images_from_folder("my_images", limit=3)
+```
+
+## Listing Images in Folder
+
+```python
+from upsonic.utils.image import list_images_in_folder
+
+# List all images in folder (sorted by newest first)
+images = list_images_in_folder("my_images")
+
+for img_path in images:
+    print(f"Found: {img_path}")
+```
+
+## Complete Workflow
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import ImageGenerationTool
+from upsonic.utils.image import save_image_to_folder, open_image_file
+
+# Setup
+agent = Agent("openai-responses/gpt-4o")
+
+# Generate image
+task = Task(
+    description="Generate an image of a futuristic city at night.",
+    tools=[ImageGenerationTool()]
+)
+result = agent.do(task)
+
+# Save and open (folder created automatically)
+if isinstance(result, bytes):
+    saved_path = save_image_to_folder(
+        image_data=result,
+        folder_path="generated_images",
+        filename="city.png",
+        is_base64=False
+    )
+    open_image_file(saved_path)
+```
