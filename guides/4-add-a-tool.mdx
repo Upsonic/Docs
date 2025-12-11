@@ -45,6 +45,9 @@ The function definition is the foundation of your custom tool. Follow these guid
 **Good Tool Definition:**
 
 ```python
+from upsonic.tools import tool
+from typing import Dict, Any
+
 @tool
 async def analyze_website_content(url: str, analysis_type: str = "general") -> Dict[str, Any]:
     """
@@ -68,6 +71,8 @@ async def analyze_website_content(url: str, analysis_type: str = "general") -> D
 **Bad Tool Definition:**
 
 ```python
+from upsonic.tools import tool
+
 @tool
 def analyze(url, type):
     # Missing type hints, docstring, and error handling
@@ -81,6 +86,9 @@ def analyze(url, type):
 Always implement proper error handling in your tools:
 
 ```python
+from upsonic.tools import tool
+from typing import Dict, Any
+
 @tool
 async def robust_tool(param: str) -> Dict[str, Any]:
     """A tool with comprehensive error handling."""
@@ -99,6 +107,8 @@ async def robust_tool(param: str) -> Dict[str, Any]:
 Validate inputs before processing:
 
 ```python
+from upsonic.tools import tool
+
 @tool
 async def validated_tool(url: str, timeout: int = 30) -> str:
     """A tool with input validation."""
@@ -117,6 +127,9 @@ async def validated_tool(url: str, timeout: int = 30) -> str:
 Always provide comprehensive docstrings:
 
 ```python
+from upsonic.tools import tool
+from typing import Dict, Any
+
 @tool
 async def well_documented_tool(param: str, option: bool = True) -> Dict[str, Any]:
     """
@@ -144,6 +157,9 @@ async def well_documented_tool(param: str, option: bool = True) -> Dict[str, Any
 Pause execution and require user confirmation before a tool runs. Perfect for sensitive operations like deletions, sending emails, or financial transactions.
 
 ```python
+from upsonic.tools import tool
+from upsonic import Agent, Task
+
 @tool(requires_confirmation=True)
 def delete_file(file_path: str) -> str:
     """Delete a file from the system."""
@@ -164,6 +180,9 @@ result = agent.do(task)
 Collect specific field values from the user at runtime. Useful for credentials, personal information, or dynamic parameters.
 
 ```python
+from upsonic.tools import tool
+from upsonic import Agent, Task
+
 @tool(
     requires_user_input=True, 
     user_input_fields=["api_key", "secret_token"]
@@ -189,6 +208,8 @@ result = agent.do(task)
 Use both features together for maximum control:
 
 ```python
+from upsonic.tools import tool
+
 @tool(
     requires_user_input=True,
     user_input_fields=["password"]
@@ -205,10 +226,13 @@ Execute tools outside the agent's automatic flow, enabling human-in-the-loop wor
 ### Basic External Execution
 
 ```python
+import subprocess
+from upsonic.tools import tool
+from upsonic import Agent, Task
+
 @tool(external_execution=True)
 def execute_shell_command(command: str) -> str:
     """Execute a shell command externally."""
-    import subprocess
     return subprocess.check_output(command, shell=True).decode("utf-8")
 
 task = Task(
@@ -241,6 +265,9 @@ if task.is_paused and task.tools_awaiting_external_execution:
 ### Security-Sensitive Operations
 
 ```python
+from upsonic.tools import tool
+from upsonic import Agent, Task
+
 @tool(external_execution=True)
 def delete_production_data(table_name: str) -> str:
     """Delete data from production (requires manual execution)."""
@@ -270,8 +297,8 @@ In this example, we'll create basic tools and show how to add user confirmation 
 
 # Imports
 from upsonic import Agent, Task
-from upsonic.tools import tool
-from typing import Dict, List, Any
+from upsonic.tools import tool, ToolHooks
+from typing import Dict, Any
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -312,8 +339,6 @@ async def fetch_website_content(url: str) -> Dict[str, Any]:
         }
 
 # Tool 2: SEO Analysis Tool with Human-in-the-Loop via Hooks
-from upsonic import ToolHooks
-
 def before_analysis_hook(html_content: str):
     """Hook that runs before SEO analysis to get user confirmation."""
     print(f"🔍 About to start SEO analysis on content ({len(html_content)} characters)")

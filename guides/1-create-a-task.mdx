@@ -28,7 +28,7 @@ Descriptions should be simple and actionable. Keep them short to increase accura
 description="Check their website for the following points: 'Terms and Sales', 'About Us', 'SSL Licence' "
 description="Go to website and extract their Terms of Sales link"
 description="Explain the changes between today and yesterday financial operations"
-descirption="Write an feedback for the coding standards of this code"
+description="Write an feedback for the coding standards of this code"
 ```
 
 **Bad Descriptions**
@@ -52,9 +52,8 @@ In Upsonic we have a Task class and they are the core parts of anything that you
 
 
 # Imports
-from upsonic import Agent
-from upsonic import Task
-from upsonic import WebSearch, WebRead
+from upsonic import Agent, Task
+from upsonic.tools import WebSearch, WebRead
 
 
 # Agent Creation
@@ -113,6 +112,9 @@ The `context` attribute is the comprehensive way to provide any contextual infor
 ### Adding Files to Tasks
 
 ```python
+from upsonic import Task
+from upsonic.tools import WebRead
+
 # Task with file attachments
 task_with_files = Task(
     description="Analyze the attached documents and extract key information",
@@ -142,6 +144,8 @@ The framework automatically handles various file formats:
 - **Code**: Python (.py), JavaScript (.js), etc.
 
 ```python
+from upsonic import Task
+
 # Example with multiple file types
 comprehensive_task = Task(
     description="Create a comprehensive analysis report",
