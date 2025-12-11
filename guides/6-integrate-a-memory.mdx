@@ -121,7 +121,6 @@ print(f"User Analysis Memory: {memory.user_analysis_memory_enabled}")
 ### Using Different Storage Providers
 
 ```python
-# PostgreSQL Storage for Production
 from upsonic.storage import PostgresStorage
 
 postgres_storage = PostgresStorage(
@@ -131,9 +130,9 @@ postgres_storage = PostgresStorage(
     schema="public"
 )
 
-# Redis Storage for High Performance
 from upsonic.storage import RedisStorage
 
+# Redis Storage for High Performance
 redis_storage = RedisStorage(
     prefix="upsonic",
     host="localhost",
@@ -141,9 +140,9 @@ redis_storage = RedisStorage(
     expire=86400  # 24 hours TTL
 )
 
-# JSON Storage for Simple Applications
 from upsonic.storage import JSONStorage
 
+# JSON Storage for Simple Applications
 json_storage = JSONStorage(
     directory_path="./data/memory",
     pretty_print=True
@@ -237,7 +236,8 @@ print(f"- Feed Tool Results: {memory.feed_tool_call_results}")
 Memory can be shared across multiple agents in a team:
 
 ```python
-from upsonic import Team
+from upsonic import Team, Agent
+from upsonic.storage import Memory
 
 # Create a shared memory instance
 shared_memory = Memory(
