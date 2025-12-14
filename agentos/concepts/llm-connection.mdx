@@ -1,0 +1,124 @@
+---
+title: "LLM Connection"
+description: "Connect AI models to power your agents"
+---
+
+## What is an LLM Connection?
+
+LLM Connections allow your agents to communicate with AI models from various providers. AgentOS supports both cloud-based and local LLM providers, giving you flexibility in choosing the right models for your use case.
+
+You can configure multiple LLM connections and select different models for each agent based on your requirements.
+
+---
+
+## OpenAI
+
+Connect OpenAI models including GPT-4, GPT-3.5, and other models from the OpenAI API.
+
+### Setup Steps
+
+1. Navigate to **Settings** > **LLM Connections**
+2. Click **Add LLM Connection**
+3. Select **OpenAI** as the provider
+4. Enter your OpenAI API Key
+5. (Optional) Configure organization ID
+6. Save the connection
+
+Your agents can now use OpenAI models by referencing this connection.
+
+<Frame>
+  <img src="/images/agentos/openai-llm-config.png" alt="OpenAI LLM Configuration" />
+</Frame>
+
+---
+
+## Anthropic
+
+Configure Anthropic's Claude models including Claude 3 Opus, Sonnet, and Haiku for your agents.
+
+### Setup Steps
+
+1. Go to **Settings** > **LLM Connections**
+2. Click **Add LLM Connection**
+3. Select **Anthropic** as the provider
+4. Enter your Anthropic API Key
+5. Save the connection
+
+Your agents can now leverage Claude models for natural language understanding and generation.
+
+<Frame>
+  <img src="/images/agentos/anthropic-llm-config.png" alt="Anthropic LLM Configuration" />
+</Frame>
+
+---
+
+## Ollama
+
+Connect your local Ollama instance to run open-source models locally without external API calls.
+
+### Setup Steps
+
+1. Navigate to **Settings** > **LLM Connections**
+2. Click **Add LLM Connection**
+3. Select **Ollama** as the provider
+4. Enter your Ollama server URL (e.g., `http://localhost:11434`)
+5. Save the connection
+
+Your agents can now use locally hosted models through Ollama, ensuring data privacy and reducing API costs.
+
+<Frame>
+  <img src="/images/agentos/ollama-llm-config.png" alt="Ollama LLM Configuration" />
+</Frame>
+
+---
+
+## Nvidia NIM
+
+Integrate Nvidia NIM for optimized model inference with enterprise-grade performance.
+
+### Setup Steps
+
+1. Go to **Settings** > **LLM Connections**
+2. Click **Add LLM Connection**
+3. Select **Nvidia NIM** as the provider
+4. Enter your NIM endpoint URL
+5. (Optional) Configure API key if required
+6. Save the connection
+
+Your agents can now use Nvidia's optimized model serving infrastructure for high-performance inference.
+
+<Frame>
+  <img src="/images/agentos/nvidia-nim-llm-config.png" alt="Nvidia NIM LLM Configuration" />
+</Frame>
+
+---
+
+## Multiple LLM Connections
+
+You can configure multiple LLM connections in AgentOS. Each agent uses one LLM connection at a time, but you can:
+
+- **Update the connection** - Switch an agent to a different LLM provider
+- **Test different models** - Use the Benchmark feature to compare models
+- **Mix providers** - Different agents can use different LLM connections
+
+### Benchmark Feature
+
+The Benchmark feature allows you to test your agent with different LLM connections and compare:
+
+- **Token Usage** - Compare token consumption across models
+- **Response Time** - Measure inference speed
+- **Output Quality** - Evaluate response quality
+- **Cost Analysis** - Compare costs between different providers
+
+This helps you choose the most cost-effective and performant model for your specific use case.
+
+---
+
+## Using LLM Connections in Agents
+
+When deploying an agent, you can select which LLM connection to use. The agent configuration allows you to:
+
+1. **Select Provider** - Choose from your configured LLM connections
+2. **Select Model** - Pick the specific model (e.g., gpt-4, claude-3-opus)
+
+AgentOS handles all API communication, credential management, and model invocation automatically.
