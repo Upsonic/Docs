@@ -3,72 +3,175 @@ title: "Deploying First Agent"
 description: "Create and deploy your first AI agent on AgentOS"
 ---
 
-## What is an Agent
+## What is AgentOS?
 
-[Content: Explanation of what an agent is in AgentOS context]
+AgentOS is a production-ready platform that transforms your AI agents into deployable, scalable services. When you deploy an agent to AgentOS, the platform automatically:
 
-<Frame>
-  <img src="/images/agentos/agent-concept.png" alt="Agent Architecture" />
-</Frame>
+- **Creates API endpoints** - Your agent becomes accessible via REST API
+- **Manages infrastructure** - Handles databases, message queues, and async workers
+- **Provides observability** - Tracks metrics, costs, tokens, and execution history
+- **Handles deployments** - Blue-green deployments, rollbacks, and versioning
+- **Scales your agents** - Automatic scaling based on demand
+
+You focus on building intelligent agents, AgentOS handles everything else.
 
 ---
 
 ## Installing Upsonic Framework
 
-[Content: How to install the Upsonic framework]
+Install the Upsonic Framework to build your agents:
 
-<Frame>
-  <img src="/images/agentos/framework-installation.png" alt="Framework Installation" />
-</Frame>
+```bash
+pip install upsonic
+```
+
+The Upsonic Framework provides the tools to create AI agents with tasks, tools, memory, and more.
 
 ---
 
 ## Starting an Agent Project
 
-[Content: Steps to initialize a new agent project]
+Create a new agent project using the Upsonic CLI:
 
-<Frame>
-  <img src="/images/agentos/agent-init.png" alt="Agent Project Initialization" />
-</Frame>
+```bash
+upsonic init
+```
+
+This command creates:
+- **`upsonic_configs.json`** - Agent configuration (required)
+- **`main.py`** - Your agent code (required)
+
+Everything else is optional. You can add additional files, modules, and dependencies as needed.
 
 ---
 
-## Edit your Agent
+## Building your Agent
 
-[Content: How to customize and develop the agent]
+### Required Files
 
-<Frame>
-  <img src="/images/agentos/agent-editing.png" alt="Agent Code Editor" />
-</Frame>
+Every agent needs two files:
+
+1. **`upsonic_configs.json`** - Configuration file
+2. **`main.py`** (or any `.py` file) - Agent implementation
+
+### Adding Dependencies
+
+Add Python packages to your agent:
+
+```bash
+upsonic install <package-name>
+```
+
+This command adds the package to `upsonic_configs.json` under dependencies.
+
+### Example Agent Code
+
+Here's a simple agent using the Upsonic Framework:
+
+```python
+from upsonic import Agent, Task
+
+# Define your agent
+agent = Agent(
+    role="Research Assistant",
+    goal="Help users find and analyze information",
+    backstory="You are an expert researcher with access to various tools"
+)
+
+# Create a task
+task = Task(
+    description="Research the latest trends in AI",
+    expected_output="A summary of current AI trends",
+    agent=agent
+)
+
+# Execute
+result = agent.execute_task(task)
+print(result)
+```
+
+For more examples and detailed documentation, visit the [Upsonic Framework Documentation](https://docs.upsonic.ai/).
 
 ---
 
 ## Deploy your Agent to the Platform
 
-[Content: Introduction to deployment methods]
+AgentOS supports two deployment methods: **Git** and **ZIP upload**.
 
-### Over a Git Provider
+### Deployment Process
 
-[Content: Deploying via GitHub/GitLab/Azure]
+<div className="step group/step relative flex items-start pb-5">
+  <div className="flex-1">
+    <h5>Step 1: Upload Agent Code</h5>
+    Upload your agent to AgentOS using one of two methods:
+
+    - **Git Provider** - Deploy from GitHub, GitLab, or Azure Repos
+    - **ZIP Upload** - Direct upload without Git integration
+  </div>
+</div>
+
+<div className="step group/step relative flex items-start pb-5">
+  <div className="flex-1">
+    <h5>Step 2: Configure Deployment</h5>
+    Specify deployment configuration:
+
+    - **Environment Variables** - Set custom env vars for your agent
+    - **LLM Connection** - Select the AI model to use
+    - **Machine Specification** - Choose CPU and RAM allocation
+  </div>
+</div>
+
+<div className="step group/step relative flex items-start pb-5">
+  <div className="flex-1">
+    <h5>Step 3: Start Deployment</h5>
+    Click **Deploy** to start the deployment process. AgentOS will:
+
+    - Pull your code from Git or extract the ZIP
+    - Install dependencies from `upsonic_configs.json`
+    - Create containers and allocate resources
+    - Start your agent and assign an API endpoint
+  </div>
+</div>
 
 <Frame>
-  <img src="/images/agentos/git-deploy.png" alt="Git-based Deployment" />
+  <img src="/images/agentos/agent-deploying.png" alt="Agent Deployment Configuration" />
 </Frame>
 
-<Frame>
-  <img src="/images/agentos/deployment-progress.png" alt="Deployment Progress" />
-</Frame>
+### Deploy from Git Provider
 
-### Over a Zip File
+Deploy directly from your repository:
 
-[Content: Deploying via ZIP upload]
+1. Push your agent code to your Git repository
+2. In AgentOS, go to **New Agent Deployment**
+3. Select **Deploy from Git**
+4. Choose your repository and branch
+5. Configure environment variables and LLM connection
+6. Click **Deploy**
 
-<Frame>
-  <img src="/images/agentos/zip-deploy.png" alt="ZIP Deployment" />
-</Frame>
+For detailed Git setup, see the [Git Connection](/agentos/concepts/git-connection) guide.
+
+### Deploy from ZIP
+
+Deploy without Git integration:
+
+1. Compress your agent project folder into a ZIP file
+2. In AgentOS, go to **New Agent Deployment**
+3. Select **Deploy from ZIP**
+4. Upload your ZIP file
+5. Configure deployment settings
+6. Click **Deploy**
+
+For more details, see the [Git Connection - ZIP Deployment](/agentos/concepts/git-connection#zip-file-deployment-no-git) section.
 
 ---
 
-<Card title="Next: Explore Concepts" icon="lightbulb" href="/agentos/concepts/agent">
-  Understand core AgentOS concepts in depth
-</Card>
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Agent Management" icon="gauge" href="/agentos/concepts/agent">
+    Learn how to manage, monitor, and scale your deployed agents
+  </Card>
+  <Card title="Metrics & Monitoring" icon="chart-line" href="/agentos/concepts/metrics">
+    Track costs, tokens, response times, and execution history
+  </Card>
+</CardGroup>

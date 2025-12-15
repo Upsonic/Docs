@@ -3,50 +3,56 @@ title: "Scheduling"
 description: "Automate agent execution with flexible scheduling options"
 ---
 
-## Overview
+## What is Scheduling?
 
-[Content: What is Scheduling in AgentOS]
+Scheduling allows you to automate agent execution at specific times or intervals. Instead of manually calling your agent's API, you can configure AgentOS to run your agent automatically based on your requirements.
 
-<Frame>
-  <img src="/images/agentos/scheduling-overview.png" alt="Scheduling Overview" />
-</Frame>
+For detailed information about agent scheduling features, see the [Agent - Scheduling](/agentos/concepts/agent#scheduling) section.
 
 ---
 
 ## Frequency-Based Scheduling
 
-[Content: Simple interval-based scheduling options]
+Simple interval-based execution for common use cases:
 
-<Frame>
-  <img src="/images/agentos/frequency-scheduling.png" alt="Frequency-Based Scheduling" />
-</Frame>
+- **Hourly** - Runs at the first minute of every hour (e.g., 16:00, 17:00)
+- **Daily** - Runs at 00:00 every day
+- **Weekly** - Runs at 00:00 every Monday
 
 ---
 
 ## Crontab Expressions
 
-[Content: Advanced scheduling with cron syntax]
+For advanced scheduling needs, use cron syntax to define custom schedules:
+
+```
+Minute (0-59)    Hour (0-23)    Day (1-31)    Month (1-12)    Weekday (0-6)
+    *                *              *              *              *
+```
+
+**Syntax Rules:**
+- Use `*` for any value
+- Use numbers for specific values
+- Use comma-separated values (e.g., `1,3,5`)
+
+**Examples:**
+- `0 9 * * 1` - 9am every Monday
+- `30 */2 * * *` - Every 2 hours at 30 minutes
+- `0 0 * * 0` - Midnight every Sunday
 
 <Frame>
-  <img src="/images/agentos/crontab-scheduling.png" alt="Crontab Expression Scheduling" />
+  <img src="/images/agentos/scheduling-overview.png" alt="Agent Scheduling Configuration" />
 </Frame>
 
 ---
 
-## Schedule Management
+## How to Configure
 
-[Content: Creating, editing, and managing schedules]
+1. Navigate to your agent's **Scheduling** tab
+2. Click **Create Schedule**
+3. Choose scheduling type:
+   - **Frequency** - Select hourly, daily, or weekly
+   - **Crontab** - Enter custom cron expression
+4. Save the schedule
 
-<Frame>
-  <img src="/images/agentos/schedule-management.png" alt="Schedule Management Interface" />
-</Frame>
-
----
-
-## Schedule History
-
-[Content: Viewing past scheduled executions]
-
-<Frame>
-  <img src="/images/agentos/schedule-history.png" alt="Schedule Execution History" />
-</Frame>
+Your agent will automatically execute according to the configured schedule.

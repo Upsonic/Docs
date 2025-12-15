@@ -3,50 +3,87 @@ title: "Alerts"
 description: "Stay informed about critical events in your agent operations"
 ---
 
-## Overview
+## What are Alerts?
 
-[Content: What are Alerts]
+Alerts notify you when your agents exceed specified thresholds or meet certain conditions. Configure alerts to monitor costs, response times, and call volumes, ensuring you stay informed about critical events.
+
+**Note:** Email notifications require SMTP configuration during AgentOS installation. See the [Installation](/agentos/get-started/installation) guide for SMTP setup.
+
+---
+
+## Alert Configuration
+
+Create custom alerts to monitor your agents' performance and resource usage.
+
+### Alert Parameters
+
+When creating an alert, configure the following:
+
+- **Alert Name** - Descriptive name for the alert (min 3 characters)
+- **Choose Agent** - Select from deployed agents
+- **Metric Name** - What to monitor:
+  - `call` - Number of API calls
+  - `cost` - Total costs
+  - `response_time` - Response duration
+- **Condition** - When to trigger:
+  - `lower_than` - Alert when metric drops below threshold
+  - `equals_to` - Alert when metric equals threshold
+  - `bigger_than` - Alert when metric exceeds threshold
+- **Time Interval** - Evaluation period:
+  - `minute` - Check per minute
+  - `hour` - Check per hour
+  - `day` - Check per day
+- **Threshold Value** - Numeric threshold for the condition
+- **Email** - Email address to receive notifications
+
+### Example Alert
+
+**"High Cost Alert"**
+- Agent: My Production Agent
+- Metric: cost
+- Condition: bigger_than
+- Time Interval: day
+- Threshold: 100
+- Result: Alert when daily costs exceed $100
 
 <Frame>
-  <img src="/images/agentos/alerts-overview.png" alt="Alerts Overview" />
+  <img src="/images/agentos/alert-overview.png" alt="Alert Creation Form" />
 </Frame>
+
+---
+
+## How It Works
+
+1. Navigate to **Alerts** in the AgentOS dashboard
+2. Click **Create New Alert**
+3. Fill in the alert configuration form
+4. Save the alert
+
+AgentOS will monitor your agent according to the specified parameters and send email notifications when conditions are met.
 
 ---
 
 ## Alert Types
 
-[Content: Different types of alerts]
+Common alert configurations:
 
-<Frame>
-  <img src="/images/agentos/alert-types.png" alt="Alert Types" />
-</Frame>
+### Cost Monitoring
+- Track spending and get notified when costs exceed budget
+- Example: Alert when daily cost > $50
 
----
+### Performance Monitoring
+- Monitor response times and identify slowdowns
+- Example: Alert when response time > 5 seconds
 
-## Alert Delivery
-
-[Content: How alerts are delivered]
-
-<Frame>
-  <img src="/images/agentos/alert-delivery.png" alt="Alert Delivery Methods" />
-</Frame>
+### Usage Monitoring
+- Track API call volumes and detect unusual activity
+- Example: Alert when hourly calls > 1000
 
 ---
 
-## Configuration
+## Best Practices
 
-[Content: Setting up alerts]
-
-<Frame>
-  <img src="/images/agentos/alert-config.png" alt="Alert Configuration" />
-</Frame>
-
----
-
-## Alert History
-
-[Content: Viewing and managing past alerts]
-
-<Frame>
-  <img src="/images/agentos/alert-history.png" alt="Alert History" />
-</Frame>
+- **Set realistic thresholds** - Avoid alert fatigue from too many notifications
+- **Use time intervals wisely** - Daily for costs, hourly for performance
+- **Monitor critical agents** - Focus alerts on production agents
+- **Test alerts** - Verify email notifications work correctly

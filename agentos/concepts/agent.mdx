@@ -1,94 +1,182 @@
 ---
 title: "Agent"
-description: "Understanding AI agents in AgentOS"
+description: "Manage and monitor your deployed AI agents"
 ---
 
-## Overview
+## What is an Agent?
 
-[Content: What is an Agent]
+After deploying an agent to AgentOS, it appears in the **Agents List** (`/agents/`) with an **Online** status. Click the **Manage** button to access the agent's detail page where you can monitor, test, and manage your agent.
 
-<Frame>
-  <img src="/images/agentos/agent-overview.png" alt="Agent Overview" />
-</Frame>
-
----
-
-## Agent Lifecycle
-
-[Content: From creation to deletion]
-
-<Frame>
-  <img src="/images/agentos/agent-lifecycle.png" alt="Agent Lifecycle" />
-</Frame>
+Each deployed agent gets:
+- Dedicated API endpoint (IP:port)
+- Automatic OpenAPI documentation
+- Execution history tracking
+- Performance metrics
+- Scheduling capabilities
 
 ---
 
-## Agent Features
+## Management Page
 
-[Content: Introduction to agent capabilities]
+The agent management page provides complete control and visibility into your agent's operations.
 
-### Management Page
+### API Endpoint
 
-[Content: Agent management interface]
+Each agent is assigned a unique IP and port. For local environments:
+- **First agent**: `http://0.0.0.0:7340`
+- **Subsequent agents**: Sequential ports (7341, 7342, etc.)
 
-<Frame>
-  <img src="/images/agentos/agent-management.png" alt="Agent Management Page" />
-</Frame>
+### Making API Calls
 
-### OpenAPI Documentation
+Call your agent using the `/call` endpoint:
 
-[Content: Built-in API docs]
+```bash
+curl -X POST "http://0.0.0.0:7340/call" \
+  -F "Mail=example_Mail"
+```
 
-<Frame>
-  <img src="/images/agentos/agent-openapi.png" alt="Agent OpenAPI Docs" />
-</Frame>
+Get the result using the job ID:
 
-### Executions
+```bash
+curl "http://0.0.0.0:7340/result/JOB_ID"
+```
 
-[Content: Execution history and tracking]
+### What You'll See
 
-<Frame>
-  <img src="/images/agentos/agent-executions.png" alt="Agent Executions" />
-</Frame>
-
-### Benchmark
-
-[Content: Model comparison tool]
-
-<Frame>
-  <img src="/images/agentos/agent-benchmark.png" alt="Agent Benchmark" />
-</Frame>
-
-### Metrics
-
-[Content: Performance metrics]
+The management page displays:
+- **Health Status** - API and Web UI health checks
+- **API Endpoint** - Direct link to `/docs` for OpenAPI documentation
+- **Example Code** - cURL, Python, JavaScript, and other language examples
+- **Streamlit UI** - Access to the Streamlit interface (if available)
+- **Test Endpoints** - Interactive API testing interface
 
 <Frame>
-  <img src="/images/agentos/agent-metrics-view.png" alt="Agent Metrics" />
-</Frame>
-
-### Scheduling
-
-[Content: Automated execution scheduling]
-
-<Frame>
-  <img src="/images/agentos/agent-scheduling.png" alt="Agent Scheduling" />
-</Frame>
-
-### Deployments
-
-[Content: Deployment history and management]
-
-<Frame>
-  <img src="/images/agentos/agent-deployments.png" alt="Agent Deployments" />
+  <img src="/images/agentos/agent-deployed-manage.png" alt="Agent Management Page" />
 </Frame>
 
 ---
 
-## Agent Communication
+## OpenAPI Documentation
 
-[Content: How agents interact with the platform]
+Every agent automatically generates OpenAPI documentation. Access it at:
+
+```
+http://IP:PORT/docs
+```
+
+The documentation provides:
+- Interactive API testing interface
+- Request/response schemas
+- Authentication details
+- Example requests in multiple languages
 
 <Frame>
-  <img src="/images/agentos/agent-communication.png" alt="Agent Communication" />
+  <img src="/images/agentos/openapi-overview.png" alt="OpenAPI Documentation" />
+</Frame>
+
+---
+
+## Executions
+
+View the complete execution history of your agent, including:
+- Timestamp of each execution
+- Input parameters
+- Output results
+- Execution duration
+- Success/failure status
+
+Filter and search through executions to analyze your agent's performance over time.
+
+<Frame>
+  <img src="/images/agentos/executions-overview.png" alt="Execution History" />
+</Frame>
+
+---
+
+## Benchmark
+
+Compare your agent's performance across different LLM models to find the optimal configuration.
+
+### How It Works
+
+1. Select multiple LLM connections (configured in Settings)
+2. Provide the same input parameters
+3. AgentOS calls your agent with each model
+4. Compare results side-by-side
+
+### What You Can Compare
+
+- **Cost** - API costs for each model
+- **Response Time** - Inference speed comparison
+- **Token Usage** - Token consumption analysis
+- **Output Quality** - Manual comparison of responses
+
+This helps you choose the most cost-effective and performant model for your use case.
+
+<Frame>
+  <img src="/images/agentos/benchmark-overview.png" alt="Benchmark Comparison" />
+</Frame>
+
+### Results View
+
+After running the benchmark, view detailed comparison results for each model:
+
+<Frame>
+  <img src="/images/agentos/benchmark-results.png" alt="Benchmark Results Comparison" />
+</Frame>
+
+---
+
+## Metrics
+
+Monitor your agent's performance with detailed metrics and visualizations.
+
+AgentOS automatically tracks:
+- **Total Calls** - Number of executions
+- **Total Cost** - Cumulative API costs
+- **Average Response Time** - Performance trends
+- **Token Usage** - Input and output tokens
+
+View both overall statistics and time-series graphs to identify trends and optimize performance.
+
+For detailed information about metrics features and the platform-wide Usage page, see the [Metrics](/agentos/concepts/metrics) guide.
+
+<Frame>
+  <img src="/images/agentos/agent-metrics.png" alt="Agent Metrics Dashboard" />
+</Frame>
+
+---
+
+## Scheduling
+
+Automate agent execution with flexible scheduling options.
+
+Configure your agent to run automatically at specific times or intervals using:
+- **Frequency-Based** - Hourly, daily, or weekly execution
+- **Crontab Expression** - Custom schedules with cron syntax
+
+For detailed scheduling configuration and examples, see the [Scheduling](/agentos/concepts/scheduling) guide.
+
+<Frame>
+  <img src="/images/agentos/scheduling-overview.png" alt="Agent Scheduling" />
+</Frame>
+
+---
+
+## Deployments
+
+Track your agent's deployment history and monitor deployment status.
+
+### Deployment History
+
+View all deployments with:
+- **Deployment Status** - Success or failure
+- **Timestamp** - When the deployment occurred
+- **Commit Hash** - Git commit used for deployment (helps identify which code version is running)
+- **Failure Reasons** - Detailed error messages for failed deployments
+
+This helps you track changes and understand which version of your code is currently deployed.
+
+<Frame>
+  <img src="/images/agentos/deployment-overview.png" alt="Deployment History" />
 </Frame>
