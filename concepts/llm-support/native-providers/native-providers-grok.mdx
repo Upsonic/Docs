@@ -19,9 +19,10 @@ export GROK_API_KEY="xai-..."
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.grok import GrokModel
 
-model = OpenAIChatModel(model_name="grok-4", provider="grok")
+model = GrokModel(model_name="grok-4")
+
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")

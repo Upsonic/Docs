@@ -75,25 +75,29 @@ pip install "upsonic[loaders]"
 from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding
 from upsonic.vectordb import QdrantProvider
-from upsonic.vectordb.config import Config, CoreConfig, ProviderName, Mode
+from upsonic.vectordb.config import QdrantConfig, ConnectionConfig, Mode
+from upsonic.loaders.markdown import MarkdownLoader
 
 embedding_provider = OpenAIEmbedding()
 
-config = Config(
-    core=CoreConfig(
-        provider_name=ProviderName.QDRANT,
+config = QdrantConfig(
+    connection=ConnectionConfig(
         mode=Mode.EMBEDDED,
-        db_path="./upsonic_vectors",
-        collection_name="upsonic_knowledge",
-        vector_size=1536
-    )
+        db_path="./upsonic_vectors"
+    ),
+    collection_name="upsonic_knowledge",
+    vector_size=1536
 )
 vectordb = QdrantProvider(config)
+
+# Explicitly provide a loader for the markdown file
+loader = MarkdownLoader()
 
 kb = KnowledgeBase(
     sources=["README.md"],
     embedding_provider=embedding_provider,
-    vectordb=vectordb
+    vectordb=vectordb,
+    loaders=[loader]  # Explicitly provide the loader
 )
 
 agent = Agent(model="openai/gpt-4o")

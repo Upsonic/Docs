@@ -1,0 +1,82 @@
+---
+title: "MCPServerTool"
+description: "A built-in tool that allows models to use MCP (Model Context Protocol) servers"
+---
+
+## Overview
+
+A built-in tool that allows models to connect to and use tools from MCP (Model Context Protocol) servers. This enables your agent to interact with external services, databases, and local applications that expose an MCP-compatible endpoint.
+
+## Usage
+
+### 1. Using Public MCP Server (Anthropic)
+Run this example as is to test connection to a public MCP server.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import MCPServerTool
+from upsonic.models.anthropic import AnthropicModel
+
+# Create Anthropic model
+model = AnthropicModel(
+    model_name="claude-sonnet-4-5",
+    provider="anthropic"
+)
+
+# Connect to DeepWiki MCP server (Public, No Auth)
+mcp_tool = MCPServerTool(
+    id='deepwiki',
+    url='https://mcp.deepwiki.com/mcp'
+)
+
+# Create agent with the tool
+agent = Agent(model=model, tools=[mcp_tool])
+
+# Run task
+task = Task('Tell me about the Upsonic/Upsonic repo.')
+result = agent.do(task)
+print(result)
+```
+
+### 2. Using Public MCP Server (OpenAI)
+Same example using OpenAI Responses model.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import MCPServerTool
+from upsonic.models.openai import OpenAIResponsesModel
+
+# Create OpenAI Responses model
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"
+)
+
+# Connect to DeepWiki MCP server (Public, No Auth)
+mcp_tool = MCPServerTool(
+    id='deepwiki',
+    url='https://mcp.deepwiki.com/mcp'
+)
+
+# Create agent with the tool
+agent = Agent(model=model, tools=[mcp_tool])
+
+# Run task
+task = Task('Tell me about the Upsonic/Upsonic repo.')
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+- `id` (str): Unique identifier for the MCP server
+- `url` (str): URL of the MCP server
+  - For OpenAI connectors, use `x-openai-connector:<connector_id>`
+- `authorization_token` (str, optional): Authorization header value (e.g., `Bearer <token>`)
+  - Supported by: OpenAI Responses, Anthropic
+- `description` (str, optional): Description of the MCP server's capabilities
+  - Supported by: OpenAI Responses
+- `allowed_tools` (List[str], optional): specific list of tools to enable from the server
+  - Supported by: OpenAI Responses, Anthropic
+- `headers` (Dict[str, str], optional): Custom HTTP headers for the connection
+  - Supported by: OpenAI Responses

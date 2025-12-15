@@ -21,9 +21,9 @@ export OPENAI_API_VERSION="2024-02-15-preview"
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.azure import AzureModel
 
-model = OpenAIChatModel(model_name="gpt-4o", provider="azure")
+model = AzureModel(model_name="gpt-4o")
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")

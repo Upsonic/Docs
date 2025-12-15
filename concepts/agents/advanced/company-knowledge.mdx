@@ -1,0 +1,51 @@
+---
+title: Company Knowledge
+sidebarTitle: Company Knowledge
+description: Branding and organizational context for your agents
+hideToc: false
+---
+
+You can embed your organization's identity and objectives directly into the `Agent`. this ensures that the agent acts as a representative of your company, aligning with your brand voice and business goals.
+
+## adding Company Context
+
+The `Agent` class accepts several parameters to define the company context:
+
+- `company_name`: The name of your organization.
+- `company_description`: A brief description of what your company does.
+- `company_objective`: The high-level goals or mission.
+- `company_url`: The main website URL.
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="SupportBot",
+    # Define Company Context
+    company_name="TechFlow Solutions",
+    company_description="A leading provider of cloud optimization tools.",
+    company_objective="To help businesses reduce cloud costs by 30%.",
+    company_url="https://techflow.example.com"
+)
+
+# The agent now knows who it works for
+task = Task("Draft a welcome email to a new client.")
+result = agent.do(task)
+
+print(result)
+# Output will likely mention TechFlow Solutions and align with the cost-reduction mission.
+```
+
+## How It Works
+
+This information is injected into the agent's system prompt. It provides a persistent background context ("grounding") that influences:
+
+1.  **Tone & Voice**: Professional and aligned with the company description.
+2.  **Goal Alignment**: Responses are steered towards the `company_objective`.
+3.  **Self-Identification**: The agent knows "who" it is representing.
+
+## Best Practices
+
+- **Be Specific**: A clear `company_objective` helps the agent prioritize tasks.
+- **URL Context**: Providing `company_url` gives the agent a reference point if it needs to generate links or refer to the website (especially if using browsing tools).

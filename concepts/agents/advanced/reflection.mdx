@@ -1,0 +1,66 @@
+---
+title: Reflection
+sidebarTitle: Reflection
+description: Enable self-critique and improvement for agent responses
+hideToc: false
+---
+
+Reflection allows the agent to critique and improve its own responses before returning them. This "Self-Correction" pattern improves output quality by checking for errors, clarity, and completeness.
+
+## Enabling Reflection
+
+To enable reflection, set `reflection=True` during agent initialization.
+
+```python
+from upsonic import Agent, Task
+
+# Create an agent with reflection enabled
+agent = Agent(
+    model="openai/gpt-4o",
+    reflection=True
+)
+
+task = Task("Write a python function to Fibonacci sequence with detailed docstrings.")
+
+# The agent will:
+# 1. Generate an initial response
+# 2. Critique the response (finding bugs or missing docs)
+# 3. Regenerate an improved response
+result = agent.do(task)
+print(result)
+```
+
+## Configuring Reflection
+
+You can customize the reflection process using `ReflectionConfig`.
+
+```python
+from upsonic import Agent, Task
+from upsonic.reflection import ReflectionConfig
+
+# Custom reflection configuration
+config = ReflectionConfig(
+    max_iterations=2,           # Maximum improvement attempts
+    acceptance_threshold=0.9    # Minimum score to accept response
+)
+
+agent = Agent(
+    model="openai/gpt-4o",
+    reflection=True,
+    reflection_config=config,
+    debug=True  # useful to see the reflection steps
+)
+
+task = Task("Optimize this database query...")
+result = agent.do(task)
+print(result)
+```
+
+## When to Use Reflection?
+- **Coding Tasks**: To catch bugs and improve code quality.
+- **Complex Reasoning**: To verify logic and assumptions.
+- **Creative Writing**: To refine style and tone.
+
+<Note>
+Reflection increases the time and token usage for each task as it involves additional model calls for critique and revision.
+</Note>

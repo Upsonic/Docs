@@ -5,11 +5,15 @@ description: Intelligent model recommendation system for optimal task performanc
 hideToc: false
 ---
 
-The Upsonic Agent Framework includes an intelligent model selection system that automatically recommends the most appropriate AI model for your specific task. This feature helps you optimize performance, cost, and speed by selecting the best model based on task requirements and constraints.
+Upsonic Agent Framework includes an intelligent model selection system that automatically recommends the most appropriate AI model for your specific task. This feature helps you optimize performance, cost, and speed by selecting the best model based on task requirements and constraints.
+
+<Warning>
+  Model selection system may recommend models from various providers (OpenAI, Anthropic, Google, etc.). **Ensure you have the required API keys configured** for the recommended model's provider before using it. If authentication is not set up for the recommended model, the agent will fail at runtime. Always verify you have the necessary credentials, or use the `preferred_provider` criteria to limit recommendations to providers you have configured.
+</Warning>
 
 ## Overview
 
-The automatic model selection system analyzes your task description and selection criteria to recommend the most suitable model from a comprehensive registry of leading AI models including OpenAI, Anthropic, Google, Meta, DeepSeek, Qwen, Mistral, Cohere, and Grok models.
+Automatic model selection system analyzes your task description and selection criteria to recommend the most suitable model from a comprehensive registry of leading AI models including OpenAI, Anthropic, Google, Meta, DeepSeek, Qwen, Mistral, Cohere, and Grok models.
 
 ### Key Features
 

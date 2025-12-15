@@ -1,0 +1,67 @@
+---
+title: Context Compression
+sidebarTitle: Context Compression
+description: Optimize context usage with intelligent compression strategies
+hideToc: false
+---
+
+The `Agent` class supports context compression to handle large amounts of information efficiently. This is particularly useful when dealing with long conversation histories or large documents that might exceed the model's context window.
+
+## Compression Strategies
+
+Upsonic offers different compression strategies configured via `compression_strategy`:
+
+1.  **`none`** (Default): No compression.
+2.  **`simple`**: Basic whitespace removal and middle truncation if length exceeds limit.
+3.  **`llmlingua`**: Advanced compression using the LLMLingua library (requires `pip install llmlingua`).
+
+## Simple Compression
+
+Use simple compression for basic optimization without additional dependencies.
+
+```python
+from upsonic import Agent, Task
+
+# Configure simple compression
+agent = Agent(
+    model="openai/gpt-4o",
+    compression_strategy="simple",
+    compression_settings={
+        "max_length": 1000  # distinct characters
+    }
+)
+
+# Task with potentially long context
+long_text = "..." * 10000
+task = Task(f"Summarize this text: {long_text}")
+
+result = agent.do(task)
+print(result)
+```
+
+## LLMLingua Compression
+
+Use [LLMLingua](https://github.com/microsoft/LLMLingua) for smart, semantic compression that preserves key information.
+
+```python
+from upsonic import Agent, Task
+
+# Configure smart compression
+agent = Agent(
+    model="openai/gpt-4o",
+    compression_strategy="llmlingua",
+    compression_settings={
+        "ratio": 0.5,           # Keep 50% of the tokens
+        "instruction": "Keep the financial details",
+        "model_name": "microsoft/llmlingua-2-xlm-roberta-large-meetingbank"
+    }
+)
+
+task = Task("Analyze the provided meeting transcript.")
+result = agent.do(task)
+print(result)
+```
+
+<Note>
+Using `llmlingua` requires installing the package: `pip install llmlingua`. The agent will perform the compression locally before sending the prompt to the LLM.
+</Note>

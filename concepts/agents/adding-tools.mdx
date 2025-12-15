@@ -67,5 +67,17 @@ print(agent.registered_agent_tools)  # Dict mapping tool names to wrapped tools
 
 # Get tool definitions
 tool_defs = agent.get_tool_defs()  # List[ToolDefinition]
+
+print(tool_defs)
+
+agent.remove_tools([calculator])
+
+# Access registered tools
+print(agent.registered_agent_tools)  # Dict mapping tool names to wrapped tools
+
+# Get tool definitions
+tool_defs = agent.get_tool_defs()  # List[ToolDefinition]
+
+print(tool_defs)
 ```
 

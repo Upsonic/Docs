@@ -25,6 +25,11 @@ The Task system is configured through the `Task` class, which provides the follo
 | `cache_embedding_provider` | Any \| None | `None` | Embedding provider for vector search caching |
 | `cache_duration_minutes` | int | `60` | How long to cache results in minutes |
 | `durable_execution` | Any \| None | `None` | DurableExecution instance for checkpoint recovery |
+| `vector_search_top_k` | int \| None | `None` | Number of top results to return from vector search (for RAG/knowledge base) |
+| `vector_search_alpha` | float \| None | `None` | Hybrid search alpha parameter (0.0 = keyword only, 1.0 = vector only) |
+| `vector_search_fusion_method` | Literal['rrf', 'weighted'] \| None | `None` | Method to fuse vector and keyword search results |
+| `vector_search_similarity_threshold` | float \| None | `None` | Minimum similarity score threshold for vector search results |
+| `vector_search_filter` | Dict[str, Any] \| None | `None` | Metadata filters to apply to vector search results |
 
 ## Configuration Example
 

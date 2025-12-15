@@ -1,0 +1,74 @@
+---
+title: Adding Documents to Task Context
+sidebarTitle: Document Context
+description: Processing documents and text files in task context
+hideToc: false
+---
+
+Tasks can include document attachments for processing. The framework automatically handles document loading and provides them to the model for analysis.
+
+## Single Document Attachment
+
+```python
+# Task with single document
+task = Task(
+    description="Summarize the key points from the attached document",
+    context=["report.pdf"]
+)
+```
+
+## Multiple Document Attachments
+
+```python
+# Task with multiple documents
+task = Task(
+    description="Compare the two attached documents and identify key differences",
+    context=["document1.pdf", "document2.pdf"]
+)
+```
+
+## Supported Document Formats
+
+The framework supports various document formats including:
+
+- PDF (.pdf)
+- Word Documents (.docx)
+- Text Files (.txt)
+- Markdown (.md)
+- JSON (.json)
+- XML (.xml)
+- CSV (.csv)
+- HTML (.html)
+- CSS (.css)
+- Python (.py)
+- JavaScript (.js)
+
+```python
+# Example with different document formats
+task = Task(
+    description="Analyze all the attached documents",
+    context=["report.pdf", "data.csv", "notes.md"]
+)
+```
+
+## Folder Context
+
+The framework also supports passing folder paths to automatically include all files within a directory:
+
+```python
+# Task with folder context - includes all files in the folder recursively
+task = Task(
+    description="Analyze all documents in the attached folder",
+    context=["/path/to/documents/folder"]
+)
+```
+
+## Best Practices
+
+- **File Paths**: Use absolute or relative paths that are accessible to your application
+- **Document Size**: Consider document file sizes for performance optimization
+- **Format Selection**: Choose appropriate formats based on your analysis needs
+- **Error Handling**: Handle cases where document files might not be accessible
+- **Context Integration**: Combine documents with relevant text context for better analysis
+- **Tool Integration**: Use specialized document analysis tools when available
+- **Folder Organization**: Organize related documents in folders for easier context management

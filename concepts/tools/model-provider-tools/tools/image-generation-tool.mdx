@@ -1,0 +1,86 @@
+---
+title: "ImageGenerationTool"
+description: "A built-in tool that allows models to generate images"
+---
+
+## Overview
+
+A built-in tool that allows models to generate images.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import ImageGenerationTool
+from upsonic.models.openai import OpenAIResponsesModel
+
+# Create model with OpenAI Responses API
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"
+)
+
+# Basic image generation tool
+image_gen = ImageGenerationTool()
+
+# Create task
+task = Task(
+    description="Generate an image of a futuristic city",
+    tools=[image_gen]
+)
+
+# Create agent
+agent = Agent(model=model, name="Artist Agent")
+
+# Execute
+result = agent.do(task)
+```
+
+## Advanced Configuration
+
+```python
+from upsonic.tools.builtin_tools import ImageGenerationTool
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIResponsesModel
+
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"
+)
+
+# Advanced image generation with configuration
+advanced_image_gen = ImageGenerationTool(
+    quality="high",
+    size="1024x1024",
+    output_format="png",
+    background="transparent",
+    moderation="auto"
+)
+
+task = Task(
+    description="Generate a high-quality logo for a tech startup",
+    tools=[advanced_image_gen]
+)
+
+agent = Agent(model=model, name="Logo Designer Agent")
+agent.do(task)
+```
+
+## Parameters
+
+- `background` (str, optional): Background type - 'transparent', 'opaque', or 'auto' (default: 'auto')
+  - Supported by: OpenAI Responses ('transparent' only for 'png' and 'webp')
+- `input_fidelity` (str, optional): Effort to match input image style - 'high' or 'low' (default: None)
+  - Supported by: OpenAI Responses (Default: 'low')
+- `moderation` (str, optional): Moderation level - 'auto' or 'low' (default: 'auto')
+  - Supported by: OpenAI Responses
+- `output_compression` (int, optional): Compression level (default: 100)
+  - Supported by: OpenAI Responses (Only for 'png' and 'webp')
+- `output_format` (str, optional): Output format - 'png', 'webp', or 'jpeg' (default: None, OpenAI defaults to 'png')
+  - Supported by: OpenAI Responses
+- `partial_images` (int, optional): Number of partial images to generate in streaming mode (default: 0)
+  - Supported by: OpenAI Responses (0 to 3)
+- `quality` (str, optional): Quality - 'low', 'medium', 'high', or 'auto' (default: 'auto')
+  - Supported by: OpenAI Responses
+- `size` (str, optional): Image size - '1024x1024', '1024x1536', '1536x1024', or 'auto' (default: 'auto')
+  - Supported by: OpenAI Responses
