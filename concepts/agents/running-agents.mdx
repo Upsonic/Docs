@@ -46,7 +46,7 @@ async def main():
 asyncio.run(main())
 ```
 
-## Streaming Execution
+## Streaming Text Output
 
 For real-time output, use `stream()` to get responses as they're generated.
 
@@ -71,6 +71,163 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+## Event Streaming
+
+For full visibility into agent execution, use `stream_events()` to receive detailed events about every step of the pipeline.
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.agent.events import (
+    PipelineStartEvent,
+    PipelineEndEvent,
+    TextDeltaEvent,
+    ToolCallEvent,
+    ToolResultEvent,
+)
+from upsonic.tools import tool
+
+@tool
+def calculate(x: int, y: int) -> int:
+    """Add two numbers."""
+    return x + y
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+    task = Task("Calculate 5 + 3", tools=[calculate])
+    
+    async with agent.stream(task) as result:
+        async for event in result.stream_events():
+            if isinstance(event, PipelineStartEvent):
+                print(f"🚀 Starting pipeline with {event.total_steps} steps")
+            
+            elif isinstance(event, ToolCallEvent):
+                print(f"\n🔧 Calling: {event.tool_name}({event.tool_args})")
+            
+            elif isinstance(event, ToolResultEvent):
+                status = "❌" if event.is_error else "✅"
+                print(f"\n{status} Result: {event.result_preview}")
+            
+            elif isinstance(event, TextDeltaEvent):
+                print("\nText Delta Event: ", event.content, end='', flush=True)
+            
+            elif isinstance(event, PipelineEndEvent):
+                print(f"\n✅ Completed in {event.total_duration:.2f}s")
+
+asyncio.run(main())
+```
+
+
+### Event Categories
+
+#### Pipeline Events
+
+| Event | Description | Key Attributes |
+|-------|-------------|----------------|
+| `PipelineStartEvent` | Emitted when execution begins | `total_steps`, `is_streaming`, `task_description` |
+| `PipelineEndEvent` | Emitted when execution ends | `total_steps`, `executed_steps`, `total_duration`, `status`, `error_message` |
+
+#### Step Events
+
+| Event | Description | Key Attributes |
+|-------|-------------|----------------|
+| `StepStartEvent` | Emitted when a step begins | `step_name`, `step_index`, `step_description`, `total_steps` |
+| `StepEndEvent` | Emitted when a step ends | `step_name`, `step_index`, `status`, `execution_time`, `message` |
+
+#### Tool Events
+
+| Event | Description | Key Attributes |
+|-------|-------------|----------------|
+| `ToolCallEvent` | Emitted when a tool is called | `tool_name`, `tool_call_id`, `tool_args`, `tool_index`, `is_parallel` |
+| `ToolResultEvent` | Emitted when a tool returns | `tool_name`, `tool_call_id`, `result`, `result_preview`, `execution_time`, `is_error`, `error_message` |
+| `ExternalToolPauseEvent` | Emitted when execution pauses for external tool | `tool_name`, `tool_call_id`, `tool_args` |
+
+#### LLM Stream Events
+
+| Event | Description | Key Attributes |
+|-------|-------------|----------------|
+| `TextDeltaEvent` | Text chunk during streaming | `content`, `accumulated_content`, `part_index` |
+| `TextCompleteEvent` | Text streaming complete | `content`, `part_index` |
+| `ThinkingDeltaEvent` | Reasoning content (for supported models) | `content`, `part_index` |
+| `ToolCallDeltaEvent` | Tool call arguments streaming | `tool_name`, `tool_call_id`, `args_delta`, `part_index` |
+| `FinalOutputEvent` | Final output ready | `output`, `output_type` |
+
+#### Initialization & Model Events
+
+| Event | Description | Key Attributes |
+|-------|-------------|----------------|
+| `AgentInitializedEvent` | Agent initialized for execution | `agent_id`, `is_streaming` |
+| `ModelSelectedEvent` | Model selected for execution | `model_name`, `provider`, `is_override` |
+| `ToolsConfiguredEvent` | Tools configured for the task | `tool_count`, `tool_names`, `has_mcp_handlers` |
+| `MessagesBuiltEvent` | Request messages built | `message_count`, `has_system_prompt`, `has_memory_messages`, `is_continuation` |
+| `ModelRequestStartEvent` | Model request starting | `model_name`, `is_streaming`, `has_tools`, `tool_call_count`, `tool_call_limit` |
+| `ModelResponseEvent` | Model response received (non-streaming) | `model_name`, `has_text`, `has_tool_calls`, `tool_call_count`, `finish_reason` |
+
+#### Cache Events
+
+| Event | Description | Key Attributes |
+|-------|-------------|----------------|
+| `CacheCheckEvent` | Cache checked for existing response | `cache_enabled`, `cache_method`, `cache_hit`, `similarity`, `input_preview` |
+| `CacheHitEvent` | Cache hit occurred | `cache_method`, `similarity`, `cached_response_preview` |
+| `CacheMissEvent` | Cache miss occurred | `cache_method`, `reason` |
+| `CacheStoredEvent` | Response stored in cache | `cache_method`, `duration_minutes` |
+
+#### Policy Events
+
+| Event | Description | Key Attributes |
+|-------|-------------|----------------|
+| `PolicyCheckEvent` | Policy validation performed | `policy_type`, `action`, `policies_checked`, `content_modified`, `blocked_reason` |
+| `PolicyFeedbackEvent` | Policy feedback for retry | `policy_type`, `feedback_message`, `retry_count`, `max_retries`, `violated_policy` |
+
+#### Memory, Reflection & Reliability Events
+
+| Event | Description | Key Attributes |
+|-------|-------------|----------------|
+| `MemoryUpdateEvent` | Memory updated | `messages_added`, `memory_type` |
+| `ReflectionEvent` | Reflection processing applied | `reflection_applied`, `improvement_made`, `original_preview`, `improved_preview` |
+| `ReliabilityEvent` | Reliability layer processing | `reliability_applied`, `modifications_made` |
+| `ExecutionCompleteEvent` | Execution complete | `output_type`, `has_output`, `output_preview`, `total_tool_calls`, `total_duration` |
+
+### Common Attributes
+
+All events inherit from `AgentEvent` and share these base attributes:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `event_id` | `str` | Unique identifier (8 chars) |
+| `timestamp` | `datetime` | When the event occurred |
+| `event_type` | `str` | Class name of the event |
+| `event_kind` | `str` | Event category identifier |
+
+### Synchronous Event Streaming
+
+For synchronous code, use `stream_events_sync()`:
+
+```python
+from upsonic import Agent, Task
+from upsonic.agent.events import TextDeltaEvent
+
+agent = Agent("openai/gpt-4o")
+result = agent.stream(Task("Explain AI briefly"))
+
+for event in result.stream_events_sync():
+    if isinstance(event, TextDeltaEvent):
+        print(event.content, end='', flush=True)
+
+print(f"\nFinal: {result.output}")
+```
+
+### StreamRunResult Methods
+
+| Method | Description |
+|--------|-------------|
+| `stream_events()` | Async iterator for all events |
+| `stream_events_sync()` | Sync iterator for all events |
+| `stream_output()` | Async iterator for text only |
+| `stream_output_sync()` | Sync iterator for text only |
+| `output` | Get final output after streaming |
+| `is_complete()` | Check if streaming finished |
+
 ## Tool Management
 
 Tools can be added to agents during initialization or dynamically using `add_tools()`. Use `get_tool_defs()` to retrieve all registered tool definitions.
@@ -84,6 +241,11 @@ def calculate(x: int, y: int) -> int:
     """Add two numbers."""
     return x + y
 
+@tool
+def another_tool() -> str:
+    """Another tool."""
+    return "Another tool"
+
 # Add tools during initialization
 agent = Agent("openai/gpt-4o", tools=[calculate])
 
@@ -92,5 +254,7 @@ agent.add_tools([another_tool])
 
 # Get all registered tool definitions
 tool_defs = agent.get_tool_defs()
+
+print(tool_defs)
 ```
 

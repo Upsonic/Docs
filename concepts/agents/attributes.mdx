@@ -34,15 +34,23 @@ The Agent system is configured through the `Agent` class, which provides the fol
 | `work_experience` | str \| None | `None` | Agent work experience |
 | `feed_tool_call_results` | bool | `False` | Include tool results in memory |
 | `show_tool_calls` | bool | `True` | Display tool calls |
-| `tool_call_limit` | int | `5` | Maximum tool calls per execution |
+| `tool_call_limit` | int | `10` | Maximum tool calls per execution |
 | `enable_thinking_tool` | bool | `False` | Enable orchestrated thinking |
 | `enable_reasoning_tool` | bool | `False` | Enable reasoning capabilities |
 | `tools` | List[Any] \| None | `None` | Agent-level tools (can also be added via `add_tools()`) |
 | `user_policy` | Policy \| List[Policy] \| None | `None` | User input safety policy |
 | `agent_policy` | Policy \| List[Policy] \| None | `None` | Agent output safety policy |
+| `tool_policy_pre` | Policy \| List[Policy] \| None | `None` | Tool safety policy for pre-execution validation |
+| `tool_policy_post` | Policy \| List[Policy] \| None | `None` | Tool safety policy for post-execution validation |
+| `user_policy_feedback` | bool | `False` | Enable feedback loop for user policy violations |
+| `agent_policy_feedback` | bool | `False` | Enable feedback loop for agent policy violations |
+| `user_policy_feedback_loop` | int | `1` | Maximum retry count for user policy feedback |
+| `agent_policy_feedback_loop` | int | `1` | Maximum retry count for agent policy feedback |
 | `settings` | ModelSettings \| None | `None` | Model-specific settings |
 | `profile` | ModelProfile \| None | `None` | Model profile configuration |
 | `reflection_config` | ReflectionConfig \| None | `None` | Configuration for reflection |
+| `model_selection_criteria` | Dict \| None | `None` | Default criteria for recommend_model_for_task() |
+| `use_llm_for_selection` | bool | `False` | Use LLM in recommend_model_for_task() |
 | `reasoning_effort` | str \| None | `None` | Reasoning effort: 'low', 'medium', 'high' (OpenAI) |
 | `reasoning_summary` | str \| None | `None` | Reasoning summary: 'concise', 'detailed' (OpenAI) |
 | `thinking_enabled` | bool \| None | `None` | Enable thinking (Anthropic/Google) |
@@ -55,10 +63,15 @@ The Agent system is configured through the `Agent` class, which provides the fol
 ```python
 from upsonic import Agent, Task
 from upsonic.storage.providers.sqlite import SqliteStorage
-from upsonic import Memory
+from upsonic.storage import Memory
 
 # Create storage and memory
-storage = SqliteStorage("sessions", "profiles", "agent_memory.db")
+storage = SqliteStorage(
+    db_file="agent_memory.db",
+    sessions_table_name="sessions",
+    profiles_table_name="profiles"
+)
+
 memory = Memory(
     storage=storage,
     session_id="session_001",

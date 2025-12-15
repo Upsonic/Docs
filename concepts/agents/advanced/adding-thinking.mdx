@@ -1,11 +1,20 @@
 ---
 title: Adding Thinking
 sidebarTitle: Thinking
-description: Enable thinking capabilities for structured problem-solving and analysis
+description: Enable thinking capabilities for structured multi-tool orchestration
 hideToc: false
 ---
 
-Thinking capabilities enable your agent to think through problems step-by-step, providing more structured and thoughtful responses. This feature is essential for complex financial analysis, risk assessment, and multi-step problem solving.
+Thinking capabilities enable your agent to **plan and orchestrate multiple tool calls** in a structured, step-by-step manner. This feature is essential when tasks require coordinating several tools to reach a comprehensive conclusion.
+
+## Why Use Thinking?
+
+Thinking is most valuable when your agent has **multiple tools** and needs to:
+- Create an execution plan before acting
+- Call tools in a specific sequence
+- Synthesize results from multiple sources
+
+Without thinking, agents make ad-hoc tool calls. With thinking, agents strategically plan their approach first.
 
 ## Enabling Thinking
 
@@ -13,10 +22,23 @@ To enable thinking capabilities, set `enable_thinking_tool=True` when creating y
 
 ```python
 from upsonic import Agent
+from upsonic.tools import tool
 
-# Enable thinking for financial analysis
+# Define tools the agent can use
+@tool
+def get_weather(city: str) -> str:
+    """Get current weather for a city."""
+    return f"Weather in {city}: Sunny, 25°C"
+
+@tool
+def get_population(city: str) -> str:
+    """Get population for a city."""
+    return f"Population of {city}: 2.1 million"
+
+# Enable thinking for multi-tool orchestration
 agent = Agent(
-    name="FinancialAnalyst",
+    name="CityAnalyst",
+    tools=[get_weather, get_population],
     enable_thinking_tool=True,
     debug=True
 )
@@ -27,26 +49,47 @@ agent = Agent(
 When thinking is enabled, the agent follows a structured "blueprint" approach:
 
 1. **Strategic Planning**: The agent creates a complete, sequential plan of tool calls
-2. **Automated Execution**: An orchestrator executes the plan step-by-step
-3. **Final Synthesis**: The agent synthesizes results into a comprehensive answer
+2. **Orchestrated Execution**: Tools are executed step-by-step according to the plan
+3. **Final Synthesis**: Results from all tools are combined into a comprehensive answer
+
+```
+Example Flow:
+1. Agent receives: "Tell me about Paris's weather and population"
+2. Agent creates plan: [get_weather("Paris"), get_population("Paris")]
+3. Orchestrator executes: get_weather → get_population
+4. Agent synthesizes: "Paris has sunny weather at 25°C and 2.1 million residents"
+```
 
 ### Thinking vs. Basic Mode
 
 | Feature | Basic Mode | Thinking Mode |
-|---------|------------|-----------------|
+|---------|------------|---------------|
 | **Planning** | Ad-hoc tool calls | Structured blueprint creation |
 | **Execution** | Direct tool execution | Orchestrated step-by-step execution |
-| **Analysis** | Immediate responses | Thoughtful synthesis of results |
-| **Use Cases** | Simple queries | Complex multi-step analysis |
+| **Best For** | Single tool tasks | Multi-tool coordination |
 
 ## Thinking Configuration
 
 ### Agent-Level Thinking
 
 ```python
+from upsonic import Agent
+from upsonic.tools import tool
+
+@tool
+def search_web(query: str) -> str:
+    """Search the web for information."""
+    return f"Search results for: {query}"
+
+@tool
+def analyze_sentiment(text: str) -> str:
+    """Analyze sentiment of text."""
+    return "Sentiment: Positive (85% confidence)"
+
 # Enable thinking for all tasks
 agent = Agent(
-    name="RiskAnalyst",
+    name="ResearchAgent",
+    tools=[search_web, analyze_sentiment],
     enable_thinking_tool=True
 )
 ```
@@ -58,7 +101,7 @@ from upsonic import Task
 
 # Override agent settings for specific task
 task = Task(
-    description="Analyze market volatility and provide investment recommendations",
+    description="Search for recent AI news and analyze the sentiment",
     enable_thinking_tool=True  # Enable thinking for this specific task
 )
 
@@ -70,87 +113,105 @@ result = agent.print_do(task)
 ```python
 # Agent with thinking enabled
 agent = Agent(
-    name="BankingAgent",
+    name="AnalysisAgent",
+    tools=[search_web, analyze_sentiment],
     enable_thinking_tool=True
 )
 
-# Simple task without thinking
+# Simple task without thinking (single tool)
 simple_task = Task(
-    description="What is the current interest rate?",
+    description="What time is it in Tokyo?",
     enable_thinking_tool=False  # Disable thinking for simple queries
 )
 
-# Complex task with thinking
+# Complex task with thinking (multiple tools)
 complex_task = Task(
-    description="Analyze portfolio risk and recommend rebalancing strategy",
+    description="Research the topic and analyze sentiment of findings",
     enable_thinking_tool=True  # Keep thinking for complex analysis
 )
 ```
 
-## Thinking Use Cases
+## When to Use Thinking
 
 Thinking is ideal for:
 
-- **Financial Analysis**: Multi-step investment analysis and risk assessment
-- **Regulatory Compliance**: Complex compliance checking and documentation
-- **Portfolio Management**: Comprehensive portfolio analysis and recommendations
-- **Risk Assessment**: Detailed risk evaluation across multiple factors
-- **Strategic Planning**: Long-term financial planning and strategy development
+- **Multi-source Research**: Gathering data from multiple tools and synthesizing
+- **Step-by-Step Analysis**: Tasks requiring sequential tool execution
+- **Complex Workflows**: When tool outputs feed into subsequent tool calls
+- **Data Aggregation**: Combining results from several sources
 
-### Example: Financial Risk Analysis
+### Example: Financial Analysis with Multiple Tools
 
 ```python
 from upsonic import Agent, Task
+from upsonic.tools.common_tools.financial_tools import YFinanceTools
 
-# Create agent with thinking capabilities
+# Create financial tools
+finance_tools = YFinanceTools(
+    stock_price=True,
+    analyst_recommendations=True,
+    company_news=True
+)
+
+# Create agent with thinking for multi-step analysis
 agent = Agent(
-    name="RiskAssessmentAgent",
+    name="FinancialAnalyst",
+    tools=finance_tools.functions(),
     enable_thinking_tool=True,
     debug=True
 )
 
-# Create a complex financial analysis task
+# Task requiring multiple tool calls
 task = Task(
     description="""
-    Analyze the following investment scenario and provide comprehensive risk assessment:
-    
-    A client has $500K to invest across:
-    1. 40% in technology stocks (high volatility)
-    2. 30% in government bonds (low risk)
-    3. 20% in real estate REITs (medium risk)
-    4. 10% in cryptocurrency (very high volatility)
-    
-    Consider market conditions, diversification benefits, and provide specific recommendations
-    for risk mitigation and portfolio optimization.
-    """,
-    enable_thinking_tool=True
+    Analyze Apple (AAPL) stock:
+    1. Get the current stock price
+    2. Fetch analyst recommendations
+    3. Get recent company news
+    4. Provide a comprehensive investment summary
+    """
 )
 
-# Execute with thinking
+# Agent will plan and execute: get_current_stock_price, get_analyst_recommendations, get_company_news
+# Then synthesize results into investment summary
 result = agent.print_do(task)
 ```
 
-### Example: Banking Compliance Analysis
+### Example: Multi-City Research
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def get_weather(city: str) -> str:
+    """Get current weather for a city."""
+    return f"Weather in {city}: Sunny, 25°C"
+
+@tool
+def get_population(city: str) -> str:
+    """Get population statistics for a city."""
+    return f"Population of {city}: 2.1 million"
+
+@tool
+def get_attractions(city: str) -> str:
+    """Get top attractions in a city."""
+    return f"Top attractions in {city}: Museums, Parks, Historic sites"
+
+agent = Agent(
+    name="TravelAdvisor",
+    tools=[get_weather, get_population, get_attractions],
+    enable_thinking_tool=True,
+    debug=True
+)
+
 task = Task(
-    description="""
-    Review the following banking transaction for compliance:
-    
-    Transaction: $50,000 wire transfer from Business Account A to Personal Account B
-    Customer: High-net-worth individual with $2M+ in assets
-    Purpose: Real estate investment
-    Timing: End of quarter
-    
-    Analyze for:
-    1. AML (Anti-Money Laundering) compliance
-    2. KYC (Know Your Customer) requirements
-    3. Regulatory reporting obligations
-    4. Risk assessment and documentation needs
-    """,
+    description="Give me a complete travel briefing for Paris including weather, population, and attractions",
     enable_thinking_tool=True
 )
 
+# Agent creates plan: [get_weather, get_population, get_attractions]
+# Executes each tool, then synthesizes into travel briefing
 result = agent.print_do(task)
 ```
 
@@ -158,27 +219,20 @@ result = agent.print_do(task)
 
 When thinking is enabled, the agent provides:
 
-1. **Strategic Analysis**: Detailed reasoning about the problem
+1. **Reasoning**: Detailed strategy for approaching the task
 2. **Execution Plan**: Step-by-step tool call sequence
-3. **Risk Assessment**: Identification of potential issues
-4. **Final Synthesis**: Comprehensive answer based on all gathered information
-
-### Example Thinking Flow
-
-```
-1. Agent analyzes the request and creates a plan
-2. Orchestrator executes: get_market_data → analyze_risk → check_compliance
-3. Agent synthesizes results into final recommendation
-```
+3. **Criticism**: Self-assessment identifying potential issues
+4. **Final Synthesis**: Comprehensive answer combining all tool results
 
 ## Performance Considerations
 
-**Important**: Thinking capabilities consume more tokens and processing time than basic mode. Monitor your usage and costs when using thinking for production applications.
+**Important**: Thinking capabilities consume more tokens and processing time than basic mode due to the planning and synthesis steps. Use thinking when the orchestration value outweighs the cost.
 
 ```python
 # Monitor performance with debug mode
 agent = Agent(
-    name="FinancialAnalyst",
+    name="Analyst",
+    tools=[get_weather, get_population],
     enable_thinking_tool=True,
     debug=True  # Shows detailed execution metrics
 )
@@ -186,12 +240,10 @@ agent = Agent(
 
 ## Best Practices
 
-1. **Use for Complex Tasks**: Enable thinking for multi-step financial analysis
-2. **Disable for Simple Queries**: Use basic mode for straightforward questions
-3. **Monitor Costs**: Track token usage with thinking enabled
-4. **Debug Mode**: Use debug mode during development to understand the process
-5. **Task-Specific Control**: Override agent settings for specific tasks when needed
-6. **Clear Instructions**: Provide detailed, specific instructions for better planning
-7. **Tool Availability**: Ensure all required tools are available for the planned sequence
+1. **Use for Multi-Tool Tasks**: Enable thinking when you have 2+ tools that need coordination
+2. **Disable for Simple Queries**: Use basic mode for single-tool or no-tool tasks
+3. **Provide Clear Instructions**: Help the agent plan by being specific about what you need
+4. **Include Multiple Tools**: Thinking shines when there are tools to orchestrate
+5. **Monitor with Debug Mode**: Use `debug=True` to understand the planning process
 
-Thinking provides a powerful way to handle complex financial scenarios that require structured thinking and comprehensive analysis, making it essential for sophisticated banking and fintec
+Thinking provides a powerful way to handle complex scenarios that require multiple tools working together, making it essential for sophisticated multi-step analysis and research tasks.

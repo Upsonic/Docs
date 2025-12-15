@@ -10,14 +10,24 @@ Knowledge bases can be added to tasks to provide RAG (Retrieval-Augmented Genera
 ## Basic Knowledge Base Integration
 
 ```python
-from upsonic import KnowledgeBase
+from upsonic import KnowledgeBase, Task, Agent
 from upsonic.embeddings import OpenAIEmbedding
-from upsonic.vectordb import ChromaVectorDB
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Create embedding provider
+embedding_provider = OpenAIEmbedding()
+
+# Create ChromaDB config
+chroma_config = ChromaConfig(
+    collection_name="my_knowledge_base",
+    vector_size=1536,  # OpenAI ada-002 embedding size
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)  # or Mode.EMBEDDED with db_path
+)
+
+# Create vector database with config
+vectordb = ChromaProvider(config=chroma_config)
 
 # Create knowledge base
-embedding_provider = OpenAIEmbedding()
-vectordb = ChromaVectorDB()
-
 knowledge_base = KnowledgeBase(
     sources=["document1.pdf", "document2.txt"],
     embedding_provider=embedding_provider,
@@ -29,6 +39,11 @@ task = Task(
     description="Answer questions about the uploaded documents",
     context=[knowledge_base]
 )
+
+agent = Agent(model="openai/gpt-4o")
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Multiple Knowledge Bases

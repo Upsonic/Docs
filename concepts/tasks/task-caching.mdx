@@ -1,0 +1,131 @@
+---
+title: Task Response Caching
+sidebarTitle: Caching
+description: Cache task responses to improve performance and reduce API costs
+hideToc: false
+---
+
+Enable caching to store and reuse task responses for similar inputs, reducing API costs and improving performance.
+
+## Quick Start
+
+```python
+task = Task(
+    description="Summarize this article",
+    enable_cache=True
+)
+```
+
+## Cache Methods
+
+### Vector Search (Default)
+Uses semantic similarity to find cached responses for similar inputs.
+
+```python
+task = Task(
+    description="Analyze this text",
+    enable_cache=True,
+    cache_method="vector_search",
+    cache_threshold=0.8  # Higher = stricter matching
+)
+```
+
+### LLM Call
+Uses an LLM to determine if cached responses are applicable.
+
+```python
+task = Task(
+    description="Analyze this text",
+    enable_cache=True,
+    cache_method="llm_call"
+)
+```
+
+## Configuration Options
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `enable_cache` | bool | `False` | Enable/disable caching |
+| `cache_method` | str | `"vector_search"` | `"vector_search"` or `"llm_call"` |
+| `cache_threshold` | float | `0.7` | Similarity threshold (0.0-1.0) |
+| `cache_duration_minutes` | int | `60` | Cache expiration time |
+| `cache_embedding_provider` | Any | Auto-detected | Custom embedding provider |
+
+## Full Example
+
+```python
+from upsonic import Task, Agent
+
+task = Task(
+    description="Explain quantum computing",
+    enable_cache=True,
+    cache_method="vector_search",
+    cache_threshold=0.75,
+    cache_duration_minutes=120
+)
+
+agent = Agent()
+result = agent.run(task)
+
+# Check if response came from cache
+if task.cache_hit:
+    print("Response retrieved from cache!")
+```
+
+## Task Cache Methods
+
+### set_cache_manager(cache_manager)
+Set a custom cache manager for the task.
+
+```python
+task.set_cache_manager(my_cache_manager)
+```
+
+### get_cached_response(input_text, llm_provider=None)
+Retrieve cached response for given input (async).
+
+```python
+cached = await task.get_cached_response("Explain quantum computing")
+if cached:
+    print("Found cached response:", cached)
+```
+
+### store_cache_entry(input_text, output)
+Store a new cache entry (async).
+
+```python
+await task.store_cache_entry("Explain quantum computing", response)
+```
+
+### get_cache_stats()
+Get cache statistics including hit rate and configuration.
+
+```python
+stats = task.get_cache_stats()
+print(f"Hit rate: {stats['hit_rate']}")
+print(f"Total entries: {stats['total_entries']}")
+```
+
+**Returns:**
+- `total_entries`: Number of cached entries
+- `cache_hits`: Number of cache hits
+- `cache_misses`: Number of cache misses
+- `hit_rate`: Cache hit rate (0.0-1.0)
+- `cache_method`: Current cache method
+- `cache_threshold`: Current threshold
+- `cache_hit`: Whether last request was a cache hit
+- `session_id`: Current session ID
+
+### clear_cache()
+Clear all cache entries.
+
+```python
+task.clear_cache()
+```
+
+## Best Practices
+
+- **Threshold Tuning**: Start with `0.7`, increase for stricter matching
+- **Duration**: Set based on how often your data changes
+- **Method Choice**: Use `vector_search` for speed, `llm_call` for accuracy
+- **Embedding Provider**: Auto-detected if not specified

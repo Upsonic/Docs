@@ -84,7 +84,7 @@ def create_analysis_task(analysis_type: str):
     elif analysis_type == "detailed":
         return Task(description="Detailed analysis", response_format=AnalysisResult)
     else:
-        return Task(description="Flexible analysis", response_format=None)
+        return Task(description="Flexible analysis", response_format=None) # this means "str"
 ```
 
 ## Best Practices

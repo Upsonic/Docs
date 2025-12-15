@@ -10,6 +10,7 @@ Tasks can be equipped with various tools to extend their capabilities. Tools are
 ## Single Tool
 
 ```python
+from upsonic import Agent, Task
 from upsonic.tools import tool
 
 @tool
@@ -21,11 +22,16 @@ task = Task(
     description="Search for information about AI",
     tools=[web_search]
 )
+
+agent = Agent("openai/gpt-4o")
+result = agent.do(task)
+print(result)
 ```
 
 ## Multiple Tools
 
 ```python
+from upsonic import Agent, Task
 from upsonic.tools import tool
 
 @tool
@@ -38,17 +44,21 @@ def data_processor(data: str) -> str:
     """Process and analyze data."""
     return f"Processed: {data}"
 
-# Task with multiple tools
 task = Task(
     description="Search for information about AI and process the results",
     tools=[web_search, data_processor]
 )
+
+agent = Agent("openai/gpt-4o")
+result = agent.do(task)
+print(result)
 ```
 
 ## Tool Collections
 
 ```python
-from upsonic.tools import YFinanceTools
+from upsonic import Agent, Task
+from upsonic.tools.common_tools.financial_tools import YFinanceTools
 
 # Create a tool collection
 finance_tools = YFinanceTools(
@@ -57,27 +67,37 @@ finance_tools = YFinanceTools(
     analyst_recommendations=True
 )
 
-# Task with tool collection
 task = Task(
     description="Get stock information for AAPL",
     tools=finance_tools.functions()
 )
+
+agent = Agent(model="openai/gpt-4o")
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Tool Configuration
 
 ```python
+from upsonic import Agent, Task
 from upsonic.tools import tool
 
-@tool(requires_confirmation=True, cache_results=True)
+@tool(requires_confirmation=True)
 def sensitive_operation(data: str) -> str:
     """Perform a sensitive operation that requires confirmation."""
     return f"Processed sensitive data: {data}"
 
 task = Task(
-    description="Process sensitive information",
+    description="Process sensitive information with data 'Upsonic'",
     tools=[sensitive_operation]
 )
+
+agent = Agent(model="openai/gpt-4o")
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Available Tool Configurations
@@ -90,6 +110,16 @@ task = Task(
 | **external_execution** | bool | Handle execution externally (advanced use-cases) |
 | **show_result** | bool | Display result directly to user without LLM processing |
 | **stop_after_tool_call** | bool | Terminate agent after this tool call |
+| **sequential** | bool | Require sequential execution (no parallelization) |
+| **cache_results** | bool | Cache the result based on arguments |
+| **cache_dir** | Optional[str] | Directory to store cache files |
+| **cache_ttl** | Optional[int] | Time-to-live for cache entries in seconds |
+| **tool_hooks** | Optional[ToolHooks] | Custom functions to run before/after tool execution |
+| **max_retries** | Optional[int] | Maximum number of retries allowed for this tool (default: 5) |
+| **timeout** | Optional[float] | Timeout for tool execution in seconds (default: 30.0) |
+| **strict** | Optional[bool] | Enforce strict JSON schema validation on tool parameters |
+| **docstring_format** | str | Format of the docstring: 'google', 'numpy', 'sphinx', or 'auto' |
+| **require_parameter_descriptions** | bool | Raise error if required parameter descriptions are missing |
 
 ## Dynamic Tool Management
 
@@ -109,7 +139,6 @@ def calculator(a: float, b: float) -> float:
     """Add two numbers."""
     return a + b
 
-# Create task
 task = Task(description="Search and calculate")
 agent = Agent("openai/gpt-4o")
 
@@ -135,7 +164,8 @@ def calculator(a: float, b: float) -> float:
 
 task = Task(description="Calculate 5 + 3", tools=[calculator])
 agent = Agent("openai/gpt-4o")
-agent.do(task)
+result = agent.do(task)
+print(result)
 
 # Access registered tools
 print(task.registered_task_tools)  # Dict mapping tool names to wrapped tools

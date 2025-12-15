@@ -1,24 +1,51 @@
 ---
 title: Adding Reasoning
 sidebarTitle: Reasoning
-description: Enable advanced reasoning capabilities for complex analytical tasks
+description: Enable advanced reasoning for complex multi-tool analysis with step-by-step evaluation
 hideToc: false
 ---
 
-Reasoning capabilities provide advanced analytical thinking for complex financial scenarios. This feature builds upon thinking tool to offer sophisticated "Act-then-Analyze" loops, making it ideal for strategic banking analysis, complex risk assessment, and multi-faceted financial decision making.
+Reasoning capabilities extend thinking with **mandatory analysis after each tool execution**. This "Act-then-Analyze" pattern enables the agent to evaluate results and adapt its strategy dynamically, making it ideal for complex scenarios requiring iterative refinement.
+
+## Thinking vs. Reasoning
+
+| Feature | Thinking | Reasoning |
+|---------|----------|-----------|
+| **Planning** | Creates execution plan | Creates execution plan |
+| **Execution** | Runs tools sequentially | Runs tools sequentially |
+| **Analysis** | Final synthesis only | Analyzes after EACH tool |
+| **Adaptation** | Follows original plan | Can revise plan mid-execution |
+| **Best For** | Straightforward multi-tool tasks | Complex analysis requiring evaluation |
 
 ## Enabling Reasoning
 
-Reasoning requires both thinking and reasoning tools to be enabled:
+Reasoning requires **both** thinking and reasoning tools to be enabled:
 
 ```python
 from upsonic import Agent
+from upsonic.tools import tool
 
-# Enable reasoning for advanced financial analysis
+@tool
+def get_stock_price(symbol: str) -> str:
+    """Get current stock price."""
+    return f"Current price of {symbol}: $185.50"
+
+@tool
+def get_analyst_ratings(symbol: str) -> str:
+    """Get analyst ratings and recommendations."""
+    return f"Analyst consensus for {symbol}: Buy (78% recommend)"
+
+@tool
+def get_company_news(symbol: str) -> str:
+    """Get recent company news."""
+    return f"Recent news for {symbol}: Strong Q4 earnings reported"
+
+# Enable reasoning for advanced analysis
 agent = Agent(
-    name="StrategicBankingAnalyst",
+    name="InvestmentAnalyst",
+    tools=[get_stock_price, get_analyst_ratings, get_company_news],
     enable_thinking_tool=True,      # Required for reasoning
-    enable_reasoning_tool=True,     # Enables advanced reasoning
+    enable_reasoning_tool=True,     # Enables act-then-analyze
     debug=True
 )
 ```
@@ -29,29 +56,49 @@ agent = Agent(
 
 Reasoning follows an advanced "Act-then-Analyze" pattern:
 
-1. **Strategic Planning**: Create initial high-level strategy
-2. **Tactical Execution**: Execute one step at a time
-3. **Mandatory Analysis**: Analyze each step's outcome
-4. **Dynamic Adaptation**: Revise strategy based on results
-5. **Final Synthesis**: Comprehensive conclusion
+1. **Strategic Planning**: Create initial execution plan
+2. **Execute One Step**: Run the next tool in the plan
+3. **Mandatory Analysis**: Evaluate the result and decide next action
+4. **Dynamic Adaptation**: Continue, revise plan, or finalize answer
+5. **Final Synthesis**: Comprehensive conclusion with all insights
 
-### Reasoning vs. Thinking
-
-| Feature        | Thinking (enable\_thinking\_tool)          | Reasoning (enable\_reasoning\_tool)                     |
-| -------------- | -------------------------------------------- | ------------------------------------------------------- |
-| **Purpose**    | Basic step-by-step financial analysis        | Advanced risk and compliance analysis                   |
-| **Complexity** | Simple to moderate financial problems        | Complex, multi-faceted banking scenarios                |
-| **Output**     | Clear financial explanations                 | Structured analysis with regulatory recommendations     |
-| **Use Cases**  | Interest calculations, basic risk assessment | Strategic banking planning, complex compliance analysis |
+```
+Example Flow:
+1. Agent receives: "Should I invest in AAPL?"
+2. Plan: [get_stock_price, get_analyst_ratings, get_company_news]
+3. Execute get_stock_price → Analyze: "Price is high, need more context"
+4. Execute get_analyst_ratings → Analyze: "Analysts bullish, aligns with price"
+5. Execute get_company_news → Analyze: "Strong earnings support the rating"
+6. Synthesize: "AAPL shows positive indicators across price, analysts, and news"
+```
 
 ## Reasoning Configuration
 
 ### Agent-Level Reasoning
 
 ```python
+from upsonic import Agent
+from upsonic.tools import tool
+
+@tool
+def search_market_data(query: str) -> str:
+    """Search for market data and trends."""
+    return f"Market data for {query}: Upward trend, 15% YoY growth"
+
+@tool
+def analyze_competitors(company: str) -> str:
+    """Analyze competitive landscape."""
+    return f"Competitors of {company}: Strong market position, 35% market share"
+
+@tool
+def get_financial_metrics(symbol: str) -> str:
+    """Get key financial metrics."""
+    return f"Financials for {symbol}: P/E 28, Revenue $394B, Profit margin 25%"
+
 # Enable reasoning for all tasks
 agent = Agent(
-    name="BankingRiskAnalyst",
+    name="StrategicAnalyst",
+    tools=[search_market_data, analyze_competitors, get_financial_metrics],
     enable_thinking_tool=True,
     enable_reasoning_tool=True
 )
@@ -64,7 +111,7 @@ from upsonic import Task
 
 # Override agent settings for specific task
 task = Task(
-    description="Complex credit risk analysis with multiple variables",
+    description="Conduct a comprehensive competitive analysis of Apple",
     enable_thinking_tool=True,
     enable_reasoning_tool=True
 )
@@ -77,66 +124,117 @@ result = agent.print_do(task)
 ```python
 # Agent with reasoning enabled
 agent = Agent(
-    name="FinancialAdvisor",
+    name="AnalysisAgent",
+    tools=[search_market_data, analyze_competitors, get_financial_metrics],
     enable_thinking_tool=True,
     enable_reasoning_tool=True
 )
 
-# Simple task without reasoning
+# Simple lookup - disable reasoning for speed
 simple_task = Task(
-    description="What is the current interest rate?",
-    enable_thinking_tool=True,   # Keep thinking
-    enable_reasoning_tool=False  # Disable reasoning
+    description="Get the current stock price of MSFT",
+    enable_thinking_tool=True,
+    enable_reasoning_tool=False  # Single tool, no analysis needed
 )
 
-# Complex task with reasoning
+# Complex analysis - use full reasoning
 complex_task = Task(
-    description="Strategic portfolio optimization with risk constraints",
+    description="Evaluate if GOOGL is a good investment considering market position, competitors, and financials",
     enable_thinking_tool=True,
     enable_reasoning_tool=True
 )
 ```
 
-## Advanced Reasoning Use Cases
+## When to Use Reasoning
 
 Reasoning is ideal for:
 
-- **Strategic banking and fintech analysis**
-- **Complex financial data interpretation**
-- **Multi-variable risk assessment**
-- **Regulatory compliance and risk mitigation**
-- **Portfolio optimization and investment strategies**
+- **Iterative Analysis**: When each step's result affects the next
+- **Strategic Decisions**: Complex scenarios requiring evaluation at each step
+- **Adaptive Workflows**: When the plan may need mid-course corrections
+- **Quality-Critical Tasks**: Where analyzing intermediate results improves accuracy
 
-### Example: Strategic Banking Analysis
+### Example: Investment Research with Analysis
 
 ```python
 from upsonic import Agent, Task
+from upsonic.tools.common_tools.financial_tools import YFinanceTools
 
-# Create agent with reasoning capabilities
+# Create comprehensive financial tools
+finance_tools = YFinanceTools(enable_all=True)
+
+# Create agent with reasoning for thorough analysis
 agent = Agent(
-    name="StrategicBankingAnalyst",
+    name="InvestmentResearcher",
+    tools=finance_tools.functions(),
     enable_thinking_tool=True,
     enable_reasoning_tool=True,
     debug=True
 )
 
-# Create a complex strategic banking task
+# Complex multi-step analysis task
 task = Task(
     description="""
-    Analyze the following banking scenario and provide strategic recommendations:
+    Conduct a thorough investment analysis of Tesla (TSLA):
     
-    A regional bank has $1B in assets across 3 business lines. Commercial lending has 40% of assets,
-    retail banking has 35%, and wealth management has 25%. The bank wants to implement
-    new risk management policies that affect each business line differently. Commercial lending
-    will see a 20% reduction in default risk, retail banking will see a 15% reduction, and wealth
-    management will see a 10% reduction. Calculate the overall risk impact and provide
-    recommendations for implementation and regulatory compliance.
+    1. Get current stock price and historical trends
+    2. Review analyst recommendations  
+    3. Examine company fundamentals and financials
+    4. Provide a reasoned investment recommendation
+    
+    At each step, evaluate if the information changes your assessment.
+    """
+)
+
+# Agent will execute tools with analysis after each step
+result = agent.print_do(task)
+```
+
+### Example: Multi-Source Research
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def search_news(topic: str) -> str:
+    """Search for recent news on a topic."""
+    return f"News on {topic}: 3 positive articles, 1 neutral, 0 negative"
+
+@tool  
+def get_expert_opinions(topic: str) -> str:
+    """Get expert opinions and analysis."""
+    return f"Experts on {topic}: Generally optimistic with caveats"
+
+@tool
+def analyze_social_sentiment(topic: str) -> str:
+    """Analyze social media sentiment."""
+    return f"Social sentiment for {topic}: 72% positive, trending up"
+
+@tool
+def check_regulatory_status(topic: str) -> str:
+    """Check regulatory environment."""
+    return f"Regulatory status for {topic}: Favorable, no pending actions"
+
+agent = Agent(
+    name="ResearchAnalyst",
+    tools=[search_news, get_expert_opinions, analyze_social_sentiment, check_regulatory_status],
+    enable_thinking_tool=True,
+    enable_reasoning_tool=True,
+    debug=True
+)
+
+task = Task(
+    description="""
+    Research the outlook for electric vehicles in 2025.
+    Gather information from news, experts, social sentiment, and regulatory sources.
+    After each source, assess how it changes the overall picture.
+    Provide a balanced conclusion.
     """,
     enable_thinking_tool=True,
     enable_reasoning_tool=True
 )
 
-# Execute with advanced reasoning
 result = agent.print_do(task)
 ```
 
@@ -144,35 +242,34 @@ result = agent.print_do(task)
 
 When reasoning is enabled, the agent provides:
 
-1. **Financial Problem Decomposition**: Breaking complex banking scenarios into components
-2. **Risk Analysis**: Step-by-step risk assessment and logical reasoning
-3. **Regulatory Evidence Evaluation**: Assessing compliance requirements and financial data
-4. **Financial Synthesis**: Combining insights into coherent banking recommendations
-5. **Actionable Recommendations**: Specific next steps for implementation and compliance
+1. **Initial Strategy**: High-level approach to the problem
+2. **Step-by-Step Analysis**: Evaluation after each tool execution
+3. **Adaptation Decisions**: Whether to continue, revise, or conclude
+4. **Evidence Chain**: How each tool's output influenced the conclusion
+5. **Final Recommendation**: Synthesized answer with full reasoning
 
 ## Performance Considerations
 
-**Warning**: Reasoning capabilities consume more tokens and processing time than basic thinking. Monitor your usage and costs when using reasoning for production applications.
+**Warning**: Reasoning consumes significantly more tokens than thinking alone due to the mandatory analysis after each tool call. Use reasoning when the analytical depth justifies the cost.
 
 ```python
 # Monitor performance with debug mode
 agent = Agent(
-    name="StrategicAnalyst",
+    name="Analyst",
+    tools=[search_news, get_expert_opinions],
     enable_thinking_tool=True,
     enable_reasoning_tool=True,
-    debug=True  # Shows detailed execution metrics
+    debug=True  # Shows detailed reasoning steps
 )
 ```
 
 ## Best Practices
 
-1. **Use for Complex Scenarios**: Enable reasoning for strategic banking analysis and complex risk assessment
+1. **Use for Complex Scenarios**: Enable reasoning when intermediate analysis adds value
 2. **Requires Thinking**: Always enable `enable_thinking_tool` when using reasoning
-3. **Monitor Performance**: Use debug mode to understand token usage and costs
-4. **Clear Instructions**: Provide detailed, specific instructions for better strategic planning
-5. **Tool Availability**: Ensure all required tools are available for the planned sequence
-6. **Memory Integration**: Combine with memory for context-aware strategic analysis
-7. **Reliability Layer**: Use reliability layer for critical financial decisions
-8. **Caching**: Enable caching for repeated strategic analysis tasks
+3. **Multiple Tools**: Reasoning shines with 3+ tools where results interact
+4. **Clear Instructions**: Tell the agent to "evaluate at each step" or "adjust based on findings"
+5. **Monitor Costs**: Reasoning uses more tokens than thinking alone
+6. **Debug First**: Use `debug=True` to understand the reasoning chain
 
-Reasoning provides the most sophisticated analytical capabilities for complex financial scenarios, making it essential for strategic banking applications that require deep analysis and adaptive decision-making.
+Reasoning provides the most sophisticated analytical capabilities for complex scenarios, making it essential for applications that require deep analysis and adaptive decision-making based on intermediate results.

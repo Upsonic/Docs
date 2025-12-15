@@ -1,0 +1,58 @@
+---
+title: Reliability & Retries
+sidebarTitle: Reliability & Retries
+description: Configure error handling and retry logic for robust agents
+hideToc: false
+---
+
+Agents operating in production need to handle failures gracefully. The `Agent` class provides built-in mechanisms for retrying failed operations and controlling error propagation.
+
+## Retry Configuration
+
+You can control how many times an agent attempts to execute a task before failing.
+
+- `retry`: The number of *additional* attempts after the first failure.
+- `mode`: How to handle the final failure (`"raise"` or `"return_false"`).
+
+### Basic Retry Logic
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent(
+    model="openai/gpt-4o",
+    retry=3,         # Will try up to 4 times total (1 initial + 3 retries)
+    mode="raise"     # Raise the exception if all retries fail
+)
+
+task = Task("Perform a potentially flaky API operation")
+
+try:
+    result = agent.do(task)
+    print(result)
+except Exception as e:
+    print(f"Task failed after retries: {e}")
+```
+
+### Safe Mode (Return False)
+
+If you prefer the agent to return `False` instead of crashing your application on failure:
+
+```python
+agent = Agent(
+    model="openai/gpt-4o",
+    retry=2,
+    mode="return_false"  # Return False instead of raising Exception
+)
+
+result = agent.do("Some complex task")
+
+if result is False:
+    print("Agent failed to complete the task.")
+else:
+    print(f"Success: {result}")
+```
+
+## Best Practices
+- **Network Instability**: Set `retry >= 2` for agents using web search or external APIs.
+- **Production Systems**: Use `mode="raise"` inside a `try/catch` block to log specific errors while keeping the application running.

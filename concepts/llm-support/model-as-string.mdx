@@ -69,7 +69,7 @@ import os
 from upsonic import Agent, Task
 
 # Configure via environment variable
-model_string = os.getenv("LLM_MODEL", "openai/gpt-4o")
+model_string = os.getenv("LLM_MODEL_KEY", "openai/gpt-4o")
 
 agent = Agent(model=model_string)
 task = Task("Analyze this data")
@@ -79,10 +79,10 @@ result = agent.do(task)
 **.env file:**
 ```bash
 # Switch models without code changes
-LLM_MODEL=anthropic/claude-3-5-sonnet-20241022
+LLM_MODEL_KEY=anthropic/claude-3-5-sonnet-20241022
 
 # Or use a different provider
-LLM_MODEL=groq/llama-3.3-70b-versatile
+LLM_MODEL_KEY=groq/llama-3.3-70b-versatile
 ```
 
 ### Dynamic Model Selection

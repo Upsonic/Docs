@@ -24,12 +24,12 @@ The `Memory` class serves as a centralized module for managing different types o
 Here's how to set up memory with SQLite storage:
 
 ```python
-from upsonic import Agent, Memory
-from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
 from upsonic.models.openai import OpenAIChatModel
 
 # Create storage backend
-storage = SqliteStorage("sessions", "profiles", "agent_memory.db")
+storage = SqliteStorage(db_file="agent_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
 
 # Create memory system
 memory = Memory(
@@ -48,6 +48,11 @@ agent = Agent(
     memory=memory,
     feed_tool_call_results=True
 )
+
+task = Task("Calculate 5 + 3")
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Memory Configuration Options

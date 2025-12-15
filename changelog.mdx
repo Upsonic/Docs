@@ -5,6 +5,38 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 
 > Product updates, improvements, and bug fixes for Upsonic
 
+<Update label="Dec 16, 2025">
+	## v0.69.0
+
+	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.69.0)
+	
+	## New Features:
+	- Event-Based Streaming System: Introduced an event-based streaming architecture with 30+ event types providing granular visibility into agent execution, including PipelineEvents, StepEvents, and LLM Stream Events with proper timestamp tracking and type-safe event handling.
+	- Profanity Safety Policy: Added profanity detection capabilities using Detoxify ML library with support for 5 different models (original, unbiased, multilingual variants) with configurable sensitivity thresholds and proper lazy loading for optimal performance.
+	- Policy Feedback Loop: Implemented user and agent policy feedback mechanisms that provide constructive feedback instead of hard blocking, allowing policies to guide users and agents with helpful messages and configurable retry counts to prevent wasted agent cycles.
+	- CLI Remove Command: Added new "remove" command for removing packages from upsonic_configs.json, providing better package management capabilities in the CLI interface.
+	- Azure and Grok Model Providers: Added support for Azure and Grok model providers, expanding the framework's model compatibility and integration options.
+	- ismethod Support for Tool Management: Added support for handling methods in tool management, enabling more flexible tool registration and usage patterns.
+	
+	## Improvements:
+	- Runtime Performance Optimization: Enhanced runtime performance through lazy importing to reduce initial load times and improve overall framework responsiveness.
+	- Memory Logging: Added informative logging for Memory operations to improve debugging and monitoring capabilities during agent execution.
+	- DeepAgent TODO Printing: Enhanced DeepAgent with TODO printing functionality to provide better visibility into planning and execution steps.
+	- CLI Configuration Management: Refactored CLI initialization to use upsonic_configs.json for all configurations, removing io.py dependency and improving maintainability and performance.
+	
+	## Bug Fixes:
+	- LLMLingua Prompt Compression API Fix: Resolved issues with the LLMLingua prompt compression API integration to ensure proper prompt compression functionality.
+	- Milvus Import Error Handling: Fixed unnecessary import error for Milvus by moving error management to __init__ to prevent import failures when Milvus is not installed.
+	- Bedrock Model Profile Creation: Fixed Bedrock provider model profile creation to ensure proper initialization and configuration of AWS Bedrock models.
+	
+	
+	Full Changelog address: https://github.com/Upsonic/Upsonic/compare/v0.68.3...v0.69.0
+	
+	### Pull Requests:
+	- feat: version 0.69.0: [@DoganK01](https://github.com/DoganK01) in [#497](https://github.com/Upsonic/Upsonic/pull/497)
+</Update>
+
+
 <Update label="Dec 12, 2025">
 	## v0.68.2 & v0.68.3
 

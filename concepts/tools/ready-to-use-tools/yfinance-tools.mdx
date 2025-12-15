@@ -11,16 +11,16 @@ Comprehensive financial data toolkit using Yahoo Finance API.
 
 ```python
 from upsonic import Agent, Task
-from upsonic.tools.common_tools import YFinanceTools
+from upsonic.tools.common_tools.financial_tools import YFinanceTools
 
 # Create finance tools instance
 finance_tools = YFinanceTools()
 finance_tools.enable_all_tools()
-
+tools = finance_tools.functions()
 # Create task
 task = Task(
     description="Get the current stock price for Apple (AAPL)",
-    tools=[finance_tools]
+    tools=tools
 )
 
 # Create agent
@@ -35,7 +35,8 @@ agent.print_do(task)
 Enable only specific financial capabilities:
 
 ```python
-from upsonic.tools.common_tools import YFinanceTools
+from upsonic.tools.common_tools.financial_tools import YFinanceTools
+from upsonic import Agent, Task
 
 # Enable specific tools
 finance_tools = YFinanceTools(
@@ -47,7 +48,7 @@ finance_tools = YFinanceTools(
 
 task = Task(
     description="Get stock price and company information for Microsoft (MSFT)",
-    tools=[finance_tools]
+    tools=finance_tools.functions()
 )
 
 agent = Agent(model="openai/gpt-4o", name="Selective Finance Agent")
@@ -85,7 +86,7 @@ When using `enable_all_tools()`, the following methods are available:
 
 ```python
 from upsonic import Agent, Task
-from upsonic.tools.common_tools import YFinanceTools
+from upsonic.tools.common_tools.financial_tools import YFinanceTools
 
 # Enable all financial tools
 finance_tools = YFinanceTools()
@@ -100,7 +101,7 @@ task = Task(
     3. Get recent news
     4. Provide investment recommendation
     """,
-    tools=[finance_tools]
+    tools=finance_tools.functions()
 )
 
 # Create agent
