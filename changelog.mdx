@@ -6,6 +6,29 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 > Product updates, improvements, and bug fixes for Upsonic
 
 <Update label="Dec 16, 2025">
+	## v0.69.1
+
+	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.69.1)
+	
+	## New Features:
+	- **Model ID Normalization**: Allows simplified model IDs (e.g., `bedrock/claude-3-5-sonnet:v2`) to be automatically normalized to full provider IDs.
+	
+	## Improvements:
+	- **Structured Output Mode**: Changed `output_mode` from "native" to "auto" for better cross-model compatibility.
+	- **Output Tools Support**: Added tool-based structured output for models that don't support native JSON schemas (like Bedrock).
+	
+	## Bug Fixes:
+	- **Fixed Structured Output for Bedrock**: Resolved `UserError: Native structured output is not supported by this model` when using Pydantic response formats with Bedrock models.
+	
+	
+	Full Changelog: https://github.com/Upsonic/Upsonic/compare/v0.69.0...v0.69.1
+	
+	### Pull Requests:
+	- fix: fix normalizing model ids: [DoganK01](https://github.com/DoganK01) in [#498](https://github.com/Upsonic/Upsonic/pull/498)
+</Update>
+
+
+<Update label="Dec 16, 2025">
 	## v0.69.0
 
 	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.69.0)
