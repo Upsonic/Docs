@@ -37,16 +37,19 @@ Task nodes are the building blocks of a graph. Each node contains a Task object 
 ```python
 from upsonic import Agent, Task
 from upsonic import Graph
+from upsonic.tools import WebSearch
+
 
 # Create a default agent for the graph
-agent = Agent(name="Test Agent")
+agent = Agent(name="Test Agent", model="openai-responses/gpt-4o")
+agent.add_tools(WebSearch)
 
 # Create a graph with the agent as default
 graph = Graph(default_agent=agent)
 
 # Create tasks
-task1 = Task("Analyze market trends")
-task2 = Task("Generate product recommendations")
+task1 = Task("Analyze Amazon market trends")
+task2 = Task("Generate product recommendations. I'm looking for a mechanical keyboard with a good build quality and a good price.")
 task3 = Task("Summarize findings")
 
 # Add tasks to the graph using the chain operator
@@ -101,7 +104,8 @@ The `DecisionFunc` allows you to use a custom Python function to determine which
 
 ```python
 from upsonic import Agent, Task
-from upsonic import Graph, DecisionFunc
+from upsonic import Graph
+from upsonic.graph.graph import DecisionFunc
 
 # Create an agent and graph
 agent = Agent(name="Test Agent")
@@ -136,7 +140,8 @@ The `DecisionLLM` uses an AI model to make decisions based on the output of prev
 
 ```python
 from upsonic import Agent, Task
-from upsonic import Graph, DecisionLLM
+from upsonic import Graph
+from upsonic.graph.graph import DecisionLLM
 
 # Create an agent and graph
 agent = Agent(name="Test Agent")

@@ -6,19 +6,19 @@ description: "Fast in-memory storage for development and testing"
 ## Usage
 
 ```python
-from upsonic.storage import InMemoryStorage
+from upsonic.storage.providers.in_memory import InMemoryStorage
 
 # Basic in-memory storage
 storage = InMemoryStorage()
 
 # With LRU cache limits
 storage = InMemoryStorage(
-    max_sessions=100,  # Keep max 100 sessions
-    max_profiles=50    # Keep max 50 user profiles
+    max_sessions=100,
+    max_profiles=50
 )
 ```
 
 ## Params
 
-- `max_sessions: int` - Optional limit on stored sessions (LRU cache)
-- `max_profiles: int` - Optional limit on stored profiles (LRU cache)
+- `max_sessions: Optional[int]` - Optional limit on stored sessions (LRU cache)
+- `max_profiles: Optional[int]` - Optional limit on stored profiles (LRU cache)

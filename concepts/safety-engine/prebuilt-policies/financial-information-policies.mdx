@@ -15,7 +15,8 @@ from upsonic.safety_engine.policies import FinancialInfoAnonymizePolicy
 
 agent = Agent(
     model="openai/gpt-4o",
-    agent_policy=FinancialInfoAnonymizePolicy
+    agent_policy=FinancialInfoAnonymizePolicy,
+    debug=True
 )
 
 task = Task("My credit card is 4532-1234-5678-9010")

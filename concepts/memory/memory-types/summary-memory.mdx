@@ -10,7 +10,9 @@ Summary Memory maintains an evolving, condensed summary of key conversation poin
 ## Usage
 
 ```python
-from upsonic.storage import Memory, SqliteStorage
+from upsonic.storage import Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
+
 
 # Summary memory with model
 memory = Memory(
@@ -22,7 +24,7 @@ memory = Memory(
 
 # Combined with conversation memory
 memory = Memory(
-    storage=SqliteStorage(sessions_table_name="sessions", profiles_table_name="profiles"),
+    storage=SqliteStorage(db_file="agent_memory.db", sessions_table_name="sessions", profiles_table_name="profiles"),
     session_id="session_002",
     full_session_memory=True,
     summary_memory=True,

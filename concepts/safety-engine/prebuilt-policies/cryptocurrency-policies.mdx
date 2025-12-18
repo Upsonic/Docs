@@ -16,7 +16,8 @@ from upsonic.safety_engine.policies import CryptoBlockPolicy
 # Block any crypto-related questions
 agent = Agent(
     model="openai/gpt-4o",
-    user_policy=CryptoBlockPolicy
+    user_policy=CryptoBlockPolicy,
+    debug=True
 )
 
 task = Task("Tell me about Bitcoin investments")

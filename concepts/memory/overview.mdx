@@ -33,11 +33,12 @@ Memory enables agents to remember conversations and learn about users. It mainta
 ## Example
 
 ```python
-from upsonic import Agent, Task, Memory
+from upsonic import Agent, Task
+from upsonic.storage import Memory
 from upsonic.storage.providers.sqlite import SqliteStorage
 
 # Create storage and memory
-storage = SqliteStorage("sessions", "profiles", "memory.db")
+storage = SqliteStorage(db_file="memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
 memory = Memory(
     storage=storage,
     session_id="session_001",

@@ -141,13 +141,13 @@ async def main():
     analyst = Agent(
         model="openai/gpt-4o-mini",
         name="analyst",
-        role="Data Analyst",
+        role="AI Analyst",
         system_prompt="Data analysis expert"
     )
     agent.add_subagent(analyst)
     
     task = Task(description="""
-    Analyze data trends.
+    Analyze AI trends.
     Save results to /analysis/trends.txt
     """)
     

@@ -6,7 +6,7 @@ description: "File-based JSON storage for simple persistence"
 ## Usage
 
 ```python
-from upsonic.storage import JSONStorage
+from upsonic.storage.providers.json import JSONStorage
 
 # Basic JSON storage
 storage = JSONStorage(directory_path="./memory_data")
@@ -14,11 +14,11 @@ storage = JSONStorage(directory_path="./memory_data")
 # With custom formatting
 storage = JSONStorage(
     directory_path="./memory_data",
-    pretty_print=True  # Format JSON for readability
+    pretty_print=True
 )
 ```
 
 ## Params
 
-- `directory_path: str` - Path to directory for JSON files
+- `directory_path: Optional[str]` - Path to directory for JSON files (default: "data" in current directory)
 - `pretty_print: bool` - Format JSON for readability (default: True)

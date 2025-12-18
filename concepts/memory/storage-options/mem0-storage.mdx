@@ -6,7 +6,7 @@ description: "Mem0 Platform and Open Source integration"
 ## Usage
 
 ```python
-from upsonic.storage import Mem0Storage
+from upsonic.storage.providers.mem0 import Mem0Storage
 
 # Mem0 Platform integration
 storage = Mem0Storage(
@@ -26,16 +26,24 @@ storage = Mem0Storage(
         }
     }
 )
+
+# With pre-existing Mem0 client
+from mem0 import AsyncMemoryClient
+client = AsyncMemoryClient(api_key="your_key")
+storage = Mem0Storage(client=client)
 ```
 
 ## Params
 
-- `api_key: str` - Mem0 Platform API key (for hosted service)
-- `org_id: str` - Organization ID for Mem0 Platform
-- `project_id: str` - Project ID for Mem0 Platform
-- `local_config: dict` - Configuration for Open Source Mem0
+- `client: Optional[Union[Memory, AsyncMemoryClient]]` - Optional pre-existing Mem0 client (user manages lifecycle)
+- `api_key: Optional[str]` - Mem0 Platform API key (ignored if client provided)
+- `org_id: Optional[str]` - Organization ID for Mem0 Platform (ignored if client provided)
+- `project_id: Optional[str]` - Project ID for Mem0 Platform (ignored if client provided)
+- `local_config: Optional[Dict[str, Any]]` - Configuration for Open Source Mem0 (ignored if client provided)
 - `namespace: str` - Application namespace (default: "upsonic")
 - `infer: bool` - Enable LLM-based inference (default: False)
-- `custom_categories: list` - Additional custom categories
+- `custom_categories: Optional[List[str]]` - Additional custom categories
 - `enable_caching: bool` - Enable ID caching (default: True)
 - `cache_ttl: int` - Cache time-to-live in seconds (default: 300)
+- `output_format: str` - Mem0 output format version (default: "v1.1")
+- `version: str` - Mem0 API version (default: "v2")

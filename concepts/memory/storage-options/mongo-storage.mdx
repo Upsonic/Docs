@@ -6,7 +6,7 @@ description: "MongoDB storage for scalable document-based systems"
 ## Usage
 
 ```python
-from upsonic.storage import MongoStorage
+from upsonic.storage.providers.mongo import MongoStorage
 
 # MongoDB storage for scalable systems
 storage = MongoStorage(
@@ -23,11 +23,19 @@ storage = MongoStorage(
     sessions_collection_name="sessions",
     profiles_collection_name="profiles"
 )
+
+# With pre-existing database or client
+from motor.motor_asyncio import AsyncIOMotorClient
+client = AsyncIOMotorClient("mongodb://localhost:27017")
+storage = MongoStorage(client=client, database_name="agent_memory")
 ```
 
 ## Params
 
-- `db_url: str` - MongoDB connection string
-- `database_name: str` - Name of the database
+- `database: Optional[AsyncIOMotorDatabase]` - Optional pre-existing database (user manages lifecycle)
+- `client: Optional[AsyncIOMotorClient]` - Optional pre-existing client (user manages lifecycle)
+- `db_url: Optional[str]` - MongoDB connection string (required if database/client not provided)
+- `database_name: Optional[str]` - Name of the database (required if database not provided)
 - `sessions_collection_name: str` - Name of sessions collection (default: "interaction_sessions")
 - `profiles_collection_name: str` - Name of profiles collection (default: "user_profiles")
+- `cultural_knowledge_collection_name: str` - Name of cultural knowledge collection (default: "cultural_knowledge")

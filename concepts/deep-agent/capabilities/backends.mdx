@@ -69,7 +69,7 @@ async def main():
             filesystem_backend=backend
         )
         
-        task = Task(description="Save important research findings to /memory/research.txt")
+        task = Task(description="Research latest AI trends. Save important research findings to /memory/research.txt")
         result = await agent.do_async(task)
         
         # Files persist across sessions

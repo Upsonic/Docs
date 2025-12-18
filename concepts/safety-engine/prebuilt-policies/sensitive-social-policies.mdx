@@ -15,7 +15,8 @@ from upsonic.safety_engine.policies import SensitiveSocialBlockPolicy
 
 agent = Agent(
     model="openai/gpt-4o",
-    user_policy=SensitiveSocialBlockPolicy
+    user_policy=SensitiveSocialBlockPolicy,
+    debug=True
 )
 
 task = Task("Inappropriate hate speech content")

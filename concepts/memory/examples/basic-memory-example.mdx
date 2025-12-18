@@ -10,7 +10,8 @@ This example demonstrates a customer support agent that remembers conversations 
 ## Memory Configuration
 
 ```python
-from upsonic.storage import Memory, SqliteStorage
+from upsonic.storage import Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
 
 # Create persistent storage
 storage = SqliteStorage(

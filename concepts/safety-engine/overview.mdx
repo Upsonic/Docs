@@ -50,15 +50,40 @@ Tool safety policies provide two validation points:
 - **Post-execution (`tool_policy_post`)**: Validates tool calls before execution when LLM invokes a tool
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
+from upsonic.tools import tool
 from upsonic.safety_engine.policies.tool_safety_policies import HarmfulToolBlockPolicy
 
 # Apply tool safety policies
 agent = Agent(
     "openai/gpt-4o",
+    name="Test Agent",
     tool_policy_pre=HarmfulToolBlockPolicy,   # Validate at registration
-    tool_policy_post=HarmfulToolBlockPolicy     # Validate before execution
+    tool_policy_post=HarmfulToolBlockPolicy,   # Validate before execution
+    debug=True  # Enable debug to see policy logs
 )
+
+# Create a potentially harmful tool to test tool_policy_pre (registration validation)
+@tool
+def delete_file(filepath: str) -> str:
+    """Delete a file from the system."""
+    import os
+    if os.path.exists(filepath):
+        os.remove(filepath)
+        return f"Deleted {filepath}"
+    return f"File {filepath} not found"
+
+# Create a task object that will test both policies:
+# - tool_policy_pre: Validates the delete_file tool when it's registered
+# - tool_policy_post: Validates the tool call before execution
+task = Task(
+    description="Use the delete_file tool to delete /tmp/test_file.txt",
+    tools=[delete_file]
+)
+
+# Execute the task - this will trigger both tool_policy_pre and tool_policy_post if it passes tool_policy_pre!
+result = agent.do(task)
+print(f"Task result: {result}")
 ```
 
 ## Navigation
