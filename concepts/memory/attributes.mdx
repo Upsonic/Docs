@@ -26,11 +26,12 @@ The Memory system is configured through the `Memory` class, which provides the f
 ## Configuration Example
 
 ```python
-from upsonic import Agent, Task, Memory
+from upsonic import Agent, Task
+from upsonic.storage import Memory
 from upsonic.storage.providers.sqlite import SqliteStorage
 
 # Create storage
-storage = SqliteStorage("sessions", "profiles", "agent_memory.db")
+storage = SqliteStorage(db_file="agent_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
 
 # Create memory with configuration
 memory = Memory(

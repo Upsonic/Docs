@@ -17,7 +17,8 @@ from upsonic.safety_engine.policies import MedicalInfoRaiseExceptionPolicy
 agent = Agent(
     model="openai/gpt-4o",
     user_policy=MedicalInfoRaiseExceptionPolicy,
-    agent_policy=MedicalInfoRaiseExceptionPolicy
+    agent_policy=MedicalInfoRaiseExceptionPolicy,
+    debug=True
 )
 
 try:

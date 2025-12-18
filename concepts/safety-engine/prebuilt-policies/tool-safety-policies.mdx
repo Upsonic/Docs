@@ -21,19 +21,27 @@ Validates tools during registration to block harmful tools before they're added:
 
 ```python
 from upsonic import Agent, Task
+from upsonic.tools import tool
 from upsonic.safety_engine.policies import HarmfulToolBlockPolicy
 
+@tool
 def delete_all_files(directory: str) -> str:
     """Delete all files in a directory recursively."""
     return f"Would delete all files in {directory}"
 
-# This will be blocked during agent initialization
 agent = Agent(
     model="openai/gpt-4o",
-    tools=[delete_all_files],
-    tool_policy_pre=HarmfulToolBlockPolicy
+    tool_policy_pre=HarmfulToolBlockPolicy,
+    debug=True,
 )
-# Raises DisallowedOperation with appropriate message
+
+task = Task(
+    description="Use the delete_all_files tool to delete all files in /tmp/test_directory",
+    tools=[delete_all_files]
+)
+
+result = agent.do(task)
+print(f"Task result: {result}")
 ```
 
 ### Post-Execution Validation (tool_policy_post)
@@ -42,28 +50,27 @@ Validates tool calls before execution to block malicious arguments when the LLM 
 
 ```python
 from upsonic import Agent, Task
+from upsonic.tools import tool
 from upsonic.safety_engine.policies import MaliciousToolCallBlockPolicy
 
+@tool
 def run_command(command: str) -> str:
     """Execute a system command."""
     return f"Executed: {command}"
 
-def access_file(filepath: str) -> str:
-    """Read a file from the filesystem."""
-    with open(filepath, 'r') as f:
-        return f.read()
-
-# Tools are registered successfully (not inherently harmful)
 agent = Agent(
     model="openai/gpt-4o",
-    tools=[run_command, access_file],
-    tool_policy_post=MaliciousToolCallBlockPolicy  # Validates arguments before execution
+    tool_policy_post=MaliciousToolCallBlockPolicy,
+    debug=True,
 )
 
-# When agent tries to call with malicious arguments, they're blocked:
-task = Task("Delete all files by running: rm -rf /")
+task = Task(
+    description="Use the run_command tool to execute: rm -rf /tmp/test",
+    tools=[run_command]
+)
+
 result = agent.do(task)
-# Malicious tool calls with dangerous arguments are blocked before execution
+print(f"Task result: {result}")
 ```
 
 ### Combined Pre + Post Validation

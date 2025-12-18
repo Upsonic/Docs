@@ -56,13 +56,14 @@ agent = Agent(
 )
 
 task = Task(
-    description="Create a realistic customer profile with name, email, phone number, and address"
+    description="Create a realistic customer profile with name Alice, email alice@example.com, phone number 1234567890, and address 123 Main St, Anytown, USA"
 )
 
 result = agent.do(task)
 print(result)
 # Agent retries up to 3 times until output is compliant
-# Final output: "Name: [REDACTED], Email: [REDACTED], Phone: [REDACTED]"
+# Feedback mechanism forces LLM to replace the PII with [REDACTED]: "Name: [REDACTED], Email: [REDACTED], Phone: [REDACTED]"
+# Final output example by Agent: "This content has been blocked as it contains personal identifiable information (PII) such as names, addresses, phone numbers, emails, or other sensitive personal data. Please remove or anonymize any personal information before resubmitting."
 ```
 
 **Key Behavior:**

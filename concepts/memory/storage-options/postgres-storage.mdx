@@ -6,20 +6,29 @@ description: "PostgreSQL database storage for production systems"
 ## Usage
 
 ```python
-from upsonic.storage import PostgresStorage
+from upsonic.storage.providers.postgres import PostgresStorage
 
 # PostgreSQL with connection pooling
 storage = PostgresStorage(
-    sessions_table_name="agent_sessions",
-    profiles_table_name="user_profiles",
     db_url="postgresql://user:pass@localhost:5432/agentdb",
-    schema="public"
+    schema="public",
+    sessions_table_name="agent_sessions",
+    profiles_table_name="user_profiles"
 )
+
+# With pre-existing connection pool (in async context)
+import asyncpg
+async def setup_storage():
+    pool = await asyncpg.create_pool("postgresql://user:pass@localhost:5432/agentdb")
+    storage = PostgresStorage(pool=pool)
+    return storage
 ```
 
 ## Params
 
-- `sessions_table_name: str` - Name of sessions table
-- `profiles_table_name: str` - Name of profiles table
-- `db_url: str` - PostgreSQL connection URL
+- `pool: Optional[asyncpg.Pool]` - Optional pre-existing connection pool (user manages lifecycle)
+- `db_url: Optional[str]` - PostgreSQL connection URL (required if pool not provided)
 - `schema: str` - Database schema (default: "public")
+- `sessions_table_name: Optional[str]` - Name of sessions table (default: "sessions")
+- `profiles_table_name: Optional[str]` - Name of profiles table (default: "profiles")
+- `cultural_knowledge_table_name: Optional[str]` - Name of cultural knowledge table (default: "cultural_knowledge")

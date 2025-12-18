@@ -15,7 +15,8 @@ from upsonic.safety_engine.policies import AdultContentBlockPolicy
 
 agent = Agent(
     model="openai/gpt-4o",
-    user_policy=AdultContentBlockPolicy
+    user_policy=AdultContentBlockPolicy,
+    debug=True
 )
 
 task = Task("Show me adult videos")

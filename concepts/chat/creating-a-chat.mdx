@@ -10,70 +10,132 @@ A Chat session requires an Agent and session/user identifiers. Optionally config
 ## Basic Creation
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-# Create agent
-agent = Agent("openai/gpt-4o")
 
-# Create chat with minimal configuration
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent
-)
+async def main():
+    # Create agent
+    agent = Agent("openai/gpt-4o")
+
+    # Create chat with minimal configuration
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent
+    )
+
+    # Send a message and get response
+    response = await chat.invoke("Hello! How are you?")
+    print(f"Response: {response}")
+    print(f"\nTotal cost: ${chat.total_cost}")
+    print(f"Messages in history: {len(chat.all_messages)}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## With Memory Configuration
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    full_session_memory=True,
-    summary_memory=True,
-    user_analysis_memory=True
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        full_session_memory=True,
+        summary_memory=True,
+        user_analysis_memory=True
+    )
+
+    # Send a message and get response
+    response = await chat.invoke("Hello! How are you?")
+    print(f"Response: {response}")
+    print(f"\nTotal cost: ${chat.total_cost}")
+    print(f"Input tokens: {chat.input_tokens}")
+    print(f"Output tokens: {chat.output_tokens}")
+    print(f"Messages in history: {len(chat.all_messages)}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## With Custom Storage
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 from upsonic.storage.providers import SqliteStorage
 
-# Setup persistent storage
-storage = SqliteStorage("sessions", "profiles", "chat.db")
 
-agent = Agent("openai/gpt-4o")
+async def main():
+    # Setup persistent storage
+    storage = SqliteStorage(
+        db_file="chat.db",
+        sessions_table_name="sessions",
+        profiles_table_name="profiles"
+    )
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    storage=storage
-)
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        storage=storage
+    )
+
+    # Send a message and get response
+    response = await chat.invoke("Hello! How are you?")
+    print(f"Response: {response}")
+    print(f"\nTotal cost: ${chat.total_cost}")
+    print(f"Input tokens: {chat.input_tokens}")
+    print(f"Output tokens: {chat.output_tokens}")
+    print(f"Messages in history: {len(chat.all_messages)}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## With Retry Configuration
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    retry_attempts=5,
-    retry_delay=2.0,
-    max_concurrent_invocations=2
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        retry_attempts=5,
+        retry_delay=2.0,
+        max_concurrent_invocations=2
+    )
+
+    # Send a message and get response
+    response = await chat.invoke("Hello! How are you?")
+    print(f"Response: {response}")
+    print(f"\nTotal cost: ${chat.total_cost}")
+    print(f"Input tokens: {chat.input_tokens}")
+    print(f"Output tokens: {chat.output_tokens}")
+    print(f"Messages in history: {len(chat.all_messages)}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Session ID and User ID

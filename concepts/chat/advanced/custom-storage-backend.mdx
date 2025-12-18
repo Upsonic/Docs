@@ -26,8 +26,12 @@ from upsonic.storage.providers import SqliteStorage
 
 
 async def main():
-    # SQLite storage (sessions_table_name, profiles_table_name, db_file)
-    storage = SqliteStorage("sessions", "profiles", "chat.db")
+    # Setup persistent SQLite storage
+    storage = SqliteStorage(
+        db_file="chat.db",
+        sessions_table_name="sessions",
+        profiles_table_name="profiles"
+    )
 
     agent = Agent("openai/gpt-4o")
 
@@ -49,95 +53,139 @@ if __name__ == "__main__":
 ## Using PostgreSQL Storage
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 from upsonic.storage.providers import PostgresStorage
 
-# PostgreSQL storage
-storage = PostgresStorage(
-    sessions_table_name="sessions",
-    profiles_table_name="profiles",
-    db_url="postgresql://user:pass@localhost:5432/dbname",
-    schema="public"
-)
 
-agent = Agent("openai/gpt-4o")
+async def main():
+    # PostgreSQL storage
+    storage = PostgresStorage(
+        sessions_table_name="sessions",
+        profiles_table_name="profiles",
+        db_url="postgresql://user:pass@localhost:5432/dbname",
+        schema="public"
+    )
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    storage=storage
-)
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        storage=storage
+    )
+
+    # Invoke chat
+    response = await chat.invoke("Hello")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Using MongoDB Storage
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 from upsonic.storage.providers import MongoStorage
 
-# MongoDB storage
-storage = MongoStorage(
-    db_url="mongodb://localhost:27017",
-    database_name="chat_db",
-    sessions_collection_name="sessions",
-    profiles_collection_name="profiles"
-)
 
-agent = Agent("openai/gpt-4o")
+async def main():
+    # MongoDB storage
+    storage = MongoStorage(
+        db_url="mongodb://localhost:27017",
+        database_name="chat_db",
+        sessions_collection_name="sessions",
+        profiles_collection_name="profiles"
+    )
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    storage=storage
-)
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        storage=storage
+    )
+
+    # Invoke chat
+    response = await chat.invoke("Hello")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Using Redis Storage
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 from upsonic.storage.providers import RedisStorage
 
-# Redis storage with TTL
-storage = RedisStorage(
-    prefix="chat",
-    host="localhost",
-    port=6379,
-    expire=3600  # 1 hour TTL
-)
 
-agent = Agent("openai/gpt-4o")
+async def main():
+    # Redis storage with TTL
+    storage = RedisStorage(
+        prefix="chat",
+        host="localhost",
+        port=6379,
+        expire=3600  # 1 hour TTL
+    )
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    storage=storage
-)
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        storage=storage
+    )
+
+    # Invoke chat
+    response = await chat.invoke("Hello")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Using JSON Storage
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 from upsonic.storage.providers import JSONStorage
 
-# JSON file-based storage
-storage = JSONStorage(
-    directory_path="./chat_data",
-    pretty_print=True
-)
 
-agent = Agent("openai/gpt-4o")
+async def main():
+    # JSON file-based storage
+    storage = JSONStorage(
+        directory_path="./chat_data",
+        pretty_print=True
+    )
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    storage=storage
-)
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        storage=storage
+    )
+
+    # Invoke chat
+    response = await chat.invoke("Hello")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Using Mem0 Storage
@@ -173,23 +221,34 @@ chat = Chat(
 ## Using In-Memory Storage
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 from upsonic.storage.providers import InMemoryStorage
 
-# In-memory storage with LRU cache limits
-storage = InMemoryStorage(
-    max_sessions=1000,
-    max_profiles=100
-)
 
-agent = Agent("openai/gpt-4o")
+async def main():
+    # In-memory storage with LRU cache limits
+    storage = InMemoryStorage(
+        max_sessions=1000,
+        max_profiles=100
+    )
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    storage=storage
-)
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        storage=storage
+    )
+
+    # Invoke chat
+    response = await chat.invoke("Hello")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Storage Connection Management
@@ -203,7 +262,13 @@ from upsonic.storage.providers import SqliteStorage
 
 
 async def main():
-    storage = SqliteStorage("sessions", "profiles", "chat.db")
+    # Setup persistent SQLite storage
+    storage = SqliteStorage(
+        db_file="chat.db",
+        sessions_table_name="sessions",
+        profiles_table_name="profiles"
+    )
+    
     agent = Agent("openai/gpt-4o")
 
     chat = Chat(

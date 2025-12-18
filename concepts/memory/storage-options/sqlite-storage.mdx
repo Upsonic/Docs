@@ -6,25 +6,33 @@ description: "Lightweight SQLite database storage"
 ## Usage
 
 ```python
-from upsonic.storage import SqliteStorage
+from upsonic.storage.providers.sqlite import SqliteStorage
 
-# In-memory SQLite (temporary)
+# In-memory SQLite (temporary) - omit db_file for in-memory
 storage = SqliteStorage(
     sessions_table_name="sessions",
-    profiles_table_name="profiles",
-    db_file=None  # Use in-memory database
+    profiles_table_name="profiles"
 )
 
 # Persistent SQLite
 storage = SqliteStorage(
+    db_file="./data/memory.db",
     sessions_table_name="sessions",
-    profiles_table_name="user_profiles",
-    db_file="./data/memory.db"
+    profiles_table_name="user_profiles"
 )
+
+# With pre-existing connection (in async context)
+import aiosqlite
+async def setup_storage():
+    conn = await aiosqlite.connect("memory.db")
+    storage = SqliteStorage(db=conn)
+    return storage
 ```
 
 ## Params
 
-- `sessions_table_name: str` - Name of sessions table
-- `profiles_table_name: str` - Name of profiles table
-- `db_file: str` - Path to SQLite file (None for in-memory)
+- `db: Optional[aiosqlite.Connection]` - Optional pre-existing connection (user manages lifecycle)
+- `db_file: Optional[str]` - Path to SQLite file (default: ":memory:" for in-memory)
+- `sessions_table_name: Optional[str]` - Name of sessions table (default: "sessions")
+- `profiles_table_name: Optional[str]` - Name of profiles table (default: "profiles")
+- `cultural_knowledge_table_name: Optional[str]` - Name of cultural knowledge table (default: "cultural_knowledge")

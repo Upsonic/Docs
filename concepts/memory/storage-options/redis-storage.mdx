@@ -6,7 +6,7 @@ description: "Redis storage for distributed and high-performance systems"
 ## Usage
 
 ```python
-from upsonic.storage import RedisStorage
+from upsonic.storage.providers.redis import RedisStorage
 
 # Redis storage for distributed systems
 storage = RedisStorage(
@@ -14,7 +14,7 @@ storage = RedisStorage(
     port=6379,
     db=0,
     password="your_password",
-    prefix="upsonic:"
+    prefix="upsonic"
 )
 
 # Redis with custom configuration
@@ -23,16 +23,23 @@ storage = RedisStorage(
     port=6379,
     db=1,
     ssl=True,
-    prefix="prod:memory:"
+    prefix="prod:memory",
+    expire=3600
 )
+
+# With pre-existing Redis client
+from redis.asyncio import Redis
+redis_client = Redis(host="localhost", port=6379, decode_responses=True)
+storage = RedisStorage(redis_client=redis_client)
 ```
 
 ## Params
 
-- `prefix: str` - Key prefix for namespacing
-- `host: str` - Redis server hostname (default: "localhost")
-- `port: int` - Redis server port (default: 6379)
-- `db: int` - Redis database number (default: 0)
-- `password: str` - Optional password for authentication
-- `ssl: bool` - Use SSL connection (default: False)
-- `expire: int` - Optional TTL in seconds for keys
+- `redis_client: Optional[Redis]` - Optional pre-existing Redis client (user manages lifecycle)
+- `prefix: str` - Key prefix for namespacing (default: "upsonic")
+- `host: str` - Redis server hostname (default: "localhost", ignored if redis_client provided)
+- `port: int` - Redis server port (default: 6379, ignored if redis_client provided)
+- `db: int` - Redis database number (default: 0, ignored if redis_client provided)
+- `password: Optional[str]` - Optional password for authentication (ignored if redis_client provided)
+- `ssl: bool` - Use SSL connection (default: False, ignored if redis_client provided)
+- `expire: Optional[int]` - Optional TTL in seconds for keys
