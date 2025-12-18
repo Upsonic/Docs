@@ -1,0 +1,209 @@
+---
+title: "Create and Deploy an Agent"
+---
+
+## What is AgentOS?
+
+AgentOS is a comprehensive platform that enables you to build and deploy AI agents with complete observability and management capabilities. With AgentOS, you can:
+
+- **Build and deploy agents** with streamlined workflows
+- **Monitor everything** - track metrics, token costs, API calls, response times, and execution history
+- **Transform agents into APIs** - make your agents API-native and production-ready
+- **Manage deployments** - handle the entire deployment lifecycle from a single interface
+
+AgentOS handles migrations, databases, async job queues, and observability infrastructure automatically, letting you focus on building intelligent agents.
+
+<Frame>
+  ![AgentOS Platform Overview](/images/agentos/installation-overview.png)
+</Frame>
+
+## What is the Agent Framework?
+
+The framework is where you develop your agent, add functionality, and design its behavior. It is a Python-based library that includes several features to help you build production-grade agents. Key capabilities include:
+
+- **Create a knowledge base** to handle large amounts of information
+- **Create safety policies** to prevent hallucinations and unsafe answers
+- **Design your own memory structure** to personalize your agent
+- **Use Unified OCR** to read all kinds of PDFs and images
+
+Just focus on your use case—Upsonic Agent Framework will handle the rest.
+
+## Let's Create an Agent That Gives Information About Stocks
+
+In this agent, the user provides a stock symbol and we ask the agent to analyze it. We’ll use a specific response format to make the output useful and consistent.
+
+### Create an Agent Repository
+
+<Steps>
+  <Step title="1) Pick your GitHub organization">
+    In GitHub, click **New** (top-right) or go to your organization page and click **Repositories** → **New**.
+
+    In the **Owner** dropdown, make sure you select your **Organization** (not your personal account).
+  </Step>
+  <Step title="2) Fill repo details (Name / Visibility)">
+    Choose a repository name (e.g. `stock-agent`).
+
+    Select **Visibility**:
+
+    - **Private**: Only accessible within your org (recommended).
+    - **Public**: Visible to everyone.
+
+    Optionally add a short **Description**.
+  </Step>
+  <Step title="3) Add starter files (README is required)">
+    **Must do:** check **Add a README file** so GitHub creates the repository with an initial commit.
+
+    Optionally:
+
+    - **.gitignore**: choose Python.
+    - **License**: choose the license your org uses.
+  </Step>
+  <Step title="4) Create the repo and clone locally">
+    Click **Create repository**.
+
+    Then on the repo page: **Code** → copy SSH or HTTPS URL and clone locally:
+
+    `git clone <repo-url>`
+  </Step>
+</Steps>
+
+### Install Upsonic CLI
+
+We’ll use `uv` to manage the virtual environment and install the Upsonic CLI.
+
+1. Create a virtual environment:
+
+```bash
+uv venv
+```
+
+2. Install Upsonic CLI into the environment:
+
+```bash
+uv pip install upsonic
+```
+
+3. Verify the CLI works by printing the help output:
+
+```bash
+uv run upsonic --help
+```
+
+![Screenshot2025 12 18at4 53 50PM](/images/Screenshot2025-12-18at4.53.50PM.png)
+
+### Create Agent Project With "upsonic init"
+
+1. Initialize a new agent project:
+
+```bash
+uv run upsonic init
+```
+
+2. When prompted, type your agent name into the input (e.g. `stock-agent`) and press Enter.
+
+![Screenshot2025 12 18at5 17 44PM](/images/Screenshot2025-12-18at5.17.44PM.png)
+
+3. Install the project dependencies (required before running locally):
+
+```bash
+uv run upsonic install
+```
+
+### Code your Inputs and Outputs
+
+Now define what your agent accepts as input and what it returns as output by editing `upsonic_configs.json`.
+
+1. Open `upsonic_configs.json` and update the basic metadata:
+   - **`agent_name`**: Your agent’s display name
+   - **`description`**: What the agent does (one sentence is enough)
+   - **`entrypoints.api_file`**: The python file that contains your agent entrypoint (e.g. `main.py`)
+2. Define your input(s) under `input_schema.inputs`:
+   - Add one key per input field (example: `user_query`)
+   - Set **`type`**, **`description`**, and **`required`**
+   - **`type options`**: `string`, `integer`, `dict`
+3. Define your output(s) under `output_schema`:
+   - Add one key per output field your agent returns (example: `bot_response`)
+   - Set **`type`** and **`description`**
+   - **`type options`**: `string`, `integer`, `dict`
+
+Here is the relevant part of the config you will edit:
+
+```json
+{
+  "agent_name": "Safety Engine Feedback Loop",
+  "description": "Upsonic AI Agent that uses the Safety Engine Feedback Loop to ensure the output is compliant with the policy",
+  "entrypoints": {
+    "api_file": "main.py"
+  },
+  "input_schema": {
+    "inputs": {
+      "user_query": {
+        "type": "string",
+        "description": "User's input question for the agent",
+        "required": true,
+        "default": null
+      }
+    }
+  },
+  "output_schema": {
+    "bot_response": {
+      "type": "string",
+      "description": "Agent's generated response"
+    }
+  }
+}
+```
+
+### Test in your local with "upsonic run"
+
+1. Run the agent locally:
+
+```bash
+uv run upsonic run
+```
+
+And then go to http://localhost:8000/docs .
+
+![Screenshot2025 12 18at5 19 25PM](/images/Screenshot2025-12-18at5.19.25PM.png)
+
+![Screenshot2025 12 18at5 20 11PM](/images/Screenshot2025-12-18at5.20.11PM.png)
+
+### Deploy to Upsonic AgentOS
+
+<Steps>
+  <Step title="1) Start a new deployment">
+    From the main dashboard, click **New Agent Deployment**.
+
+    ![Screenshot2025 12 18at5 22 15PM](/images/Screenshot2025-12-18at5.22.15PM.png)
+  </Step>
+  <Step title="2) Choose repository source">
+    Click **Deploy Existing Repositories**.
+
+    ![Screenshot2025 12 18at5 23 36PM](/images/Screenshot2025-12-18at5.23.36PM.png)
+  </Step>
+  <Step title="3) Select your agent repository">
+    Find and click the agent repository you created (the repo you want to deploy).
+  </Step>
+  <Step title="4) Configure LLM Connection">
+    Set up your **LLM Connection** (provider + credentials) for this deployment.
+
+    ![Screenshot2025 12 18at5 24 47PM](/images/Screenshot2025-12-18at5.24.47PM.png)
+  </Step>
+  <Step title="5) Deploy">
+    Scroll to the bottom and click **Deploy**.
+  </Step>
+</Steps>
+
+### Use your Agent
+
+<Steps>
+  <Step title="1) Open the deployed agent">
+    Go to your agent from the AgentOS dashboard / agents list.
+  </Step>
+  <Step title="2) Find the API URL">
+    In the agent menu, locate the **API URL** and click it.
+  </Step>
+  <Step title="3) Use the endpoint + Swagger docs">
+    You will see an API endpoint page that includes the **Swagger API documentation**.
+  </Step>
+</Steps>
