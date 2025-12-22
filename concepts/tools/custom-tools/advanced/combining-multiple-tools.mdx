@@ -49,11 +49,84 @@ task = Task(
 )
 
 agent = Agent(model="openai/gpt-4o", name="Main Agent")
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
-## Parameters
+## Supported Tool Types
 
-- Tools list accepts: functions, ToolKit instances, class instances, and agent instances
-- All tools are registered and available to the agent during execution
-- Tools can be called in any order based on the agent's reasoning
+The tools list accepts any combination of:
+
+| Type | Example | Registered As |
+|------|---------|---------------|
+| Function tool | `@tool` decorated function | Function name |
+| ToolKit instance | `DataProcessor()` | All `@tool` methods |
+| Class instance | `Calculator()` | All public methods |
+| Agent instance | `analyzer_agent` | `ask_{agent_name}` |
+| MCP Handler | `MCPHandler(...)` | All MCP-provided tools |
+| KnowledgeBase | `KnowledgeBase(...)` | `search_{kb_name}` |
+| Builtin tools | `WebSearchTool()` | Provider-specific |
+
+## Deduplication
+
+When combining tools, duplicate registrations are automatically ignored:
+
+```python
+from upsonic.tools import tool
+
+@tool
+def shared_tool(x: int) -> int:
+    """A tool used by multiple tasks."""
+    return x * 2
+
+# Adding the same tool multiple times is safe
+task = Task(
+    description="Process data",
+    tools=[shared_tool, shared_tool, DataProcessor()]  # shared_tool registered once
+)
+```
+
+## Tool Name Conflicts
+
+If multiple tools have the same name, the last one registered wins:
+
+```python
+class Kit1(ToolKit):
+    @tool
+    def process(self, x: str) -> str:
+        """Process from Kit1."""
+        return f"kit1: {x}"
+
+class Kit2(ToolKit):
+    @tool
+    def process(self, x: str) -> str:
+        """Process from Kit2."""
+        return f"kit2: {x}"
+
+# Warning: Both have 'process' - Kit2's version overwrites Kit1's
+task = Task(tools=[Kit1(), Kit2()])  # Only Kit2.process is available
+```
+
+**Solution**: Use unique method names or separate tasks.
+
+## Best Practices
+
+1. **Group related tools**: Combine tools that work together for a task
+2. **Avoid name conflicts**: Use unique, descriptive tool names
+3. **Consider performance**: More tools = more tokens in the prompt
+4. **Remove unused tools**: Keep the tool set focused for better agent performance
+
+```python
+# Good: Focused tool set for a specific task
+task = Task(
+    description="Analyze sales data and create a report",
+    tools=[database_tools, chart_generator, report_writer]
+)
+
+# Avoid: Too many unrelated tools
+task = Task(
+    description="Analyze sales data",
+    tools=[database_tools, email_tools, calendar_tools, 
+           chart_generator, weather_api, translation_tools]  # Unfocused
+)
+```

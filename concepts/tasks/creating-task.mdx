@@ -10,16 +10,21 @@ Tasks in Upsonic are created directly in code using the `Task` class constructor
 ## Basic Task Creation
 
 ```python
-from upsonic import Task
+from upsonic import Agent, Task
 
 # Simple task with just a description
+agent = Agent(model="openai/gpt-4o")
 task = Task(description="What is the capital of France?")
+
+# Execute task
+result = agent.do(task)
+print(result)
 ```
 
 ## Task with Tools
 
 ```python
-from upsonic import Task
+from upsonic import Agent, Task
 from upsonic.tools import tool
 
 # Create a simple tool
@@ -32,16 +37,22 @@ def calculator(operation: str, a: float, b: float) -> str:
         return f"Result: {a * b}"
     return "Invalid operation"
 
-# Create task with tools
+# Create agent and task with tools
+agent = Agent(model="openai/gpt-4o")
 task = Task(
     description="Calculate 10 + 5 using the calculator tool",
     tools=[calculator]
 )
+
+# Execute task
+result = agent.do(task)
+print(result)
 ```
 
 ## Task with Response Format
 
 ```python
+from upsonic import Agent, Task
 from pydantic import BaseModel
 
 class AnalysisResult(BaseModel):
@@ -49,25 +60,35 @@ class AnalysisResult(BaseModel):
     confidence: float
     recommendations: list[str]
 
-# Task with structured response
+# Create agent and task with structured response
+agent = Agent(model="openai/gpt-4o")
 task = Task(
-    description="Analyze the provided data and provide structured results",
+    description="Analyze the current state of renewable energy and provide structured results",
     response_format=AnalysisResult
 )
+
+# Execute task
+result = agent.do(task)
+print(f"Summary: {result.summary}")
+print(f"Confidence: {result.confidence}")
+print(f"Recommendations: {result.recommendations}")
 ```
 
 ## Task with Advanced Configuration
 
 ```python
+from upsonic import Agent, Task
+
 def validate_output(result):
     """Custom guardrail function."""
     if isinstance(result, str) and len(result) > 10:
         return True
     return False
 
-# Task with advanced features
+# Create agent and task with advanced features
+agent = Agent(model="openai/gpt-4o")
 task = Task(
-    description="Generate a comprehensive report",
+    description="Generate a comprehensive report on AI trends",
     enable_cache=True,
     cache_method="vector_search",
     cache_threshold=0.8,
@@ -76,6 +97,10 @@ task = Task(
     guardrail_retries=3,
     enable_thinking_tool=True
 )
+
+# Execute task
+result = agent.do(task)
+print(result)
 ```
 
 ## Best Practices

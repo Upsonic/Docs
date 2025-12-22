@@ -37,13 +37,16 @@ config = OCRConfig(
 ocr = OCR(TesseractOCR, config=config)
 
 # Extract text from document
-text = ocr.get_text('document.pdf')
-print(text)
+    text = ocr.get_text('document.pdf')
+    print(text)
 ```
 
 ## Configuration Example 2
 
 ```python
+from upsonic.ocr import OCR
+from upsonic.ocr.tesseract import TesseractOCR
+
 # Method 2: Direct parameters
 ocr = OCR(
     TesseractOCR,
@@ -54,6 +57,6 @@ ocr = OCR(
 )
 
 # Extract text
-text = ocr.get_text('invoice.png')
-print(text)
+    text = ocr.get_text('invoice.png')
+    print(text)
 ```

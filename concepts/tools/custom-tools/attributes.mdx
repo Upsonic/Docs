@@ -19,8 +19,60 @@ Custom tools support comprehensive configuration through the `@tool` decorator:
 | `cache_results` | bool | `False` | Enable result caching |
 | `cache_dir` | str \| None | `None` | Directory for cache storage |
 | `cache_ttl` | int \| None | `None` | Cache time-to-live in seconds |
-| `tool_hooks` | Dict \| None | `None` | Before/after execution hooks |
+| `tool_hooks` | ToolHooks \| None | `None` | Before/after execution hooks |
 | `max_retries` | int | `0` | Maximum retry attempts |
 | `timeout` | int \| None | `None` | Execution timeout in seconds |
 | `strict` | bool | `False` | Enforce strict JSON schema validation |
 | `docstring_format` | str | `"auto"` | Docstring parsing format: 'google', 'numpy', 'sphinx', 'auto' |
+| `require_parameter_descriptions` | bool | `True` | Require descriptions for all parameters in docstring |
+
+## Example Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolHooks
+
+# Define hooks
+def before_search(query: str):
+    print(f"Searching for: {query}")
+    return {"logged_query": query}
+
+def after_search(result):
+    print(f"Found {len(result)} results")
+    return {"result_count": len(result)}
+
+hooks = ToolHooks(before=before_search, after=after_search)
+
+@tool(
+    requires_confirmation=True,
+    timeout=30,
+    max_retries=2,
+    cache_results=True,
+    cache_ttl=3600,
+    tool_hooks=hooks,
+    sequential=True
+)
+def search_database(query: str, limit: int = 10) -> list:
+    """
+    Search the database for matching records.
+    
+    Args:
+        query: Search query string
+        limit: Maximum number of results to return
+    
+    Returns:
+        List of matching records
+    """
+    return [f"Record {i}: Found '{query}' in database" for i in range(1, limit + 1)] 
+
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Search the database for 'Upsonic' and return the top 5 results",
+    tools=[search_database]
+)
+
+# Execute
+result = agent.do(task)
+print(result)
+```

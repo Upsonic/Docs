@@ -25,8 +25,32 @@ agent = Agent("openai/gpt-4o", tools=[add])
 ### Dynamically
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
+
+@tool
+def divide(a: int, b: int) -> float:
+    """Divide two numbers."""
+    return a / b
+
+@tool
+def subtract(a: int, b: int) -> int:
+    """Subtract two numbers."""
+    return a - b
+
+agent = Agent(model="openai/gpt-4o")
 agent.add_tools(multiply)              # Single tool
 agent.add_tools([divide, subtract])    # Multiple tools
+
+# Execute task with added tools
+task = Task(description="What is 10 multiplied by 5?")
+result = agent.do(task)
+print(result)
 ```
 
 ## Removing Tools
@@ -57,54 +81,97 @@ agent.remove_tools(["add", multiply])
 ### Function Tools
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
 @tool
 def search(query: str) -> str:
+    """Search for information."""
     return f"Results: {query}"
 
+agent = Agent(model="openai/gpt-4o")
 agent.add_tools(search)
+
+# Execute task with search tool
+task = Task(description="Search for Python tutorials")
+result = agent.do(task)
+print(result)
+
+# Remove tool when no longer needed
 agent.remove_tools("search")        # By name
-agent.remove_tools(search)         # By object
+# Or: agent.remove_tools(search)    # By object
 ```
 
 ### ToolKit
 
 ```python
-from upsonic.tools import ToolKit
+from upsonic import Agent, Task
+from upsonic.tools import ToolKit, tool
 
 class MathToolKit(ToolKit):
     @tool
     def add(self, a: int, b: int) -> int:
+        """Add two numbers."""
         return a + b
 
 toolkit = MathToolKit()
+agent = Agent(model="openai/gpt-4o")
 agent.add_tools(toolkit)
 
-agent.remove_tools("add")          # Remove method (keeps toolkit)
-agent.remove_tools(toolkit)        # Remove entire toolkit
+# Execute task
+task = Task(description="What is 5 + 3?")
+result = agent.do(task)
+print(result)
+
+# Remove method (keeps toolkit) or remove entire toolkit
+# agent.remove_tools("add")        # Remove method only
+# agent.remove_tools(toolkit)      # Remove entire toolkit
 ```
 
 ### Regular Class (Auto-tools)
 
 ```python
+from upsonic import Agent, Task
+
 class Calculator:
     def add(self, a: int, b: int) -> int:
+        """Add two numbers."""
         return a + b
 
 calc = Calculator()
+agent = Agent(model="openai/gpt-4o")
 agent.add_tools(calc)
 
-agent.remove_tools("add")          # Remove method (keeps class)
-agent.remove_tools(calc)           # Remove entire class
+# Execute task
+task = Task(description="What is 7 + 8?")
+result = agent.do(task)
+print(result)
+
+# Remove method (keeps class) or remove entire class
+# agent.remove_tools("add")        # Remove method only
+# agent.remove_tools(calc)         # Remove entire class
 ```
 
 ### Agent as Tool
 
 ```python
-math_agent = Agent("openai/gpt-4o", name="Math Agent")
+from upsonic import Agent, Task
+
+# Create a math agent that can be used as a tool
+math_agent = Agent(model="openai/gpt-4o", name="Math Agent")
+
+# Main agent that uses math_agent as a tool
+agent = Agent(model="openai/gpt-4o")
 agent.add_tools(math_agent)
 
-agent.remove_tools(math_agent)              # By object
-agent.remove_tools("ask_math_agent")        # By name (auto-prefixed)
+# Execute task - will delegate to math_agent when needed
+task = Task(description="Ask the Math Agent to solve 15 * 4")
+result = agent.do(task)
+print(result)
+
+# Remove agent tool
+# agent.remove_tools(math_agent)          # By object
+# agent.remove_tools("ask_math_agent")    # By name (auto-prefixed)
 ```
 
 ### MCP Handler
@@ -137,14 +204,30 @@ agent.remove_tools(plan_and_execute)
 Tasks have the same tool manager that requires the agent reference:
 
 ```python
-from upsonic import Task
+from upsonic import Agent, Task
+from upsonic.tools import tool
 
-task = Task(description="Calculate", tools=[add])
+@tool
+def add(a: int, b: int) -> int:
+    """Add two numbers."""
+    return a + b
+
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
+
+agent = Agent(model="openai/gpt-4o")
+task = Task(description="Calculate 5 + 3", tools=[add])
 task.add_tools(multiply)
 
-task.remove_tools("add", agent)         # By name
-task.remove_tools(multiply, agent)      # By object
-task.remove_tools([add, "multiply"], agent)  # Mixed
+result = agent.do(task)
+print(result)
+
+# Remove tools (requires agent reference)
+# task.remove_tools("add", agent)         # By name
+# task.remove_tools(multiply, agent)      # By object
+# task.remove_tools([add, "multiply"], agent)  # Mixed
 ```
 
 ## Key Points
@@ -154,4 +237,178 @@ task.remove_tools([add, "multiply"], agent)  # Mixed
 - **Remove by name**: Works for all tool types
 - **Remove by object**: Removes entire container (ToolKit/Class/MCP/Agent) or single function
 - **Mixed removal**: Combine names and objects in one call
+
+## Deduplication
+
+Upsonic automatically prevents duplicate tool registration:
+
+```python
+from upsonic import Agent
+from upsonic.tools import tool
+
+@tool
+def add(a: int, b: int) -> int:
+    """Add two numbers."""
+    return a + b
+
+agent = Agent("openai/gpt-4o")
+
+# First registration
+agent.add_tools(add)
+
+# Subsequent registrations are ignored (no re-processing)
+agent.add_tools(add)       # Ignored - same object
+agent.add_tools([add])     # Ignored - same object
+agent.add_tools([add, add])  # Only registered once
+
+print(len(agent.registered_agent_tools))  # Output: 1
+```
+
+### Re-adding After Removal
+
+After removing a tool, you can re-add it:
+
+```python
+from upsonic import Agent
+from upsonic.tools import tool, ToolKit
+
+class MathKit(ToolKit):
+    @tool
+    def add(self, a: int, b: int) -> int:
+        """Add two numbers."""
+        return a + b
+
+kit = MathKit()
+agent = Agent("openai/gpt-4o")
+
+# Add toolkit
+agent.add_tools(kit)
+print("add" in agent.registered_agent_tools)  # True
+
+# Remove entire toolkit
+agent.remove_tools(kit)
+print("add" in agent.registered_agent_tools)  # False
+
+# Re-add toolkit (works because tracking was cleaned up)
+agent.add_tools(kit)
+print("add" in agent.registered_agent_tools)  # True
+```
+
+## Best Practices
+
+### 1. Use Descriptive Names
+
+Tool names come from function/method names. Use clear, descriptive names:
+
+```python
+# Good
+@tool
+def search_customer_database(query: str) -> str:
+    """Search for customers by name or ID."""
+    ...
+
+# Avoid
+@tool
+def search(q: str) -> str:
+    """Search."""
+    ...
+```
+
+### 2. Provide Comprehensive Docstrings
+
+Docstrings become the tool description shown to the LLM:
+
+```python
+@tool
+def calculate_shipping(
+    weight_kg: float,
+    destination_country: str,
+    express: bool = False
+) -> dict:
+    """
+    Calculate shipping cost for a package.
+    
+    Args:
+        weight_kg: Package weight in kilograms (must be > 0)
+        destination_country: ISO 3166-1 alpha-2 country code (e.g., "US", "DE")
+        express: Whether to use express shipping (2-3 days vs 7-10 days)
+    
+    Returns:
+        Dictionary with 'cost', 'currency', and 'estimated_days'
+    """
+    ...
+```
+
+### 3. Group Related Tools
+
+Use ToolKit for related tools that share state:
+
+```python
+from upsonic.tools import ToolKit, tool
+
+class DatabaseToolKit(ToolKit):
+    def __init__(self, connection_string: str):
+        self.conn = connect(connection_string)
+    
+    @tool
+    def query(self, sql: str) -> list:
+        """Execute a SQL query."""
+        return self.conn.execute(sql).fetchall()
+    
+    @tool
+    def insert(self, table: str, data: dict) -> int:
+        """Insert a row into a table."""
+        ...
+```
+
+### 4. Remove Unused Tools
+
+Remove tools when no longer needed to keep the LLM focused:
+
+```python
+# After completing data import, remove import tools
+agent.remove_tools(["import_csv", "validate_schema"])
+
+# Keep only the tools needed for the next phase
+```
+
+## KnowledgeBase as Tool
+
+KnowledgeBase instances can be used as tools for RAG capabilities. See [Using KnowledgeBase as Tool](/concepts/knowledgebase/using-as-tool) for details.
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+
+kb = KnowledgeBase(
+    sources=["docs/"],
+    name="documentation",  # Important for unique tool naming
+    # ... other config
+)
+
+task = Task(
+    description="Find information about authentication",
+    tools=[kb]  # Registers search_documentation tool
+)
+```
+
+## Inspecting Registered Tools
+
+Check what tools are currently registered:
+
+```python
+# Agent tools
+print(agent.registered_agent_tools.keys())
+# dict_keys(['add', 'multiply', 'search_documentation'])
+
+# Task tools (after execution)
+print(task.registered_task_tools.keys())
+
+# Builtin tools (WebSearchTool, etc.)
+print([t.unique_id for t in agent.agent_builtin_tools])
+# ['web_search', 'code_execution']
+
+# Tool definitions with schemas
+for tool_def in agent.tool_manager.get_tool_definitions():
+    print(f"{tool_def.name}: {tool_def.description}")
+```
 

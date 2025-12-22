@@ -6,9 +6,11 @@ description: "Redis storage for distributed and high-performance systems"
 ## Usage
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory
 from upsonic.storage.providers.redis import RedisStorage
 
-# Redis storage for distributed systems
+# Create Redis storage and memory
 storage = RedisStorage(
     host="localhost",
     port=6379,
@@ -16,6 +18,35 @@ storage = RedisStorage(
     password="your_password",
     prefix="upsonic"
 )
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    model="openai/gpt-4o"
+)
+
+# Create agent with memory
+agent = Agent("openai/gpt-4o", memory=memory)
+
+# First conversation
+task1 = Task("My name is Alice and I love Python")
+result1 = agent.do(task1)
+
+# Second conversation - agent remembers
+task2 = Task("What's my name and favorite language?")
+result2 = agent.do(task2)
+print(result2)  # Output: Your name is Alice and you love Python
+```
+
+### Redis with Custom Configuration
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory
+from upsonic.storage.providers.redis import RedisStorage
 
 # Redis with custom configuration
 storage = RedisStorage(
@@ -26,11 +57,46 @@ storage = RedisStorage(
     prefix="prod:memory",
     expire=3600
 )
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=True
+)
 
-# With pre-existing Redis client
+agent = Agent("openai/gpt-4o", memory=memory)
+
+task1 = Task("Help me with caching strategies")
+result1 = agent.do(task1)
+
+task2 = Task("Why is Redis good for this?")
+result2 = agent.do(task2)
+print(result2)
+```
+
+### With Pre-existing Redis Client
+
+```python
 from redis.asyncio import Redis
+from upsonic import Agent, Task
+from upsonic.storage import Memory
+from upsonic.storage.providers.redis import RedisStorage
+
 redis_client = Redis(host="localhost", port=6379, decode_responses=True)
 storage = RedisStorage(redis_client=redis_client)
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=True
+)
+
+agent = Agent("openai/gpt-4o", memory=memory)
+
+task1 = Task("Explain Redis data structures")
+result1 = agent.do(task1)
+
+task2 = Task("Which one is best for a queue?")
+result2 = agent.do(task2)
+print(result2)
 ```
 
 ## Params

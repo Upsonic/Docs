@@ -6,22 +6,65 @@ description: "PostgreSQL database storage for production systems"
 ## Usage
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory
 from upsonic.storage.providers.postgres import PostgresStorage
 
-# PostgreSQL with connection pooling
+# Create PostgreSQL storage and memory
 storage = PostgresStorage(
     db_url="postgresql://user:pass@localhost:5432/agentdb",
     schema="public",
     sessions_table_name="agent_sessions",
     profiles_table_name="user_profiles"
 )
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    model="openai/gpt-4o"
+)
 
-# With pre-existing connection pool (in async context)
+# Create agent with memory
+agent = Agent("openai/gpt-4o", memory=memory)
+
+# First conversation
+task1 = Task("My name is Alice and I love Python")
+result1 = agent.do(task1)
+
+# Second conversation - agent remembers
+task2 = Task("What's my name and favorite language?")
+result2 = agent.do(task2)
+print(result2)  # Output: Your name is Alice and you love Python
+```
+
+### With Pre-existing Connection Pool
+
+```python
 import asyncpg
-async def setup_storage():
+from upsonic import Agent, Task
+from upsonic.storage import Memory
+from upsonic.storage.providers.postgres import PostgresStorage
+
+async def setup_and_run():
     pool = await asyncpg.create_pool("postgresql://user:pass@localhost:5432/agentdb")
     storage = PostgresStorage(pool=pool)
-    return storage
+    memory = Memory(
+        storage=storage,
+        session_id="session_001",
+        full_session_memory=True
+    )
+    
+    agent = Agent("openai/gpt-4o", memory=memory)
+    
+    task1 = Task("Explain PostgreSQL indexing")
+    result1 = agent.do(task1)
+    
+    task2 = Task("What are the benefits of using it?")
+    result2 = agent.do(task2)
+    return result2
 ```
 
 ## Params

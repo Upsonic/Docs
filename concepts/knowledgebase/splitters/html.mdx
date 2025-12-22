@@ -21,9 +21,10 @@ pip install beautifulsoup4 lxml
 
 ```python
 from upsonic import Agent, Task, KnowledgeBase
-from upsonic.loaders import HTMLLoader, HTMLLoaderConfig
+from upsonic.loaders.html import HTMLLoader
+from upsonic.loaders.config import HTMLLoaderConfig
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
-from upsonic.text_splitter import HTMLChunker, HTMLChunkingConfig
+from upsonic.text_splitter.html_chunker import HTMLChunker, HTMLChunkingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
 
 # Configure splitter

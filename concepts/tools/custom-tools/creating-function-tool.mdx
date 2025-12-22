@@ -37,5 +37,98 @@ task = Task(
 agent = Agent(model="openai/gpt-4o", name="Calculator Agent")
 
 # Execute
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
+
+## Async Functions
+
+Async functions are fully supported for I/O-bound operations:
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+import httpx
+
+@tool
+async def fetch_weather(city: str) -> dict:
+    """
+    Fetch current weather for a city.
+    
+    Args:
+        city: City name (e.g., "London", "New York")
+    
+    Returns:
+        Weather data including temperature and conditions
+    """
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"https://api.weather.com/v1/current?city={city}"
+        )
+        return response.json()
+
+task = Task(
+    description="What's the weather in Tokyo?",
+    tools=[fetch_weather]
+)
+
+agent = Agent(model="openai/gpt-4o")
+result = await agent.do_async(task)  # Use do_async for async tools
+print(result)
+```
+
+## Sync and Async Versions
+
+For libraries that need both sync and async support, create both versions:
+
+```python
+from upsonic.tools import tool
+
+@tool
+def search(query: str) -> list:
+    """
+    Search for items (sync version).
+    
+    Args:
+        query: Search query string
+    
+    Returns:
+        List of matching results
+    """
+    # Sync implementation
+    return sync_search(query)
+
+@tool
+async def asearch(query: str) -> list:
+    """
+    Search for items (async version).
+    
+    Args:
+        query: Search query string
+    
+    Returns:
+        List of matching results
+    """
+    # Async implementation
+    return await async_search(query)
+```
+
+## Tool Configuration
+
+Configure tool behavior using decorator parameters:
+
+```python
+from upsonic.tools import tool
+
+@tool(
+    requires_confirmation=True,  # Ask user before executing
+    timeout=30,                  # 30 second timeout
+    max_retries=3,               # Retry up to 3 times on failure
+    cache_results=True           # Cache results
+)
+def expensive_operation(data: str) -> str:
+    """Perform an expensive operation that should be cached."""
+    return process(data)
+```
+
+See [Tool Attributes](/concepts/tools/custom-tools/attributes) for all configuration options.

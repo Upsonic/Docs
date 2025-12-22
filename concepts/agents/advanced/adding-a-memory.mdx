@@ -44,15 +44,21 @@ memory = Memory(
 
 # Create agent with memory
 agent = Agent(
+    model="openai/gpt-4o",
     name="BankingAssistant",
     memory=memory,
     feed_tool_call_results=True
 )
 
-task = Task("Calculate 5 + 3")
+task = Task("My name is Alice")
 
 result = agent.do(task)
 print(result)
+
+task2 = Task("What is my name?")
+
+result2 = agent.do(task2)
+print(result2)
 ```
 
 ## Memory Configuration Options
@@ -60,16 +66,43 @@ print(result)
 ### Basic Memory Setup
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
+
+# Create storage backend
+storage = SqliteStorage(db_file="basic_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+
+# Basic memory configuration
 memory = Memory(
     storage=storage,
     session_id="session_001",
     user_id="user_001"
 )
+
+# Create agent with memory
+agent = Agent(
+    model="openai/gpt-4o",
+    memory=memory
+)
+
+# Test memory
+task = Task("Hello, my name is Bob")
+result = agent.do(task)
+print(result)
 ```
 
 ### Full Memory Configuration
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
+from upsonic.models.openai import OpenAIChatModel
+
+# Create storage and model
+storage = SqliteStorage(db_file="full_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+model = OpenAIChatModel("gpt-4o-mini")
+
+# Full memory configuration with all options
 memory = Memory(
     storage=storage,
     session_id="advanced_session",
@@ -85,6 +118,18 @@ memory = Memory(
     feed_tool_call_results=False,    # Include tool results in memory
     user_memory_mode='update'        # 'update' or 'replace' user profiles
 )
+
+# Create agent with full memory
+agent = Agent(
+    model="openai/gpt-4o",
+    name="AdvancedMemoryAgent",
+    memory=memory
+)
+
+# Test conversation with memory
+task = Task("I prefer conservative investments and my goal is retirement savings")
+result = agent.do(task)
+print(result)
 ```
 
 ### Memory Types Explained
@@ -93,29 +138,71 @@ memory = Memory(
 Stores complete conversation history for context retrieval:
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
+
+# Create storage
+storage = SqliteStorage(db_file="session_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+
+# Memory with full session history
 memory = Memory(
     storage=storage,
     session_id="session_001",
     full_session_memory=True
 )
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", memory=memory)
+
+# First message
+result1 = agent.do(Task("My favorite color is blue"))
+print(result1)
+
+# Second message - agent should remember the first
+result2 = agent.do(Task("What is my favorite color?"))
+print(result2)
 ```
 
 #### Summary Memory
 Automatically generates and maintains conversation summaries:
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
+from upsonic.models.openai import OpenAIChatModel
+
+# Create storage
+storage = SqliteStorage(db_file="summary_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+
+# Memory with automatic summarization
 memory = Memory(
     storage=storage,
     session_id="session_001",
     summary_memory=True,
     model=OpenAIChatModel("gpt-4o-mini")
 )
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", memory=memory)
+
+# Have a conversation that will be summarized
+task = Task("Tell me about the benefits of cloud computing")
+result = agent.do(task)
+print(result)
 ```
 
 #### User Analysis Memory
 Builds and maintains user profiles based on interactions:
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
+from upsonic.models.openai import OpenAIChatModel
+
+# Create storage
+storage = SqliteStorage(db_file="user_analysis_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+
+# Memory with user profile analysis
 memory = Memory(
     storage=storage,
     session_id="session_001",
@@ -123,6 +210,14 @@ memory = Memory(
     user_analysis_memory=True,
     model=OpenAIChatModel("gpt-4o-mini")
 )
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", memory=memory)
+
+# Share user preferences
+task = Task("I'm a software developer interested in AI and machine learning")
+result = agent.do(task)
+print(result)
 ```
 
 ## Using Memory in Task Execution
@@ -130,7 +225,27 @@ memory = Memory(
 Once configured, memory automatically integrates with your agent:
 
 ```python
-from upsonic import Task
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
+from upsonic.models.openai import OpenAIChatModel
+
+# Setup storage and memory
+storage = SqliteStorage(db_file="task_execution_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+memory = Memory(
+    storage=storage,
+    session_id="investment_session",
+    user_id="investor_001",
+    full_session_memory=True,
+    user_analysis_memory=True,
+    model=OpenAIChatModel("gpt-4o-mini")
+)
+
+# Create agent with memory
+agent = Agent(
+    model="openai/gpt-4o",
+    name="InvestmentAdvisor",
+    memory=memory
+)
 
 # Create a task - memory will automatically be used
 task = Task(
@@ -138,7 +253,8 @@ task = Task(
 )
 
 # Execute with memory context
-result = agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 The memory system will:
@@ -152,22 +268,72 @@ The memory system will:
 ### Accessing Memory Data
 
 ```python
-# Access user profile
-user_profile = await agent.memory.storage.read_async("user_001", UserProfile)
+import asyncio
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
+from upsonic.storage.session.sessions import InteractionSession, UserProfile
+from upsonic.models.openai import OpenAIChatModel
 
-# Access session data
-session_data = await agent.memory.storage.read_async("session_001", InteractionSession)
+async def main():
+    # Create storage and memory
+    storage = SqliteStorage(db_file="access_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+    memory = Memory(
+        storage=storage,
+        session_id="session_001",
+        user_id="user_001",
+        full_session_memory=True,
+        user_analysis_memory=True,
+        model=OpenAIChatModel("gpt-4o-mini")
+    )
+
+    # Create agent with memory
+    agent = Agent(model="openai/gpt-4o", memory=memory)
+
+    # First, have a conversation to build memory
+    task = Task("My name is John and I'm interested in technology stocks")
+    result = agent.do(task)
+    print("Agent response:", result)
+
+    # Access user profile via agent.memory.storage
+    user_profile = await agent.memory.storage.read_async("user_001", UserProfile)
+    print("User profile:", user_profile)
+
+    # Access session data via agent.memory.storage
+    session_data = await agent.memory.storage.read_async("session_001", InteractionSession)
+    print("Session messages count:", len(session_data.chat_history) if session_data and session_data.chat_history else 0)
+
+# Run the async function
+asyncio.run(main())
 ```
 
 ### Memory Configuration in Agent
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
+
+# Create storage and memory
+storage = SqliteStorage(db_file="advisor_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+memory = Memory(
+    storage=storage,
+    session_id="advisor_session",
+    user_id="client_001",
+    full_session_memory=True
+)
+
+# Create agent with memory configuration
 agent = Agent(
+    model="openai/gpt-4o",
     name="FinancialAdvisor",
     memory=memory,
     feed_tool_call_results=True,  # Include tool results in memory
     debug=True                    # Enable memory debug logging
 )
+
+# Test the agent
+task = Task("What investment strategies do you recommend for a 30-year-old?")
+result = agent.do(task)
+print(result)
 ```
 
 ## Advanced Memory Features
@@ -175,13 +341,23 @@ agent = Agent(
 ### Custom User Profile Schema
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
+from upsonic.models.openai import OpenAIChatModel
 from pydantic import BaseModel, Field
+from typing import List
 
+# Define custom user profile schema
 class CustomUserTraits(BaseModel):
     risk_tolerance: str = Field(description="User's risk tolerance level")
     investment_goals: str = Field(description="User's investment objectives")
-    preferred_assets: list = Field(description="User's preferred asset classes")
+    preferred_assets: List[str] = Field(default=[], description="User's preferred asset classes")
 
+# Create storage and model
+storage = SqliteStorage(db_file="custom_profile_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+model = OpenAIChatModel("gpt-4o-mini")
+
+# Create memory with custom profile schema
 memory = Memory(
     storage=storage,
     session_id="session_001",
@@ -190,11 +366,28 @@ memory = Memory(
     user_profile_schema=CustomUserTraits,
     model=model
 )
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", memory=memory)
+
+# Share investment preferences
+task = Task("I have a high risk tolerance and I'm interested in tech stocks and crypto")
+result = agent.do(task)
+print(result)
 ```
 
 ### Dynamic User Profile Generation
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
+from upsonic.models.openai import OpenAIChatModel
+
+# Create storage and model
+storage = SqliteStorage(db_file="dynamic_profile_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+model = OpenAIChatModel("gpt-4o-mini")
+
+# Memory with dynamic profile generation
 memory = Memory(
     storage=storage,
     session_id="session_001",
@@ -203,17 +396,40 @@ memory = Memory(
     dynamic_user_profile=True,  # Automatically generate profile schema
     model=model
 )
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", memory=memory)
+
+# The agent will dynamically build a profile based on the conversation
+task = Task("I'm a retired teacher looking for safe investments with steady income")
+result = agent.do(task)
+print(result)
 ```
 
 ### Memory with Limited History
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory, SqliteStorage
+
+# Create storage
+storage = SqliteStorage(db_file="limited_history_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+
+# Memory with limited conversation history
 memory = Memory(
     storage=storage,
     session_id="session_001",
     full_session_memory=True,
     num_last_messages=10  # Keep only last 10 conversation turns
 )
+
+# Create agent
+agent = Agent(model="openai/gpt-4o", memory=memory)
+
+# Test limited history
+task = Task("Remember that my favorite number is 42")
+result = agent.do(task)
+print(result)
 ```
 
 ## Best Practices

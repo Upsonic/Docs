@@ -77,13 +77,15 @@ Once you have a recommendation, use it to execute your task:
 from upsonic import Agent, Task
 
 agent = Agent()
-task = Task("Solve this complex mathematical proof...")
+task = Task("Solve this complex mathematical proof: prove that sqrt(2) is irrational")
 
 # Get recommendation
 recommendation = agent.recommend_model_for_task(task)
+print(f"Recommended model: {recommendation.model_name}")
 
 # Use recommended model
 result = agent.do(task, model=recommendation.model_name)
+print(result)
 ```
 
 ## Advanced Usage with Criteria
@@ -93,7 +95,7 @@ result = agent.do(task, model=recommendation.model_name)
 Use `SelectionCriteria` to define specific requirements and constraints:
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 
 agent = Agent()
 
@@ -114,6 +116,11 @@ recommendation = agent.recommend_model_for_task(
 print(f"Selected: {recommendation.model_name}")
 print(f"Cost Tier: {recommendation.estimated_cost_tier}/10")
 print(f"Speed Tier: {recommendation.estimated_speed_tier}/10")
+
+# Use the recommended model
+task = Task("Implement a machine learning algorithm with mathematical proofs")
+result = agent.do(task, model=recommendation.model_name)
+print(result)
 ```
 
 ### LLM-Based Selection
@@ -121,7 +128,7 @@ print(f"Speed Tier: {recommendation.estimated_speed_tier}/10")
 Enable LLM-based selection for more intelligent recommendations:
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 
 agent = Agent()
 
@@ -133,6 +140,11 @@ recommendation = agent.recommend_model_for_task(
 
 print(f"Method: {recommendation.selection_method}")  # "llm"
 print(f"Selected: {recommendation.model_name}")
+
+# Use the recommended model
+task = Task("Analyze customer sentiment in multilingual support tickets")
+result = agent.do(task, model=recommendation.model_name)
+print(result)
 ```
 
 ### Async Model Recommendation
@@ -140,7 +152,7 @@ print(f"Selected: {recommendation.model_name}")
 For async workflows, use the async version:
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 import asyncio
 
 async def main():
@@ -152,6 +164,11 @@ async def main():
     )
     
     print(f"For long documents: {recommendation.model_name}")
+    
+    # Use the recommended model
+    task = Task("Summarize the key legal provisions in this document")
+    result = agent.do(task, model=recommendation.model_name)
+    print(result)
 
 asyncio.run(main())
 ```
@@ -183,16 +200,25 @@ Configure model selection with these criteria parameters:
 The `ModelRecommendation` object provides comprehensive information:
 
 ```python
-recommendation = agent.recommend_model_for_task("Your task here")
+from upsonic import Agent, Task
+
+agent = Agent()
+
+recommendation = agent.recommend_model_for_task("Analyze financial data and create investment recommendations")
 
 # Access recommendation properties
-print(recommendation.model_name)           # e.g., "openai/gpt-4o"
-print(recommendation.reason)               # Explanation for selection
-print(recommendation.confidence_score)     # 0.0 to 1.0
-print(recommendation.alternative_models)   # List of alternatives
-print(recommendation.estimated_cost_tier)  # 1-10 scale
-print(recommendation.estimated_speed_tier) # 1-10 scale
-print(recommendation.selection_method)     # "rule_based" or "llm"
+print(f"Model: {recommendation.model_name}")           # e.g., "openai/gpt-4o"
+print(f"Reason: {recommendation.reason}")               # Explanation for selection
+print(f"Confidence: {recommendation.confidence_score}")     # 0.0 to 1.0
+print(f"Alternatives: {recommendation.alternative_models}")   # List of alternatives
+print(f"Cost Tier: {recommendation.estimated_cost_tier}")  # 1-10 scale
+print(f"Speed Tier: {recommendation.estimated_speed_tier}") # 1-10 scale
+print(f"Method: {recommendation.selection_method}")     # "rule_based" or "llm"
+
+# Use the recommendation
+task = Task("Analyze financial data and create investment recommendations")
+result = agent.do(task, model=recommendation.model_name)
+print(result)
 ```
 
 ## Complete Example: Multi-Task Workflow
@@ -222,6 +248,7 @@ reasoning_rec = agent.recommend_model_for_task(
 )
 print(f"For reasoning: {reasoning_rec.model_name}")
 result1 = agent.do(reasoning_task, model=reasoning_rec.model_name)
+print(f"Result: {result1}")
 
 # Task 2: Cost-sensitive chatbot
 chatbot_task = Task("Generate a friendly greeting for our banking app users")
@@ -236,6 +263,7 @@ chatbot_rec = agent.recommend_model_for_task(
 )
 print(f"For chatbot: {chatbot_rec.model_name}")
 result2 = agent.do(chatbot_task, model=chatbot_rec.model_name)
+print(f"Result: {result2}")
 
 # Task 3: Code generation
 code_task = Task("Write a high-performance sorting algorithm in Python")
@@ -247,6 +275,7 @@ code_rec = agent.recommend_model_for_task(
 )
 print(f"For coding: {code_rec.model_name}")
 result3 = agent.do(code_task, model=code_rec.model_name)
+print(f"Result: {result3}")
 
 # Task 4: Long document analysis
 document_task = Task("Analyze and summarize this 300-page financial report")
@@ -260,7 +289,8 @@ document_rec = agent.recommend_model_for_task(
     }
 )
 print(f"For documents: {document_rec.model_name}")
-print(f"Context window: {document_rec.estimated_cost_tier}")
+result4 = agent.do(document_task, model=document_rec.model_name)
+print(f"Result: {result4}")
 ```
 
 ## Agent-Level Configuration
@@ -268,7 +298,7 @@ print(f"Context window: {document_rec.estimated_cost_tier}")
 Configure default selection behavior at agent initialization:
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 
 # Agent with default selection criteria
 agent = Agent(
@@ -282,8 +312,14 @@ agent = Agent(
 )
 
 # Now recommendations use these defaults
-recommendation = agent.recommend_model_for_task("Any task here")
-# Will automatically apply cost constraints
+task_description = "Generate a summary of quarterly sales data"
+recommendation = agent.recommend_model_for_task(task_description)
+print(f"Recommended (with cost constraints): {recommendation.model_name}")
+
+# Execute with recommended model
+task = Task(task_description)
+result = agent.do(task, model=recommendation.model_name)
+print(result)
 ```
 
 ## Best Practices
@@ -320,6 +356,10 @@ Each model includes benchmark scores (MMLU, HumanEval, MATH, etc.), capabilities
 ### Banking & Finance
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o-mini")
+
 recommendation = agent.recommend_model_for_task(
     "Perform risk assessment and regulatory compliance analysis",
     criteria={
@@ -329,11 +369,23 @@ recommendation = agent.recommend_model_for_task(
         "require_production_ready": True
     }
 )
+
+print(f"Recommended model for banking: {recommendation.model_name}")
+print(f"Reason: {recommendation.reason}")
+
+# Use the recommended model
+task = Task("Analyze the risk profile of a mortgage portfolio")
+result = agent.do(task, model=recommendation.model_name)
+print(result)
 ```
 
 ### Customer Support
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o-mini")
+
 recommendation = agent.recommend_model_for_task(
     "Handle customer inquiries in real-time chat",
     criteria={
@@ -342,11 +394,23 @@ recommendation = agent.recommend_model_for_task(
         "max_cost_tier": 3
     }
 )
+
+print(f"Recommended model for support: {recommendation.model_name}")
+print(f"Reason: {recommendation.reason}")
+
+# Use the recommended model
+task = Task("Respond to a customer asking about account balance")
+result = agent.do(task, model=recommendation.model_name)
+print(result)
 ```
 
 ### Research & Development
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o-mini")
+
 recommendation = agent.recommend_model_for_task(
     "Solve complex mathematical proofs",
     criteria={
@@ -356,6 +420,14 @@ recommendation = agent.recommend_model_for_task(
     },
     use_llm=True
 )
+
+print(f"Recommended model for R&D: {recommendation.model_name}")
+print(f"Reason: {recommendation.reason}")
+
+# Use the recommended model
+task = Task("Prove that the sum of angles in a triangle equals 180 degrees")
+result = agent.do(task, model=recommendation.model_name)
+print(result)
 ```
 
 The automatic model selection system empowers your AI agent framework to dynamically optimize model usage based on task requirements, delivering the best balance of performance, cost, and speed for your specific banking and fintech applications.

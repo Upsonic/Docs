@@ -22,7 +22,7 @@ Reasoning capabilities extend thinking with **mandatory analysis after each tool
 Reasoning requires **both** thinking and reasoning tools to be enabled:
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 from upsonic.tools import tool
 
 @tool
@@ -42,12 +42,18 @@ def get_company_news(symbol: str) -> str:
 
 # Enable reasoning for advanced analysis
 agent = Agent(
+    model="openai/gpt-4o",
     name="InvestmentAnalyst",
     tools=[get_stock_price, get_analyst_ratings, get_company_news],
     enable_thinking_tool=True,      # Required for reasoning
     enable_reasoning_tool=True,     # Enables act-then-analyze
     debug=True
 )
+
+# Run the agent with reasoning capabilities
+task = Task("Should I invest in AAPL? Analyze the stock thoroughly.")
+result = agent.do(task)
+print(result)
 ```
 
 **Warning**: `enable_reasoning_tool` requires `enable_thinking_tool` to be `True`. Setting reasoning without thinking will raise a `ValueError`.
@@ -77,7 +83,7 @@ Example Flow:
 ### Agent-Level Reasoning
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 from upsonic.tools import tool
 
 @tool
@@ -97,33 +103,77 @@ def get_financial_metrics(symbol: str) -> str:
 
 # Enable reasoning for all tasks
 agent = Agent(
+    model="openai/gpt-4o",
     name="StrategicAnalyst",
     tools=[search_market_data, analyze_competitors, get_financial_metrics],
     enable_thinking_tool=True,
     enable_reasoning_tool=True
 )
+
+# Execute a strategic analysis task
+task = Task("Analyze the competitive position and financials of Apple")
+result = agent.do(task)
+print(result)
 ```
 
 ### Task-Level Reasoning
 
 ```python
-from upsonic import Task
+from upsonic import Agent, Task
+from upsonic.tools import tool
 
-# Override agent settings for specific task
+@tool
+def search_market_data(query: str) -> str:
+    """Search for market data and trends."""
+    return f"Market data for {query}: Upward trend, 15% YoY growth"
+
+@tool
+def analyze_competitors(company: str) -> str:
+    """Analyze competitive landscape."""
+    return f"Competitors of {company}: Strong market position, 35% market share"
+
+# Create agent without reasoning enabled at agent level
+agent = Agent(
+    model="openai/gpt-4o",
+    name="MarketAnalyst",
+    tools=[search_market_data, analyze_competitors]
+)
+
+# Override agent settings for specific task - enable reasoning
 task = Task(
     description="Conduct a comprehensive competitive analysis of Apple",
     enable_thinking_tool=True,
     enable_reasoning_tool=True
 )
 
-result = agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ### Mixed Configuration
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def search_market_data(query: str) -> str:
+    """Search for market data and trends."""
+    return f"Market data for {query}: Upward trend, 15% YoY growth"
+
+@tool
+def analyze_competitors(company: str) -> str:
+    """Analyze competitive landscape."""
+    return f"Competitors of {company}: Strong market position, 35% market share"
+
+@tool
+def get_financial_metrics(symbol: str) -> str:
+    """Get key financial metrics."""
+    return f"Financials for {symbol}: P/E 28, Revenue $394B, Profit margin 25%"
+
 # Agent with reasoning enabled
 agent = Agent(
+    model="openai/gpt-4o",
     name="AnalysisAgent",
     tools=[search_market_data, analyze_competitors, get_financial_metrics],
     enable_thinking_tool=True,
@@ -132,10 +182,12 @@ agent = Agent(
 
 # Simple lookup - disable reasoning for speed
 simple_task = Task(
-    description="Get the current stock price of MSFT",
-    enable_thinking_tool=True,
+    description="Get the current market data for MSFT",
+    enable_thinking_tool=False,
     enable_reasoning_tool=False  # Single tool, no analysis needed
 )
+result1 = agent.do(simple_task)
+print("Simple task result:", result1)
 
 # Complex analysis - use full reasoning
 complex_task = Task(
@@ -143,6 +195,8 @@ complex_task = Task(
     enable_thinking_tool=True,
     enable_reasoning_tool=True
 )
+result2 = agent.do(complex_task)
+print("Complex task result:", result2)
 ```
 
 ## When to Use Reasoning
@@ -165,6 +219,7 @@ finance_tools = YFinanceTools(enable_all=True)
 
 # Create agent with reasoning for thorough analysis
 agent = Agent(
+    model="openai/gpt-4o",
     name="InvestmentResearcher",
     tools=finance_tools.functions(),
     enable_thinking_tool=True,
@@ -187,7 +242,8 @@ task = Task(
 )
 
 # Agent will execute tools with analysis after each step
-result = agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ### Example: Multi-Source Research
@@ -217,6 +273,7 @@ def check_regulatory_status(topic: str) -> str:
     return f"Regulatory status for {topic}: Favorable, no pending actions"
 
 agent = Agent(
+    model="openai/gpt-4o",
     name="ResearchAnalyst",
     tools=[search_news, get_expert_opinions, analyze_social_sentiment, check_regulatory_status],
     enable_thinking_tool=True,
@@ -235,7 +292,8 @@ task = Task(
     enable_reasoning_tool=True
 )
 
-result = agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Reasoning Output Structure
@@ -253,14 +311,33 @@ When reasoning is enabled, the agent provides:
 **Warning**: Reasoning consumes significantly more tokens than thinking alone due to the mandatory analysis after each tool call. Use reasoning when the analytical depth justifies the cost.
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def search_news(topic: str) -> str:
+    """Search for recent news on a topic."""
+    return f"News on {topic}: 3 positive articles, 1 neutral, 0 negative"
+
+@tool
+def get_expert_opinions(topic: str) -> str:
+    """Get expert opinions and analysis."""
+    return f"Experts on {topic}: Generally optimistic with caveats"
+
 # Monitor performance with debug mode
 agent = Agent(
+    model="openai/gpt-4o",
     name="Analyst",
     tools=[search_news, get_expert_opinions],
     enable_thinking_tool=True,
     enable_reasoning_tool=True,
     debug=True  # Shows detailed reasoning steps
 )
+
+# Run task to see performance metrics
+task = Task("What is the current outlook for renewable energy investments?")
+result = agent.do(task)
+print(result)
 ```
 
 ## Best Practices

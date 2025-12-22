@@ -10,7 +10,10 @@ After task execution, you can access various aspects of the task results and met
 ## Basic Result Access
 
 ```python
-# Execute task
+from upsonic import Agent, Task
+
+# Create agent and execute task
+agent = Agent(model="openai/gpt-4o")
 task = Task(description="What is the capital of France?")
 result = agent.do(task)
 
@@ -22,6 +25,13 @@ print(f"Task response: {task.response}")
 ## Task Metadata
 
 ```python
+from upsonic import Agent, Task
+
+# Create agent and execute task
+agent = Agent(model="openai/gpt-4o")
+task = Task(description="Explain quantum computing in simple terms")
+result = agent.do(task)
+
 # Access task metadata
 print(f"Task ID: {task.task_id}")
 print(f"Price ID: {task.price_id}")
@@ -33,6 +43,13 @@ print(f"End time: {task.end_time}")
 ## Cost Information
 
 ```python
+from upsonic import Agent, Task
+
+# Create agent and execute task
+agent = Agent(model="openai/gpt-4o")
+task = Task(description="Write a short poem about technology")
+result = agent.do(task)
+
 # Access cost information
 total_cost = task.total_cost
 input_tokens = task.total_input_token
@@ -46,6 +63,20 @@ print(f"Output tokens: {output_tokens}")
 ## Tool Call History
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def get_weather(city: str) -> str:
+    """Get weather for a city."""
+    return f"Weather in {city}: Sunny, 25°C"
+
+# Create agent and execute task with tools
+agent = Agent(model="openai/gpt-4o")
+task = Task(description="What's the weather in Paris?", tools=[get_weather])
+result = agent.do(task)
+print(result)
+
 # Access tool call history
 tool_calls = task.tool_calls
 for i, tool_call in enumerate(tool_calls):
@@ -58,6 +89,19 @@ for i, tool_call in enumerate(tool_calls):
 ## Cache Information
 
 ```python
+from upsonic import Agent, Task
+
+# Create agent and execute task with caching
+agent = Agent(model="openai/gpt-4o")
+task = Task(
+    description="What is machine learning?",
+    enable_cache=True,
+    cache_method="vector_search",
+    cache_threshold=0.8
+)
+result = agent.do(task)
+print(result)
+
 # Access cache statistics
 cache_stats = task.get_cache_stats()
 print(f"Cache hit: {cache_stats.get('cache_hit')}")
@@ -68,6 +112,19 @@ print(f"Cache threshold: {cache_stats.get('cache_threshold')}")
 ## Task State Information
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(external_execution=True)
+def external_api_call(query: str) -> str:
+    """Make an external API call."""
+    return f"API result for: {query}"
+
+# Create agent and execute task
+agent = Agent(model="openai/gpt-4o")
+task = Task(description="Call external API", tools=[external_api_call])
+result = agent.do(task)
+
 # Check task state
 print(f"Task is paused: {task.is_paused}")
 print(f"Tools awaiting execution: {len(task.tools_awaiting_external_execution)}")
@@ -93,7 +150,7 @@ class ReportResult(BaseModel):
     confidence: float
 
 # Create and execute task
-agent = Agent(name="Analysis Agent")
+agent = Agent(model="openai/gpt-4o", name="Analysis Agent")
 task = Task(
     description="Generate a market analysis report",
     response_format=ReportResult,

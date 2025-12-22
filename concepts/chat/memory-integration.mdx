@@ -206,20 +206,31 @@ if __name__ == "__main__":
 Enable automatic schema generation from conversations:
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    dynamic_user_profile=True,  # Automatically generate schema fields
-    user_analysis_memory=True  # Required for dynamic profiles
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
 
-# The schema will be automatically generated based on user conversations
-# Fields are extracted as the user mentions information
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        dynamic_user_profile=True,  # Automatically generate schema fields
+        user_analysis_memory=True  # Required for dynamic profiles
+    )
+
+    # The schema will be automatically generated based on user conversations
+    # Fields are extracted as the user mentions information
+    
+    # Invoke chat
+    response = await chat.invoke("Hello my name is Bob")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 When `dynamic_user_profile=True`, the system automatically identifies 2-5 relevant traits from conversations and creates a dynamic schema. This is useful when you don't know the user profile structure in advance.
@@ -232,17 +243,28 @@ When `dynamic_user_profile=True`, the system automatically identifies 2-5 releva
 - `replace`: Replace user profiles completely on each update
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    user_analysis_memory=True,
-    user_memory_mode="update"  # or "replace"
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        user_analysis_memory=True,
+        user_memory_mode="update"  # or "replace"
+    )
+
+    # Invoke chat
+    response = await chat.invoke("Explain Generative AI")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Limiting Message History
@@ -250,17 +272,28 @@ chat = Chat(
 The `num_last_messages` parameter limits conversation history to the last N message pairs (request-response pairs):
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    full_session_memory=True,
-    num_last_messages=20  # Keep last 20 request-response pairs
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        full_session_memory=True,
+        num_last_messages=20  # Keep last 20 request-response pairs
+    )
+
+    # Invoke chat
+    response = await chat.invoke("What are Large Language Models?")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 This helps manage context size and reduce token costs for long conversations.
@@ -270,17 +303,28 @@ This helps manage context size and reduce token costs for long conversations.
 By default, tool calls are excluded from memory. Enable them with `feed_tool_call_results`:
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    full_session_memory=True,
-    feed_tool_call_results=True  # Include tool execution results
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        full_session_memory=True,
+        feed_tool_call_results=True  # Include tool execution results
+    )
+
+    # Invoke chat
+    response = await chat.invoke("Define Supervised Learning")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 When `False` (default), tool-related messages are filtered from `chat_history` to keep memory focused on user interactions.

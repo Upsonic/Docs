@@ -6,16 +6,60 @@ description: "Fast in-memory storage for development and testing"
 ## Usage
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory
 from upsonic.storage.providers.in_memory import InMemoryStorage
 
-# Basic in-memory storage
+# Create in-memory storage and memory
 storage = InMemoryStorage()
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=True
+)
+
+# Create agent with memory
+agent = Agent("openai/gpt-4o", memory=memory)
+
+# First conversation
+task1 = Task("My name is Alice and I love Python")
+result1 = agent.do(task1)
+
+# Second conversation - agent remembers
+task2 = Task("What's my name and favorite language?")
+result2 = agent.do(task2)
+print(result2)  # Output: Your name is Alice and you love Python
+```
+
+### With LRU Cache Limits
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory
+from upsonic.storage.providers.in_memory import InMemoryStorage
 
 # With LRU cache limits
 storage = InMemoryStorage(
     max_sessions=100,
     max_profiles=50
 )
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    full_session_memory=True,
+    user_analysis_memory=True,
+    model="openai/gpt-4o"
+)
+
+agent = Agent("openai/gpt-4o", memory=memory)
+
+task1 = Task("Tell me about machine learning")
+result1 = agent.do(task1)
+
+task2 = Task("What is the main concept we just discussed?")
+result2 = agent.do(task2)
+print(result2)
 ```
 
 ## Params

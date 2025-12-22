@@ -49,6 +49,19 @@ print(result)
 ## Multiple Knowledge Bases
 
 ```python
+from upsonic import KnowledgeBase, Task, Agent
+from upsonic.embeddings import OpenAIEmbedding
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Create embedding provider and vector database
+embedding_provider = OpenAIEmbedding()
+chroma_config = ChromaConfig(
+    collection_name="multi_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+)
+vectordb = ChromaProvider(config=chroma_config)
+
 # Create multiple knowledge bases
 kb1 = KnowledgeBase(
     sources=["technical_docs/"],
@@ -65,15 +78,27 @@ kb2 = KnowledgeBase(
 )
 
 # Task with multiple knowledge bases
+agent = Agent(model="openai/gpt-4o")
 task = Task(
     description="Find information about both technical procedures and company policies",
     context=[kb1, kb2]
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Knowledge Base with Direct Content
 
 ```python
+from upsonic import KnowledgeBase, Task, Agent
+from upsonic.embeddings import OpenAIEmbedding
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding_provider = OpenAIEmbedding()
+chroma_config = ChromaConfig(collection_name="content_kb", vector_size=1536, connection=ConnectionConfig(mode=Mode.IN_MEMORY))
+vectordb = ChromaProvider(config=chroma_config)
+
 # Knowledge base with direct string content
 knowledge_base = KnowledgeBase(
     sources=["This is important information about our product features and capabilities."],
@@ -81,15 +106,27 @@ knowledge_base = KnowledgeBase(
     vectordb=vectordb
 )
 
+agent = Agent(model="openai/gpt-4o")
 task = Task(
     description="What are the key features mentioned in the product information?",
     context=[knowledge_base]
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Knowledge Base Configuration
 
 ```python
+from upsonic import KnowledgeBase, Task, Agent
+from upsonic.embeddings import OpenAIEmbedding
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding_provider = OpenAIEmbedding()
+chroma_config = ChromaConfig(collection_name="advanced_kb", vector_size=1536, connection=ConnectionConfig(mode=Mode.IN_MEMORY))
+vectordb = ChromaProvider(config=chroma_config)
+
 # Advanced knowledge base configuration
 knowledge_base = KnowledgeBase(
     sources=["data/"],
@@ -101,6 +138,11 @@ knowledge_base = KnowledgeBase(
     loader_config={"skip_empty_content": True},
     splitter_config={"chunk_overlap": 200}
 )
+
+agent = Agent(model="openai/gpt-4o")
+task = Task(description="Search the knowledge base for relevant information", context=[knowledge_base])
+result = agent.do(task)
+print(result)
 ```
 
 ## Vector Search Filters
@@ -108,7 +150,13 @@ knowledge_base = KnowledgeBase(
 Filter vector search results when using knowledge bases:
 
 ```python
-from upsonic import Task, KnowledgeBase
+from upsonic import Task, KnowledgeBase, Agent
+from upsonic.embeddings import OpenAIEmbedding
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding_provider = OpenAIEmbedding()
+chroma_config = ChromaConfig(collection_name="filter_kb", vector_size=1536, connection=ConnectionConfig(mode=Mode.IN_MEMORY))
+vectordb = ChromaProvider(config=chroma_config)
 
 knowledge_base = KnowledgeBase(
     sources=["documents/"],
@@ -116,12 +164,17 @@ knowledge_base = KnowledgeBase(
     vectordb=vectordb
 )
 
+agent = Agent(model="openai/gpt-4o")
+
 # Task with search filter
 task = Task(
     description="Find information about Q4 sales",
     context=[knowledge_base],
     vector_search_filter={"department": "sales", "year": 2024}
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Supported Sources
@@ -134,6 +187,14 @@ Knowledge bases support various source types:
 - **Mixed Sources**: Combination of files and content
 
 ```python
+from upsonic import KnowledgeBase, Task, Agent
+from upsonic.embeddings import OpenAIEmbedding
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding_provider = OpenAIEmbedding()
+chroma_config = ChromaConfig(collection_name="mixed_kb", vector_size=1536, connection=ConnectionConfig(mode=Mode.IN_MEMORY))
+vectordb = ChromaProvider(config=chroma_config)
+
 # Mixed sources example
 knowledge_base = KnowledgeBase(
     sources=[
@@ -144,6 +205,11 @@ knowledge_base = KnowledgeBase(
     embedding_provider=embedding_provider,
     vectordb=vectordb
 )
+
+agent = Agent(model="openai/gpt-4o")
+task = Task(description="What insights can you find in the knowledge base?", context=[knowledge_base])
+result = agent.do(task)
+print(result)
 ```
 
 ## Best Practices

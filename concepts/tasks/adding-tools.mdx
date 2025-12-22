@@ -139,13 +139,17 @@ def calculator(a: float, b: float) -> float:
     """Add two numbers."""
     return a + b
 
-task = Task(description="Search and calculate")
+task = Task(description="Search for AI news and calculate 10 + 20")
 agent = Agent("openai/gpt-4o")
 
 # Add tools dynamically
 task.add_tools([web_search, calculator])
 
-# Remove tools
+# Execute task with dynamically added tools
+result = agent.do(task)
+print(result)
+
+# Remove tools (for subsequent executions)
 task.remove_tools([web_search], agent=agent)
 ```
 

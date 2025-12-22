@@ -22,7 +22,7 @@ class GitHubMCP:
 
 # Create task
 task = Task(
-    description="Check my GitHub repositories and list recent commits",
+    description="List all my public GitHub repositories, then find the 5 most recent commits across all of them and summarize the changes.",
     tools=[GitHubMCP]
 )
 
@@ -33,7 +33,8 @@ agent = Agent(
 )
 
 # Execute
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Parameters

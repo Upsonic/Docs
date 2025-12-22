@@ -21,9 +21,10 @@ pip install "upsonic[loaders]"
 
 ```python
 from upsonic import Agent, Task, KnowledgeBase
-from upsonic.loaders import XMLLoader, XMLLoaderConfig
+from upsonic.loaders.xml import XMLLoader
+from upsonic.loaders.config import XMLLoaderConfig
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
-from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.text_splitter.recursive import RecursiveChunker, RecursiveChunkingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
 
 # Configure loader

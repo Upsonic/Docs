@@ -26,9 +26,10 @@ pip install rapidocr-onnxruntime
 
 ```python
 from upsonic import Agent, Task, KnowledgeBase
-from upsonic.loaders import PyMuPDFLoader, PyMuPDFLoaderConfig
+from upsonic.loaders.pymupdf import PyMuPDFLoader
+from upsonic.loaders.config import PyMuPDFLoaderConfig
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
-from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.text_splitter.recursive import RecursiveChunker, RecursiveChunkingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
 
 # Configure loader

@@ -17,11 +17,11 @@ The Durable Execution system is configured through the `DurableExecution` class,
 ## Configuration Example
 
 ```python
-from upsonic import Agent, Task, DurableExecution
-from upsonic.durable import FileDurableStorage
+from upsonic import Agent, Task
+from upsonic.durable import DurableExecution, FileDurableStorage
 
-# Create storage backend
-storage = FileDurableStorage("./durable_checkpoints")
+# Create storage
+storage = FileDurableStorage("./checkpoints")
 
 # Create durable execution
 durable = DurableExecution(
@@ -37,14 +37,15 @@ task = Task(
     durable_execution=durable
 )
 
-# Execute with checkpointing
-result = agent.do(task)
-print(f"Execution ID: {task.durable_execution_id}")
-print(result)
-
-# If execution fails, resume from checkpoint
-# result = agent.continue_durable(
-#     durable_execution_id=task.durable_execution_id,
-#     storage=storage
-# )
+# Execute with automatic checkpointing
+try:
+    result = agent.do(task)
+    print(result)
+except Exception as e:
+    # Resume from checkpoint
+    result = agent.continue_durable(
+        durable_execution_id=task.durable_execution_id,
+        storage=storage
+    )
+    print(result)
 ```

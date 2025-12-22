@@ -13,6 +13,8 @@ This guide demonstrates how to build a complete Retrieval-Augmented Generation (
 from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
 
 # Step 1: Setup embedding provider
 embedding = OpenAIEmbedding(OpenAIEmbeddingConfig(
@@ -29,23 +31,27 @@ vectordb = ChromaProvider(ChromaConfig(
     )
 ))
 
-# Step 3: Create knowledge base with documents
+# Step 3: Setup PDF loader
+loader = PdfLoader(PdfLoaderConfig())
+
+# Step 4: Create knowledge base with documents
 kb = KnowledgeBase(
     sources=["document.pdf"],
     embedding_provider=embedding,
-    vectordb=vectordb
+    vectordb=vectordb,
+    loaders=[loader]
 )
 
-# Step 4: Create agent
+# Step 5: Create agent
 agent = Agent("openai/gpt-4o")
 
-# Step 5: Create task with knowledge base context
+# Step 6: Create task with knowledge base context
 task = Task(
-    description="What are the main topics discussed in the document?",
+    description="What is the daily working hours policy described in the text?",
     context=[kb]
 )
 
-# Step 6: Execute and get results
+# Step 7: Execute and get results
 result = agent.do(task)
 print(result)
 ```
@@ -87,11 +93,16 @@ KnowledgeBase automatically processes documents, creates chunks, generates embed
 
 ```python
 from upsonic import KnowledgeBase
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+
+loader = PdfLoader(PdfLoaderConfig())
 
 kb = KnowledgeBase(
     sources=["document.pdf"],
     embedding_provider=embedding,
-    vectordb=vectordb
+    vectordb=vectordb,
+    loaders=[loader]
 )
 ```
 
@@ -113,7 +124,7 @@ Pass the knowledge base as context to the task. The agent will automatically que
 from upsonic import Task
 
 task = Task(
-    description="What are the main topics discussed in the document?",
+    description="What is the main topic?",
     context=[kb]
 )
 ```
@@ -136,6 +147,8 @@ import asyncio
 from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
 
 async def main():
     embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
@@ -145,15 +158,18 @@ async def main():
         connection=ConnectionConfig(mode=Mode.IN_MEMORY)
     ))
 
+    loader = PdfLoader(PdfLoaderConfig())
+
     kb = KnowledgeBase(
         sources=["document.pdf"],
         embedding_provider=embedding,
-        vectordb=vectordb
+        vectordb=vectordb,
+        loaders=[loader]
     )
 
     agent = Agent("openai/gpt-4o")
     task = Task(
-        description="What are the main topics discussed in the document?",
+        description="What is the main topic?",
         context=[kb]
     )
 

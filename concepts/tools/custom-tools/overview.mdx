@@ -24,7 +24,16 @@ Custom tools are Python functions or classes that you create to give your AI age
 ## Navigation
 
 - [Creating Function Tools](/concepts/tools/custom-tools/creating-function-tool) - Create tools from Python functions
-- [Creating Toolkits](/concepts/tools/custom-tools/creating-toolkit) - Organize multiple tools into toolkits
+- [Creating ToolKits](/concepts/tools/custom-tools/creating-toolkit) - Organize multiple tools into toolkits with shared state
+- [Creating Class Tools](/concepts/tools/custom-tools/creating-class-tool) - Auto-register all public methods as tools
 - [Tool Attributes](/concepts/tools/custom-tools/attributes) - Comprehensive guide to all tool configuration options
 - [Tool Configurations](/concepts/tools/custom-tools/tool-configurations/caching) - Configure caching, timeouts, execution modes, and more
 - [Advanced Features](/concepts/tools/custom-tools/advanced/agent-as-tool) - Use agents as tools and combine multiple tools
+
+## Quick Comparison
+
+| Type | Registration | Best For |
+|------|--------------|----------|
+| **Function Tool** | `@tool` decorator | Simple, standalone operations |
+| **ToolKit** | `@tool` on selected methods | Related tools with shared state |
+| **Class Tool** | All public methods auto-registered | Quick prototyping, utility classes |

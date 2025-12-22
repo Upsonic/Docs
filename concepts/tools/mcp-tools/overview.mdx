@@ -63,7 +63,7 @@ print(result)
 ### 2. MCPHandler Class
 
 ```python
-from upsonic import Task
+from upsonic import Agent, Task
 from upsonic.tools.mcp import MCPHandler
 
 mcp_handler = MCPHandler(
@@ -71,13 +71,19 @@ mcp_handler = MCPHandler(
     timeout_seconds=60
 )
 
-task = Task(description="Query database", tools=[mcp_handler])
+agent = Agent(model="openai/gpt-4o")
+task = Task(
+    description="Query the database to list all tables and their schema information to understand the database structure.",
+    tools=[mcp_handler]
+)
+result = agent.do(task)
+print(result)
 ```
 
 ### 3. MultiMCPHandler Class (Multiple Servers)
 
 ```python
-from upsonic import Task
+from upsonic import Agent, Task
 from upsonic.tools.mcp import MultiMCPHandler
 
 multi_handler = MultiMCPHandler(
@@ -88,7 +94,13 @@ multi_handler = MultiMCPHandler(
     timeout_seconds=60
 )
 
-task = Task(description="Use multiple databases", tools=[multi_handler])
+agent = Agent(model="openai/gpt-4o")
+task = Task(
+    description="Connect to both databases, query the user table from db1 and the products table from db2, and cross-reference the data.",
+    tools=[multi_handler]
+)
+result = agent.do(task)
+print(result)
 ```
 
 ## MCP Server Resources
