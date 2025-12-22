@@ -1,0 +1,277 @@
+---
+title: "Sales Offer Generator Agent"
+description: "Use Upsonic's DeepAgent to generate personalized sales offers using real-time internet search"
+---
+
+This example demonstrates how to create and use an **Upsonic Agent** with **DeepAgent** architecture to analyze customer needs, search the internet for real products, and generate a personalized sales offer. The example shows how to leverage Upsonic's coordination capabilities to manage multiple specialized agents.
+
+## Overview
+
+Upsonic framework provides seamless integration for multi-agent systems. This example showcases:
+
+1.  **DeepAgent Integration** — Using DeepAgent to coordinate sub-agents
+2.  **Real-Time Data** — Using `ddgs` (DuckDuckGo) to fetch live market prices
+3.  **Task Execution** — Running complex multi-step tasks (Research -> Strategy -> Content)
+4.  **FastAPI Server** — Running the agent as a production-ready API server
+
+ The agent uses three specialized sub-agents:
+-   **Product Researcher** — Finds real products matching criteria
+-   **Pricing Strategist** — Analyzes competition and suggests pricing
+-   **Creative Copywriter** — Drafts the final email
+
+## Project Structure
+
+```
+sales_offer_generator_agent/
+├── main.py                    # Agent entry point with DeepAgent
+├── agents.py                  # Agent definitions
+├── tools.py                   # Search tools
+├── upsonic_configs.json       # Upsonic CLI configuration
+└── README.md                  # Quick start guide
+```
+
+### Environment Variables
+
+You can configure the model using environment variables:
+
+```bash
+# Set API key
+export OPENAI_API_KEY="your-api-key"
+```
+
+## Installation
+
+```bash
+# Install dependencies from upsonic_configs.json
+upsonic install
+```
+
+### Managing Dependencies
+
+```bash
+# Add a package
+upsonic add <package> <section>
+upsonic add ddgs api
+
+# Remove a package
+upsonic remove <package> <section>
+upsonic remove streamlit api
+```
+
+**Sections:** `api`, `streamlit`, `development`
+
+## Usage
+
+### Option 1: Run Directly
+
+```bash
+python3 main.py
+```
+
+Runs the agent with a default test query.
+
+### Option 2: Run as API Server
+
+```bash
+upsonic run
+```
+
+Server starts at `http://localhost:8000`. API documentation at `/docs`.
+
+**Example API call:**
+```bash
+curl -X POST http://localhost:8000/call \
+  -H "Content-Type: application/json" \
+  -d '{"user_query": "I need a gaming laptop under $2000"}'
+```
+
+## How It Works
+
+| Component | Description |
+|-----------|-------------|
+| DeepAgent | Orchestrator that plans and delegates tasks |
+| SearchTools | Uses `ddgs` to search the web |
+| Agent | Specialized sub-agents (Researcher, Strategist, Writer) |
+| Execution | DeepAgent plans the flow and aggregates results |
+
+### Example Output
+
+**Query:**
+```
+"I need a high-performance laptop for video editing..."
+```
+
+**Response:**
+```
+"Subject: Exclusive Offer on MSI Raider GE78...
+Hi [Name], based on your needs for 4K video editing, we found the MSI Raider GE78..."
+```
+
+## Complete Implementation
+
+### main.py
+
+```python
+"""
+Sales Offer Generator Agent
+
+This example demonstrates how to create and use an Agent that research products and writes sales offers.
+
+This file contains:
+- async main(inputs): For use with `upsonic run` CLI command (FastAPI server)
+"""
+import asyncio
+from upsonic import Task
+from upsonic.agent.deepagent import DeepAgent
+from agents import SalesAgents
+
+async def main(inputs: dict) -> dict:
+    """
+    Async main function for FastAPI server (used by `upsonic run` command).
+    
+    This function is called by the Upsonic CLI when running the agent as a server.
+    It receives inputs from the API request and returns a response dictionary.
+    
+    Args:
+        inputs: Dictionary containing input parameters as defined in upsonic_configs.json
+                Expected key: "user_query" (string)
+    
+    Returns:
+        Dictionary with output schema as defined in upsonic_configs.json
+        Expected key: "bot_response" (string)
+    """
+    
+    user_query = inputs.get("user_query")
+    if not user_query:
+        return {"bot_response": "Please provide a user_query."}
+
+    print("🚀 Starting Sales Offer Generator Agent (DeepAgent Mode)...\n")
+
+    # 1. Initialize Agents Factory
+    agents_factory = SalesAgents()
+
+    # 2. Create Specialist Agents
+    researcher = agents_factory.product_researcher()
+    strategist = agents_factory.pricing_strategist()
+    writer = agents_factory.offer_writer()
+
+    # 3. Initialize DeepAgent with the Team
+    # DeepAgent will automatically coordinate these subagents to fulfill the main task.
+    deep_agent = DeepAgent(
+        model="openai/gpt-4o",
+        subagents=[researcher, strategist, writer]
+    )
+
+    print(f"📋 Customer Requirements:\n{user_query}\n")
+
+    task = Task(description=f"""
+    Generate a complete, personalized sales offer email for a customer with these requirements:
+    "{user_query}"
+
+    You must execute this in the following order:
+    1. MARKET RESEARCH: Use the Product Researcher to find at least 3 REAL products available now that match the specs. Get prices.
+    2. PRICING STRATEGY: Use the Pricing Strategist to analyze the findings and determine the best 'special offer' price.
+    3. EMAIL DRAFT: Use the Creative Copywriter to write the final sales email including the selected best product and the special price.
+    
+    Output the final email.
+    """)
+
+    # 5. Execute
+    print("🤖 DeepAgent is working...")
+    result = await deep_agent.do_async(task)
+
+    print("\n" + "="*50)
+    print("Final Result:")
+    print("="*50)
+    print(result)
+    
+    return {
+        "bot_response": result
+    }
+
+
+if __name__ == "__main__":
+    # Test execution
+    test_input = {
+        "user_query": "I need a high-performance laptop for video editing (4K workflows) and 3D rendering. Budget is around $3,000. Prefer NVIDIA RTX 4080 or better."
+    }
+    asyncio.run(main(test_input))
+
+```
+
+### upsonic_configs.json
+
+```json
+{
+    "environment_variables": {
+        "UPSONIC_WORKERS_AMOUNT": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "API_WORKERS": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "RUNNER_CONCURRENCY": {
+            "type": "number",
+            "description": "The number of runners for the Upsonic API",
+            "default": 1
+        },
+        "NEW_FEATURE_FLAG": {
+            "type": "string",
+            "description": "New feature flag added in version 2.0",
+            "default": "enabled"
+        }
+    },
+    "machine_spec": {
+        "cpu": 2,
+        "memory": 4096,
+        "storage": 1024
+    },
+    "agent_name": "Sales Offer Generator",
+    "description": "DeepAgent-powered Sales Agent that researches products and writes offers.",
+    "icon": "mail",
+    "language": "python",
+    "streamlit": false,
+    "proxy_agent": false,
+    "dependencies": {
+        "api": [
+            "fastapi>=0.115.12",
+            "uvicorn>=0.34.2",
+            "upsonic",
+            "pip",
+            "ddgs"
+        ],
+        "development": [
+            "watchdog",
+            "python-dotenv",
+            "pytest"
+        ]
+    },
+    "entrypoints": {
+        "api_file": "main.py"
+    },
+    "input_schema": {
+        "inputs": {
+            "user_query": {
+                "type": "string",
+                "description": "Customer requirements for the sales offer (e.g. 'Laptop for video editing under $3000')",
+                "required": true,
+                "default": null
+            }
+        }
+    },
+    "output_schema": {
+        "bot_response": {
+            "type": "string",
+            "description": "The generated sales offer email."
+        }
+    }
+}
+```
+
+## Repository
+
+View the complete example: [Sales Offer Generator](https://github.com/Upsonic/Examples/...)
