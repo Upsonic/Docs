@@ -1,0 +1,318 @@
+---
+title: "OpenRouter Safety Agent"
+description: "Use Upsonic's Safety Engine with PIIBlockPolicy_LLM, OpenAI's gpt-4o for responses, and gpt-oss-safeguard-20b for policy enforcement via OpenRouter"
+---
+
+This example demonstrates how to use **Upsonic's Safety Engine** with the prebuilt **PIIBlockPolicy_LLM** to automatically detect and block personally identifiable information (PII) in user inputs. The agent uses OpenAI's `gpt-4o` for main responses, while the policy enforcement is powered by OpenAI's safety-focused `gpt-oss-safeguard-20b` model via OpenRouter.
+
+## Overview
+
+The Safety Engine is a powerful feature in Upsonic that allows you to enforce content policies on your LLM agents. This example showcases:
+
+1. **Dual Model Architecture** — Using `gpt-4o` for agent responses and `gpt-oss-safeguard-20b` for policy enforcement
+2. **OpenRouter Provider** — Accessing OpenAI's safety models through the OpenRouter API
+3. **PII Block Policy LLM** — LLM-powered detection and blocking of personal information (emails, phone numbers, SSN, etc.)
+4. **User Policy Feedback** — Providing helpful guidance instead of just blocking content
+5. **Feedback Loop** — Allowing users to retry with corrected input
+
+The `PIIBlockPolicy_LLM` is a prebuilt policy that uses LLM-powered detection to identify and block content containing:
+- Email addresses
+- Phone numbers
+- Social Security Numbers
+- Credit card numbers
+- Home addresses
+- And other personally identifiable information
+
+## Key Features
+
+- **Prebuilt Policy**: No need to implement PII detection logic — Upsonic provides it out of the box
+- **Dual Model Setup**: Uses `gpt-4o` for high-quality responses and `gpt-oss-safeguard-20b` for safety enforcement
+- **LLM-Powered Detection**: Policy uses an LLM for contextual understanding of PII, not just pattern matching
+- **Safety-Focused Model**: Policy enforcement uses OpenAI's gpt-oss-safeguard-20b, specifically designed for safe interactions
+- **Helpful Feedback**: Instead of just blocking, provides guidance on how to rephrase queries
+- **OpenRouter Provider**: Access OpenAI's safety models through the OpenRouter API
+- **Easy Integration**: Configure the policy's LLM and add it to your Agent constructor
+
+## File Structure
+
+```bash
+task_examples/gpt_oss_safety_agent/
+├── main.py                    # Agent with safety policy
+├── upsonic_configs.json       # Upsonic CLI configuration
+├── .env.example               # Example env file
+└── README.md                  # Quick start guide
+```
+
+## Prerequisites
+
+Set your API keys:
+```bash
+# For policy enforcement (gpt-oss-safeguard-20b via OpenRouter)
+export OPENROUTER_API_KEY="your-openrouter-api-key"
+
+# For main agent responses (gpt-4o)
+export OPENAI_API_KEY="your-openai-api-key"
+```
+
+## Installation
+
+```bash
+# Install dependencies
+upsonic install
+```
+
+### Managing Dependencies
+
+```bash
+# Add a package
+upsonic add <package> <section>
+upsonic add requests api
+
+# Remove a package
+upsonic remove <package> <section>
+upsonic remove requests api
+```
+
+**Sections:** `api`, `streamlit`, `development`
+
+## Usage
+
+### Option 1: Run Directly
+
+```bash
+python3 main.py
+```
+
+Runs built-in test cases demonstrating both safe and PII-containing queries.
+
+### Option 2: Run as API Server
+
+```bash
+upsonic run
+```
+
+Server starts at `http://localhost:8000`. API documentation at `/docs`.
+
+**Example API call:**
+```bash
+curl -X POST http://localhost:8000/call \
+  -H "Content-Type: application/json" \
+  -d '{"user_query": "My email is john@example.com, can you help me with my account?"}'
+```
+
+## How It Works
+
+| Query Type | Result |
+|------------|--------|
+| Safe query (no PII) | ✅ Normal AI response |
+| Query with email | ❌ Blocked with helpful feedback |
+| Query with phone number | ❌ Blocked with helpful feedback |
+| Query with SSN | ❌ Blocked with helpful feedback |
+
+### Example Output
+
+**Safe query:**
+```
+Query: "What is machine learning?"
+Response: "Machine learning is a branch of artificial intelligence..."
+```
+
+**PII query:**
+```
+Query: "My email is john@example.com, can you help me?"
+Response: "The content included an email address, which is considered personal 
+identifying information (PII). To comply with the policy, please remove or 
+replace the email address with a placeholder..."
+```
+
+## Complete Implementation
+
+### main.py
+
+```python
+"""
+Openai Safety Agent Example with provider OpenRouter
+
+This example demonstrates how to use the OpenAI's gpt-oss-safeguard-20b model
+with Upsonic's safety policies (PIIBlockPolicy_LLM) to create a secure AI agent.
+
+The agent:
+- Uses OpenAI's gpt-4o for main agent responses
+- Uses OpenRouter's gpt-oss-safeguard-20b (OpenAI's safety-focused model) for policy enforcement
+- Applies PIIBlockPolicy_LLM to detect and block PII in user inputs
+- Provides helpful feedback when policy violations occur
+
+Requirements:
+- Set OPENROUTER_API_KEY environment variable
+- Set OPENAI_API_KEY environment variable (for gpt-4o)
+"""
+
+from upsonic import Task, Agent
+from upsonic.safety_engine.policies.pii_policies import PIIBlockPolicy_LLM
+from upsonic.safety_engine.llm.upsonic_llm import UpsonicLLMProvider
+
+
+async def main(inputs):
+    """
+    Main function for the Safety Agent.
+    
+    Args:
+        inputs: Dictionary containing user_query
+        
+    Returns:
+        Dictionary containing bot_response
+    """
+    user_query = inputs.get("user_query")
+    
+    answering_task = Task(f"Answer the user question: {user_query}")
+    
+    # Set the LLM for the policy to use gpt-oss-safeguard-20b via OpenRouter
+    policy_llm = UpsonicLLMProvider(
+        agent_name="PII Policy LLM",
+        model="openrouter/openai/gpt-oss-safeguard-20b"
+    )
+    PIIBlockPolicy_LLM.base_llm = policy_llm
+    
+    agent = Agent(
+        model='openai/gpt-4o',
+        user_policy=PIIBlockPolicy_LLM,
+        user_policy_feedback=True,
+        user_policy_feedback_loop=1,
+        debug=True
+    )
+    
+    result = await agent.print_do_async(answering_task)
+    
+    return {
+        "bot_response": result
+    }
+
+
+if __name__ == "__main__":
+    import asyncio
+    
+    test_inputs = [
+        {"user_query": "What is machine learning?"},
+        {"user_query": "My email is john@example.com, can you help me with my account?"},
+    ]
+    
+    async def run_tests():
+        for i, inputs in enumerate(test_inputs, 1):
+            print(f"\n{'='*60}")
+            print(f"Test {i}: {inputs['user_query'][:50]}...")
+            print('='*60)
+            
+            try:
+                _ = await main(inputs)
+            except Exception as e:
+                print(f"\nError: {e}")
+    
+    asyncio.run(run_tests())
+```
+
+### upsonic_configs.json
+
+```json
+{
+    "envinroment_variables": {
+        "OPENROUTER_API_KEY": {
+            "type": "string",
+            "description": "OpenRouter API key for accessing gpt-oss-safeguard models (for policy enforcement)",
+            "required": true
+        },
+        "OPENAI_API_KEY": {
+            "type": "string",
+            "description": "OpenAI API key for gpt-4o (for main agent responses)",
+            "required": true
+        },
+        "UPSONIC_WORKERS_AMOUNT": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "API_WORKERS": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "RUNNER_CONCURRENCY": {
+            "type": "number",
+            "description": "The number of runners for the Upsonic API",
+            "default": 1
+        },
+        "NEW_FEATURE_FLAG": {
+            "type": "string",
+            "description": "New feature flag added in version 2.0",
+            "default": "enabled"
+        }
+    },
+    "machine_spec": {
+        "cpu": 2,
+        "memory": 4096,
+        "storage": 1024
+    },
+    "agent_name": "Safety Agent",
+    "description": "OpenRouter Safety Agent with PII Protection - Uses gpt-4o for responses and gpt-oss-safeguard-20b for policy enforcement with PIIBlockPolicy_LLM",
+    "icon": "book",
+    "language": "book",
+    "streamlit": false,
+    "proxy_agent": false,
+    "dependencies": {
+        "api": [
+            "fastapi>=0.115.12",
+            "uvicorn>=0.34.2",
+            "upsonic"
+        ],
+        "streamlit": [],
+        "development": [
+            "python-dotenv",
+            "pytest"
+        ]
+    },
+    "entrypoints": {
+        "api_file": "main.py",
+        "streamlit_file": "streamlit_app.py"
+    },
+    "input_schema": {
+        "inputs": {
+            "user_query": {
+                "type": "string",
+                "description": "User's input question for the agent",
+                "required": true,
+                "default": null
+            }
+        }
+    },
+    "output_schema": {
+        "bot_response": {
+            "type": "string",
+            "description": "Agent's generated response"
+        }
+    }
+}
+```
+
+> **Note:** The `gpt-oss-safeguard-120b` variant is not yet available on OpenRouter.
+
+## Use Cases
+
+- **Customer support**: Prevent accidental PII exposure in support conversations
+- **Healthcare applications**: Ensure HIPAA compliance by blocking PHI
+- **Financial services**: Protect sensitive financial information
+- **Enterprise applications**: Enforce data privacy policies
+- **Public-facing chatbots**: Prevent users from sharing personal information
+
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `OPENROUTER_API_KEY` | OpenRouter API key for policy enforcement (gpt-oss-safeguard-20b) | Yes |
+| `OPENAI_API_KEY` | OpenAI API key for main agent responses (gpt-4o) | Yes |
+
+
+For more information on Safety Engine and custom policies, visit: [Upsonic Safety Engine Documentation](https://docs.upsonic.ai/concepts/safety-engine/overview)
+
+## Repository
+
+View the complete example: [GPT-OSS Safety Agent Example](https://github.com/Upsonic/Examples/tree/master/task_examples/gpt_oss_safety_agent)

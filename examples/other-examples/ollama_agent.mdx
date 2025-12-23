@@ -1,0 +1,226 @@
+---
+title: "Ollama Agent"
+description: "Use Upsonic's Agent with local Ollama models like gpt-oss:20b"
+---
+
+This example demonstrates how to create and use an **Upsonic Agent** with **Ollama** models to run LLMs locally. The example shows how to configure the agent to use local models for privacy and cost-efficiency.
+
+## Overview
+
+Upsonic framework provides seamless integration for local models via Ollama. This example showcases:
+
+1.  **Local Model Integration** — Using `OllamaModel` to connect to local LLMs
+2.  **Privacy** — Running inferences entirely on your local machine
+3.  **Task Execution** — Running simple QA tasks
+4.  **FastAPI Server** — Running the agent as a production-ready API server
+
+## Project Structure
+
+```
+ollama_agent/
+├── main.py                    # Agent entry point 
+├── upsonic_configs.json       # Upsonic CLI configuration
+└── README.md                  # Quick start guide
+```
+
+### Environment Variables
+
+No API keys are required for Ollama if running locally. Just ensure the Ollama service is active.
+
+## Installation
+
+```bash
+# Install dependencies from upsonic_configs.json
+upsonic install
+```
+
+### Managing Dependencies
+
+```bash
+# Add a package
+upsonic add <package> <section>
+
+# Remove a package
+upsonic remove <package> <section>
+```
+
+**Sections:** `api`, `streamlit`, `development`
+
+## Usage
+
+### Option 1: Run Directly
+
+```bash
+python3 main.py
+```
+
+Runs the agent with a default test query ("Hello, how are you?").
+
+### Option 2: Run as API Server
+
+```bash
+upsonic run
+```
+
+Server starts at `http://localhost:8000`. API documentation at `/docs`.
+
+**Example API call:**
+```bash
+curl -X POST http://localhost:8000/call \
+  -H "Content-Type: application/json" \
+  -d '{"user_query": "Explain quantum computing in one sentence."}'
+```
+
+## How It Works
+
+| Component | Description |
+|-----------|-------------|
+| OllamaModel | Connects to the local Ollama instance (default port 11434) |
+| Agent | Uses the local model for inference |
+| Task | Encapsulates the user query |
+| Execution | Runs the task synchronously or asynchronously |
+
+### Example Output
+
+**Query:**
+```
+"Hello, how are you?"
+```
+
+**Response:**
+```
+"I'm just an AI, so I don't have feelings, but I'm functioning perfectly! How can I help you today?"
+```
+
+## Complete Implementation
+
+### main.py
+
+```python
+"""
+Ollama Agent Example
+
+This example demonstrates how to create and use an Upsonic Agent with local Ollama models.
+
+This file contains:
+- async main(inputs): For use with `upsonic run` CLI command (FastAPI server)
+- direct execution: For running as a script `python main.py`
+"""
+
+from upsonic import Agent, Task
+from upsonic.models.ollama import OllamaModel
+
+# Initialize the model
+# Ensure you have pulled the model: `ollama pull gpt-oss:20b`
+model = OllamaModel(model_name="gpt-oss:20b")
+
+
+async def main(inputs: dict) -> dict:
+    """
+    Async main function for FastAPI server (used by `upsonic run` command).
+    """
+    user_query = inputs.get("user_query", "Hello, how are you?")
+    
+    agent = Agent(model=model)
+    
+    task = Task(description=user_query)
+    
+    result = await agent.do_async(task)
+    
+    return {
+        "bot_response": result
+    }
+
+
+if __name__ == "__main__":
+    print("🤖 Running Ollama Agent directly...")
+    
+    agent = Agent(model=model)
+    
+    task_text = "Hello, how are you?"
+    print(f"Task: {task_text}")
+    task = Task(task_text)
+    
+    result = agent.do(task)
+    
+    print("-" * 50)
+    print("Result:")
+    print(result)
+    print("-" * 50)
+```
+
+### upsonic_configs.json
+
+```json
+{
+    "environment_variables": {
+        "UPSONIC_WORKERS_AMOUNT": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "API_WORKERS": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "RUNNER_CONCURRENCY": {
+            "type": "number",
+            "description": "The number of runners for the Upsonic API",
+            "default": 1
+        },
+        "NEW_FEATURE_FLAG": {
+            "type": "string",
+            "description": "New feature flag added in version 2.0",
+            "default": "enabled"
+        }
+    },
+    "machine_spec": {
+        "cpu": 2,
+        "memory": 4096,
+        "storage": 1024
+    },
+    "agent_name": "Ollama Agent",
+    "description": "Simple Upsonic Agent using local Ollama models.",
+    "icon": "terminal",
+    "language": "python",
+    "streamlit": false,
+    "proxy_agent": false,
+    "dependencies": {
+        "api": [
+            "fastapi>=0.115.12",
+            "uvicorn>=0.34.2",
+            "upsonic",
+            "pip"
+        ],
+        "development": [
+            "watchdog",
+            "python-dotenv",
+            "pytest"
+        ]
+    },
+    "entrypoints": {
+        "api_file": "main.py"
+    },
+    "input_schema": {
+        "inputs": {
+            "user_query": {
+                "type": "string",
+                "description": "User's input question for the agent",
+                "required": true,
+                "default": null
+            }
+        }
+    },
+    "output_schema": {
+        "bot_response": {
+            "type": "string",
+            "description": "Agent's generated response"
+        }
+    }
+}
+```
+
+## Repository
+
+View the complete example: [Ollama Agent](https://github.com/Upsonic/Examples/...)
