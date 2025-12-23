@@ -17,17 +17,45 @@ Choose memory types based on your specific needs:
 
 You can use one type or combine all three for the most powerful memory system:
 
+### Basic Conversation Memory Only
+
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory
+from upsonic.storage.providers.in_memory import InMemoryStorage
+
 # Basic conversation memory only
+storage = InMemoryStorage()
 memory = Memory(
-    storage=InMemoryStorage(),
+    storage=storage,
     session_id="session_001",
     full_session_memory=True
 )
 
-# All three memory types
+# Create agent with memory
+agent = Agent("openai/gpt-4o", memory=memory)
+
+# First conversation
+task1 = Task("My name is Alice and I love Python")
+result1 = agent.do(task1)
+
+# Second conversation - agent remembers
+task2 = Task("What's my name and favorite language?")
+result2 = agent.do(task2)
+print(result2)  # Output: Your name is Alice and you love Python
+```
+
+### All Three Memory Types
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory
+from upsonic.storage.providers.in_memory import InMemoryStorage
+
+# All three memory types combined
+storage = InMemoryStorage()
 memory = Memory(
-    storage=InMemoryStorage(),
+    storage=storage,
     session_id="session_001",
     user_id="user_001",
     full_session_memory=True,
@@ -35,6 +63,18 @@ memory = Memory(
     user_analysis_memory=True,
     model="openai/gpt-4o"
 )
+
+# Create agent with comprehensive memory
+agent = Agent("openai/gpt-4o", memory=memory)
+
+# First conversation - agent stores everything
+task1 = Task("Hi! I'm Bob, a backend developer who loves microservices")
+result1 = agent.do(task1)
+
+# Agent uses all memory types for rich context
+task2 = Task("What can you tell me about my background?")
+result2 = agent.do(task2)
+print(result2)
 ```
 
 ## Use Case for Conversation Memory

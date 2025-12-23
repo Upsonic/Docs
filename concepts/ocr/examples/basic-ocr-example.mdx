@@ -12,6 +12,11 @@ This example demonstrates a complete document processing pipeline using the Unif
 ```python
 from upsonic.ocr import OCR
 from upsonic.ocr.easyocr import EasyOCR
+import urllib.request
+
+# Download a sample image for testing
+url = "https://raw.githubusercontent.com/JaidedAI/EasyOCR/master/examples/english.png"
+urllib.request.urlretrieve(url, "sample_image.png")
 
 # Configure OCR with preprocessing for best results
 ocr = OCR(
@@ -24,6 +29,10 @@ ocr = OCR(
     pdf_dpi=250,
     gpu=True
 )
+
+# Run OCR on the sample image
+result = ocr.get_text("sample_image.png")
+print(result)
 ```
 
 ## Full Code

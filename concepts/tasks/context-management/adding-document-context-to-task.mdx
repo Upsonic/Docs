@@ -10,21 +10,35 @@ Tasks can include document attachments for processing. The framework automatical
 ## Single Document Attachment
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o")
+
 # Task with single document
 task = Task(
     description="Summarize the key points from the attached document",
     context=["report.pdf"]
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Multiple Document Attachments
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o")
+
 # Task with multiple documents
 task = Task(
     description="Compare the two attached documents and identify key differences",
     context=["document1.pdf", "document2.pdf"]
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Supported Document Formats
@@ -44,11 +58,18 @@ The framework supports various document formats including:
 - JavaScript (.js)
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o")
+
 # Example with different document formats
 task = Task(
     description="Analyze all the attached documents",
     context=["report.pdf", "data.csv", "notes.md"]
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Folder Context
@@ -56,11 +77,18 @@ task = Task(
 The framework also supports passing folder paths to automatically include all files within a directory:
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o")
+
 # Task with folder context - includes all files in the folder recursively
 task = Task(
     description="Analyze all documents in the attached folder",
     context=["/path/to/documents/folder"]
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Best Practices

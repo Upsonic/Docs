@@ -6,7 +6,33 @@ description: "List, query, and manage durable executions"
 ## Listing Executions
 
 ```python
-from upsonic.durable import DurableExecution
+from upsonic import Agent, Task
+from upsonic.durable import DurableExecution, FileDurableStorage
+
+# Create storage
+storage = FileDurableStorage("./checkpoints")
+
+# Create durable execution
+durable = DurableExecution(storage=storage)
+
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Simple task for demonstration",
+    durable_execution=durable
+)
+
+# Execute with automatic checkpointing
+try:
+    result = agent.do(task)
+    print(result)
+except Exception as e:
+    # Resume from checkpoint
+    result = agent.continue_durable(
+        durable_execution_id=task.durable_execution_id,
+        storage=storage
+    )
+    print(result)
 
 # List all executions
 all_executions = DurableExecution.list_all_executions(storage)
@@ -38,9 +64,39 @@ in_progress_executions = DurableExecution.list_all_executions(
 ## Getting Execution Information
 
 ```python
+from upsonic import Agent, Task
+from upsonic.durable import DurableExecution, FileDurableStorage
+
+# Create storage
+storage = FileDurableStorage("./checkpoints")
+
+# Create durable execution
+durable = DurableExecution(storage=storage)
+
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Query task for demonstration",
+    durable_execution=durable
+)
+
+# Execute with automatic checkpointing
+try:
+    result = agent.do(task)
+    print(result)
+except Exception as e:
+    # Resume from checkpoint
+    result = agent.continue_durable(
+        durable_execution_id=task.durable_execution_id,
+        storage=storage
+    )
+    print(result)
+
+execution_id = task.durable_execution_id
+
 # Get detailed execution information
-durable = DurableExecution(storage=storage, execution_id=execution_id)
-exec_info = durable.get_execution_info()
+durable_info = DurableExecution(storage=storage, execution_id=execution_id)
+exec_info = durable_info.get_execution_info()
 
 if exec_info:
     print(f"Status: {exec_info['status']}")
@@ -55,6 +111,34 @@ if exec_info:
 ## Storage Statistics
 
 ```python
+from upsonic import Agent, Task
+from upsonic.durable import DurableExecution, FileDurableStorage
+
+# Create storage
+storage = FileDurableStorage("./checkpoints")
+
+# Create durable execution
+durable = DurableExecution(storage=storage)
+
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Stats task for demonstration",
+    durable_execution=durable
+)
+
+# Execute with automatic checkpointing
+try:
+    result = agent.do(task)
+    print(result)
+except Exception as e:
+    # Resume from checkpoint
+    result = agent.continue_durable(
+        durable_execution_id=task.durable_execution_id,
+        storage=storage
+    )
+    print(result)
+
 # Get storage statistics
 stats = storage.get_stats()
 
@@ -72,6 +156,35 @@ print(f"By status: {stats['by_status']}")
 
 ```python
 import asyncio
+from upsonic import Agent, Task
+from upsonic.durable import DurableExecution, FileDurableStorage
+
+# Create storage
+storage = FileDurableStorage("./checkpoints")
+
+# Create durable execution
+durable = DurableExecution(storage=storage)
+
+# Create agent and task
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Cleanup task for demonstration",
+    durable_execution=durable
+)
+
+# Execute with automatic checkpointing
+try:
+    result = agent.do(task)
+    print(result)
+except Exception as e:
+    # Resume from checkpoint
+    result = agent.continue_durable(
+        durable_execution_id=task.durable_execution_id,
+        storage=storage
+    )
+    print(result)
+
+execution_id = task.durable_execution_id
 
 # Cleanup old executions (older than 7 days)
 deleted_count = asyncio.run(

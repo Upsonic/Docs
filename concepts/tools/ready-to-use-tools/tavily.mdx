@@ -26,7 +26,8 @@ task = Task(
 agent = Agent(model="openai/gpt-4o", name="Tavily Search Agent")
 
 # Execute
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Advanced Search
@@ -50,7 +51,8 @@ task = Task(
 )
 
 agent = Agent(model="openai/gpt-4o", name="Advanced Search Agent")
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Parameters

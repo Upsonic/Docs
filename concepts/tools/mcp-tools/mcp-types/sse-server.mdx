@@ -21,7 +21,7 @@ class SearchMCP:
 
 # Create task with MCP tools
 task = Task(
-    description="Use the fetch tool to get latest news in Europe",
+    description="Search for the latest technology news in Europe using the SearchMCP tool, then use FetchMCP to retrieve the full content of the top 3 articles.",
     tools=[FetchMCP, SearchMCP]
 )
 
@@ -32,7 +32,8 @@ agent = Agent(
 )
 
 # Execute
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Parameters

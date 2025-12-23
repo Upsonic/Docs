@@ -10,9 +10,14 @@ In Upsonic, you can use the output of one task as context for another task throu
 ## Basic Task Chaining
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o")
+
 # First task
 task1 = Task(description="What is 2 + 2?")
 result1 = agent.do(task1)
+print(f"Result 1: {result1}")
 
 # Second task using context from first task
 task2 = Task(
@@ -20,28 +25,64 @@ task2 = Task(
     context=[task1]
 )
 result2 = agent.do(task2)
+print(f"Result 2: {result2}")
 ```
 
 ## Multiple Context Sources
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o")
+
+# First two tasks
+task1 = Task(description="What is 10 + 5?")
+result1 = agent.do(task1)
+
+task2 = Task(description="What is 20 - 8?", context=[task1])
+result2 = agent.do(task2)
+
 # Task with multiple context sources
 task3 = Task(
     description="Summarize all the previous mathematical results",
     context=[task1, task2, "Additional context: These were all math problems"]
 )
 result3 = agent.do(task3)
+print(result3)
 ```
 
 ## Complex Workflow Example
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from pydantic import BaseModel
+from typing import List
+
+@tool
+def data_collector(source: str) -> str:
+    """Collect data from a source."""
+    return f"Collected data from {source}"
+
+@tool
+def data_analyzer(data: str) -> str:
+    """Analyze data."""
+    return f"Analysis of: {data}"
+
+class ReportResult(BaseModel):
+    title: str
+    summary: str
+    insights: List[str]
+
+agent = Agent(model="openai/gpt-4o")
+
 # Task 1: Data collection
 task1 = Task(
     description="Collect data from market research sources",
     tools=[data_collector],
     enable_cache=True
 )
+result1 = agent.do(task1)
 
 # Task 2: Data analysis
 task2 = Task(
@@ -50,6 +91,7 @@ task2 = Task(
     context=[task1],
     enable_thinking_tool=True
 )
+result2 = agent.do(task2)
 
 # Task 3: Report generation
 task3 = Task(
@@ -57,6 +99,9 @@ task3 = Task(
     context=[task1, task2],
     response_format=ReportResult
 )
+result3 = agent.do(task3)
+print(f"Report: {result3.title}")
+print(f"Summary: {result3.summary}")
 ```
 
 ## Context Types
@@ -69,6 +114,21 @@ Tasks can use various types of context:
 - **Mixed**: Combination of different context types
 
 ```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup knowledge base
+embedding_provider = OpenAIEmbedding()
+vectordb = ChromaProvider(config=ChromaConfig(collection_name="kb", vector_size=1536, connection=ConnectionConfig(mode=Mode.IN_MEMORY)))
+knowledge_base = KnowledgeBase(sources=["company_data.txt"], embedding_provider=embedding_provider, vectordb=vectordb)
+
+agent = Agent(model="openai/gpt-4o")
+
+# Previous data collection task
+data_collection_task = Task(description="Collect Q4 sales data")
+agent.do(data_collection_task)
+
 # Mixed context example
 task = Task(
     description="Analyze the data and provide insights",
@@ -78,6 +138,8 @@ task = Task(
         knowledge_base  # Knowledge base context
     ]
 )
+result = agent.do(task)
+print(result)
 ```
 
 ## Best Practices

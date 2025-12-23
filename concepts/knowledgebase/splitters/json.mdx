@@ -19,9 +19,10 @@ No additional dependencies required. Uses standard library.
 
 ```python
 from upsonic import Agent, Task, KnowledgeBase
-from upsonic.loaders import JSONLoader, JSONLoaderConfig
+from upsonic.loaders.json import JSONLoader
+from upsonic.loaders.config import JSONLoaderConfig
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
-from upsonic.text_splitter import JSONChunker, JSONChunkingConfig
+from upsonic.text_splitter.json_chunker import JSONChunker, JSONChunkingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
 
 # Configure splitter

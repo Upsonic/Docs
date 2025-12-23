@@ -40,7 +40,7 @@ class SlackMCP:
 
 # Create task with authenticated tools
 task = Task(
-    description="Check GitHub issues and notify the team on Slack",
+    description="Fetch the latest open issues from the repository 'my-project/repo' using the GitHub tool, then send a summary of these issues to the '#dev-team' channel on Slack.",
     tools=[GitHubMCP, SlackMCP]
 )
 
@@ -51,7 +51,8 @@ agent = Agent(
 )
 
 # Execute
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Parameters
@@ -84,12 +85,13 @@ class SecureMCP:
     }
 
 task = Task(
-    description="Use authenticated MCP server",
+    description="Connect to the secure company MCP server and retrieve the latest confidential report.",
     tools=[SecureMCP]
 )
 
 agent = Agent(name="Secure Agent", model="openai/gpt-4o")
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## SSE Server Authentication
@@ -104,12 +106,13 @@ class AuthenticatedSSE:
     # Pass credentials via URL parameters or configure server-side
 
 task = Task(
-    description="Use authenticated SSE MCP server",
+    description="Connect to the real-time SSE MCP server and listen for the latest status updates.",
     tools=[AuthenticatedSSE]
 )
 
 agent = Agent(name="SSE Agent", model="openai/gpt-4o")
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Troubleshooting Authentication

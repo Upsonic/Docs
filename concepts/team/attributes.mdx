@@ -24,8 +24,13 @@ from upsonic import Agent, Task, Team
 from upsonic import Memory
 from upsonic.storage.providers.sqlite import SqliteStorage
 
-# Create storage and memory
-storage = SqliteStorage("sessions", "profiles", "team_memory.db")
+# Create SQLite storage and memory
+storage = SqliteStorage(
+    db_file="memory.db",
+    sessions_table_name="sessions",
+    profiles_table_name="profiles"
+)
+
 memory = Memory(storage=storage, session_id="team_001")
 
 # Create specialized agents

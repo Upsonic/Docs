@@ -10,31 +10,52 @@ Tasks can include image attachments for processing. The framework automatically 
 ## Single Image Attachment
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o")
+
 # Task with single image
 task = Task(
     description="Describe what you see in the attached image",
     context=["image.png"]
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Multiple Image Attachments
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o")
+
 # Task with multiple images
 task = Task(
     description="Compare the two attached images and identify similarities and differences",
     context=["image1.jpg", "image2.jpg"]
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Images with Other Context
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o")
+
 # Task with images and other context
 task = Task(
     description="Analyze the attached chart and provide insights based on the market data",
     context=["chart.png", market_data_task],
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Supported Image Formats
@@ -48,16 +69,24 @@ The framework supports various image formats including:
 - TIFF (.tiff)
 
 ```python
+from upsonic import Agent, Task
+
+agent = Agent(model="openai/gpt-4o")
+
 # Example with different image formats
 task = Task(
     description="Analyze all the attached images",
     context=["photo.jpg", "diagram.png", "chart.tiff"]
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Image Processing with Tools
 
 ```python
+from upsonic import Agent, Task
 from upsonic.tools import tool
 
 @tool
@@ -66,12 +95,17 @@ def image_analyzer(image_path: str) -> str:
     # Your image analysis logic here
     return f"Analysis of {image_path}"
 
+agent = Agent(model="openai/gpt-4o")
+
 # Task combining image attachments with image analysis tools
 task = Task(
     description="Analyze the attached images using the image analyzer tool",
     context=["image1.jpg", "image2.png"],
     tools=[image_analyzer]
 )
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Best Practices

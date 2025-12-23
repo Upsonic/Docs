@@ -215,6 +215,11 @@ def streaming_rag(question):
     import asyncio
     asyncio.run(stream_output())
 
+streaming_rag("What is machine learning?")
+```
+
+
+```python
 # For non-streaming UEL chain, use regular invoke
 from upsonic.uel import ChatPromptTemplate, StrOutputParser
 from upsonic.models import infer_model
@@ -238,4 +243,3 @@ def non_streaming_rag(question):
 
 non_streaming_rag("What is machine learning?")
 ```
-

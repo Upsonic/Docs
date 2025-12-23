@@ -18,11 +18,16 @@ pip install "upsonic[rag]"
 ### Single File
 
 ```python
-from upsonic import KnowledgeBase
+from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
 
+# Setup embedding provider
 embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+
+# Setup vector database
 config = ChromaConfig(
     collection_name="my_kb",
     vector_size=1536,
@@ -30,55 +35,137 @@ config = ChromaConfig(
 )
 vectordb = ChromaProvider(config)
 
+# Setup PDF loader
+loader = PdfLoader(PdfLoaderConfig())
+
+# Create knowledge base
 kb = KnowledgeBase(
     sources="document.pdf",
     embedding_provider=embedding,
-    vectordb=vectordb
+    vectordb=vectordb,
+    loaders=[loader]
 )
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="What was the total revenue in Q3 2024 according to the report?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
 ```
 
 ### Multiple Files
 
 ```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
+
+# Create knowledge base with multiple sources
 kb = KnowledgeBase(
     sources=["doc1.pdf", "doc2.md", "doc3.docx"],
     embedding_provider=embedding,
     vectordb=vectordb
 )
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="What are the three main conclusions drawn from the A/B testing results?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
 ```
 
 ### Directory
 
 ```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
+
+# Setup PDF loader
+loader = PdfLoader(PdfLoaderConfig())
+
+# Create knowledge base from directory
 kb = KnowledgeBase(
     sources="data/",
     embedding_provider=embedding,
-    vectordb=vectordb
+    vectordb=vectordb,
+    loaders=[loader]
 )
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="What are the dimensions and power requirements for the Model X unit?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
 ```
 
 ### Mixed Sources
 
 ```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
+
+# Setup PDF loader
+loader = PdfLoader(PdfLoaderConfig())
+
+# Create knowledge base with mixed sources
 kb = KnowledgeBase(
     sources=["doc1.pdf", "data/", "This is direct content text."],
     embedding_provider=embedding,
-    vectordb=vectordb
+    vectordb=vectordb,
+    loaders=[loader]
 )
-```
 
-### Using with Task
-
-```python
-from upsonic import Agent, Task
-
+# Use with Agent
 agent = Agent("openai/gpt-4o")
 task = Task(
-    description="Summarize the documents",
+    description="Find the warranty terms for the battery component in the text",
     context=[kb]
 )
 
 result = agent.do(task)
+print(result)
 ```
 
 ## Supported File Types

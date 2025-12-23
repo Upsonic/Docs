@@ -27,7 +27,8 @@ task = Task(
 agent = Agent(model="openai/gpt-4o", name="Finance Agent")
 
 # Execute
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Selective Tool Configuration
@@ -52,7 +53,8 @@ task = Task(
 )
 
 agent = Agent(model="openai/gpt-4o", name="Selective Finance Agent")
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Available Tools
@@ -108,7 +110,8 @@ task = Task(
 agent = Agent(model="openai/gpt-4o", name="Financial Analyst")
 
 # Execute
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Installation

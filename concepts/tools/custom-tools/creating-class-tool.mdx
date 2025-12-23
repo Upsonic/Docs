@@ -56,11 +56,106 @@ task = Task(
 agent = Agent(model="openai/gpt-4o", name="Calculator Agent")
 
 # Execute
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Key Points
 
 - **Public methods only**: Methods starting with `_` are ignored
 - **Automatic registration**: All public methods become tools automatically
+
+## Class Tool vs ToolKit
+
+| Feature | Class Tool | ToolKit |
+|---------|-----------|---------|
+| **Registration** | All public methods | Only `@tool` decorated methods |
+| **Control** | Less control over which methods become tools | Explicit control via `@tool` decorator |
+| **Helper methods** | Must prefix with `_` to hide | Any non-decorated method is hidden |
+| **Use case** | Simple classes where all methods are tools | Complex classes with internal helpers |
+
+### When to Use Each
+
+**Use Class Tool** when:
+- All public methods should be tools
+- Simple utility classes
+- Quick prototyping
+
+```python
+class Calculator:
+    def add(self, a: int, b: int) -> int:
+        """Add two numbers."""
+        return a + b
+    
+    def multiply(self, a: int, b: int) -> int:
+        """Multiply two numbers."""
+        return a * b
+```
+
+**Use ToolKit** when:
+- You need helper methods that shouldn't be tools
+- You want explicit control over tool registration
+- You have complex internal logic
+
+```python
+from upsonic.tools import ToolKit, tool
+
+class DataProcessor(ToolKit):
+    def __init__(self, config: dict):
+        self.config = config
+    
+    @tool
+    def process(self, data: str) -> str:
+        """Process data using configured rules."""
+        cleaned = self._clean(data)
+        return self._transform(cleaned)
+    
+    def _clean(self, data: str) -> str:
+        """Helper - not a tool."""
+        return data.strip()
+    
+    def _transform(self, data: str) -> str:
+        """Helper - not a tool."""
+        return data.upper()
+```
+
+## State Management
+
+Class instances maintain state between tool calls:
+
+```python
+class Counter:
+    def __init__(self):
+        self.count = 0
+    
+    def increment(self) -> int:
+        """Increment counter and return new value."""
+        self.count += 1
+        return self.count
+    
+    def get_count(self) -> int:
+        """Get current count."""
+        return self.count
+
+counter = Counter()
+agent.add_tools(counter)
+
+# Agent can call increment() multiple times
+# Each call uses the same instance with shared state
+```
+
+## Removing Class Tools
+
+Remove individual methods or the entire class:
+
+```python
+calculator = Calculator()
+agent.add_tools(calculator)
+
+# Remove single method (keeps other methods)
+agent.remove_tools("add")
+
+# Remove entire class instance (removes all methods)
+agent.remove_tools(calculator)
+```
 

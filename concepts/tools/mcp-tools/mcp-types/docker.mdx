@@ -28,7 +28,7 @@ class DatabaseMCP:
 
 # Create task
 task = Task(
-    description="Query the database and analyze results",
+    description="Connect to the PostgreSQL database container, query the latest 100 transactions, and analyze them for potential anomalies.",
     tools=[DatabaseMCP]
 )
 
@@ -39,7 +39,8 @@ agent = Agent(
 )
 
 # Execute
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Parameters

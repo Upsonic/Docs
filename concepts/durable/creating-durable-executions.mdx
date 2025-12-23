@@ -8,45 +8,54 @@ description: "How to create and execute durable tasks"
 Durable executions are created by attaching a `DurableExecution` instance to a `Task`. The system automatically handles checkpoint management throughout the execution lifecycle.
 
 ```python
-from upsonic import Task, Agent
+from upsonic import Agent, Task
 from upsonic.durable import DurableExecution, FileDurableStorage
 
-# Create storage backend
-storage = FileDurableStorage(path="./checkpoints")
+# Create storage
+storage = FileDurableStorage("./checkpoints")
 
 # Create durable execution
 durable = DurableExecution(storage=storage)
 
-# Create task with durable execution
+# Create agent and task
+agent = Agent("openai/gpt-4o")
 task = Task(
-    "Process customer data and generate report",
+    description="Process customer data and generate report",
     durable_execution=durable
 )
 
-# Get the unique execution ID
-print(f"Execution ID: {task.durable_execution_id}")
-# Output: Execution ID: 20251027123456-a1b2c3d4
-
-# Execute the task
-agent = Agent("openai/gpt-4o-mini", name="DataProcessor")
+# Execute with automatic checkpointing
 try:
     result = agent.do(task)
-    print(f"Success: {result}")
+    print(result)
 except Exception as e:
-    print(f"Failed: {e}")
-    print(f"Checkpoint saved at: {task.durable_execution_id}")
+    # Resume from checkpoint
+    result = agent.continue_durable(
+        durable_execution_id=task.durable_execution_id,
+        storage=storage
+    )
+    print(result)
 ```
 
 ## Recovery from Failure
 
 ```python
+from upsonic import Agent
+from upsonic.durable import DurableExecution, FileDurableStorage
+
+# Create storage
+storage = FileDurableStorage("./checkpoints")
+
 # Resume from a failed execution
 execution_id = "20251027123456-a1b2c3d4"
 
 # Create a new agent instance (simulating restart)
-agent = Agent("openai/gpt-4o-mini", name="DataProcessor")
+agent = Agent("openai/gpt-4o")
 
 # Resume from the checkpoint
-result = agent.continue_durable(execution_id, storage)
+result = agent.continue_durable(
+    durable_execution_id=execution_id,
+    storage=storage
+)
 print(f"Recovered and completed: {result}")
 ```

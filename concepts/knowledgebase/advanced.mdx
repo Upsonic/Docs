@@ -12,7 +12,7 @@ KnowledgeBase provides advanced features for intelligent document processing, in
 When `loaders` and `splitters` are not provided, KnowledgeBase automatically detects and creates appropriate components for each source based on file type and content analysis.
 
 ```python
-from upsonic import KnowledgeBase
+from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
 
@@ -31,6 +31,16 @@ kb = KnowledgeBase(
     use_case="rag_retrieval",
     quality_preference="balanced"
 )
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="What are the error handling mechanisms described in the code implementation?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Indexed Processing
@@ -40,8 +50,20 @@ When multiple sources are provided with multiple loaders/splitters, KnowledgeBas
 ### Single Loader/Splitter (Shared)
 
 ```python
-from upsonic.loaders import PdfLoader, PdfLoaderConfig
-from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+from upsonic.text_splitter.recursive import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
 
 loader = PdfLoader(PdfLoaderConfig())
 splitter = RecursiveChunker(RecursiveChunkingConfig())
@@ -53,13 +75,37 @@ kb = KnowledgeBase(
     loaders=[loader],  # Single loader used for all sources
     splitters=[splitter]  # Single splitter used for all sources
 )
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="List the safety precautions mentioned in the operating manual",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
 ```
 
 ### Multiple Loaders/Splitters (Indexed)
 
 ```python
-from upsonic.loaders import PdfLoader, PdfLoaderConfig, MarkdownLoader, MarkdownLoaderConfig
-from upsonic.text_splitter import RecursiveChunker, RecursiveChunkingConfig, SemanticChunker, SemanticChunkingConfig
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.markdown import MarkdownLoader
+from upsonic.loaders.config import PdfLoaderConfig, MarkdownLoaderConfig
+from upsonic.text_splitter.recursive import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.text_splitter.semantic import SemanticChunker, SemanticChunkingConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
 
 # Different loader for each source
 loaders = [
@@ -82,6 +128,16 @@ kb = KnowledgeBase(
     loaders=loaders,  # Index 0 -> doc1.pdf, Index 1 -> guide.md, Index 2 -> doc2.pdf
     splitters=splitters  # Index 0 -> doc1.pdf, Index 1 -> guide.md, Index 2 -> doc2.pdf
 )
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="What are the dependencies listed in the markdown file versus the build script?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
 ```
 
 **Important:** When using multiple loaders/splitters, the count must match the number of file sources (string content sources don't need loaders).
@@ -91,6 +147,18 @@ kb = KnowledgeBase(
 KnowledgeBase can process direct string content without requiring loaders. String content is automatically detected and converted to documents.
 
 ```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
+
 kb = KnowledgeBase(
     sources=[
         "document.pdf",  # File path - needs loader
@@ -100,6 +168,16 @@ kb = KnowledgeBase(
     embedding_provider=embedding,
     vectordb=vectordb
 )
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="What is the specific error code mentioned in the log snippet?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Quality Preferences
@@ -111,12 +189,34 @@ Control the speed vs quality trade-off for intelligent splitter selection:
 - **`"quality"`**: Optimized for quality, may be slower
 
 ```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
+
 kb = KnowledgeBase(
     sources=["document.pdf"],
     embedding_provider=embedding,
     vectordb=vectordb,
     quality_preference="quality"  # Prioritize chunking quality
 )
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Extract the exact definition of 'force majeure' from the contract",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Use Cases
@@ -127,12 +227,34 @@ Optimize chunking strategy for specific use cases:
 - Other use cases may be added in future versions
 
 ```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
+
 kb = KnowledgeBase(
     sources=["document.pdf"],
     embedding_provider=embedding,
     vectordb=vectordb,
     use_case="rag_retrieval"
 )
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="What are the specific prerequisites for the cloud deployment?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
 ```
 
 ## Configuration Options
@@ -140,6 +262,18 @@ kb = KnowledgeBase(
 Pass configuration options to loaders and splitters via `loader_config` and `splitter_config`:
 
 ```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
+
 kb = KnowledgeBase(
     sources=["document.pdf"],
     embedding_provider=embedding,
@@ -147,6 +281,16 @@ kb = KnowledgeBase(
     loader_config={"chunk_size": 1000},
     splitter_config={"chunk_overlap": 200, "chunk_size": 512}
 )
+
+# Use with Agent
+agent = Agent("openai/gpt-4o")
+task = Task(
+    description="Find the detailed parameter description for the 'initialize' function",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
 ```
 
 

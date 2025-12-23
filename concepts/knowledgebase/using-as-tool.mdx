@@ -22,6 +22,8 @@ Add KnowledgeBase to the `tools` parameter of a Task or Agent:
 from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
 
 # Step 1: Setup embedding provider
 embedding = OpenAIEmbedding(OpenAIEmbeddingConfig(
@@ -38,23 +40,27 @@ vectordb = ChromaProvider(ChromaConfig(
     )
 ))
 
-# Step 3: Create knowledge base with documents
+# Step 3: Setup PDF loader
+loader = PdfLoader(PdfLoaderConfig())
+
+# Step 4: Create knowledge base with documents
 kb = KnowledgeBase(
     sources=["document.pdf"],
     embedding_provider=embedding,
-    vectordb=vectordb
+    vectordb=vectordb,
+    loaders=[loader]
 )
 
-# Step 4: Create agent
+# Step 5: Create agent
 agent = Agent("openai/gpt-4o")
 
-# Step 5: Create task with knowledge base as a tool
+# Step 6: Create task with knowledge base as a tool
 task = Task(
     description="What are the main topics discussed in the document?",
     tools=[kb]
 )
 
-# Step 6: Execute and get results
+# Step 7: Execute and get results
 result = agent.do(task)
 print(result)
 ```
@@ -82,28 +88,72 @@ print(result)
 
 ## Multiple Knowledge Bases
 
-You can add multiple KnowledgeBase instances as tools:
+You can add multiple KnowledgeBase instances as tools. **When using multiple knowledge bases, provide unique `name` and `description` attributes** so the agent can distinguish between them:
 
 ```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
+
+loader = PdfLoader(PdfLoaderConfig())
+
+# Each KnowledgeBase MUST have a unique name for multi-KB usage
 kb1 = KnowledgeBase(
     sources=["technical_docs/"],
     embedding_provider=embedding,
-    vectordb=ChromaProvider(ChromaConfig(...))
+    vectordb=vectordb,
+    loaders=[loader],
+    name="technical_docs",  # IMPORTANT: Unique name for this KB
+    description="Technical API documentation including rate limits, authentication, and endpoints"
 )
 
 kb2 = KnowledgeBase(
     sources=["user_guides/"],
     embedding_provider=embedding,
-    vectordb=ChromaProvider(ChromaConfig(...))
+    vectordb=vectordb,
+    loaders=[loader],
+    name="user_guides",  # IMPORTANT: Different unique name
+    description="User guides and tutorials for end users including usage limits and best practices"
 )
 
+# Use with Agent
+agent = Agent("openai/gpt-4o")
 task = Task(
-    description="Compare information from technical docs and user guides",
+    description="Compare the API rate limits defined in the technical documentation with the usage limits described in the user guide",
     tools=[kb1, kb2]
 )
 
 result = agent.do(task)
+print(result)
 ```
+
+### How Tool Names Are Generated
+
+When you register multiple KnowledgeBase instances as tools, each one gets a **unique tool name** based on its `name` attribute:
+
+| KnowledgeBase `name` | Registered Tool Name |
+|---------------------|---------------------|
+| `"technical_docs"` | `search_technical_docs` |
+| `"user_guides"` | `search_user_guides` |
+| (no name provided) | `search_{auto_generated_id}` (e.g., `search_7c6432f612bb422a`) |
+
+This allows the agent to call the appropriate knowledge base search tool:
+- Call `search_technical_docs(query="API rate limits")` to search the technical documentation
+- Call `search_user_guides(query="usage limits")` to search the user guides
+
+<Warning>
+If you don't provide unique `name` attributes, tool names may collide and only one knowledge base will be accessible.
+</Warning>
 
 ## Cleanup
 
@@ -111,12 +161,5 @@ Always close the KnowledgeBase when done to free resources:
 
 ```python
 await kb.close()
-```
-
-Or use async context manager:
-
-```python
-async with kb:
-    result = agent.do(task)
 ```
 

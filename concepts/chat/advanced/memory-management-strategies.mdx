@@ -10,78 +10,133 @@ Configure memory behavior for optimal performance and cost.
 ## Limiting Message History
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    num_last_messages=20  # Only keep last 20 messages in context
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        num_last_messages=20  # Only keep last 20 messages in context
+    )
+
+    # Invoke chat
+    response = await chat.invoke("What is Machine Learning?")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Memory with Summarization
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    full_session_memory=True,
-    summary_memory=True  # Automatically summarize long conversations
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        full_session_memory=True,
+        summary_memory=True  # Automatically summarize long conversations
+    )
+
+    # Invoke chat
+    response = await chat.invoke("Explain Deep Learning")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Tool Call Results in Memory
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    feed_tool_call_results=True  # Include tool execution results in memory
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        feed_tool_call_results=True  # Include tool execution results in memory
+    )
+
+    # Invoke chat
+    response = await chat.invoke("What is NLP?")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## User Profile Management
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    user_analysis_memory=True,
-    user_memory_mode="update"  # Incrementally update profiles
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        user_analysis_memory=True,
+        user_memory_mode="update"  # Incrementally update profiles
+    )
+
+    # Invoke chat
+    response = await chat.invoke("Describe Computer Vision")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Dynamic Profile Schema
 
 ```python
+import asyncio
 from upsonic import Agent, Chat
 
-agent = Agent("openai/gpt-4o")
 
-chat = Chat(
-    session_id="session1",
-    user_id="user1",
-    agent=agent,
-    dynamic_user_profile=True  # Generate profile schema automatically
-)
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        dynamic_user_profile=True  # Generate profile schema automatically
+    )
+
+    # Invoke chat
+    response = await chat.invoke("What is Reinforcement Learning?")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Memory Optimization Tips

@@ -21,7 +21,7 @@ Without thinking, agents make ad-hoc tool calls. With thinking, agents strategic
 To enable thinking capabilities, set `enable_thinking_tool=True` when creating your agent:
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 from upsonic.tools import tool
 
 # Define tools the agent can use
@@ -37,11 +37,17 @@ def get_population(city: str) -> str:
 
 # Enable thinking for multi-tool orchestration
 agent = Agent(
+    model="openai/gpt-4o",
     name="CityAnalyst",
     tools=[get_weather, get_population],
     enable_thinking_tool=True,
     debug=True
 )
+
+# Create task and execute
+task = Task("Tell me about Paris's weather and population")
+result = agent.do(task)
+print(result)
 ```
 
 ## How Thinking Works
@@ -73,7 +79,7 @@ Example Flow:
 ### Agent-Level Thinking
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 from upsonic.tools import tool
 
 @tool
@@ -88,31 +94,70 @@ def analyze_sentiment(text: str) -> str:
 
 # Enable thinking for all tasks
 agent = Agent(
+    model="openai/gpt-4o",
     name="ResearchAgent",
     tools=[search_web, analyze_sentiment],
     enable_thinking_tool=True
 )
+
+# Execute a research task
+task = Task("Search for information about AI trends and analyze the sentiment")
+result = agent.do(task)
+print(result)
 ```
 
 ### Task-Level Thinking
 
 ```python
-from upsonic import Task
+from upsonic import Agent, Task
+from upsonic.tools import tool
 
-# Override agent settings for specific task
+@tool
+def search_web(query: str) -> str:
+    """Search the web for information."""
+    return f"Search results for: {query} - Found 5 relevant articles"
+
+@tool
+def analyze_sentiment(text: str) -> str:
+    """Analyze sentiment of text."""
+    return "Sentiment: Positive (85% confidence)"
+
+# Create agent without thinking enabled by default
+agent = Agent(
+    model="openai/gpt-4o",
+    name="ResearchAgent",
+    tools=[search_web, analyze_sentiment]
+)
+
+# Override agent settings for specific task - enable thinking
 task = Task(
     description="Search for recent AI news and analyze the sentiment",
     enable_thinking_tool=True  # Enable thinking for this specific task
 )
 
-result = agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ### Mixed Configuration
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def search_web(query: str) -> str:
+    """Search the web for information."""
+    return f"Search results for: {query}"
+
+@tool
+def analyze_sentiment(text: str) -> str:
+    """Analyze sentiment of text."""
+    return "Sentiment: Positive (85% confidence)"
+
 # Agent with thinking enabled
 agent = Agent(
+    model="openai/gpt-4o",
     name="AnalysisAgent",
     tools=[search_web, analyze_sentiment],
     enable_thinking_tool=True
@@ -123,12 +168,16 @@ simple_task = Task(
     description="What time is it in Tokyo?",
     enable_thinking_tool=False  # Disable thinking for simple queries
 )
+result1 = agent.do(simple_task)
+print("Simple result:", result1)
 
 # Complex task with thinking (multiple tools)
 complex_task = Task(
-    description="Research the topic and analyze sentiment of findings",
+    description="Research the topic of electric vehicles and analyze public sentiment",
     enable_thinking_tool=True  # Keep thinking for complex analysis
 )
+result2 = agent.do(complex_task)
+print("Complex result:", result2)
 ```
 
 ## When to Use Thinking
@@ -155,6 +204,7 @@ finance_tools = YFinanceTools(
 
 # Create agent with thinking for multi-step analysis
 agent = Agent(
+    model="openai/gpt-4o",
     name="FinancialAnalyst",
     tools=finance_tools.functions(),
     enable_thinking_tool=True,
@@ -174,7 +224,8 @@ task = Task(
 
 # Agent will plan and execute: get_current_stock_price, get_analyst_recommendations, get_company_news
 # Then synthesize results into investment summary
-result = agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ### Example: Multi-City Research
@@ -199,6 +250,7 @@ def get_attractions(city: str) -> str:
     return f"Top attractions in {city}: Museums, Parks, Historic sites"
 
 agent = Agent(
+    model="openai/gpt-4o",
     name="TravelAdvisor",
     tools=[get_weather, get_population, get_attractions],
     enable_thinking_tool=True,
@@ -212,7 +264,8 @@ task = Task(
 
 # Agent creates plan: [get_weather, get_population, get_attractions]
 # Executes each tool, then synthesizes into travel briefing
-result = agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Thinking Output Structure
@@ -229,13 +282,32 @@ When thinking is enabled, the agent provides:
 **Important**: Thinking capabilities consume more tokens and processing time than basic mode due to the planning and synthesis steps. Use thinking when the orchestration value outweighs the cost.
 
 ```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def get_weather(city: str) -> str:
+    """Get current weather for a city."""
+    return f"Weather in {city}: Sunny, 25\u00b0C"
+
+@tool
+def get_population(city: str) -> str:
+    """Get population for a city."""
+    return f"Population of {city}: 2.1 million"
+
 # Monitor performance with debug mode
 agent = Agent(
+    model="openai/gpt-4o",
     name="Analyst",
     tools=[get_weather, get_population],
     enable_thinking_tool=True,
     debug=True  # Shows detailed execution metrics
 )
+
+# Run task to see performance metrics
+task = Task("Compare the weather and populations of London and Paris")
+result = agent.do(task)
+print(result)
 ```
 
 ## Best Practices

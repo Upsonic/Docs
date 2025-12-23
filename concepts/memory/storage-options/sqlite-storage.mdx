@@ -6,6 +6,44 @@ description: "Lightweight SQLite database storage"
 ## Usage
 
 ```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
+
+# Create SQLite storage and memory
+storage = SqliteStorage(
+    db_file="memory.db",
+    sessions_table_name="sessions",
+    profiles_table_name="profiles"
+)
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    model="openai/gpt-4o"
+)
+
+# Create agent with memory
+agent = Agent("openai/gpt-4o", memory=memory)
+
+# First conversation
+task1 = Task("My name is Alice and I love Python")
+result1 = agent.do(task1)
+
+# Second conversation - agent remembers
+task2 = Task("What's my name and favorite language?")
+result2 = agent.do(task2)
+print(result2)  # Output: Your name is Alice and you love Python
+```
+
+### In-Memory SQLite (Temporary)
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory
 from upsonic.storage.providers.sqlite import SqliteStorage
 
 # In-memory SQLite (temporary) - omit db_file for in-memory
@@ -13,20 +51,47 @@ storage = SqliteStorage(
     sessions_table_name="sessions",
     profiles_table_name="profiles"
 )
-
-# Persistent SQLite
-storage = SqliteStorage(
-    db_file="./data/memory.db",
-    sessions_table_name="sessions",
-    profiles_table_name="user_profiles"
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=True
 )
 
-# With pre-existing connection (in async context)
+agent = Agent("openai/gpt-4o", memory=memory)
+
+task1 = Task("Hello, I'm learning about databases")
+result1 = agent.do(task1)
+
+task2 = Task("Which one are we using right now?")
+result2 = agent.do(task2)
+print(result2)
+```
+
+### With Pre-existing Connection
+
+```python
 import aiosqlite
-async def setup_storage():
+from upsonic import Agent, Task
+from upsonic.storage import Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
+
+async def setup_and_run():
     conn = await aiosqlite.connect("memory.db")
     storage = SqliteStorage(db=conn)
-    return storage
+    memory = Memory(
+        storage=storage,
+        session_id="session_001",
+        full_session_memory=True
+    )
+    
+    agent = Agent("openai/gpt-4o", memory=memory)
+    
+    task1 = Task("Explain async programming")
+    result1 = agent.do(task1)
+    
+    task2 = Task("How does it relate to the database connection we're using?")
+    result2 = agent.do(task2)
+    return result2
 ```
 
 ## Params

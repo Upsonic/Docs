@@ -84,5 +84,85 @@ task = Task(
 agent = Agent(model="openai/gpt-4o", name="Math Agent")
 
 # Execute
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
+
+## State Management
+
+ToolKits can maintain state between tool calls:
+
+```python
+from upsonic.tools import ToolKit, tool
+
+class ShoppingCart(ToolKit):
+    def __init__(self):
+        self.items = []
+    
+    @tool
+    def add_item(self, name: str, price: float) -> str:
+        """Add an item to the shopping cart."""
+        self.items.append({"name": name, "price": price})
+        return f"Added {name} (${price}) to cart"
+    
+    @tool
+    def get_total(self) -> float:
+        """Calculate the total price of all items."""
+        return sum(item["price"] for item in self.items)
+    
+    @tool
+    def list_items(self) -> list:
+        """List all items in the cart."""
+        return self.items
+```
+
+## Async Methods
+
+ToolKits support async methods for I/O operations:
+
+```python
+from upsonic.tools import ToolKit, tool
+import httpx
+
+class APIToolKit(ToolKit):
+    def __init__(self, base_url: str):
+        self.base_url = base_url
+        self.client = httpx.AsyncClient()
+    
+    @tool
+    async def fetch_data(self, endpoint: str) -> dict:
+        """Fetch data from the API."""
+        response = await self.client.get(f"{self.base_url}/{endpoint}")
+        return response.json()
+    
+    @tool
+    async def post_data(self, endpoint: str, data: dict) -> dict:
+        """Post data to the API."""
+        response = await self.client.post(
+            f"{self.base_url}/{endpoint}",
+            json=data
+        )
+        return response.json()
+```
+
+## Managing ToolKit Tools
+
+Remove individual methods or the entire toolkit:
+
+```python
+toolkit = CalculatorToolKit()
+agent.add_tools(toolkit)
+
+# Remove single method (toolkit stays in agent.tools)
+agent.remove_tools("add")
+
+# Remove entire toolkit (removes all its methods)
+agent.remove_tools(toolkit)
+```
+
+## Best Practices
+
+1. **Group related functionality**: Keep tools that work together in the same ToolKit
+2. **Use descriptive class names**: The class name helps document the toolkit's purpose
+3. **Initialize dependencies in `__init__`**: Set up database connections, API clients, etc.
+4. **Use helper methods for shared logic**: Non-decorated methods are not exposed as tools

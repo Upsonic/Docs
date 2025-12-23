@@ -23,7 +23,7 @@ class FileSystemMCP:
 
 # Create task
 task = Task(
-    description="Fetch data from the web and save to file system",
+    description="Fetch the documentation page from 'https://docs.python.org/3/' using FetchMCP, and then save the content to a local file named 'python_docs.html'.",
     tools=[FetchMCP, FileSystemMCP]
 )
 
@@ -34,7 +34,8 @@ agent = Agent(
 )
 
 # Execute
-agent.print_do(task)
+result = agent.do(task)
+print(result)
 ```
 
 ## Parameters

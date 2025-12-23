@@ -10,11 +10,12 @@ This example demonstrates a complete workflow with durable execution, including 
 ## Durable Execution Configuration
 
 ```python
-from upsonic import Task, Agent, tool
+from upsonic import Agent, Task
 from upsonic.durable import DurableExecution, FileDurableStorage
+from upsonic.tools import tool
 
-# Setup storage
-storage = FileDurableStorage(path="./example_checkpoints")
+# Create storage
+storage = FileDurableStorage("./checkpoints")
 
 # Create durable execution
 durable = DurableExecution(
@@ -28,8 +29,9 @@ durable = DurableExecution(
 
 ```python
 import asyncio
-from upsonic import Task, Agent, tool
+from upsonic import Agent, Task
 from upsonic.durable import DurableExecution, FileDurableStorage
+from upsonic.tools import tool
 
 # Define tools for the task
 @tool
@@ -56,10 +58,8 @@ async def main():
     print("DURABLE EXECUTION EXAMPLE")
     print("="*60)
 
-    # Setup storage
-    storage = FileDurableStorage(
-        path="./example_checkpoints"
-    )
+    # Create storage
+    storage = FileDurableStorage("./checkpoints")
 
     # Create durable execution
     durable = DurableExecution(
@@ -68,9 +68,10 @@ async def main():
         debug=True
     )
 
-    # Create task with tools
+    # Create agent and task
+    agent = Agent("openai/gpt-4o")
     task = Task(
-        "Complete data processing workflow: "
+        description="Complete data processing workflow: "
         "1. Verify data source 'database.csv' is accessible "
         "2. Process 1000 records "
         "3. Generate final report",
@@ -80,12 +81,9 @@ async def main():
 
     execution_id = task.durable_execution_id
     print(f"\n🆔 Execution ID: {execution_id}")
-    print(f"📁 Checkpoint storage: example_checkpoints/")
+    print(f"📁 Checkpoint storage: ./checkpoints/")
 
-    # Create agent
-    agent = Agent("openai/gpt-4o-mini", name="DataProcessor", debug=True)
-
-    # Attempt execution
+    # Execute with automatic checkpointing
     print("\n" + "="*60)
     print("PHASE 1: INITIAL EXECUTION")
     print("="*60)
@@ -119,11 +117,11 @@ async def main():
         print("\n🔄 Attempting recovery...")
 
         try:
-            # Create new agent (simulating system restart)
-            recovery_agent = Agent("openai/gpt-4o-mini", name="RecoveryAgent", debug=True)
-
             # Resume from checkpoint
-            result = recovery_agent.continue_durable(execution_id, storage)
+            result = agent.continue_durable(
+                durable_execution_id=execution_id,
+                storage=storage
+            )
 
             print(f"\n✅ Recovery successful!")
             print(f"Result: {result}")

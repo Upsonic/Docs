@@ -10,26 +10,65 @@ Summary Memory maintains an evolving, condensed summary of key conversation poin
 ## Usage
 
 ```python
+from upsonic import Agent, Task
 from upsonic.storage import Memory
 from upsonic.storage.providers.sqlite import SqliteStorage
 
-
-# Summary memory with model
+# Create storage and memory with summary memory
+storage = SqliteStorage(
+    db_file="memory.db",
+    sessions_table_name="sessions",
+    profiles_table_name="profiles"
+)
 memory = Memory(
-    storage=SqliteStorage(sessions_table_name="sessions", profiles_table_name="profiles"),
+    storage=storage,
     session_id="session_002",
     summary_memory=True,
     model="openai/gpt-4o-mini"  # Model for generating summaries
 )
 
+# Create agent with memory
+agent = Agent("openai/gpt-4o", memory=memory)
+
+# First conversation
+task1 = Task("I'm learning about web development with React and Node.js")
+result1 = agent.do(task1)
+
+# Agent maintains evolving summary
+task2 = Task("What have we been discussing?")
+result2 = agent.do(task2)
+print(result2)
+```
+
+### Combined with Conversation Memory
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage import Memory
+from upsonic.storage.providers.sqlite import SqliteStorage
+
 # Combined with conversation memory
+storage = SqliteStorage(
+    db_file="agent_memory.db",
+    sessions_table_name="sessions",
+    profiles_table_name="profiles"
+)
 memory = Memory(
-    storage=SqliteStorage(db_file="agent_memory.db", sessions_table_name="sessions", profiles_table_name="profiles"),
+    storage=storage,
     session_id="session_002",
     full_session_memory=True,
     summary_memory=True,
     model="openai/gpt-4o-mini"
 )
+
+agent = Agent("openai/gpt-4o", memory=memory)
+
+task1 = Task("Let's talk about database optimization")
+result1 = agent.do(task1)
+
+task2 = Task("Continue with more advanced techniques")
+result2 = agent.do(task2)
+print(result2)
 ```
 
 ## Params

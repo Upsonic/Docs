@@ -43,6 +43,8 @@ Create a KnowledgeBase from documents and use it with an Agent:
 from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
 
 # Setup embedding provider
 embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
@@ -55,11 +57,15 @@ config = ChromaConfig(
 )
 vectordb = ChromaProvider(config)
 
+# Setup PDF loader
+loader = PdfLoader(PdfLoaderConfig())
+
 # Create knowledge base
 kb = KnowledgeBase(
     sources=["document.pdf", "data/"],
     embedding_provider=embedding,
-    vectordb=vectordb
+    vectordb=vectordb,
+    loaders=[loader]
 )
 
 # Use with Agent
