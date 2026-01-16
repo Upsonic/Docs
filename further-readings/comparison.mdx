@@ -1,26 +1,100 @@
 ---
 title: 'Comparison'
-description: 'Why Upsonic?'
+description: 'Agent Development Platform Benchmark'
 ---
 
-| **Features**                                                              | **Upsonic**                                                                                                | **CrewAI**                                                                                              | **LangGraph**                                                                                    |
-| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Github Star**                                                           | 6.7K                                                                                                       | 27.1K                                                                                                   | 9.4K                                                                                             |
-| **Pricing**                                                               | Open Source / Enterprise Edition                                                                           | Open Source / Enterprise Edition                                                                        | Open Source / Enterprise Edition                                                                 |
-| **Architecture**                                                          | Task-based agent architecture                                                                              | Role-Based agent architecture                                                                           | Graph-based multi-agent architecture                                                             |
-| [**Reliability Score**](https://github.com/Upsonic/Reliability-Benchmark) | 98.2%                                                                                                      | 87.5%                                                                                                   | 6.3%                                                                                             |
-| **Learning Curve**                                                        | Easy                                                                                                       | Easy                                                                                                    | A little bit difficult (Graph structure)                                                         |
-| Tools (MCP)                                                               | ✅                                                                                                          | ❌                                                                                                       | ✅                                                                                                |
-| \*Development Experience                                                  | Tasks and Agents can be implemented with just two lines of code rapid development and iteration processes. | Multiple file structures, YAML configurations, and various setup files are required for implementation. | A graph-based design implementation is required, which presents challenges in terms of clarity.” |
-| **Using as Client**                                                       | ✅                                                                                                          | ❌                                                                                                       | ❌                                                                                                |
-| **Multi-Agent Processing**                                                | ✅                                                                                                          | ✅                                                                                                       | ✅                                                                                                |
-| **Process Control (Human-in-the-loop)**                                   | ✅                                                                                                          | ✅                                                                                                       | ✅                                                                                                |
-| **Dependency**                                                            | Few dependency                                                                                             | Heavy Installation / Many dependency                                                                    | Few dependency                                                                                   |
-| **Light Weight**                                                          | ❌                                                                                                          | ❌                                                                                                       | ✅                                                                                                |
-| **Memory Capability**                                                     | Low                                                                                                        | High                                                                                                    | High                                                                                             |
-| **Knowledge Base Capability**                                             | Low                                                                                                        | High                                                                                                    | High                                                                                             |
-| **Direct LLM Call**                                                       | ✅                                                                                                          | ❌                                                                                                       | ❌                                                                                                |
-| **Object Response**                                                       | ✅                                                                                                          | ✅                                                                                                       | ✅                                                                                                |
-| **Reflection**                                                            | ✅                                                                                                          | ❌                                                                                                       | ❌                                                                                                |
-| **Flow**                                                                  | ❌                                                                                                          | ✅                                                                                                       | ✅                                                                                                |
-| **Planning**                                                              | ✅                                                                                                          | ✅                                                                                                       | ✅                                                                                                |
+## Framework - Core
+
+| Feature Category | Upsonic | LangChain | CrewAI | Agno | Amazon Bedrock |
+|-----------------|:-------:|:---------:|:------:|:----:|:--------------:|
+| Human in the loop | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Easy to create chat agents | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Direct LLM Calls | ✅ | ✅ | ❌ | ❌ | ✅ |
+| Team | Advanced | Intermediate | Advanced | Advanced | Low |
+| Reasoning | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Multimodal | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Evals | ✅ | ✅ | ✅ | ✅ | Just for LLMs |
+| Show Cost & Token Metrics | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Graph | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Custom Loggers | ❌ | ✅ | ✅ | ✅ | ❌ |
+| Automatic Context Compression | ✅ | ✅ | ✅ | ✅ | ❌ |
+| FastAPI Compatible Agents | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Deep Agents | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Unified OCR Module | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+---
+
+## Framework - Memory
+
+| Feature Category | Upsonic | LangChain | CrewAI | Agno | Amazon Bedrock |
+|-----------------|:-------:|:---------:|:------:|:----:|:--------------:|
+| Summarized Memory | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Full-Session Memory | ✅ | ✅ | ✅ | ✅ | ✅ |
+| User-Focused Memory | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Event-Focused Memory | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Chat-Focused Memory | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Local Database Support | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Cloud Database Support | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Custom Memory Logic | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Supported DB: In-Memory, PostgreSQL, Redis, Sqlite, Mongo, Json | ✅ | ✅ | ✅ | ✅ | ❌ |
+
+---
+
+## Framework - Knowledge Base
+
+| Feature Category | Upsonic | LangChain | CrewAI | Agno | Amazon Bedrock |
+|-----------------|:-------:|:---------:|:------:|:----:|:--------------:|
+| Basic RAG Implementation | ✅ | ✅ | ✅ | ✅ | ✅ |
+| PDF, PowerPoint, Word, Excel, Image, Audio, Website, JSON, ZIP, + | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Supported Parameters | Advanced | Advanced | Intermediate | Intermediate | Intermediate |
+| Agentic RAG | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Chroma Vector, Weaviate Vector, PGVector, Pinecone, Qdrant, Milvus, Faiss DB Support | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+---
+
+## Framework - LLM Support
+
+| Feature Category | Upsonic | LangChain | CrewAI | Agno | Amazon Bedrock |
+|-----------------|:-------:|:---------:|:------:|:----:|:--------------:|
+| Llama 3.1 - 3.2 - 3.3 - 4.0 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Qwen 1.5 - 2.5 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| HuggingFace | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Mistral | ✅ | ✅ | ✅ | ✅ | ✅ |
+| OpenAI (GPT-4o, GPT-4.5, o3-mini, 4o mini) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Anthropic (Claude 3.5, 3.7 Sonnet) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Azure OpenAI | ✅ | ✅ | ✅ | ✅ | ✅ |
+| AWS Bedrock | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Google Gemini | ✅ | ✅ | ✅ | ✅ | ✅ |
+| DeepSeek | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Groq | ✅ | ✅ | ✅ | ✅ | ✅ |
+| OpenRouter | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Cohere | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+---
+
+## Framework - Tools & MCP
+
+| Feature Category | Upsonic | LangChain | CrewAI | Agno | Amazon Bedrock |
+|-----------------|:-------:|:---------:|:------:|:----:|:--------------:|
+| Custom Tool | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Model Context Protocol Support (MCP) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Computer Use Integration | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Tool Parameters (Caching, timeout, doc format, before after hooks, Parallelization, input request, retry limit) | Advanced | Intermediate | Intermediate | Advanced | Advanced |
+
+---
+
+## Safety Engine
+
+| Feature Category | Upsonic | LangChain | CrewAI | Agno | Amazon Bedrock |
+|-----------------|:-------:|:---------:|:------:|:----:|:--------------:|
+| Guardrails | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Custom policy Creation | ✅ | ❌ | ❌ | ❌ | ❌ |
+| ML models integration | ✅ | ❌ | ❌ | ❌ | ❌ |
+| LLM-Based Detection | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Pre-built Safety Policies (PII Protection, Finance Policy etc.) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Action Types (Block Actions, Block with reason) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Anonymization | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Detection Capability (Text, images, video, audio, Files) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| LLM based Rules | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Confidence Scoring | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Prompt Injection Prevention | ✅ | ❌ | ❌ | ❌ | ❌ |
