@@ -48,6 +48,25 @@ print(result)
 - `command` (str): The command to run ("docker")
 - `args` (List[str]): Docker run arguments including image name
 - `env` (Dict[str, str]): Environment variables to pass to container
+- `tool_name_prefix` (str): Optional prefix to add to all tool names (prevents collisions)
+
+## Using Tool Name Prefix
+
+Add a `tool_name_prefix` when using multiple Docker-based MCP servers:
+
+```python
+class ProductionDB:
+    command = "docker"
+    args = ["run", "--rm", "-i", "postgres-mcp:latest"]
+    env = {"DATABASE_URL": "postgresql://prod-server/db"}
+    tool_name_prefix = "prod_db"  # Tools become: prod_db_query, etc.
+
+class StagingDB:
+    command = "docker"
+    args = ["run", "--rm", "-i", "postgres-mcp:latest"]
+    env = {"DATABASE_URL": "postgresql://staging-server/db"}
+    tool_name_prefix = "staging_db"  # Tools become: staging_db_query, etc.
+```
 
 ## Requirements
 

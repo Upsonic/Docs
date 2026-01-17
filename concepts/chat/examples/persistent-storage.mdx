@@ -1,0 +1,62 @@
+---
+title: "Persistent Storage"
+description: "Chat with database persistence"
+---
+
+## SQLite Persistence
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+from upsonic.storage import SqliteStorage
+
+
+async def main():
+    storage = SqliteStorage(db_file="chat.db")
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="persistent_session",
+        user_id="user1",
+        agent=agent,
+        storage=storage,
+        full_session_memory=True
+    )
+
+    response = await chat.invoke("Remember that my favorite color is blue")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Resume Previous Session
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+from upsonic.storage import SqliteStorage
+
+
+async def main():
+    storage = SqliteStorage(db_file="chat.db")
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="persistent_session",
+        user_id="user1",
+        agent=agent,
+        storage=storage,
+        full_session_memory=True
+    )
+
+    response = await chat.invoke("What is my favorite color?")
+    print(response)
+
+    print(f"\nTotal messages: {len(chat.all_messages)}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```

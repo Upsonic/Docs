@@ -3,19 +3,23 @@ title: "Mem0Storage"
 description: "Mem0 Platform and Open Source integration"
 ---
 
-## Usage
+## Overview
+
+`Mem0Storage` integrates with the Mem0 memory platform. Supports both the hosted Mem0 Platform and self-hosted Mem0 Open Source deployments.
+
+## Basic Usage
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.mem0 import Mem0Storage
+from upsonic.storage.memory import Memory
+from upsonic.storage.mem0 import Mem0Storage
 
-# Create Mem0 Platform storage and memory
 storage = Mem0Storage(
     api_key="your_mem0_api_key",
     org_id="your_org_id",
     project_id="your_project_id"
 )
+
 memory = Memory(
     storage=storage,
     session_id="session_001",
@@ -26,90 +30,30 @@ memory = Memory(
     model="openai/gpt-4o"
 )
 
-# Create agent with memory
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# First conversation
-task1 = Task("My name is Alice and I love Python")
-result1 = agent.do(task1)
-
-# Second conversation - agent remembers
-task2 = Task("What's my name and favorite language?")
-result2 = agent.do(task2)
-print(result2)  # Output: Your name is Alice and you love Python
+result1 = agent.do(Task("My name is Alice"))
+result2 = agent.do(Task("What's my name?"))
+print(result2)  # "Your name is Alice"
 ```
 
-### Mem0 Open Source
+## Parameters
 
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.mem0 import Mem0Storage
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `memory_client` | `Memory \| MemoryClient \| None` | `None` | Pre-existing Mem0 client |
+| `api_key` | `str \| None` | `None` | Mem0 Platform API key |
+| `host` | `str \| None` | `None` | Mem0 Platform host URL |
+| `org_id` | `str \| None` | `None` | Organization ID (Platform) |
+| `project_id` | `str \| None` | `None` | Project ID (Platform) |
+| `config` | `MemoryConfig \| None` | `None` | Config for self-hosted Mem0 |
+| `session_table` | `str \| None` | `"upsonic_sessions"` | Session table name (metadata) |
+| `user_memory_table` | `str \| None` | `"upsonic_user_memories"` | User memory table name (metadata) |
+| `default_user_id` | `str` | `"upsonic_default"` | Default user ID for Mem0 operations |
+| `id` | `str \| None` | auto-generated | Storage instance ID |
 
-# Mem0 Open Source
-storage = Mem0Storage(
-    local_config={
-        "vector_store": {
-            "provider": "chroma",
-            "config": {
-                "path": "./chroma_db"
-            }
-        }
-    }
-)
-memory = Memory(
-    storage=storage,
-    session_id="session_001",
-    full_session_memory=True
-)
+## Requirements
 
-agent = Agent("openai/gpt-4o", memory=memory)
-
-task1 = Task("Help me understand vector databases")
-result1 = agent.do(task1)
-
-task2 = Task("How do they differ from traditional SQL?")
-result2 = agent.do(task2)
-print(result2)
+```bash
+pip install mem0ai
 ```
-
-### With Pre-existing Mem0 Client
-
-```python
-from mem0 import AsyncMemoryClient
-from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.mem0 import Mem0Storage
-
-client = AsyncMemoryClient(api_key="your_key")
-storage = Mem0Storage(client=client)
-memory = Memory(
-    storage=storage,
-    session_id="session_001",
-    full_session_memory=True
-)
-
-agent = Agent("openai/gpt-4o", memory=memory)
-
-task1 = Task("Explain memory management in AI systems")
-result1 = agent.do(task1)
-
-task2 = Task("Why is context window size important?")
-result2 = agent.do(task2)
-print(result2)
-```
-
-## Params
-
-- `client: Optional[Union[Memory, AsyncMemoryClient]]` - Optional pre-existing Mem0 client (user manages lifecycle)
-- `api_key: Optional[str]` - Mem0 Platform API key (ignored if client provided)
-- `org_id: Optional[str]` - Organization ID for Mem0 Platform (ignored if client provided)
-- `project_id: Optional[str]` - Project ID for Mem0 Platform (ignored if client provided)
-- `local_config: Optional[Dict[str, Any]]` - Configuration for Open Source Mem0 (ignored if client provided)
-- `namespace: str` - Application namespace (default: "upsonic")
-- `infer: bool` - Enable LLM-based inference (default: False)
-- `custom_categories: Optional[List[str]]` - Additional custom categories
-- `enable_caching: bool` - Enable ID caching (default: True)
-- `cache_ttl: int` - Cache time-to-live in seconds (default: 300)
-- `output_format: str` - Mem0 output format version (default: "v1.1")
-- `version: str` - Mem0 API version (default: "v2")

@@ -42,6 +42,38 @@ print(result)
 
 - `command` (str): The command to run ("uvx")
 - `args` (List[str]): Arguments including package name
+- `tool_name_prefix` (str): Optional prefix to add to all tool names (prevents collisions)
+
+## Using Tool Name Prefix
+
+When using multiple MCP servers with the same tools, add a `tool_name_prefix` to prevent collisions:
+
+```python
+from upsonic import Task, Agent
+
+# Two SQLite servers for different databases
+class UsersDB:
+    command = "uvx"
+    args = ["mcp-server-sqlite", "--db-path", "/tmp/users.db"]
+    tool_name_prefix = "users_db"  # Tools become: users_db_create_table, etc.
+
+class OrdersDB:
+    command = "uvx"
+    args = ["mcp-server-sqlite", "--db-path", "/tmp/orders.db"]
+    tool_name_prefix = "orders_db"  # Tools become: orders_db_create_table, etc.
+
+task = Task(
+    description="""
+    Use 'users_db_*' tools to work with the users database.
+    Use 'orders_db_*' tools to work with the orders database.
+    Create tables in both and insert sample data.
+    """,
+    tools=[UsersDB, OrdersDB]
+)
+
+agent = Agent(name="Multi-DB Agent", model="openai/gpt-4o")
+result = agent.do(task)
+```
 
 ## Characteristics
 

@@ -110,8 +110,8 @@ from upsonic import Agent, Task
 from upsonic.tools import WebSearch, WebRead
 from pydantic import BaseModel
 
-# Set your OpenAI API key
-os.environ["OPENAI_API_KEY"] = "api_key"
+# Set your OpenAI API key (via environment variable or .env file)
+# os.environ["OPENAI_API_KEY"] = "your-api-key"  # Or use .env file
 
 # MCP 1: SQLite Database Operations
 class DatabaseMCP:
@@ -131,6 +131,7 @@ class DatabaseReport(BaseModel):
 
 # Agent Creation with MCP Tools
 database_agent = Agent(
+    model="openai/gpt-4o",
     name="Database Management Expert",
     role="Database operations and data management specialist",
     goal="Provide comprehensive database management with structured reporting"
@@ -163,6 +164,7 @@ print(f"Summary: {structured_result.summary}")
 
 # Example 3: Combined MCP and Regular Tools
 research_agent = Agent(
+    model="openai/gpt-4o",
     name="Research and Database Agent",
     role="Combined research and data management specialist",
     goal="Research topics and store findings in a structured database"
@@ -180,6 +182,7 @@ print(combined_result)
 
 # Example 4: Multiple MCP Workflow
 workflow_agent = Agent(
+    model="openai/gpt-4o",
     name="Multi-MCP Workflow Agent",
     role="Multi-tool specialist",
     goal="Use multiple MCP tools to accomplish complex tasks"

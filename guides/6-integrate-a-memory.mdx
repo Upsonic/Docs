@@ -53,7 +53,7 @@ from upsonic import Task
 from upsonic.storage import InMemoryStorage, Memory
 
 # Create a storage provider
-storage = InMemoryStorage(max_sessions=100, max_profiles=50)
+storage = InMemoryStorage()
 
 # Create a Memory instance with all memory types enabled
 memory = Memory(
@@ -70,6 +70,7 @@ memory = Memory(
 
 # Create an Agent with Memory
 personal_assistant = Agent(
+    model="openai/gpt-4o",
     name="Personal Assistant",
     role="Personal AI Assistant with Memory",
     goal="Provide personalized assistance by remembering user preferences and conversation history",
@@ -124,19 +125,18 @@ print(f"User Analysis Memory: {memory.user_analysis_memory_enabled}")
 from upsonic.storage import PostgresStorage
 
 postgres_storage = PostgresStorage(
-    sessions_table_name="agent_sessions",
-    profiles_table_name="user_profiles",
     db_url="postgresql://user:pass@localhost:5432/upsonic_db",
-    schema="public"
+    db_schema="public",
+    session_table="agent_sessions",
+    user_memory_table="user_profiles"
 )
 
 from upsonic.storage import RedisStorage
 
 # Redis Storage for High Performance
 redis_storage = RedisStorage(
-    prefix="upsonic",
-    host="localhost",
-    port=6379,
+    db_url="redis://localhost:6379/0",
+    db_prefix="upsonic",
     expire=86400  # 24 hours TTL
 )
 
@@ -144,8 +144,7 @@ from upsonic.storage import JSONStorage
 
 # JSON Storage for Simple Applications
 json_storage = JSONStorage(
-    directory_path="./data/memory",
-    pretty_print=True
+    db_path="./data/memory"
 )
 ```
 
@@ -251,12 +250,14 @@ shared_memory = Memory(
 
 # Create agents with shared memory
 research_agent = Agent(
+    model="openai/gpt-4o",
     name="Research Agent",
     role="Research Specialist",
     memory=shared_memory
 )
 
 writing_agent = Agent(
+    model="openai/gpt-4o",
     name="Writing Agent", 
     role="Content Writer",
     memory=shared_memory

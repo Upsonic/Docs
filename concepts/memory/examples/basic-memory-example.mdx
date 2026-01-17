@@ -3,94 +3,137 @@ title: "Basic Memory Example"
 description: "Complete example of using memory in a customer support agent"
 ---
 
-## About Example Scenario
+## Scenario
 
-This example demonstrates a customer support agent that remembers conversations and learns about users across multiple sessions. The agent will maintain context within each support session and build a profile of each customer for personalized service.
+A customer support agent that:
+- Remembers conversation context within a session
+- Learns about customers across sessions
+- Provides personalized support based on user profile
 
-## Memory Configuration
-
-```python
-from upsonic.storage import Memory
-from upsonic.storage.providers.sqlite import SqliteStorage
-
-# Create persistent storage
-storage = SqliteStorage(
-    sessions_table_name="support_sessions",
-    profiles_table_name="customers",
-    db_file="./support_memory.db"
-)
-
-# Create memory for customer support
-memory = Memory(
-    storage=storage,
-    session_id="support_session_001",
-    user_id="customer_123",
-    full_session_memory=True,      # Remember conversation history
-    user_analysis_memory=True,     # Learn about the customer
-    num_last_messages=10,          # Keep last 10 turns for context
-    model="openai/gpt-4o"
-)
-```
-
-## Full Code
+## Complete Implementation
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory, SqliteStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# Create persistent storage
-storage = SqliteStorage(
-    sessions_table_name="support_sessions",
-    profiles_table_name="customers",
-    db_file="./support_memory.db"
-)
+# 1. Create persistent storage
+storage = SqliteStorage(db_file="./support.db")
 
-# Create memory for customer support
+# 2. Configure memory with all features
 memory = Memory(
     storage=storage,
-    session_id="support_session_001",
+    session_id="support_001",
     user_id="customer_123",
-    full_session_memory=True,      # Remember conversation history
-    user_analysis_memory=True,     # Learn about the customer
-    num_last_messages=10,          # Keep last 10 turns for context
+    full_session_memory=True,      # Remember conversation
+    summary_memory=True,           # Generate summaries
+    user_analysis_memory=True,     # Learn about customer
+    num_last_messages=10,          # Keep last 10 turns
     model="openai/gpt-4o"
 )
 
-# Support agent
+# 3. Create support agent
 agent = Agent(
     model="openai/gpt-4o",
     name="Support Agent",
     memory=memory
 )
 
-# Conversation 1
-task1 = Task(description="I'm having trouble logging in to my account")
-result1 = agent.do(task1)
+# 4. First interaction
+result1 = agent.do(Task("I'm having trouble logging in to my account"))
 print("Response 1:", result1)
 
-# Conversation 2 - agent remembers context and user
-task2 = Task(description="I tried resetting my password but didn't receive the email")
-result2 = agent.do(task2)
+# 5. Follow-up - agent remembers context
+result2 = agent.do(Task("I tried resetting my password but didn't get the email"))
 print("Response 2:", result2)
 
-# Next session - agent remembers customer history
-memory_new_session = Memory(
-    storage=storage,
-    session_id="support_session_002",  # New session
-    user_id="customer_123",            # Same customer
-    full_session_memory=True,
-    user_analysis_memory=True,         # Loads existing profile
-    model="openai/gpt-4o"
-)
-
-agent_new = Agent(model="openai/gpt-4o", memory=memory_new_session)
-task3 = Task(description="Hello, I'm back. What was my problem?")
-result3 = agent_new.do(task3)  # Agent knows customer's previous issues
+# 6. Agent references previous context
+result3 = agent.do(Task("What have I told you about my issue?"))
 print("Response 3:", result3)
 ```
 
-This example shows how the agent:
-1. **Remembers the conversation** - References previous login issues
-2. **Learns about the user** - Builds a profile of the customer's technical level and preferences
-3. **Maintains context** - Knows about password reset attempts from earlier in the session
-4. **Persists across sessions** - Recognizes the customer in a new session and recalls their history
+## Cross-Session Memory
+
+Same customer returns in a new session:
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+# Same storage instance or connection to same db file
+storage = SqliteStorage(db_file="./support.db")
+
+# New session, same customer
+memory = Memory(
+    storage=storage,
+    session_id="support_002",       # NEW session
+    user_id="customer_123",          # SAME customer
+    full_session_memory=True,
+    user_analysis_memory=True,
+    model="openai/gpt-4o"
+)
+
+agent = Agent("openai/gpt-4o", memory=memory)
+
+# Agent knows customer from previous sessions
+result = agent.do(Task("Hello, I'm back. What did we discuss before?"))
+print(result)
+```
+
+## Async Usage
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+async def main():
+    storage = SqliteStorage(db_file="./async_support.db")
+    
+    memory = Memory(
+        storage=storage,
+        session_id="async_001",
+        user_id="user_456",
+        full_session_memory=True,
+        summary_memory=True,
+        model="openai/gpt-4o"
+    )
+    
+    agent = Agent("openai/gpt-4o", memory=memory)
+    
+    # Async execution
+    result1 = await agent.do_async(Task("My order hasn't arrived"))
+    result2 = await agent.do_async(Task("It's been 5 days"))
+    
+    print("Final response:", result2)
+
+asyncio.run(main())
+```
+
+## What Gets Persisted
+
+### Session Table
+
+| Field | Content |
+|-------|---------|
+| `session_id` | `"support_001"` |
+| `user_id` | `"customer_123"` |
+| `messages` | Full conversation history |
+| `summary` | Generated session summary |
+| `runs` | Individual run outputs |
+
+### User Memory Table
+
+| Field | Content |
+|-------|---------|
+| `user_id` | `"customer_123"` |
+| `user_memory` | Extracted traits (login issues, communication style) |
+
+## Key Takeaways
+
+1. **Same storage, different sessions** - User profile persists
+2. **Memory is automatic** - Just attach to agent, no manual saving
+3. **Summary + History** - Use both for best context/cost balance
+4. **Sync and async** - Both `do()` and `do_async()` work with memory

@@ -1,111 +1,167 @@
 ---
-title: "Focus Memory"
+title: "User Analysis Memory"
 description: "Learn about users and build comprehensive profiles"
 ---
 
-## What is User Analysis Memory?
+## Overview
 
-User Analysis Memory learns about users across all conversations, building comprehensive profiles that enable personalization and adaptive responses.
+User Analysis Memory extracts user traits from conversations and builds persistent profiles. This enables personalization across sessions and adaptive agent behavior.
 
-## Usage
+## Basic Usage
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.in_memory import InMemoryStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# Create storage and memory with user analysis
-storage = InMemoryStorage()
+storage = SqliteStorage(db_file="users.db")
+
 memory = Memory(
     storage=storage,
-    session_id="session_003",
-    user_id="user_001",
+    session_id="session_001",
+    user_id="user_abc",
     user_analysis_memory=True,
-    model="openai/gpt-4o"
+    model="openai/gpt-4o"  # Required for trait extraction
 )
 
-# Create agent with memory
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# First conversation - agent learns about user
-task1 = Task("Hi! I'm a data scientist with 5 years of experience in ML")
-result1 = agent.do(task1)
-
-# Agent remembers user profile
-task2 = Task("What do you know about me?")
-result2 = agent.do(task2)
-print(result2)  # Output: You're a data scientist with 5 years of ML experience
+result1 = agent.do(Task("I'm a data scientist with 5 years of ML experience"))
+result2 = agent.do(Task("What do you know about me?"))
+print(result2)  # "You're a data scientist with 5 years of ML experience"
 ```
 
-### Custom User Profile Schema
+## Custom Profile Schema
+
+Define specific fields to track:
 
 ```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.in_memory import InMemoryStorage
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# Custom user profile schema
-class UserProfile(BaseModel):
-    name: Optional[str] = Field(None, description="User's name")
-    expertise: Optional[str] = Field(None, description="Technical expertise level")
-    interests: Optional[list] = Field(None, description="Areas of interest")
+class DeveloperProfile(BaseModel):
+    name: Optional[str] = Field(None, description="Developer name")
+    languages: Optional[List[str]] = Field(None, description="Programming languages")
+    experience_years: Optional[int] = Field(None, description="Years of experience")
+    preferred_editor: Optional[str] = Field(None, description="Preferred code editor")
 
-storage = InMemoryStorage()
+storage = SqliteStorage(db_file="developers.db")
+
 memory = Memory(
     storage=storage,
-    session_id="session_003",
-    user_id="user_001",
+    session_id="session_001",
+    user_id="dev_123",
     user_analysis_memory=True,
-    user_profile_schema=UserProfile,
+    user_profile_schema=DeveloperProfile,
     model="openai/gpt-4o"
 )
 
 agent = Agent("openai/gpt-4o", memory=memory)
 
-task1 = Task("I'm Alice, an expert in NLP, interested in chatbots and language models")
-result1 = agent.do(task1)
-
-task2 = Task("What are my areas of interest?")
-result2 = agent.do(task2)
-print(result2)
+result = agent.do(Task("I'm Alice, I use Python and Go, been coding for 8 years, love VS Code"))
+print(result)
 ```
 
-### Dynamic User Learning
+## Dynamic Profile Generation
+
+Let the agent discover and create custom fields:
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.in_memory import InMemoryStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# Dynamic user learning (agent creates custom fields)
-storage = InMemoryStorage()
+storage = SqliteStorage(db_file="dynamic.db")
+
 memory = Memory(
     storage=storage,
-    session_id="session_003",
-    user_id="user_001",
+    session_id="session_001",
+    user_id="user_456",
     user_analysis_memory=True,
-    dynamic_user_profile=True,  # Agent creates custom profile fields
+    dynamic_user_profile=True,  # Agent creates custom fields
     model="openai/gpt-4o"
 )
 
 agent = Agent("openai/gpt-4o", memory=memory)
 
-task1 = Task("I prefer concise answers and love working with Python")
-result1 = agent.do(task1)
-
-# Agent adapts to learned preferences
-task2 = Task("How should you communicate with me?")
-result2 = agent.do(task2)
-print(result2)
+result = agent.do(Task("I prefer concise answers, work night shifts, and love hiking"))
+print(result)  # Agent adapts to learned preferences
 ```
 
-## Params
+## Cross-Session Persistence
 
-- `user_analysis_memory: bool` - Enable/disable user learning
-- `user_id: str` - Required identifier for the user
-- `model: str` - Required model for analyzing user traits
-- `user_profile_schema: BaseModel` - Optional custom profile schema
-- `dynamic_user_profile: bool` - Let agent create custom fields
-- `user_memory_mode: str` - 'update' (default) or 'replace' mode
+User profiles persist across sessions:
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="profiles.db")
+
+# Session 1: Learn about user
+memory1 = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="customer_789",
+    user_analysis_memory=True,
+    model="openai/gpt-4o"
+)
+agent1 = Agent("openai/gpt-4o", memory=memory1)
+agent1.do(Task("I'm John, I run a small bakery in Seattle"))
+
+# Session 2: New session, same user - profile is loaded
+memory2 = Memory(
+    storage=storage,
+    session_id="session_002",  # Different session
+    user_id="customer_789",     # Same user
+    user_analysis_memory=True,
+    model="openai/gpt-4o"
+)
+agent2 = Agent("openai/gpt-4o", memory=memory2)
+result = agent2.do(Task("Remind me what you know about me"))
+print(result)  # "You're John, you run a bakery in Seattle"
+```
+
+## Update Modes
+
+| Mode | Behavior |
+|------|----------|
+| `'update'` | Merge new traits with existing profile (default) |
+| `'replace'` | Replace entire profile with new traits |
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="modes.db")
+
+# Update mode: accumulates traits
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    user_analysis_memory=True,
+    user_memory_mode='update',
+    model="openai/gpt-4o"
+)
+
+agent = Agent("openai/gpt-4o", memory=memory)
+result = agent.do(Task("I also speak Spanish and French"))
+print(result)
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `user_analysis_memory` | `bool` | `False` | Enable user profiling |
+| `user_id` | `str` | auto-generated | User identifier |
+| `model` | `str \| Model` | (required) | Model for trait extraction |
+| `user_profile_schema` | `BaseModel \| None` | `None` | Custom profile schema |
+| `dynamic_user_profile` | `bool` | `False` | Auto-generate profile fields |
+| `user_memory_mode` | `Literal['update', 'replace']` | `'update'` | Profile update strategy |

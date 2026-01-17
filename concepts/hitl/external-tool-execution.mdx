@@ -1,0 +1,699 @@
+---
+title: External Tool Execution
+sidebarTitle: External Tool Execution
+description: Pause agents for external tool processing and resume with results
+---
+
+External Tool Execution allows you to mark tools as requiring external execution, causing the agent to pause and wait for results before continuing. This is essential for tools that call external services, require human approval, or execute in different systems.
+
+## Quick Start
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+# Mark tool as requiring external execution
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email - requires external execution."""
+    # In a real implementation, this would call an email service
+    return f"Email sent successfully to {to} with subject '{subject}'"
+
+def execute_tool_externally(requirement) -> str:
+    """Execute the external tool and return result."""
+    tool_exec = requirement.tool_execution
+    tool_name = tool_exec.tool_name
+    tool_args = tool_exec.tool_args
+    
+    if tool_name == "send_email":
+        return send_email(**tool_args)
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+
+async def main():
+    agent = Agent("openai/gpt-4o-mini", name="email_agent")
+    task = Task(
+        description="Send an email to test@example.com with subject 'Hello' and body 'Test message'.",
+        tools=[send_email]
+    )
+    
+    output = await agent.do_async(task, return_output=True)
+    
+    # Process external tool requirements
+    for requirement in output.active_requirements:
+        if requirement.is_external_tool_execution:
+            result = execute_tool_externally(requirement)
+            requirement.tool_execution.result = result
+    
+    # Resume agent with results
+    result = await agent.continue_run_async(run_id=output.run_id, return_output=True)
+    print(result.output)
+
+asyncio.run(main())
+```
+
+## Core Concepts
+
+### Defining External Tools
+
+Use the `@tool(external_execution=True)` decorator to mark tools that require external execution:
+
+```python
+from upsonic.tools import tool
+
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """
+    Send an email - requires external execution.
+    
+    Args:
+        to: Email recipient
+        subject: Email subject
+        body: Email body content
+        
+    Returns:
+        Confirmation message
+    """
+    # In a real implementation, this would call an email service
+    return f"Email sent successfully to {to} with subject '{subject}'"
+
+
+@tool(external_execution=True)
+def execute_database_query(query: str) -> str:
+    """Execute a database query - requires external execution."""
+    # In a real implementation, this would execute the query
+    return f"Query executed: {query} | Results: 10 rows returned"
+
+
+@tool(external_execution=True)
+def call_external_api(endpoint: str, payload: dict = None) -> dict:
+    """Call an external API - requires external execution."""
+    # In a real implementation, this would call the API
+    return {"status": "success", "data": {"message": f"API called at {endpoint}"}}
+```
+
+### External Tool Executor
+
+Create a function to handle external tool execution:
+
+```python
+def execute_tool_externally(requirement) -> str:
+    """Execute an external tool based on the requirement."""
+    tool_exec = requirement.tool_execution
+    tool_name = tool_exec.tool_name
+    tool_args = tool_exec.tool_args
+    
+    if tool_name == "send_email":
+        return send_email(**tool_args)
+    elif tool_name == "execute_database_query":
+        return execute_database_query(**tool_args)
+    elif tool_name == "call_external_api":
+        result = call_external_api(**tool_args)
+        return str(result) if isinstance(result, dict) else result
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+```
+
+### Processing Requirements
+
+When the agent pauses for external tools, access the requirements:
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("openai/gpt-4o-mini")
+task = Task("Your task description", tools=[send_email])
+
+output = await agent.do_async(task, return_output=True)
+
+for requirement in output.active_requirements:
+    if requirement.is_external_tool_execution:
+        # Access tool details
+        tool_name = requirement.tool_execution.tool_name
+        tool_args = requirement.tool_execution.tool_args
+        tool_call_id = requirement.tool_execution.tool_call_id
+        
+        # Execute externally and set result
+        result = execute_my_tool(tool_name, tool_args)
+        requirement.tool_execution.result = result
+```
+
+## Continuation Methods
+
+### Resume with `run_id` (Same Agent)
+
+The simplest approach - use run_id with the same agent:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email - requires external execution."""
+    # In a real implementation, this would call an email service
+    return f"Email sent successfully to {to} with subject '{subject}'"
+
+def execute_tool_externally(requirement) -> str:
+    tool_exec = requirement.tool_execution
+    tool_name = tool_exec.tool_name
+    tool_args = tool_exec.tool_args
+    
+    if tool_name == "send_email":
+        return send_email(**tool_args)
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+
+async def external_with_run_id_same_agent():
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent")
+    task = Task(
+        description="Send an email to test@example.com with subject 'Hello' and body 'Test message'.",
+        tools=[send_email]
+    )
+    
+    output = await agent.do_async(task, return_output=True)
+    
+    for requirement in output.active_requirements:
+        if requirement.is_external_tool_execution:
+            result = execute_tool_externally(requirement)
+            requirement.tool_execution.result = result
+    
+    result = await agent.continue_run_async(run_id=output.run_id, return_output=True)
+    return result
+
+asyncio.run(external_with_run_id_same_agent())
+```
+
+### Resume with `task` (Same Agent)
+
+Use task object for in-memory context continuation:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email - requires external execution."""
+    # In a real implementation, this would call an email service
+    return f"Email sent successfully to {to} with subject '{subject}'"
+
+def execute_tool_externally(requirement) -> str:
+    tool_exec = requirement.tool_execution
+    tool_name = tool_exec.tool_name
+    tool_args = tool_exec.tool_args
+    
+    if tool_name == "send_email":
+        return send_email(**tool_args)
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+
+async def external_with_task_same_agent():
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent")
+    task = Task(
+        description="Send an email to test@example.com with subject 'Hello' and body 'Test message'.",
+        tools=[send_email]
+    )
+    
+    output = await agent.do_async(task, return_output=True)
+    
+    for requirement in output.active_requirements:
+        if requirement.is_external_tool_execution:
+            result = execute_tool_externally(requirement)
+            requirement.tool_execution.result = result
+    
+    result = await agent.continue_run_async(task=task, return_output=True)
+    return result
+
+asyncio.run(external_with_task_same_agent())
+```
+
+### Resume with `run_id` (New Agent - Cross-Process)
+
+For cross-process resumption with persistent storage:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.db.database import SqliteDatabase
+
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email - requires external execution."""
+    # In a real implementation, this would call an email service
+    return f"Email sent successfully to {to} with subject '{subject}'"
+
+def execute_tool_externally(requirement) -> str:
+    tool_exec = requirement.tool_execution
+    tool_name = tool_exec.tool_name
+    tool_args = tool_exec.tool_args
+    
+    if tool_name == "send_email":
+        return send_email(**tool_args)
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+
+async def external_with_run_id_new_agent():
+    db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
+    task = Task(
+        description="Send an email to test@example.com with subject 'Hello' and body 'Test message'.",
+        tools=[send_email]
+    )
+    
+    output = await agent.do_async(task, return_output=True)
+    run_id = output.run_id
+    
+    # Execute tools externally
+    for requirement in output.active_requirements:
+        if requirement.is_external_tool_execution:
+            result = execute_tool_externally(requirement)
+            requirement.tool_execution.result = result
+    
+    # Create NEW agent to resume (simulates different process)
+    new_agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
+    result = await new_agent.continue_run_async(
+        run_id=run_id,
+        requirements=output.requirements,  # Pass requirements with results
+        return_output=True
+    )
+    return result
+
+asyncio.run(external_with_run_id_new_agent())
+```
+
+### Resume with `task` (New Agent - Cross-Process)
+
+New agent using task for continuation:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.db.database import SqliteDatabase
+
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email - requires external execution."""
+    # In a real implementation, this would call an email service
+    return f"Email sent successfully to {to} with subject '{subject}'"
+
+def execute_tool_externally(requirement) -> str:
+    tool_exec = requirement.tool_execution
+    tool_name = tool_exec.tool_name
+    tool_args = tool_exec.tool_args
+    
+    if tool_name == "send_email":
+        return send_email(**tool_args)
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+
+async def external_with_task_new_agent():
+    db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
+    task = Task(
+        description="Send an email to test@example.com with subject 'Hello' and body 'Test message'.",
+        tools=[send_email]
+    )
+    
+    output = await agent.do_async(task, return_output=True)
+    
+    for requirement in output.active_requirements:
+        if requirement.is_external_tool_execution:
+            result = execute_tool_externally(requirement)
+            requirement.tool_execution.result = result
+    
+    # Create NEW agent with task
+    new_agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
+    result = await new_agent.continue_run_async(
+        task=task,
+        requirements=output.requirements,
+        return_output=True
+    )
+    return result
+
+asyncio.run(external_with_task_new_agent())
+```
+
+
+## Multiple External Tools
+
+### Loop-Based Handling with `run_id`
+
+Handle multiple external tools with a loop:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email - requires external execution."""
+    # In a real implementation, this would call an email service
+    return f"Email sent successfully to {to} with subject '{subject}'"
+
+@tool(external_execution=True)
+def execute_database_query(query: str) -> str:
+    """Execute a database query - requires external execution."""
+    # In a real implementation, this would execute the query
+    return f"Query executed: {query} | Results: 10 rows returned"
+
+@tool(external_execution=True)
+def call_external_api(endpoint: str, payload: dict = None) -> dict:
+    """Call an external API - requires external execution."""
+    # In a real implementation, this would call the API
+    return {"status": "success", "data": {"message": f"API called at {endpoint}"}}
+
+def execute_tool_externally(requirement) -> str:
+    tool_exec = requirement.tool_execution
+    tool_name = tool_exec.tool_name
+    tool_args = tool_exec.tool_args
+    
+    if tool_name == "send_email":
+        return send_email(**tool_args)
+    elif tool_name == "execute_database_query":
+        return execute_database_query(**tool_args)
+    elif tool_name == "call_external_api":
+        result = call_external_api(**tool_args)
+        return str(result) if isinstance(result, dict) else result
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+
+async def external_multiple_tools_loop():
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent")
+    task = Task(
+        description=(
+            "First, send an email to admin@example.com with subject 'Report' and body 'Monthly report'. "
+            "Then query the database with 'SELECT * FROM users'. "
+            "Finally, call the external API at https://api.example.com/data."
+        ),
+        tools=[send_email, execute_database_query, call_external_api]
+    )
+    
+    output = await agent.do_async(task, return_output=True)
+    
+    # Loop until all tools are processed
+    while output.active_requirements:
+        for requirement in output.active_requirements:
+            if requirement.is_external_tool_execution:
+                result = execute_tool_externally(requirement)
+                requirement.tool_execution.result = result
+        
+        output = await agent.continue_run_async(
+            run_id=output.run_id,
+            return_output=True
+        )
+    
+    return output
+
+asyncio.run(external_multiple_tools_loop())
+```
+
+### Loop-Based Handling with `task`
+
+Same pattern using task:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email - requires external execution."""
+    # In a real implementation, this would call an email service
+    return f"Email sent successfully to {to} with subject '{subject}'"
+
+@tool(external_execution=True)
+def execute_database_query(query: str) -> str:
+    """Execute a database query - requires external execution."""
+    # In a real implementation, this would execute the query
+    return f"Query executed: {query} | Results: 10 rows returned"
+
+@tool(external_execution=True)
+def call_external_api(endpoint: str, payload: dict = None) -> dict:
+    """Call an external API - requires external execution."""
+    # In a real implementation, this would call the API
+    return {"status": "success", "data": {"message": f"API called at {endpoint}"}}
+
+def execute_tool_externally(requirement) -> str:
+    tool_exec = requirement.tool_execution
+    tool_name = tool_exec.tool_name
+    tool_args = tool_exec.tool_args
+    
+    if tool_name == "send_email":
+        return send_email(**tool_args)
+    elif tool_name == "execute_database_query":
+        return execute_database_query(**tool_args)
+    elif tool_name == "call_external_api":
+        result = call_external_api(**tool_args)
+        return str(result) if isinstance(result, dict) else result
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+
+async def external_multiple_tools_loop_task():
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent")
+    task = Task(
+        description=(
+            "First, send an email to admin@example.com with subject 'Report' and body 'Monthly report'. "
+            "Then query the database with 'SELECT * FROM users'. "
+            "Finally, call the external API at https://api.example.com/data."
+        ),
+        tools=[send_email, execute_database_query, call_external_api]
+    )
+    
+    output = await agent.do_async(task, return_output=True)
+    
+    while output.active_requirements:
+        for requirement in output.active_requirements:
+            if requirement.is_external_tool_execution:
+                result = execute_tool_externally(requirement)
+                requirement.tool_execution.result = result
+        
+        output = await agent.continue_run_async(
+            task=task,
+            return_output=True
+        )
+    
+    return output
+
+asyncio.run(external_multiple_tools_loop_task())
+```
+
+### Using Executor Callback for Multiple Tools
+
+Let the executor handle all subsequent tools automatically:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email - requires external execution."""
+    # In a real implementation, this would call an email service
+    return f"Email sent successfully to {to} with subject '{subject}'"
+
+@tool(external_execution=True)
+def execute_database_query(query: str) -> str:
+    """Execute a database query - requires external execution."""
+    # In a real implementation, this would execute the query
+    return f"Query executed: {query} | Results: 10 rows returned"
+
+@tool(external_execution=True)
+def call_external_api(endpoint: str, payload: dict = None) -> dict:
+    """Call an external API - requires external execution."""
+    # In a real implementation, this would call the API
+    return {"status": "success", "data": {"message": f"API called at {endpoint}"}}
+
+def execute_tool_externally(requirement) -> str:
+    tool_exec = requirement.tool_execution
+    tool_name = tool_exec.tool_name
+    tool_args = tool_exec.tool_args
+    
+    if tool_name == "send_email":
+        return send_email(**tool_args)
+    elif tool_name == "execute_database_query":
+        return execute_database_query(**tool_args)
+    elif tool_name == "call_external_api":
+        result = call_external_api(**tool_args)
+        return str(result) if isinstance(result, dict) else result
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+
+async def external_multiple_tools_with_executor():
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent")
+    task = Task(
+        description=(
+            "First, send an email to admin@example.com with subject 'Report' and body 'Monthly report'. "
+            "Then query the database with 'SELECT * FROM users'. "
+            "Finally, call the external API at https://api.example.com/data."
+        ),
+        tools=[send_email, execute_database_query, call_external_api]
+    )
+    
+    output = await agent.do_async(task, return_output=True)
+    
+    # Handle first batch of requirements
+    for requirement in output.active_requirements:
+        if requirement.is_external_tool_execution:
+            result = execute_tool_externally(requirement)
+            requirement.tool_execution.result = result
+    
+    # Executor handles all subsequent tools automatically
+    result = await agent.continue_run_async(
+        run_id=output.run_id,
+        return_output=True,
+        external_tool_executor=execute_tool_externally
+    )
+    
+    return result
+
+asyncio.run(external_multiple_tools_with_executor())
+```
+
+## Cross-Process External Tool Handling
+
+Complete pattern for handling external tools across process restarts:
+
+### With `run_id`
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.db.database import SqliteDatabase
+
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email - requires external execution."""
+    # In a real implementation, this would call an email service
+    return f"Email sent successfully to {to} with subject '{subject}'"
+
+def execute_tool_externally(requirement) -> str:
+    tool_exec = requirement.tool_execution
+    tool_name = tool_exec.tool_name
+    tool_args = tool_exec.tool_args
+    
+    if tool_name == "send_email":
+        return send_email(**tool_args)
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+
+async def external_cross_process():
+    db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
+    
+    # STEP 1: Initial run pauses for external tool
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
+    task = Task(
+        description="Send an email to test@example.com with subject 'Test' and body 'Hello'.",
+        tools=[send_email]
+    )
+    
+    output = await agent.do_async(task, return_output=True)
+    run_id = output.run_id
+    
+    if output.is_paused and output.active_requirements:
+        print(f"Run {run_id} paused for external tools:")
+        for req in output.active_requirements:
+            if req.tool_execution:
+                print(f"  - Tool: {req.tool_execution.tool_name}")
+                print(f"    Call ID: {req.tool_execution.tool_call_id}")
+                print(f"    Args: {req.tool_execution.tool_args}")
+    
+    # STEP 2: Execute tools and set results
+    print("\nExecuting external tools...")
+    for req in output.active_requirements:
+        if req.is_external_tool_execution and not req.is_resolved:
+            tool_result = execute_tool_externally(req)
+            req.tool_execution.result = tool_result
+            print(f"  Set result for {req.tool_execution.tool_name}: {tool_result}")
+    
+    # STEP 3: New agent resumes (simulates different process)
+    print(f"\nCreating new agent to resume run {run_id}...")
+    new_db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
+    new_agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=new_db)
+    
+    result = await new_agent.continue_run_async(
+        run_id=run_id,
+        requirements=output.requirements,
+        return_output=True
+    )
+    print(f"Final result: {result.output}")
+    return result
+
+asyncio.run(external_cross_process())
+```
+
+### With `task`
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.db.database import SqliteDatabase
+
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email - requires external execution."""
+    # In a real implementation, this would call an email service
+    return f"Email sent successfully to {to} with subject '{subject}'"
+
+def execute_tool_externally(requirement) -> str:
+    tool_exec = requirement.tool_execution
+    tool_name = tool_exec.tool_name
+    tool_args = tool_exec.tool_args
+    
+    if tool_name == "send_email":
+        return send_email(**tool_args)
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+
+async def external_cross_process_task():
+    db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
+    
+    # STEP 1: Initial run
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
+    task = Task(
+        description="Send an email to test@example.com with subject 'Test' and body 'Hello'.",
+        tools=[send_email]
+    )
+    
+    output = await agent.do_async(task, return_output=True)
+    run_id = output.run_id
+    
+    if output.is_paused and output.active_requirements:
+        print(f"Run {run_id} paused for external tools")
+    
+    # STEP 2: Execute tools
+    for req in output.active_requirements:
+        if req.is_external_tool_execution and not req.is_resolved:
+            tool_result = execute_tool_externally(req)
+            req.tool_execution.result = tool_result
+    
+    # STEP 3: New agent uses task for continuation
+    new_db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
+    new_agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=new_db)
+    
+    result = await new_agent.continue_run_async(
+        task=task,
+        requirements=output.requirements,
+        return_output=True
+    )
+    return result
+
+asyncio.run(external_cross_process_task())
+```
+
+## Important Notes
+
+- **Direct Call Mode Only**: HITL continuation only supports direct call mode. Streaming is not supported.
+- **Requirements Parameter**: When using a new agent, pass `requirements=output.requirements` to inject the results into the loaded state.
+- **Persistent Storage**: For cross-process scenarios, always use persistent storage like `SqliteDatabase`.
+- **is_resolved Check**: Always check `requirement.is_resolved` before processing to avoid re-executing completed tools.

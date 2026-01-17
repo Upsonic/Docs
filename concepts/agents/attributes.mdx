@@ -10,31 +10,35 @@ The Agent system is configured through the `Agent` class, which provides the fol
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `model` | str \| Model | `"openai/gpt-4o"` | Model identifier or Model instance |
+| `model_name` | str | (from `model`) | Original model identifier string (set from `model` parameter) |
 | `name` | str \| None | `None` | Agent name for identification |
-| `agent_id_` | str \| None | `None` | Unique identifier for the agent instance |
 | `memory` | Memory \| None | `None` | Memory instance for conversation history |
 | `db` | DatabaseBase \| None | `None` | Database instance (overrides memory if provided) |
+| `session_id` | str \| None | `None` | Session identifier for conversation tracking |
+| `user_id` | str \| None | `None` | User identifier for multi-user scenarios |
 | `debug` | bool | `False` | Enable debug logging |
+| `debug_level` | int | `1` | Debug level (1 = standard, 2 = detailed). Only used when debug=True |
 | `company_url` | str \| None | `None` | Company URL for context |
 | `company_objective` | str \| None | `None` | Company objective for context |
 | `company_description` | str \| None | `None` | Company description for context |
 | `company_name` | str \| None | `None` | Company name for context |
 | `system_prompt` | str \| None | `None` | Custom system prompt |
 | `reflection` | bool | `False` | Enable reflection capabilities |
-| `compression_strategy` | str | `"none"` | Context compression method: 'none', 'simple', 'llmlingua' |
-| `compression_settings` | Dict \| None | `None` | Settings for compression strategy |
+| `compression_strategy` | Literal["none", "simple", "llmlingua"] | `"none"` | Context compression method: 'none', 'simple', 'llmlingua' |
+| `compression_settings` | Dict[str, Any] \| None | `None` | Settings for compression strategy |
 | `reliability_layer` | Any \| None | `None` | Reliability layer for robustness |
+| `agent_id_` | str \| None | `None` | Unique identifier for the agent instance |
 | `canvas` | Canvas \| None | `None` | Canvas instance for visual interactions |
 | `retry` | int | `1` | Number of retry attempts |
-| `mode` | str | `"raise"` | Retry mode behavior: 'raise' or 'return_false' |
+| `mode` | RetryMode | `"raise"` | Retry mode behavior: 'raise' or 'return_false' |
 | `role` | str \| None | `None` | Agent role |
 | `goal` | str \| None | `None` | Agent goal |
 | `instructions` | str \| None | `None` | Specific instructions |
 | `education` | str \| None | `None` | Agent education background |
 | `work_experience` | str \| None | `None` | Agent work experience |
-| `feed_tool_call_results` | bool | `False` | Include tool results in memory |
+| `feed_tool_call_results` | bool \| None | `None` | Include tool results in memory |
 | `show_tool_calls` | bool | `True` | Display tool calls |
-| `tool_call_limit` | int | `10` | Maximum tool calls per execution |
+| `tool_call_limit` | int | `5` | Maximum tool calls per execution |
 | `enable_thinking_tool` | bool | `False` | Enable orchestrated thinking |
 | `enable_reasoning_tool` | bool | `False` | Enable reasoning capabilities |
 | `tools` | List[Any] \| None | `None` | Agent-level tools (can also be added via `add_tools()`) |
@@ -49,14 +53,29 @@ The Agent system is configured through the `Agent` class, which provides the fol
 | `settings` | ModelSettings \| None | `None` | Model-specific settings |
 | `profile` | ModelProfile \| None | `None` | Model profile configuration |
 | `reflection_config` | ReflectionConfig \| None | `None` | Configuration for reflection |
-| `model_selection_criteria` | Dict \| None | `None` | Default criteria for recommend_model_for_task() |
+| `model_selection_criteria` | Dict[str, Any] \| None | `None` | Default criteria for recommend_model_for_task() |
 | `use_llm_for_selection` | bool | `False` | Use LLM in recommend_model_for_task() |
-| `reasoning_effort` | str \| None | `None` | Reasoning effort: 'low', 'medium', 'high' (OpenAI) |
-| `reasoning_summary` | str \| None | `None` | Reasoning summary: 'concise', 'detailed' (OpenAI) |
+| `reasoning_effort` | Literal["low", "medium", "high"] \| None | `None` | Reasoning effort: 'low', 'medium', 'high' (OpenAI) |
+| `reasoning_summary` | Literal["concise", "detailed"] \| None | `None` | Reasoning summary: 'concise', 'detailed' (OpenAI) |
 | `thinking_enabled` | bool \| None | `None` | Enable thinking (Anthropic/Google) |
 | `thinking_budget` | int \| None | `None` | Token budget for thinking |
 | `thinking_include_thoughts` | bool \| None | `None` | Include thoughts in output (Google) |
-| `reasoning_format` | str \| None | `None` | Reasoning format: 'hidden', 'raw', 'parsed' (Groq) |
+| `reasoning_format` | Literal["hidden", "raw", "parsed"] \| None | `None` | Reasoning format: 'hidden', 'raw', 'parsed' (Groq) |
+| `culture_manager` | CultureManager \| None | `None` | Culture manager instance for cultural knowledge (experimental) |
+| `add_culture_to_context` | bool | `False` | Add cultural knowledge to context (experimental) |
+| `update_cultural_knowledge` | bool | `False` | Update cultural knowledge based on interactions (experimental) |
+| `enable_agentic_culture` | bool | `False` | Enable agentic culture capabilities (experimental) |
+| `metadata` | Dict[str, Any] \| None | `None` | Agent metadata (passed to prompt) |
+
+## Properties
+
+The Agent class provides the following read-only properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `agent_id` | str | Unique agent identifier (auto-generated if not provided via `agent_id_`) |
+| `session_id` | str \| None | Session identifier (from override, memory, or db) |
+| `user_id` | str \| None | User identifier (from override, memory, or db) |
 
 ## Configuration Example
 
@@ -68,8 +87,7 @@ from upsonic.storage import Memory
 # Create storage and memory
 storage = SqliteStorage(
     db_file="agent_memory.db",
-    sessions_table_name="sessions",
-    profiles_table_name="profiles"
+    agent_sessions_table_name="sessions"
 )
 
 memory = Memory(
@@ -90,7 +108,7 @@ agent = Agent(
     role="AI Assistant",
     goal="Help users with their questions",
     show_tool_calls=True,
-    tool_call_limit=10
+    tool_call_limit=5
 )
 
 # Execute a task

@@ -1,0 +1,66 @@
+---
+title: "AsyncMongoStorage"
+description: "Async MongoDB storage for document-based scalable systems"
+---
+
+## Overview
+
+`AsyncMongoStorage` provides an asynchronous MongoDB-based storage backend. Supports both Motor (legacy) and PyMongo async (recommended) clients. Ideal for document-based applications, flexible schemas, and horizontally scalable deployments.
+
+## Basic Usage
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.mongo import AsyncMongoStorage
+
+async def main():
+    storage = AsyncMongoStorage(
+        db_url="mongodb://localhost:27017",
+        db_name="agent_memory"
+    )
+
+    memory = Memory(
+        storage=storage,
+        session_id="session_001",
+        user_id="user_123",
+        full_session_memory=True,
+        summary_memory=True,
+        user_analysis_memory=True,
+        model="openai/gpt-4o"
+    )
+
+    agent = Agent("openai/gpt-4o", memory=memory)
+
+    result1 = await agent.ado(Task("My name is Alice"))
+    result2 = await agent.ado(Task("What's my name?"))
+    print(result2)  # "Your name is Alice"
+
+asyncio.run(main())
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `db_url` | `str` | `None` | MongoDB connection URL |
+| `db_name` | `str` | `"upsonic"` | Database name to use |
+| `db_client` | `AsyncIOMotorClient` or `AsyncMongoClient` | `None` | Pre-configured async MongoDB client |
+| `session_collection` | `str` | `None` | Custom name for the session collection |
+| `user_memory_collection` | `str` | `None` | Custom name for the user memory collection |
+| `id` | `str` | `None` | Unique identifier for this storage instance |
+
+<Note>
+When both Motor and PyMongo async are available, PyMongo async is preferred. Install using `pip install -U 'pymongo>=4.9'` (recommended) or `pip install -U motor` (legacy).
+</Note>
+
+## Requirements
+
+```bash
+# Recommended
+pip install 'pymongo>=4.9'
+
+# Or legacy Motor
+pip install motor
+```

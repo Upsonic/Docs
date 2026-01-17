@@ -243,23 +243,25 @@ task = Task(
 agent = Agent(model="openai/gpt-4o")
 
 # Initial execution - agent pauses when tool is needed
-result = agent.do(task)
+output = agent.do(task, return_output=True)
 
-# Check if execution paused
-if task.is_paused and task.tools_awaiting_external_execution:
-    # Execute each tool externally
-    for tool_call in task.tools_awaiting_external_execution:
-        print(f"Tool: {tool_call.tool_name}")
-        print(f"Args: {tool_call.args}")
-        
-        # Execute the tool yourself
-        external_result = execute_shell_command(**tool_call.args)
-        
-        # Set the result back
-        tool_call.result = external_result
+# Check if execution paused with external tool requirements
+if output.active_requirements:
+    # Execute each external tool requirement
+    for requirement in output.active_requirements:
+        if requirement.is_external_tool_execution:
+            tool_exec = requirement.tool_execution
+            print(f"Tool: {tool_exec.tool_name}")
+            print(f"Args: {tool_exec.tool_args}")
+            
+            # Execute the tool yourself
+            external_result = execute_shell_command(**tool_exec.tool_args)
+            
+            # Set the result back
+            requirement.tool_execution.result = external_result
     
     # Continue execution with the results
-    final_result = agent.continue_run(task)
+    final_result = agent.continue_run(task=task, requirements=output.requirements)
 ```
 
 ### Security-Sensitive Operations
@@ -273,18 +275,30 @@ def delete_production_data(table_name: str) -> str:
     """Delete data from production (requires manual execution)."""
     return f"Deleted data from {table_name}"
 
+task = Task(
+    description="Delete all data from the users table",
+    tools=[delete_production_data]
+)
+
+agent = Agent(model="openai/gpt-4o")
+
+# Initial execution - agent pauses when tool is needed
+output = agent.do(task, return_output=True)
+
 # Review before executing
-if task.is_paused:
-    for tool_call in task.tools_awaiting_external_execution:
-        print(f"⚠️  About to delete from: {tool_call.args['table_name']}")
-        confirm = input("Proceed? (yes/no): ")
-        
-        if confirm == "yes":
-            tool_call.result = delete_production_data(**tool_call.args)
-        else:
-            tool_call.result = "Operation cancelled by user"
+if output.active_requirements:
+    for requirement in output.active_requirements:
+        if requirement.is_external_tool_execution:
+            tool_exec = requirement.tool_execution
+            print(f"⚠️  About to delete from: {tool_exec.tool_args['table_name']}")
+            confirm = input("Proceed? (yes/no): ")
+            
+            if confirm == "yes":
+                requirement.tool_execution.result = delete_production_data(**tool_exec.tool_args)
+            else:
+                requirement.tool_execution.result = "Operation cancelled by user"
     
-    final_result = agent.continue_run(task)
+    final_result = agent.continue_run(task=task, requirements=output.requirements)
 ```
 
 ## Let's Create Custom Tools for a Website Analysis Agent
@@ -408,6 +422,7 @@ async def analyze_seo_metrics(html_content: str) -> Dict[str, Any]:
 
 # Agent Creation with Custom Tools
 website_analyzer_agent = Agent(
+    model="openai/gpt-4o",
     name="Website Analysis Expert",
     role="Website Performance and SEO Specialist",
     goal="Provide comprehensive website analysis with actionable insights for optimization"

@@ -3,66 +3,48 @@ title: "InMemoryStorage"
 description: "Fast in-memory storage for development and testing"
 ---
 
-## Usage
+## Overview
+
+`InMemoryStorage` provides a fast, ephemeral storage backend. Ideal for development, testing, and scenarios where persistence isn't required.
+
+<Warning>
+Data is lost when the process terminates. Use a persistent storage for production.
+</Warning>
+
+## Basic Usage
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.in_memory import InMemoryStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.in_memory import InMemoryStorage
 
-# Create in-memory storage and memory
 storage = InMemoryStorage()
-memory = Memory(
-    storage=storage,
-    session_id="session_001",
-    full_session_memory=True
-)
 
-# Create agent with memory
-agent = Agent("openai/gpt-4o", memory=memory)
-
-# First conversation
-task1 = Task("My name is Alice and I love Python")
-result1 = agent.do(task1)
-
-# Second conversation - agent remembers
-task2 = Task("What's my name and favorite language?")
-result2 = agent.do(task2)
-print(result2)  # Output: Your name is Alice and you love Python
-```
-
-### With LRU Cache Limits
-
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.in_memory import InMemoryStorage
-
-# With LRU cache limits
-storage = InMemoryStorage(
-    max_sessions=100,
-    max_profiles=50
-)
 memory = Memory(
     storage=storage,
     session_id="session_001",
     user_id="user_123",
     full_session_memory=True,
+    summary_memory=True,
     user_analysis_memory=True,
     model="openai/gpt-4o"
 )
 
 agent = Agent("openai/gpt-4o", memory=memory)
 
-task1 = Task("Tell me about machine learning")
-result1 = agent.do(task1)
-
-task2 = Task("What is the main concept we just discussed?")
-result2 = agent.do(task2)
-print(result2)
+result1 = agent.do(Task("My name is Alice"))
+result2 = agent.do(Task("What's my name?"))
+print(result2)  # "Your name is Alice"
 ```
 
-## Params
+## Parameters
 
-- `max_sessions: Optional[int]` - Optional limit on stored sessions (LRU cache)
-- `max_profiles: Optional[int]` - Optional limit on stored profiles (LRU cache)
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `session_table` | `str \| None` | `"upsonic_sessions"` | Session table name (for compatibility) |
+| `user_memory_table` | `str \| None` | `"upsonic_user_memories"` | User memory table name (for compatibility) |
+| `id` | `str \| None` | auto-generated | Storage instance ID |
+
+## Storage Type
+
+`InMemoryStorage` is a **synchronous** storage implementation using Python dictionaries.

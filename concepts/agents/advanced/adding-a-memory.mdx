@@ -29,7 +29,7 @@ from upsonic.storage import Memory, SqliteStorage
 from upsonic.models.openai import OpenAIChatModel
 
 # Create storage backend
-storage = SqliteStorage(db_file="agent_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="agent_memory.db")
 
 # Create memory system
 memory = Memory(
@@ -70,7 +70,7 @@ from upsonic import Agent, Task
 from upsonic.storage import Memory, SqliteStorage
 
 # Create storage backend
-storage = SqliteStorage(db_file="basic_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="basic_memory.db")
 
 # Basic memory configuration
 memory = Memory(
@@ -99,7 +99,7 @@ from upsonic.storage import Memory, SqliteStorage
 from upsonic.models.openai import OpenAIChatModel
 
 # Create storage and model
-storage = SqliteStorage(db_file="full_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="full_memory.db")
 model = OpenAIChatModel("gpt-4o-mini")
 
 # Full memory configuration with all options
@@ -142,7 +142,7 @@ from upsonic import Agent, Task
 from upsonic.storage import Memory, SqliteStorage
 
 # Create storage
-storage = SqliteStorage(db_file="session_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="session_memory.db")
 
 # Memory with full session history
 memory = Memory(
@@ -172,7 +172,7 @@ from upsonic.storage import Memory, SqliteStorage
 from upsonic.models.openai import OpenAIChatModel
 
 # Create storage
-storage = SqliteStorage(db_file="summary_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="summary_memory.db")
 
 # Memory with automatic summarization
 memory = Memory(
@@ -200,7 +200,7 @@ from upsonic.storage import Memory, SqliteStorage
 from upsonic.models.openai import OpenAIChatModel
 
 # Create storage
-storage = SqliteStorage(db_file="user_analysis_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="user_analysis_memory.db")
 
 # Memory with user profile analysis
 memory = Memory(
@@ -230,7 +230,7 @@ from upsonic.storage import Memory, SqliteStorage
 from upsonic.models.openai import OpenAIChatModel
 
 # Setup storage and memory
-storage = SqliteStorage(db_file="task_execution_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="task_execution_memory.db")
 memory = Memory(
     storage=storage,
     session_id="investment_session",
@@ -271,18 +271,18 @@ The memory system will:
 import asyncio
 from upsonic import Agent, Task
 from upsonic.storage import Memory, SqliteStorage
-from upsonic.storage.session.sessions import InteractionSession, UserProfile
 from upsonic.models.openai import OpenAIChatModel
 
 async def main():
     # Create storage and memory
-    storage = SqliteStorage(db_file="access_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+    storage = SqliteStorage(db_file="access_memory.db")
     memory = Memory(
         storage=storage,
         session_id="session_001",
         user_id="user_001",
         full_session_memory=True,
         user_analysis_memory=True,
+        summary_memory=True,
         model=OpenAIChatModel("gpt-4o-mini")
     )
 
@@ -294,13 +294,17 @@ async def main():
     result = agent.do(task)
     print("Agent response:", result)
 
-    # Access user profile via agent.memory.storage
-    user_profile = await agent.memory.storage.read_async("user_001", UserProfile)
-    print("User profile:", user_profile)
+    # Access session data via memory
+    session = await agent.memory.get_session_async()
+    if session:
+        print("Session ID:", session.session_id)
+        print("Messages count:", len(session.messages) if session.messages else 0)
+        print("Session summary:", session.summary)
 
-    # Access session data via agent.memory.storage
-    session_data = await agent.memory.storage.read_async("session_001", InteractionSession)
-    print("Session messages count:", len(session_data.chat_history) if session_data and session_data.chat_history else 0)
+    # Access user memory via storage
+    user_memory = storage.get_user_memory(user_id="user_001")
+    if user_memory:
+        print("User memory:", user_memory.user_memory)
 
 # Run the async function
 asyncio.run(main())
@@ -313,7 +317,7 @@ from upsonic import Agent, Task
 from upsonic.storage import Memory, SqliteStorage
 
 # Create storage and memory
-storage = SqliteStorage(db_file="advisor_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="advisor_memory.db")
 memory = Memory(
     storage=storage,
     session_id="advisor_session",
@@ -354,7 +358,7 @@ class CustomUserTraits(BaseModel):
     preferred_assets: List[str] = Field(default=[], description="User's preferred asset classes")
 
 # Create storage and model
-storage = SqliteStorage(db_file="custom_profile_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="custom_profile_memory.db")
 model = OpenAIChatModel("gpt-4o-mini")
 
 # Create memory with custom profile schema
@@ -384,7 +388,7 @@ from upsonic.storage import Memory, SqliteStorage
 from upsonic.models.openai import OpenAIChatModel
 
 # Create storage and model
-storage = SqliteStorage(db_file="dynamic_profile_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="dynamic_profile_memory.db")
 model = OpenAIChatModel("gpt-4o-mini")
 
 # Memory with dynamic profile generation
@@ -413,7 +417,7 @@ from upsonic import Agent, Task
 from upsonic.storage import Memory, SqliteStorage
 
 # Create storage
-storage = SqliteStorage(db_file="limited_history_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="limited_history_memory.db")
 
 # Memory with limited conversation history
 memory = Memory(
@@ -430,6 +434,22 @@ agent = Agent(model="openai/gpt-4o", memory=memory)
 task = Task("Remember that my favorite number is 42")
 result = agent.do(task)
 print(result)
+```
+
+## Storage Configuration Options
+
+The `SqliteStorage` class accepts the following parameters:
+
+```python
+from upsonic.storage import SqliteStorage
+
+# Full configuration example
+storage = SqliteStorage(
+    db_file="agent_data.db",           # Path to SQLite database file
+    session_table="custom_sessions",    # Custom session table name (optional)
+    user_memory_table="custom_users",   # Custom user memory table name (optional)
+    id="storage_instance_1"             # Unique storage instance ID (optional)
+)
 ```
 
 ## Best Practices

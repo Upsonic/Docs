@@ -3,6 +3,47 @@ title: Changelog
 description: Latest updates and improvements to Upsonic AI Agent Framework
 ---
 
+
+> Product updates, improvements, and bug fixes for Upsonic
+<Update label="Jan 17, 2026">
+	## v0.70.0
+
+	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.70.0)
+	
+	## New Features:
+	- Agent Run Implementation: Introduced "Agent Run" architecture with `AgentRunInput` and `AgentRunOutput` dataclasses, providing type safety, clear contracts, and a single source of truth for agent execution state.
+	- Memory Modes for UEL: Added `user_memory_mode` parameter with 'update' and 'replace' options to solve conflicts between placeholder history and model history.
+	- AgentSession Class: New session management class for storing agent-related information across multiple runs with proper lifecycle management.
+	- Parallel Tool Call Support: Added support for parallel tool calls when external tool execution is enabled, improving throughput for multi-tool operations.
+	- Agent Metadata Attribute: New `metadata` attribute in Agent class that enables users to inject any metadata directly into the prompt.
+	- Dynamic Search Tool for KnowledgeBase: Introduced dynamic `search` tool when KnowledgeBase is used as a tool (RAG as tool functionality).
+	- MCP Tool Name Prefix: Added tool name prefix support for MCP tools, allowing different function tools with the same name to be used for different purposes.
+	- RunRequirement Class: New class for managing Human-in-the-Loop (HITL) requirements with clear distinction between confirmation, user input, and external execution needs.
+	- Run Cancellation Manager: Thread-safe cancellation management with proper lifecycle methods (`register_run`, `cancel_run`, `cleanup_run`).
+	- External Tool Callable Support: For one-tool-at-a-time calls with external tool execution, callable is provided as argument for background handling.
+	- Debug Level 2: Enhanced debugging capabilities with additional logging and visibility.
+	
+	## Improvements:
+	- Context Managers Refactored: Converted context managers to regular classes to align with the step-based architecture in Agent flow.
+	- HITL Logic Refactored: Human-in-the-Loop logics are now managed by the `RunRequirement` class with improved and cleaner usage patterns.
+	- Streaming Logic Refactored: Removed unnecessary and confusing stream methods in Agent class, consolidating streaming functionality.
+	- Storage Providers Refactored: Comprehensive storage system overhaul with abstract `Storage` base class and support for multiple backends (In-Memory, JSON, SQLite, Redis, PostgreSQL, MongoDB, Mem0).
+	- Improved Event System: Enhanced event streaming architecture with comprehensive event types for better observability.
+	- Test Organization: Reorganized tests by moving smoke tests from unit_tests directory into dedicated smoke_tests directory for clearer separation.
+	- AgentRunContext Removal: Removed `AgentRunContext` class and made everything dependent on `AgentRunOutput` for simplified state management.
+	
+	## Bug Fixes:
+	- Fixed System Prompt Setup: Resolved issue where system prompt was not being set up correctly in certain scenarios.
+	- Fixed Test Compatibility: Addressed test compatibility issues across different Python versions.
+	- Fixed Notebook Issues: Resolved issues with Jupyter notebook examples.
+	
+	
+	Full Changelog address: https://github.com/Upsonic/Upsonic/compare/v0.69.0...v0.70.0
+	
+	### Pull Requests:
+	- Agent Run Implementation: [DoganK01](https://github.com/DoganK01) in [#504](https://github.com/Upsonic/Upsonic/pull/504)
+</Update>
+
 > Product updates, improvements, and bug fixes for Upsonic
 
 <Update label="Dec 16, 2025">

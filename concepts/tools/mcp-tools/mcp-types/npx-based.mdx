@@ -42,6 +42,31 @@ print(result)
 - `command` (str): The command to run ("npx")
 - `args` (List[str]): Arguments including package name and flags
 - `env` (Dict[str, str]): Environment variables (optional)
+- `tool_name_prefix` (str): Optional prefix to add to all tool names (prevents collisions)
+
+## Using Tool Name Prefix
+
+Add a `tool_name_prefix` when using multiple MCP servers with potentially overlapping tool names:
+
+```python
+from upsonic import Task, Agent
+
+class FileSystemMCP:
+    command = "npx"
+    args = ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+    tool_name_prefix = "fs"  # Tools become: fs_read_file, fs_write_file, etc.
+
+class GitHubMCP:
+    command = "npx"
+    args = ["-y", "@modelcontextprotocol/server-github"]
+    env = {"GITHUB_PERSONAL_ACCESS_TOKEN": "your_token"}
+    tool_name_prefix = "github"  # Tools become: github_list_repos, etc.
+
+task = Task(
+    description="Use 'fs_*' tools to read local files, and 'github_*' tools to interact with GitHub.",
+    tools=[FileSystemMCP, GitHubMCP]
+)
+```
 
 ## Requirements
 

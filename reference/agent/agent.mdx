@@ -10,19 +10,24 @@ sidebarTitle: Agent
 | `model`                            | `Union[str, Model]`                                   | `"openai/gpt-4o"` | Model identifier or Model instance                                                                                                                                                                                               |
 | `name`                             | `Optional[str]`                                       | `None`     | Agent name for identification                                                                                                                                                                                                    |
 | `memory`                           | `Optional[Memory]`                                    | `None`     | Memory instance for conversation history                                                                                                                                                                                        |
+| `db`                               | `Optional[DatabaseBase]`                              | `None`     | Database instance (overrides memory if provided)                                                                                                                                                                               |
+| `session_id`                       | `Optional[str]`                                       | `None`     | Session identifier for tracking conversations                                                                                                                                                                                  |
+| `user_id`                          | `Optional[str]`                                       | `None`     | User identifier for multi-user scenarios                                                                                                                                                                                       |
 | `debug`                            | `bool`                                                | `False`    | Enable debug logging                                                                                                                                                                                                            |
+| `debug_level`                      | `int`                                                 | `1`        | Debug level (1 = standard, 2 = detailed). Only used when debug=True                                                                                                                                                           |
 | `company_url`                      | `Optional[str]`                                       | `None`     | Company URL for context                                                                                                                                                                                                         |
 | `company_objective`                | `Optional[str]`                                       | `None`     | Company objective for context                                                                                                                                                                                                    |
 | `company_description`              | `Optional[str]`                                       | `None`     | Company description for context                                                                                                                                                                                                 |
+| `company_name`                     | `Optional[str]`                                       | `None`     | Company name for context                                                                                                                                                                                                        |
 | `system_prompt`                    | `Optional[str]`                                       | `None`     | Custom system prompt                                                                                                                                                                                                            |
-| `reflection`                       | `Optional[bool]`                                      | `False`    | Reflection capabilities                                                                                                                                                                                                        |
-| `compression_strategy`             | `Literal["none", "simple", "llmlingua"]`              | `"none"`   | The method for context compression                                                                                                                                                                                               |
-| `compression_settings`             | `Optional[Dict[str, Any]]`                            | `None`     | A dictionary of settings for the chosen strategy. For simple: max_length 2000. For llmlingua: ratio 0.5, model_name, instruction |
+| `reflection`                       | `bool`                                                | `False`    | Reflection capabilities (default is False)                                                                                                                                                                                     |
+| `compression_strategy`             | `Literal["none", "simple", "llmlingua"]`              | `"none"`   | The method for context compression ('none', 'simple', 'llmlingua')                                                                                                                                                              |
+| `compression_settings`             | `Optional[Dict[str, Any]]`                            | `None`     | A dictionary of settings for the chosen strategy. For "simple": {"max_length": 2000}. For "llmlingua": {"ratio": 0.5, "model_name": "...", "instruction": "..."} |
 | `reliability_layer`                | `Optional[Any]`                                       | `None`     | Reliability layer for robustness                                                                                                                                                                                                |
 | `agent_id_`                        | `Optional[str]`                                       | `None`     | Specific agent ID                                                                                                                                                                                                               |
 | `canvas`                           | `Optional[Canvas]`                                    | `None`     | Canvas instance for visual interactions                                                                                                                                                                                         |
 | `retry`                            | `int`                                                 | `1`        | Number of retry attempts                                                                                                                                                                                                        |
-| `mode`                             | `RetryMode`                                           | `"raise"`  | Retry mode behavior (raise or return_false)                                                                                                                                                                                 |
+| `mode`                             | `RetryMode`                                           | `"raise"`  | Retry mode behavior ("raise" or "return_false")                                                                                                                                                                                 |
 | `role`                             | `Optional[str]`                                       | `None`     | Agent role                                                                                                                                                                                                                      |
 | `goal`                             | `Optional[str]`                                       | `None`     | Agent goal                                                                                                                                                                                                                      |
 | `instructions`                     | `Optional[str]`                                       | `None`     | Specific instructions                                                                                                                                                                                                           |
@@ -33,13 +38,31 @@ sidebarTitle: Agent
 | `tool_call_limit`                  | `int`                                                 | `5`        | Maximum tool calls per execution                                                                                                                                                                                                 |
 | `enable_thinking_tool`             | `bool`                                                | `False`    | Enable orchestrated thinking                                                                                                                                                                                                     |
 | `enable_reasoning_tool`            | `bool`                                                | `False`    | Enable reasoning capabilities                                                                                                                                                                                                    |
-| `user_policy`                      | `Optional[Policy]`                                    | `None`     | User input safety policy                                                                                                                                                                                                         |
-| `agent_policy`                     | `Optional[Policy]`                                    | `None`     | Agent output safety policy                                                                                                                                                                                                      |
+| `tools`                            | `Optional[list]`                                      | `None`     | List of tools to register with this agent (can be functions, ToolKits, or other agents)                                                                                                                                       |
+| `user_policy`                      | `Optional[Union[Policy, List[Policy]]]`              | `None`     | User input safety policy (single policy or list of policies)                                                                                                                                                                  |
+| `agent_policy`                     | `Optional[Union[Policy, List[Policy]]]`               | `None`     | Agent output safety policy (single policy or list of policies)                                                                                                                                                                 |
+| `tool_policy_pre`                  | `Optional[Union[Policy, List[Policy]]]`              | `None`     | Tool safety policy for pre-execution validation (single policy or list of policies)                                                                                                                                            |
+| `tool_policy_post`                 | `Optional[Union[Policy, List[Policy]]]`               | `None`     | Tool safety policy for post-execution validation (single policy or list of policies)                                                                                                                                            |
+| `user_policy_feedback`             | `bool`                                                | `False`    | Enable feedback loop for user policy violations (returns helpful message instead of blocking)                                                                                                                                   |
+| `agent_policy_feedback`            | `bool`                                                | `False`    | Enable feedback loop for agent policy violations (re-executes agent with feedback)                                                                                                                                              |
+| `user_policy_feedback_loop`        | `int`                                                 | `1`        | Maximum retry count for user policy feedback (default 1)                                                                                                                                                                       |
+| `agent_policy_feedback_loop`       | `int`                                                 | `1`        | Maximum retry count for agent policy feedback (default 1)                                                                                                                                                                      |
 | `settings`                         | `Optional[ModelSettings]`                             | `None`     | Model-specific settings                                                                                                                                                                                                         |
-| `profile`                          | `Optional[ModelProfile]`                              | `None`     | Model profile configuration                                                                                                                                                                                                     |
+| `profile`                          | `Optional[ModelProfile]`                             | `None`     | Model profile configuration                                                                                                                                                                                                     |
 | `reflection_config`                | `Optional[ReflectionConfig]`                          | `None`     | Configuration for reflection and self-evaluation                                                                                                                                                                                |
-| `model_selection_criteria`         | `Optional[Dict[str, Any]]`                            | `None`     | Default criteria dictionary for recommend_model_for_task (see SelectionCriteria)                                                                                                                                             |
-| `use_llm_for_selection`            | `bool`                                                | `False`    | Default flag for whether to use LLM in recommend_model_for_task                                                                                                                                                                |
+| `model_selection_criteria`         | `Optional[Dict[str, Any]]`                            | `None`     | Default criteria dictionary for recommend_model_for_task() (see SelectionCriteria)                                                                                                                                             |
+| `use_llm_for_selection`            | `bool`                                                | `False`    | Default flag for whether to use LLM in recommend_model_for_task()                                                                                                                                                              |
+| `reasoning_effort`                 | `Optional[Literal["low", "medium", "high"]]`         | `None`     | Reasoning effort level for OpenAI models ("low", "medium", "high")                                                                                                                                                            |
+| `reasoning_summary`                | `Optional[Literal["concise", "detailed"]]`            | `None`     | Reasoning summary type for OpenAI models ("concise", "detailed")                                                                                                                                                               |
+| `thinking_enabled`                 | `Optional[bool]`                                      | `None`     | Enable thinking for Anthropic/Google models (True/False)                                                                                                                                                                       |
+| `thinking_budget`                  | `Optional[int]`                                       | `None`     | Token budget for thinking (Anthropic: budget_tokens, Google: thinking_budget)                                                                                                                                                  |
+| `thinking_include_thoughts`        | `Optional[bool]`                                      | `None`     | Include thoughts in output (Google models)                                                                                                                                                                                      |
+| `reasoning_format`                 | `Optional[Literal["hidden", "raw", "parsed"]]`       | `None`     | Reasoning format for Groq models ("hidden", "raw", "parsed")                                                                                                                                                                    |
+| `culture_manager`                  | `Optional[CultureManager]`                           | `None`     | CultureManager instance for cultural knowledge operations                                                                                                                                                                        |
+| `add_culture_to_context`           | `bool`                                                | `False`    | Add cultural knowledge to system prompt (default False)                                                                                                                                                                        |
+| `update_cultural_knowledge`        | `bool`                                                | `False`    | Extract cultural knowledge after runs (default False)                                                                                                                                                                           |
+| `enable_agentic_culture`           | `bool`                                                | `False`    | Give agent tools to update culture (default False)                                                                                                                                                                              |
+| `metadata`                         | `Optional[Dict[str, Any]]`                            | `None`     | Agent metadata (passed to prompt)                                                                                                                                                                                               |
 
 
 ## Functions
@@ -50,63 +73,73 @@ Execute a task synchronously.
 
 **Parameters:**
 
-- `task` (Task): Task to execute
+- `task` (Union[str, Task]): Task to execute (can be a Task object or a string description)
 - `model` (Optional[Union[str, Model]]): Override model for this execution
 - `debug` (bool): Enable debug mode
 - `retry` (int): Number of retries
+- `return_output` (bool): If True, return full AgentRunOutput. If False (default), return content only.
 
 **Returns:**
 
-- `Any`: The task response
+- `Any`: Task content (str, BaseModel, etc.) if return_output=False, Full AgentRunOutput if return_output=True
 
 ### `do_async`
 
-Execute a task asynchronously with complete framework integration.
+Execute a task asynchronously using the pipeline architecture.
 
 **Parameters:**
 
-- `task` (Task): Task to execute
+- `task` (Union[str, Task]): Task to execute
 - `model` (Optional[Union[str, Model]]): Override model for this execution
 - `debug` (bool): Enable debug mode
 - `retry` (int): Number of retries
+- `return_output` (bool): If True, return full AgentRunOutput. If False (default), return content only.
 - `state` (Optional[State]): Graph execution state
 - `graph_execution_id` (Optional[str]): Graph execution identifier
+- `_resume_context` (Optional[AgentRunContext]): Internal - context for HITL resumption
+- `_resume_step_index` (Optional[int]): Internal - step index to resume from
 
 **Returns:**
 
-- `Any`: The task response
+- `Any`: Task content (str, BaseModel, etc.) if return_output=False, Full AgentRunOutput if return_output=True
 
 ### `stream`
 
-Stream task execution with StreamRunResult wrapper.
+Stream task execution synchronously - yields events/text as they arrive.
 
 **Parameters:**
 
-- `task` (Task): Task to execute
+- `task` (Union[str, Task]): Task to execute
 - `model` (Optional[Union[str, Model]]): Override model for this execution
 - `debug` (bool): Enable debug mode
 - `retry` (int): Number of retries
-
-**Returns:**
-
-- `StreamRunResult`: Advanced streaming result wrapper
-
-### `stream_async`
-
-Stream task execution asynchronously with StreamRunResult wrapper.
-
-**Parameters:**
-
-- `task` (Task): Task to execute
-- `model` (Optional[Union[str, Model]]): Override model for this execution
-- `debug` (bool): Enable debug mode
-- `retry` (int): Number of retries
+- `events` (bool): If True, yield AgentEvent objects. If False (default), yield text chunks.
 - `state` (Optional[State]): Graph execution state
-- `graph_execution_id` (Optional[str]): Graph execution identifier
+- `event` (Optional[bool]): Deprecated, use 'events' instead.
 
 **Returns:**
 
-- `StreamRunResult`: Advanced streaming result wrapper
+- `Iterator[Union[str, AgentStreamEvent]]`: AgentEvent if events=True, str if events=False
+
+### `astream`
+
+Stream task execution asynchronously - yields events or text as they arrive.
+
+Note: HITL (Human-in-the-Loop) features are not supported in streaming mode. Use do_async() for HITL functionality.
+
+**Parameters:**
+
+- `task` (Union[str, Task]): Task to execute
+- `model` (Optional[Union[str, Model]]): Override model for this execution
+- `debug` (bool): Enable debug mode
+- `retry` (int): Number of retries
+- `events` (bool): If True, yield AgentEvent objects. If False (default), yield text chunks.
+- `state` (Optional[State]): Graph execution state
+- `event` (Optional[bool]): Deprecated, use 'events' instead.
+
+**Returns:**
+
+- `AsyncIterator[Union[str, AgentStreamEvent]]`: AgentEvent if events=True, str if events=False
 
 ### `print_do`
 
@@ -138,71 +171,70 @@ Execute a task asynchronously and print the result.
 
 - `Any`: The result object (with output printed to console)
 
-### `print_stream`
-
-Stream task execution synchronously and print output.
-
-**Parameters:**
-
-- `task` (Task): Task to execute
-- `model` (Optional[Union[str, Model]]): Override model for this execution
-- `debug` (bool): Enable debug mode
-- `retry` (int): Number of retries
-
-**Returns:**
-
-- `Any`: The final output
-
-### `print_stream_async`
-
-Stream task execution asynchronously and print output.
-
-**Parameters:**
-
-- `task` (Task): Task to execute
-- `model` (Optional[Union[str, Model]]): Override model for this execution
-- `debug` (bool): Enable debug mode
-- `retry` (int): Number of retries
-
-**Returns:**
-
-- `Any`: The final output
-
 ### `continue_run`
 
-Continue execution of a paused task.
+Continue a paused agent run (synchronous wrapper).
+
+Automatically detects if the original run was streaming and continues in the same mode, or you can override with the streaming parameter.
+
+Supports all HITL continuation scenarios:
+1. External tool execution: Pass task object with external results filled
+2. Durable execution (error recovery): Pass run_id to load from storage
+3. Cancel run resumption: Pass run_id to load from storage
 
 **Parameters:**
 
-- `task` (Task): Task to continue
-- `model` (Optional[Union[str, Model]]): Override model for this execution
+- `task` (Optional[Task]): Task object (for external tool execution with results)
+- `run_id` (Optional[str]): Run ID to load from storage (for durable/cancel)
+- `model` (Optional[Union[str, Model]]): Override model
 - `debug` (bool): Enable debug mode
 - `retry` (int): Number of retries
+- `return_output` (bool): If True, return full AgentRunOutput. If False (default), return content only.
+- `streaming` (Optional[bool]): If True, return list of events/text. If False, return result. If None (default), auto-detect from original run.
+- `event` (bool): If True (with streaming), return list of AgentEvent objects. If False (with streaming), return list of text chunks.
+- `external_tool_executor` (Optional[Callable[[RunRequirement], str]]): Optional function that executes external tools. When provided, if the agent pauses again with NEW external tool requirements, the executor is called automatically for each requirement.
 
 **Returns:**
 
-- `Any`: The task response
+- For direct mode: Task content if return_output=False, AgentRunOutput if return_output=True
+- For streaming mode: List of events (if event=True) or text chunks (if event=False)
 
-### `continue_async`
+### `continue_run_async`
 
-Continue execution of a paused task asynchronously.
+Continue a paused agent run using StepResult-based intelligent resumption.
+
+Note: HITL continuation is only supported in direct call mode (streaming=False).
+
+Supports all HITL continuation scenarios:
+1. External tool execution: Resume from MessageBuildStep with tool results
+2. Durable execution (error recovery): Resume from exact failed step
+3. Cancel run resumption: Resume from exact cancelled step
 
 **Parameters:**
 
-- `task` (Task): Task to continue
-- `model` (Optional[Union[str, Model]]): Override model for this execution
+- `task` (Optional[Task]): Task object with external results (for external tool continuation)
+- `run_id` (Optional[str]): Run ID to load from storage (for durable/cancel continuation)
+- `model` (Optional[Union[str, Model]]): Override model
 - `debug` (bool): Enable debug mode
 - `retry` (int): Number of retries
+- `return_output` (bool): If True, return full AgentRunOutput. If False, return content only.
 - `state` (Optional[State]): Graph execution state
+- `streaming` (bool): Must be False. Streaming mode not supported for HITL continuation.
+- `event` (bool): Ignored (streaming not supported)
+- `external_tool_executor` (Optional[Callable[[RunRequirement], str]]): Optional function that executes external tools. When provided, if the agent pauses again with NEW external tool requirements, the executor is called automatically for each requirement.
 - `graph_execution_id` (Optional[str]): Graph execution identifier
 
 **Returns:**
 
-- `Any`: The task response
+- `Any`: Task content or AgentRunOutput (if return_output=True)
+
+**Raises:**
+
+- `ValueError`: If streaming=True is passed
 
 ### `recommend_model_for_task`
 
-Get a model recommendation for a specific task (synchronous).
+Get a model recommendation for a specific task (synchronous version of recommend_model_for_task_async).
 
 **Parameters:**
 
@@ -216,13 +248,15 @@ Get a model recommendation for a specific task (synchronous).
 
 ### `recommend_model_for_task_async`
 
-Get a model recommendation for a specific task (asynchronous).
+Get a model recommendation for a specific task.
+
+This method analyzes the task and returns a recommendation for the best model to use. The user can then decide whether to use the recommended model or stick with the default.
 
 **Parameters:**
 
 - `task` (Union[Task, str]): Task object or task description string
-- `criteria` (Optional[Dict[str, Any]]): Optional criteria dictionary for model selection
-- `use_llm` (Optional[bool]): Optional flag to use LLM for selection
+- `criteria` (Optional[Dict[str, Any]]): Optional criteria dictionary for model selection (overrides agent's default)
+- `use_llm` (Optional[bool]): Optional flag to use LLM for selection (overrides agent's default)
 
 **Returns:**
 
@@ -255,29 +289,35 @@ Get cache statistics for this agent's session.
 
 Clear the agent's session cache.
 
-### `get_run_result`
+### `get_run_output`
 
-Get the persistent RunResult that accumulates messages across all executions.
-
-**Returns:**
-
-- `RunResult`: The agent's run result containing all messages and the last output
-
-### `reset_run_result`
-
-Reset the RunResult to start fresh (clears all accumulated messages).
-
-### `get_stream_run_result`
-
-Get the persistent StreamRunResult that accumulates messages across all streaming executions.
+Get the AgentRunOutput from the last execution.
 
 **Returns:**
 
-- `StreamRunResult`: The agent's stream run result containing all messages and the last output
+- `Optional[AgentRunOutput]`: The complete run output, or None if no run has been executed
 
-### `reset_stream_run_result`
+### `get_run_id`
 
-Reset the StreamRunResult to start fresh (clears all accumulated messages).
+Get the current run ID.
+
+**Returns:**
+
+- `Optional[str]`: The current run ID, or None if no run is active.
+
+### `cancel_run`
+
+Cancel a run by its ID.
+
+If no run_id is provided, cancels the current run.
+
+**Parameters:**
+
+- `run_id` (Optional[str]): The ID of the run to cancel. If None, cancels the current run.
+
+**Returns:**
+
+- `bool`: True if the run was found and cancelled, False otherwise.
 
 ### `get_last_model_recommendation`
 
@@ -285,4 +325,40 @@ Get the last model recommendation made by the agent.
 
 **Returns:**
 
-- `Optional[Any]`: ModelRecommendation object or None if no recommendation was made
+- `Optional[ModelRecommendation]`: ModelRecommendation object or None if no recommendation was made
+
+### `add_tools`
+
+Dynamically add tools to the agent and register them.
+
+**Parameters:**
+
+- `tools` (Union[Any, List[Any]]): A single tool or list of tools to add
+
+**Raises:**
+
+- `DisallowedOperation`: If any tool is blocked by the safety policy
+
+### `remove_tools`
+
+Remove tools from the agent.
+
+Supports removing:
+- Tool names (strings)
+- Function objects
+- Agent objects
+- MCP handlers (and all their tools)
+- Class instances (ToolKit or regular classes, and all their tools)
+- Builtin tools (AbstractBuiltinTool instances)
+
+**Parameters:**
+
+- `tools` (Union[str, List[str], Any, List[Any]]): Single tool or list of tools to remove (any type)
+
+### `get_tool_defs`
+
+Get the tool definitions for all currently registered tools.
+
+**Returns:**
+
+- `List[ToolDefinition]`: List of tool definitions from the ToolManager

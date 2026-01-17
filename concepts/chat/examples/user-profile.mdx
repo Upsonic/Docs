@@ -1,0 +1,70 @@
+---
+title: "User Profile"
+description: "Custom user profile schemas"
+---
+
+## Custom Profile Schema
+
+Define structured user profiles with Pydantic:
+
+```python
+import asyncio
+from typing import Optional
+from pydantic import BaseModel, Field
+from upsonic import Agent, Chat
+
+
+class UserProfile(BaseModel):
+    name: Optional[str] = Field(default=None, description="User name")
+    favorite_language: Optional[str] = Field(default=None, description="Favorite programming language")
+    expertise_level: Optional[str] = Field(default=None, description="Beginner, Intermediate, or Expert")
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        user_profile_schema=UserProfile,
+        user_analysis_memory=True
+    )
+
+    await chat.invoke("Hi, I am Bob. I am an expert Python developer.")
+    response = await chat.invoke("What do you know about me?")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Dynamic Profile Schema
+
+Let the system auto-generate profile fields:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        dynamic_user_profile=True,
+        user_analysis_memory=True
+    )
+
+    await chat.invoke("I prefer dark mode and use VS Code")
+    response = await chat.invoke("What preferences do you know about me?")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```

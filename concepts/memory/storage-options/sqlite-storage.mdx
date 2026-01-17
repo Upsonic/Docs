@@ -1,21 +1,21 @@
 ---
 title: "SqliteStorage"
-description: "Lightweight SQLite database storage"
+description: "Lightweight SQLite database storage for local development"
 ---
 
-## Usage
+## Overview
+
+`SqliteStorage` provides a file-based SQLite storage backend. Ideal for local development, single-node deployments, and testing.
+
+## Basic Usage
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# Create SQLite storage and memory
-storage = SqliteStorage(
-    db_file="memory.db",
-    sessions_table_name="sessions",
-    profiles_table_name="profiles"
-)
+storage = SqliteStorage(db_file="memory.db")
+
 memory = Memory(
     storage=storage,
     session_id="session_001",
@@ -26,78 +26,30 @@ memory = Memory(
     model="openai/gpt-4o"
 )
 
-# Create agent with memory
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# First conversation
-task1 = Task("My name is Alice and I love Python")
-result1 = agent.do(task1)
-
-# Second conversation - agent remembers
-task2 = Task("What's my name and favorite language?")
-result2 = agent.do(task2)
-print(result2)  # Output: Your name is Alice and you love Python
+result1 = agent.do(Task("My name is Alice"))
+result2 = agent.do(Task("What's my name?"))
+print(result2)  # "Your name is Alice"
 ```
 
-### In-Memory SQLite (Temporary)
+## Parameters
 
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.sqlite import SqliteStorage
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `db_file` | `str \| None` | `None` | Path to SQLite file. If `None`, creates `./upsonic.db` |
+| `db_engine` | `Engine \| None` | `None` | Pre-configured SQLAlchemy Engine |
+| `db_url` | `str \| None` | `None` | SQLAlchemy URL (e.g., `sqlite:///./data.db`) |
+| `session_table` | `str \| None` | `"upsonic_sessions"` | Session table name |
+| `user_memory_table` | `str \| None` | `"upsonic_user_memories"` | User memory table name |
+| `id` | `str \| None` | auto-generated | Storage instance ID |
 
-# In-memory SQLite (temporary) - omit db_file for in-memory
-storage = SqliteStorage(
-    sessions_table_name="sessions",
-    profiles_table_name="profiles"
-)
-memory = Memory(
-    storage=storage,
-    session_id="session_001",
-    full_session_memory=True
-)
+## Storage Type
 
-agent = Agent("openai/gpt-4o", memory=memory)
+`SqliteStorage` is a **synchronous** storage implementation. It uses SQLAlchemy with thread-safe scoped sessions.
 
-task1 = Task("Hello, I'm learning about databases")
-result1 = agent.do(task1)
+## Requirements
 
-task2 = Task("Which one are we using right now?")
-result2 = agent.do(task2)
-print(result2)
+```bash
+pip install sqlalchemy
 ```
-
-### With Pre-existing Connection
-
-```python
-import aiosqlite
-from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.sqlite import SqliteStorage
-
-async def setup_and_run():
-    conn = await aiosqlite.connect("memory.db")
-    storage = SqliteStorage(db=conn)
-    memory = Memory(
-        storage=storage,
-        session_id="session_001",
-        full_session_memory=True
-    )
-    
-    agent = Agent("openai/gpt-4o", memory=memory)
-    
-    task1 = Task("Explain async programming")
-    result1 = agent.do(task1)
-    
-    task2 = Task("How does it relate to the database connection we're using?")
-    result2 = agent.do(task2)
-    return result2
-```
-
-## Params
-
-- `db: Optional[aiosqlite.Connection]` - Optional pre-existing connection (user manages lifecycle)
-- `db_file: Optional[str]` - Path to SQLite file (default: ":memory:" for in-memory)
-- `sessions_table_name: Optional[str]` - Name of sessions table (default: "sessions")
-- `profiles_table_name: Optional[str]` - Name of profiles table (default: "profiles")
-- `cultural_knowledge_table_name: Optional[str]` - Name of cultural knowledge table (default: "cultural_knowledge")

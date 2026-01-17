@@ -7,43 +7,37 @@ hideToc: true
 
 ## Overview
 
-Chat enables you to build stateful conversational sessions with automatic memory management, cost tracking, and session analytics. It integrates seamlessly with Agent and Task to provide persistent conversation context across multiple interactions.
+Chat enables you to build stateful conversational sessions with automatic memory management, cost tracking, and session analytics. It wraps an Agent with session persistence, memory integration, and usage metrics.
 
 ## Key Features
 
-- **Session Management**: Unique session and user identification with state tracking
-- **Memory Integration**: Automatic conversation history, summarization, and user profile management
-- **Cost Tracking**: Real-time token usage and cost monitoring per session
+- **Session Management**: Unique session/user identification with state tracking
+- **Memory Integration**: Conversation history, summarization, and user profile analysis
+- **Cost Tracking**: Real-time token usage and cost monitoring
 - **Streaming Support**: Both blocking and streaming response modes
-- **Error Handling**: Built-in retry mechanisms and error recovery
-- **Storage Backends**: Flexible storage options for persistence
+- **History Manipulation**: Delete messages, remove attachments
+- **Error Handling**: Built-in retry mechanisms with exponential backoff
 
 ## Example
 
-Create a Chat session and interact with an Agent:
-
 ```python
 import asyncio
-from upsonic import Agent, Task, Chat
+from upsonic import Agent, Chat
 
 
 async def main():
-    # Create agent
     agent = Agent("openai/gpt-4o")
 
-    # Create chat session
     chat = Chat(
         session_id="user123_session1",
         user_id="user123",
         agent=agent
     )
 
-    # Send a message
     response = await chat.invoke("Hello, how are you?")
     print(response)
 
-    # Access metrics
-    print(f"Total cost: ${chat.total_cost}")
+    print(f"Total cost: ${chat.total_cost:.4f}")
     print(f"Messages: {len(chat.all_messages)}")
 
 
@@ -53,12 +47,11 @@ if __name__ == "__main__":
 
 ## Navigation
 
-- [Attributes](/chat/attributes) - Configuration options for Chat
-- [Creating a Chat](/chat/creating-a-chat) - How to initialize and configure Chat
-- [Running a Chat](/chat/running-a-chat) - How to send messages and stream responses
-- [Memory Integration](/chat/memory-integration) - Memory management and persistence
-- [Chat Metrics](/chat/chat-metrics) - Cost tracking and session analytics
-- [Advanced](/chat/advanced/custom-storage-backend) - Advanced configuration options
-- [Error Handling](/chat/error-handling) - Error handling and retry mechanisms
-- [Examples](/chat/examples/basic-chat-example) - Complete working examples
-
+- [Attributes](/chat/attributes) - Configuration options
+- [Creating a Chat](/chat/creating-a-chat) - Initialization and configuration
+- [Running a Chat](/chat/running-a-chat) - Sending messages and streaming
+- [Metrics](/chat/metrics) - Cost and session analytics
+- [History Management](/chat/history-management) - Message and attachment manipulation
+- [Storage Backends](/chat/storage-backends) - Persistence options
+- [Advanced](/chat/advanced/memory-strategies) - Advanced configuration
+- [Examples](/chat/examples/basic) - Complete working examples

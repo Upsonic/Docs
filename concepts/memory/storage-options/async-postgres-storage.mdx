@@ -1,0 +1,62 @@
+---
+title: "AsyncPostgresStorage"
+description: "Async PostgreSQL storage for production systems"
+---
+
+## Overview
+
+`AsyncPostgresStorage` provides an asynchronous PostgreSQL-based storage backend using SQLAlchemy with asyncpg. Ideal for production deployments, multi-node systems, and applications requiring ACID compliance with async support.
+
+## Basic Usage
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.postgres import AsyncPostgresStorage
+
+async def main():
+    storage = AsyncPostgresStorage(
+        db_url="postgresql+asyncpg://user:password@localhost:5432/mydb"
+    )
+
+    memory = Memory(
+        storage=storage,
+        session_id="session_001",
+        user_id="user_123",
+        full_session_memory=True,
+        summary_memory=True,
+        user_analysis_memory=True,
+        model="openai/gpt-4o"
+    )
+
+    agent = Agent("openai/gpt-4o", memory=memory)
+
+    result1 = await agent.ado(Task("My name is Alice"))
+    result2 = await agent.ado(Task("What's my name?"))
+    print(result2)  # "Your name is Alice"
+
+asyncio.run(main())
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `db_url` | `str` | `None` | PostgreSQL connection URL (e.g., `postgresql+asyncpg://user:pass@host/db`) |
+| `db_engine` | `AsyncEngine` | `None` | Pre-configured SQLAlchemy AsyncEngine |
+| `db_schema` | `str` | `"public"` | PostgreSQL schema to use |
+| `session_table` | `str` | `None` | Custom name for the session table |
+| `user_memory_table` | `str` | `None` | Custom name for the user memory table |
+| `create_schema` | `bool` | `True` | Whether to create the schema if it doesn't exist |
+| `id` | `str` | `None` | Unique identifier for this storage instance |
+
+<Note>
+Connection pool is automatically configured with `pool_pre_ping=True` and `pool_recycle=3600` for robust connection handling.
+</Note>
+
+## Requirements
+
+```bash
+pip install sqlalchemy asyncpg
+```

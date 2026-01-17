@@ -63,21 +63,21 @@ agent = Agent("openai/gpt-4o")
 agent.add_tools([calculator])
 
 # Access registered tools
-print(agent.registered_agent_tools)  # Dict mapping tool names to wrapped tools
+print("\nRegistered tools:", agent.registered_agent_tools)  # Dict mapping tool names to wrapped tools
 
 # Get tool definitions
 tool_defs = agent.get_tool_defs()  # List[ToolDefinition]
 
-print(tool_defs)
+print("\nTool definitions:", tool_defs)
 
 agent.remove_tools([calculator])
 
 # Access registered tools
-print(agent.registered_agent_tools)  # Dict mapping tool names to wrapped tools
+print("\nRegistered tools:", agent.registered_agent_tools)  # Dict mapping tool names to wrapped tools
 
 # Get tool definitions
 tool_defs = agent.get_tool_defs()  # List[ToolDefinition]
 
-print(tool_defs)
+print("\nTool definitions:", tool_defs)
 ```
 

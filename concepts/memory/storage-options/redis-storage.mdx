@@ -3,21 +3,23 @@ title: "RedisStorage"
 description: "Redis storage for distributed and high-performance systems"
 ---
 
-## Usage
+## Overview
+
+`RedisStorage` provides a Redis-based storage backend. Ideal for distributed systems, high-performance requirements, and applications needing TTL-based expiration.
+
+## Basic Usage
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.redis import RedisStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.redis import RedisStorage
 
-# Create Redis storage and memory
 storage = RedisStorage(
-    host="localhost",
-    port=6379,
-    db=0,
-    password="your_password",
-    prefix="upsonic"
+    db_url="redis://localhost:6379/0",
+    db_prefix="myapp",
+    expire=86400  # 24 hours TTL
 )
+
 memory = Memory(
     storage=storage,
     session_id="session_001",
@@ -28,84 +30,37 @@ memory = Memory(
     model="openai/gpt-4o"
 )
 
-# Create agent with memory
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# First conversation
-task1 = Task("My name is Alice and I love Python")
-result1 = agent.do(task1)
-
-# Second conversation - agent remembers
-task2 = Task("What's my name and favorite language?")
-result2 = agent.do(task2)
-print(result2)  # Output: Your name is Alice and you love Python
+result1 = agent.do(Task("My name is Alice"))
+result2 = agent.do(Task("What's my name?"))
+print(result2)  # "Your name is Alice"
 ```
 
-### Redis with Custom Configuration
+## Parameters
 
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.redis import RedisStorage
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `db_url` | `str \| None` | `None` | Redis connection URL (e.g., `redis://localhost:6379/0`) |
+| `redis_client` | `Redis \| RedisCluster \| None` | `None` | Pre-existing Redis client |
+| `db_prefix` | `str` | `"upsonic"` | Prefix for all Redis keys |
+| `expire` | `int \| None` | `None` | TTL in seconds for all keys |
+| `session_table` | `str \| None` | `"sessions"` | Session key namespace |
+| `user_memory_table` | `str \| None` | `"user_memories"` | User memory key namespace |
+| `id` | `str \| None` | auto-generated | Storage instance ID |
 
-# Redis with custom configuration
-storage = RedisStorage(
-    host="redis.example.com",
-    port=6379,
-    db=1,
-    ssl=True,
-    prefix="prod:memory",
-    expire=3600
-)
-memory = Memory(
-    storage=storage,
-    session_id="session_001",
-    full_session_memory=True
-)
+## Storage Type
 
-agent = Agent("openai/gpt-4o", memory=memory)
+`RedisStorage` is a **synchronous** storage implementation. For Redis Cluster support, provide a pre-configured `RedisCluster` client.
 
-task1 = Task("Help me with caching strategies")
-result1 = agent.do(task1)
+## Key Structure
 
-task2 = Task("Why is Redis good for this?")
-result2 = agent.do(task2)
-print(result2)
+Keys are structured as: `{db_prefix}:{table}:{id}`
+
+Example: `myapp:sessions:session_001`
+
+## Requirements
+
+```bash
+pip install redis
 ```
-
-### With Pre-existing Redis Client
-
-```python
-from redis.asyncio import Redis
-from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.redis import RedisStorage
-
-redis_client = Redis(host="localhost", port=6379, decode_responses=True)
-storage = RedisStorage(redis_client=redis_client)
-memory = Memory(
-    storage=storage,
-    session_id="session_001",
-    full_session_memory=True
-)
-
-agent = Agent("openai/gpt-4o", memory=memory)
-
-task1 = Task("Explain Redis data structures")
-result1 = agent.do(task1)
-
-task2 = Task("Which one is best for a queue?")
-result2 = agent.do(task2)
-print(result2)
-```
-
-## Params
-
-- `redis_client: Optional[Redis]` - Optional pre-existing Redis client (user manages lifecycle)
-- `prefix: str` - Key prefix for namespacing (default: "upsonic")
-- `host: str` - Redis server hostname (default: "localhost", ignored if redis_client provided)
-- `port: int` - Redis server port (default: 6379, ignored if redis_client provided)
-- `db: int` - Redis database number (default: 0, ignored if redis_client provided)
-- `password: Optional[str]` - Optional password for authentication (ignored if redis_client provided)
-- `ssl: bool` - Use SSL connection (default: False, ignored if redis_client provided)
-- `expire: Optional[int]` - Optional TTL in seconds for keys

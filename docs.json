@@ -47,6 +47,7 @@
                                     "concepts/agents/adding-tools",
                                     "concepts/agents/image-generation-agent",
                                     "concepts/agents/running-agents",
+                                    "concepts/agents/access_output",
                                     "concepts/agents/debugging-agents",
                                     {
                                         "group": "Advanced",
@@ -245,7 +246,8 @@
                                             "concepts/safety-engine/prebuilt-policies/fraud-detection-policies",
                                             "concepts/safety-engine/prebuilt-policies/phishing-policies",
                                             "concepts/safety-engine/prebuilt-policies/insider-threat-policies",
-                                            "concepts/safety-engine/prebuilt-policies/tool-safety-policies"
+                                            "concepts/safety-engine/prebuilt-policies/tool-safety-policies",
+                                            "concepts/safety-engine/prebuilt-policies/profanity-policies"
                                         ]
                                     },
                                     {
@@ -286,28 +288,12 @@
                                 ]
                             },
                             {
-                                "group": "Durable Execution",
+                                "group": "HITL",
                                 "pages": [
-                                    "concepts/durable/overview",
-                                    "concepts/durable/attributes",
-                                    "concepts/durable/creating-durable-executions",
-                                    "concepts/durable/recovery-and-continuation",
-                                    "concepts/durable/execution-management",
-                                    {
-                                        "group": "Storage",
-                                        "pages": [
-                                            "concepts/durable/storage/in-memory",
-                                            "concepts/durable/storage/file-based",
-                                            "concepts/durable/storage/sqlite",
-                                            "concepts/durable/storage/redis"
-                                        ]
-                                    },
-                                    {
-                                        "group": "Examples",
-                                        "pages": [
-                                            "concepts/durable/examples/basic-example"
-                                        ]
-                                    }
+                                    "concepts/hitl/overview",
+                                    "concepts/hitl/durable-execution",
+                                    "concepts/hitl/external-tool-execution",
+                                    "concepts/hitl/cancel-run"
                                 ]
                             },
                             {
@@ -333,9 +319,14 @@
                                             "concepts/memory/storage-options/postgres-storage",
                                             "concepts/memory/storage-options/redis-storage",
                                             "concepts/memory/storage-options/mem0-storage",
-                                            "concepts/memory/storage-options/mongo-storage"
+                                            "concepts/memory/storage-options/mongo-storage",
+                                            "concepts/memory/storage-options/async-sqlite-storage",
+                                            "concepts/memory/storage-options/async-postgres-storage",
+                                            "concepts/memory/storage-options/async-mongo-storage",
+                                            "concepts/memory/storage-options/async-mem0-storage"
                                         ]
                                     },
+                                    "concepts/memory/storage-tables",
                                     {
                                         "group": "Examples",
                                         "pages": [
@@ -425,22 +416,24 @@
                                     "concepts/chat/attributes",
                                     "concepts/chat/creating-a-chat",
                                     "concepts/chat/running-a-chat",
-                                    "concepts/chat/chat-metrics",
-                                    "concepts/chat/error-handling",
-                                    "concepts/chat/memory-integration",
+                                    "concepts/chat/history-management",
+                                    "concepts/chat/metrics",
+                                    "concepts/chat/storage-backends",
                                     {
                                         "group": "Advanced",
                                         "pages": [
-                                            "concepts/chat/advanced/custom-storage-backend",
-                                            "concepts/chat/advanced/memory-management-strategies",
-                                            "concepts/chat/advanced/use-as-context-manager"
+                                            "concepts/chat/advanced/context-manager",
+                                            "concepts/chat/advanced/error-handling",
+                                            "concepts/chat/advanced/memory-strategies"
                                         ]
                                     },
                                     {
                                         "group": "Examples",
                                         "pages": [
-                                            "concepts/chat/examples/basic-chat-example",
-                                            "concepts/chat/examples/complex-chat-example"
+                                            "concepts/chat/examples/basic",
+                                            "concepts/chat/examples/multi-session",
+                                            "concepts/chat/examples/persistent-storage",
+                                            "concepts/chat/examples/user-profile"
                                         ]
                                     }
                                 ]
@@ -544,6 +537,7 @@
                                             "concepts/uel/advanced/custom-chains",
                                             "concepts/uel/advanced/parallel-execution",
                                             "concepts/uel/advanced/rag-patterns",
+                                            "concepts/uel/advanced/memory-modes",
                                             "concepts/uel/advanced/visualization"
                                         ]
                                     }
@@ -693,11 +687,13 @@
                         "group": "Other Examples",
                         "pages": [
                             "examples/other-examples/contract_analyzer",
+                            "examples/other-examples/company_research_sales_strategy_agent",
                             "examples/other-examples/crypto-block",
                             "examples/other-examples/document-analyzer",
                             "examples/other-examples/extract-people",
                             "examples/other-examples/find-company-website",
                             "examples/other-examples/find-sales-categories",
+                            "examples/other-examples/groq_code_review_agent",
                             "examples/other-examples/nvidia_agent",
                             "examples/other-examples/ollama_agent",
                             "examples/other-examples/safety_engine_with_safeguard_llm_models",

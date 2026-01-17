@@ -1,15 +1,13 @@
 ---
 title: "Memory"
-description: "Give your agents memory - remember conversations and users"
+description: "Give your agents persistent memory - remember conversations and learn about users"
 sidebarTitle: Overview
 hideToc: true
 ---
 
-![Concepts Memory](/images/concepts-memory.png)
-
 ## Overview
 
-Memory enables agents to remember conversations and learn about users. It maintains conversation history, creates summaries, and builds user profiles to provide context across interactions.
+Memory enables agents to remember conversations and learn about users across sessions. It maintains chat history, generates summaries, and builds user profiles for personalized interactions.
 
 <Note>
   **Storage Installation**
@@ -17,55 +15,72 @@ Memory enables agents to remember conversations and learn about users. It mainta
   ```bash
   pip install upsonic[storage]
   ```
-
-  This installs Upsonic with storage dependencies including SQLite, PostgreSQL, Redis, MongoDB, and Mem0 for memory management. These backends enable persistent conversation history, user profiles, and automatic memory management across agent sessions.
 </Note>
 
 ## Key Features
 
-- **Conversation History**: Remember previous messages and maintain context
-- **User Profiles**: Learn user preferences and communication style
-- **Automatic Summaries**: Generate conversation summaries
-- **Multiple Storage Backends**: SQLite, Redis, PostgreSQL, or in-memory
-- **Flexible Memory Types**: Choose full history, summaries, or user analysis
-- **Automatic Management**: Memory is saved and loaded automatically
+- **Conversation History**: Persist complete chat history across sessions
+- **Session Summaries**: Auto-generate condensed conversation summaries
+- **User Profiles**: Extract and learn user traits from interactions
+- **Multiple Storage Backends**: SQLite, Redis, PostgreSQL, MongoDB, or in-memory
+- **Sync & Async Support**: Both synchronous and asynchronous storage operations
+- **HITL Checkpointing**: Automatic checkpoint saving for Human-in-the-Loop resumption
 
-## Example
+## Quick Start
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# Create storage and memory
-storage = SqliteStorage(db_file="memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+# Create storage backend
+storage = SqliteStorage(db_file="memory.db")
+
+# Create memory with desired features
 memory = Memory(
     storage=storage,
     session_id="session_001",
     user_id="user_123",
-    full_session_memory=True,
-    summary_memory=True,
-    user_analysis_memory=True,
-    model="openai/gpt-4o"  # Required for summary_memory and user_analysis_memory
+    full_session_memory=True,    # Enable chat history
+    summary_memory=True,         # Enable summaries
+    user_analysis_memory=True,   # Enable user profiles
+    model="openai/gpt-4o"        # Required for summaries & user analysis
 )
 
-# Create agent with memory
+# Attach memory to agent
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# First conversation
-task1 = Task("My name is Alice and I love Python")
-result1 = agent.do(task1)
+# First interaction
+result1 = agent.do(Task("My name is Alice and I'm a Python developer"))
 
-# Second conversation - agent remembers
-task2 = Task("What's my name and favorite language?")
-result2 = agent.do(task2)
-print(result2)  # Output: Your name is Alice and you love Python
+# Second interaction - agent remembers context
+result2 = agent.do(Task("What's my name and expertise?"))
+print(result2)  # Alice, Python developer
 ```
+
+## Memory Types
+
+| Type | Purpose | Requires |
+|------|---------|----------|
+| **Conversation Memory** | Full chat history persistence | `session_id` |
+| **Summary Memory** | Condensed session summaries | `session_id`, `model` |
+| **User Analysis Memory** | User profile extraction | `user_id`, `model` |
+
+## Storage Backends
+
+| Backend | Use Case | Persistence |
+|---------|----------|-------------|
+| `SqliteStorage` | Local development, single-node | File-based |
+| `RedisStorage` | Distributed, high-performance | In-memory + optional persist |
+| `PostgresStorage` | Production, multi-node | Database |
+| `MongoStorage` | Document-based, scalable | Database |
+| `InMemoryStorage` | Testing, ephemeral | None |
 
 ## Navigation
 
-- [Memory Attributes](/concepts/memory/attributes) - Comprehensive guide to all memory configuration options
-- [Choosing the Right Memory Types](/concepts/memory/choosing-right-memory-types) - Select appropriate memory types for your use case
-- [Memory Types](/concepts/memory/memory-types/conversation-memory) - Detailed guides on conversation, summary, and focus memory
-- [Storage Options](/concepts/memory/storage-options/sqlite-storage) - Configure SQLite, PostgreSQL, Redis, MongoDB, and other storage backends
-- [Basic Memory Example](/concepts/memory/examples/basic-memory-example) - Get started with memory integration
+- [Memory Attributes](/concepts/memory/attributes) - All configuration options
+- [Choosing Memory Types](/concepts/memory/choosing-right-memory-types) - Select the right memory for your use case
+- [Storage Tables](/concepts/memory/storage-tables) - What data is stored
+- [Memory Types](/concepts/memory/memory-types/conversation-memory) - Conversation, Summary, User Analysis
+- [Storage Options](/concepts/memory/storage-options/sqlite-storage) - Backend configuration
+- [Examples](/concepts/memory/examples/basic-memory-example) - Working examples

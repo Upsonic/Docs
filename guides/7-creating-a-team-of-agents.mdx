@@ -50,18 +50,21 @@ from upsonic import Agent
 
 # Specialized agents with clear roles
 research_agent = Agent(
+    model="openai/gpt-4o",
     name="Research Specialist",
     role="Market Research and Data Collection",
     goal="Gather comprehensive market data and insights"
 )
 
 analysis_agent = Agent(
+    model="openai/gpt-4o",
     name="Analysis Expert", 
     role="Financial Analysis and Risk Assessment",
     goal="Analyze data and provide investment recommendations"
 )
 
 reporting_agent = Agent(
+    model="openai/gpt-4o",
     name="Report Writer",
     role="Report Generation and Documentation", 
     goal="Create comprehensive reports from analysis results"
@@ -73,10 +76,10 @@ reporting_agent = Agent(
 ```python
 from upsonic import Agent
 
-# Generic agents without clear specialization
-agent1 = Agent(name="Agent 1", role="Helper")
-agent2 = Agent(name="Agent 2", role="Helper") 
-agent3 = Agent(name="Agent 3", role="Helper")
+# Generic agents without clear specialization (BAD: vague roles and goals)
+agent1 = Agent(model="openai/gpt-4o", name="Agent 1", role="Helper")
+agent2 = Agent(model="openai/gpt-4o", name="Agent 2", role="Helper") 
+agent3 = Agent(model="openai/gpt-4o", name="Agent 3", role="Helper")
 ```
 
 ## Team Operational Modes
@@ -153,19 +156,19 @@ class InvestmentSuggestion(BaseModel):
 
 # Agents
 savings_agent = Agent(
+    model="openai/gpt-4o-mini",
     name="Virtual Savings Advisor",
     role="Analyzes user spending habits",
     goal="Provide weekly saving recommendations",
-    instructions="Analyze spending categories and suggest actionable, safe ways to save money.",
-    model="openai/gpt-4o-mini"
+    instructions="Analyze spending categories and suggest actionable, safe ways to save money."
 )
 
 investment_agent = Agent(
+    model="openai/gpt-4o-mini",
     name="Investment Suggestion Agent",
     role="Generates safe investment suggestions",
     goal="Provide low-risk investment options based on savings advice",
-    instructions="Take the savings advice and suggest secure investment vehicles like ETFs, government bonds, or savings accounts.",
-    model="openai/gpt-4o-mini"
+    instructions="Take the savings advice and suggest secure investment vehicles like ETFs, government bonds, or savings accounts."
 )
 
 # Tasks

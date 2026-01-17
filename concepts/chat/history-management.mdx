@@ -1,0 +1,102 @@
+---
+title: "History Management"
+description: "Message and attachment manipulation"
+---
+
+## Clear History
+
+Remove all messages while preserving session:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
+
+    await chat.invoke("Hello")
+    await chat.invoke("How are you?")
+    print(f"Messages before: {len(chat.all_messages)}")
+
+    chat.clear_history()
+    print(f"Messages after: {len(chat.all_messages)}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Reset Session
+
+Delete the entire session and start fresh:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
+
+    await chat.invoke("Hello")
+
+    chat.reset_session()
+    print("Session reset complete")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Delete a Message
+
+Remove a specific message by index:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
+
+    await chat.invoke("Message one")
+    await chat.invoke("Message two")
+
+    print(f"Before: {len(chat.all_messages)} messages")
+
+    chat.delete_message(0)
+
+    print(f"After: {len(chat.all_messages)} messages")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Remove Attachment by Path
+
+Remove attachments matching a path from all messages:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
+
+    await chat.invoke("Analyze", context=["doc.pdf", "image.png"])
+
+    removed = chat.remove_attachment_by_path("doc.pdf")
+    print(f"Removed {removed} attachments")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```

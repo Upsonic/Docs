@@ -43,18 +43,24 @@ print(result)
 from upsonic.uel import ChatPromptTemplate, RunnablePassthrough, StrOutputParser, itemgetter
 from upsonic.models import infer_model
 
-model = infer_model("openai/gpt-4o").add_memory(history=True)
+model = infer_model("openai/gpt-4o").add_memory(history=True, mode="auto")
 parser = StrOutputParser()
 
-# Contextualize question based on history
 contextualize_template = ChatPromptTemplate.from_messages([
-    ("system", "Rephrase the question to be standalone given the history."),
+    ("system", """You are a question rephraser.
+Your ONLY job is to rephrase the user's question to be standalone, given the conversation history.
+DO NOT answer the question. DO NOT provide any information.
+ONLY output the rephrased question, nothing else.
+
+Example:
+History: "What is Python?" → "Python is a programming language."
+User: "What about its speed?"
+Output: "How fast is Python?" or "What is Python's performance?"
+"""),
     ("placeholder", {"variable_name": "chat_history"}),
-    ("human", "{question}")
+    ("human", "Rephrase this question to be standalone: {question}")
 ])
 
-# Full RAG chain with history
-# First contextualize the question if history exists
 contextualize_chain = (
     contextualize_template
     | model
@@ -64,7 +70,7 @@ contextualize_chain = (
 rag_chain = (
     RunnablePassthrough.assign(
         contextualized_question=lambda x: (
-            contextualize_chain.invoke(x) or x["question"] if x.get("chat_history") 
+            contextualize_chain.invoke(x).strip() if x.get("chat_history") 
             else x["question"]
         )
     ).assign(
@@ -87,6 +93,7 @@ result = rag_chain.invoke({
     ]
 })
 print(result)
+
 ```
 
 ## Multi-Source RAG

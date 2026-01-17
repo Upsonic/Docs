@@ -1,0 +1,628 @@
+---
+title: "Company Research & Sales Strategy Agent"
+description: "Use Upsonic's DeepAgent to conduct comprehensive company research, analyze industries, perform financial analysis, and develop tailored sales strategies"
+---
+
+This example demonstrates how to create and use an **Upsonic Agent** with **DeepAgent** architecture to conduct comprehensive business research and develop sales strategies. The example showcases how to leverage Upsonic's coordination capabilities to manage multiple specialized agents working together on complex, multi-step research tasks.
+
+## Overview
+
+Upsonic framework provides seamless integration for multi-agent systems. This example showcases:
+
+1. **DeepAgent Integration** — Using DeepAgent to coordinate specialized sub-agents
+2. **Web Research** — Using DuckDuckGo and Tavily for real-time company and industry data
+3. **Financial Analysis** — Using YFinance tools for stock and financial data
+4. **Task Planning** — Automatic task decomposition using planning tools
+5. **Memory Persistence** — SQLite-based session memory for continuity
+6. **FastAPI Server** — Running the agent as a production-ready API server
+
+The agent uses four specialized sub-agents:
+- **Company Researcher** — Gathers comprehensive company information
+- **Industry Analyst** — Analyzes industry trends and market dynamics
+- **Financial Analyst** — Performs financial analysis using YFinance
+- **Sales Strategist** — Develops tailored sales strategies
+
+## Project Structure
+
+```
+company_research_sales_strategy/
+├── main.py                    # Entry point with main() and amain()
+├── orchestrator.py             # DeepAgent orchestrator creation
+├── subagents.py               # Specialized subagent factory functions
+├── schemas.py                 # Pydantic output schemas
+├── task_builder.py           # Task description builder
+├── upsonic_configs.json       # Upsonic CLI configuration
+└── README.md                  # Quick start guide
+```
+
+### Environment Variables
+
+You can configure the model and search tools using environment variables:
+
+```bash
+# Required: Set OpenAI API key
+export OPENAI_API_KEY="your-api-key"
+
+# Optional: Set Tavily API key for enhanced search (falls back to DuckDuckGo)
+export TAVILY_API_KEY="your-tavily-key"
+```
+
+## Installation
+
+```bash
+# Install dependencies from upsonic_configs.json
+upsonic install
+```
+
+### Managing Dependencies
+
+```bash
+# Add a package
+upsonic add <package> <section>
+upsonic add pandas api
+
+# Remove a package
+upsonic remove <package> <section>
+upsonic remove streamlit api
+```
+
+**Sections:** `api`, `streamlit`, `development`
+
+## Usage
+
+### Option 1: Run Directly
+
+```bash
+python3 main.py
+```
+
+Runs the agent with default test inputs (OpenAI company research).
+
+### Option 2: Run as API Server
+
+```bash
+upsonic run
+```
+
+Server starts at `http://localhost:8000`. API documentation at `/docs`.
+
+**Example API call:**
+```bash
+curl -X POST http://localhost:8000/call \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Tesla",
+    "company_symbol": "TSLA",
+    "industry": "Electric Vehicles"
+  }'
+```
+
+## How It Works
+
+| Component | Description |
+|-----------|-------------|
+| DeepAgent | Orchestrator that plans and delegates tasks to subagents |
+| Planning Tool | Automatically breaks down complex research into manageable steps |
+| Company Researcher | Uses web search to gather company information |
+| Industry Analyst | Analyzes industry trends using Tavily/DuckDuckGo |
+| Financial Analyst | Uses YFinance tools for financial data |
+| Sales Strategist | Develops tailored sales strategies |
+| Memory | SQLite-based persistence for session continuity |
+
+### Example Output
+
+**Query:**
+```json
+{
+  "company_name": "OpenAI",
+  "industry": "Artificial Intelligence",
+  "company_symbol": null
+}
+```
+
+**Response:**
+```json
+{
+  "company_name": "OpenAI",
+  "comprehensive_report": "...",
+  "research_completed": true
+}
+```
+
+## Complete Implementation
+
+### main.py
+
+```python
+"""
+Main entry point for Company Research and Sales Strategy Agent.
+
+This module provides the entry points (main and amain) that coordinate
+the comprehensive research and strategy development process.
+"""
+
+from __future__ import annotations
+
+from typing import Dict, Any
+
+from upsonic import Task
+try:
+    from .orchestrator import create_orchestrator_agent
+    from .task_builder import build_research_task
+    from .schemas import ComprehensiveReportOutput
+except ImportError:
+    from orchestrator import create_orchestrator_agent
+    from task_builder import build_research_task
+    from schemas import ComprehensiveReportOutput
+
+
+def main(inputs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Main function for company research and sales strategy development.
+    
+    Args:
+        inputs: Dictionary containing:
+            - company_name: Name of the target company (required)
+            - company_symbol: Optional stock symbol for financial analysis
+            - industry: Optional industry name for focused analysis
+            - enable_memory: Whether to enable memory persistence (default: True)
+            - storage_path: Optional path for SQLite storage (default: "company_research.db")
+            - model: Optional model identifier (default: "openai/gpt-4o")
+    
+    Returns:
+        Dictionary containing comprehensive research report
+    """
+    company_name = inputs.get("company_name")
+    if not company_name:
+        raise ValueError("company_name is required in inputs")
+    
+    company_symbol = inputs.get("company_symbol")
+    industry = inputs.get("industry")
+    enable_memory = inputs.get("enable_memory", True)
+    storage_path = inputs.get("storage_path")
+    model = inputs.get("model", "openai/gpt-4o")
+    
+    orchestrator = create_orchestrator_agent(
+        model=model,
+        storage_path=storage_path,
+        enable_memory=enable_memory,
+    )
+    
+    task_description = build_research_task(
+        company_name=company_name,
+        company_symbol=company_symbol,
+        industry=industry,
+    )
+    
+    task = Task(task_description, response_format=ComprehensiveReportOutput)
+    
+    result = orchestrator.do(task)
+    
+    return {
+        "company_name": company_name,
+        "comprehensive_report": result,
+        "research_completed": True,
+    }
+
+
+
+if __name__ == "__main__":
+    import json
+    import sys
+    
+    test_inputs = {
+        "company_name": "OpenAI",
+        "company_symbol": None,
+        "industry": "Artificial Intelligence",
+        "enable_memory": False,
+        "storage_path": None,
+        "model": "openai/gpt-4o-mini",
+    }
+    
+    if len(sys.argv) > 1:
+        try:
+            with open(sys.argv[1], "r") as f:
+                test_inputs = json.load(f)
+        except Exception as e:
+            print(f"Error loading JSON file: {e}")
+            print("Using default test inputs")
+    
+    try:
+        result = main(test_inputs)
+        
+        print("\n" + "=" * 80)
+        print("Research Completed Successfully!")
+        print("=" * 80)
+        print(f"\nCompany: {result.get('company_name')}")
+        print(f"Research Status: {'Completed' if result.get('research_completed') else 'Failed'}")
+        print(f"\nComprehensive Report:\n{result.get('comprehensive_report', 'N/A')}")
+        
+    except Exception as e:
+        print(f"\n❌ Error during execution: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+```
+
+### orchestrator.py
+
+```python
+"""
+Orchestrator agent creation and configuration.
+
+Creates the main DeepAgent orchestrator that coordinates all specialized
+subagents for comprehensive company research and sales strategy development.
+"""
+
+from __future__ import annotations
+
+from typing import Optional
+
+from upsonic.agent.deepagent import DeepAgent
+from upsonic.db.database import SqliteDatabase
+
+try:
+    from .subagents import (
+        create_research_subagent,
+        create_industry_analyst_subagent,
+        create_financial_analyst_subagent,
+        create_sales_strategist_subagent,
+    )
+except ImportError:
+    from subagents import (
+        create_research_subagent,
+        create_industry_analyst_subagent,
+        create_financial_analyst_subagent,
+        create_sales_strategist_subagent,
+    )
+
+
+def create_orchestrator_agent(
+    model: str = "openai/gpt-4o",
+    storage_path: Optional[str] = None,
+    enable_memory: bool = True,
+) -> DeepAgent:
+    """Create the main orchestrator DeepAgent with all subagents.
+    
+    Args:
+        model: Model identifier for the orchestrator agent
+        storage_path: Optional path for SQLite storage database
+        enable_memory: Whether to enable memory persistence
+        
+    Returns:
+        Configured DeepAgent instance with all subagents
+    """
+    db = None
+    memory = None
+    
+    if enable_memory:
+        if storage_path is None:
+            storage_path = "company_research.db"
+        db = SqliteDatabase(
+            db_file=storage_path,
+            agent_sessions_table_name="agent_sessions",
+            session_id="company_research_session",
+            user_id="research_user",
+            full_session_memory=True,
+            summary_memory=True,
+            model=model,
+        )
+        memory = db.memory
+    
+    subagents = [
+        create_research_subagent(),
+        create_industry_analyst_subagent(),
+        create_financial_analyst_subagent(),
+        create_sales_strategist_subagent(),
+    ]
+    
+    orchestrator = DeepAgent(
+        model=model,
+        name="Company Research & Sales Strategy Orchestrator",
+        role="Senior Business Strategy Consultant",
+        goal="Orchestrate comprehensive company research, industry analysis, financial evaluation, and sales strategy development",
+        system_prompt="""You are a senior business strategy consultant orchestrating a comprehensive 
+        research and strategy development process. Your role is to:
+        
+        1. Coordinate specialized subagents to conduct deep research on target companies
+        2. Analyze industry trends and competitive landscape
+        3. Evaluate financial performance and market position
+        4. Synthesize findings into actionable sales strategies
+        
+        Use the planning tool (write_todos) to break down complex research tasks. Delegate specific 
+        research areas to specialized subagents. Synthesize all findings into a comprehensive report 
+        with actionable insights and recommendations.
+        
+        Always use subagents for specialized tasks:
+        - Use 'company-researcher' for company-specific research
+        - Use 'industry-analyst' for industry and market analysis
+        - Use 'financial-analyst' for financial data and stock analysis
+        - Use 'sales-strategist' for sales strategy development
+        
+        Coordinate parallel execution when tasks are independent to maximize efficiency.""",
+        memory=memory,
+        subagents=subagents,
+        enable_planning=True,
+        enable_filesystem=True,
+        tool_call_limit=30,
+        debug=False,
+    )
+    
+    return orchestrator
+```
+
+### subagents.py
+
+```python
+"""
+Specialized subagent creation functions.
+
+Each function creates a specialized agent for a specific domain:
+- Company research
+- Industry analysis
+- Financial analysis
+- Sales strategy development
+"""
+
+from __future__ import annotations
+
+import os
+from typing import TYPE_CHECKING
+
+from upsonic import Agent
+from upsonic.tools.common_tools.duckduckgo import duckduckgo_search_tool
+from upsonic.tools.common_tools.financial_tools import YFinanceTools
+from upsonic.tools.common_tools.tavily import tavily_search_tool
+
+if TYPE_CHECKING:
+    pass
+
+
+def create_research_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
+    """Create specialized subagent for company research.
+    
+    Args:
+        model: Model identifier for the subagent
+        
+    Returns:
+        Configured Agent instance for company research
+    """
+    ddg_search = duckduckgo_search_tool(duckduckgo_client=None, max_results=10)
+    
+    return Agent(
+        model=model,
+        name="company-researcher",
+        role="Company Research Specialist",
+        goal="Conduct comprehensive research on target companies including business model, products, markets, and competitive positioning",
+        system_prompt="""You are an expert company researcher with deep knowledge of business analysis, 
+        market research, and competitive intelligence. Your role is to gather comprehensive information 
+        about companies including their business model, products/services, target markets, competitive 
+        advantages, and recent developments. Use web search tools extensively to find current, accurate 
+        information. Structure your findings clearly and cite sources when possible.""",
+        tools=[ddg_search],
+        tool_call_limit=15,
+    )
+
+
+def create_industry_analyst_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
+    """Create specialized subagent for industry analysis.
+    
+    Args:
+        model: Model identifier for the subagent
+        
+    Returns:
+        Configured Agent instance for industry analysis
+    """
+    tavily_api_key = os.getenv("TAVILY_API_KEY")
+    tools = []
+    
+    if tavily_api_key:
+        tavily_search = tavily_search_tool(tavily_api_key)
+        tools.append(tavily_search)
+    else:
+        ddg_search = duckduckgo_search_tool(duckduckgo_client=None, max_results=10)
+        tools.append(ddg_search)
+    
+    return Agent(
+        model=model,
+        name="industry-analyst",
+        role="Industry Analysis Specialist",
+        goal="Analyze industry trends, market dynamics, competitive landscape, and emerging opportunities",
+        system_prompt="""You are a senior industry analyst with expertise in market research, trend analysis, 
+        and competitive intelligence. Your role is to analyze industry trends, market size, growth patterns, 
+        key players, emerging technologies, regulatory environment, opportunities, and threats. Provide 
+        data-driven insights and strategic perspectives on industry dynamics.""",
+        tools=tools,
+        tool_call_limit=15,
+    )
+
+
+def create_financial_analyst_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
+    """Create specialized subagent for financial analysis.
+    
+    Args:
+        model: Model identifier for the subagent
+        
+    Returns:
+        Configured Agent instance for financial analysis
+    """
+    financial_tools = YFinanceTools(
+        stock_price=True,
+        company_info=True,
+        analyst_recommendations=True,
+        company_news=True,
+        enable_all=True,
+    )
+    
+    return Agent(
+        model=model,
+        name="financial-analyst",
+        role="Financial Analysis Specialist",
+        goal="Perform comprehensive financial analysis including stock performance, fundamentals, and analyst sentiment",
+        system_prompt="""You are a financial analyst with expertise in company valuation, financial statement 
+        analysis, and market research. Your role is to analyze financial data, stock performance, company 
+        fundamentals, analyst recommendations, and market sentiment. Provide clear insights on financial 
+        health, growth prospects, and investment considerations.""",
+        tools=financial_tools.functions(),
+        tool_call_limit=10,
+    )
+
+
+def create_sales_strategist_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
+    """Create specialized subagent for sales strategy development.
+    
+    Args:
+        model: Model identifier for the subagent
+        
+    Returns:
+        Configured Agent instance for sales strategy development
+    """
+    return Agent(
+        model=model,
+        name="sales-strategist",
+        role="Sales Strategy Specialist",
+        goal="Develop comprehensive, tailored sales strategies based on company research, industry analysis, and market insights",
+        system_prompt="""You are a sales strategy expert with deep knowledge of B2B and B2C sales, 
+        go-to-market strategies, and revenue generation. Your role is to develop tailored sales strategies 
+        that align with company capabilities, market opportunities, and competitive positioning. Create 
+        actionable strategies covering target segments, value propositions, sales channels, pricing, 
+        messaging, and success metrics.""",
+        tool_call_limit=5,
+    )
+```
+
+### upsonic_configs.json
+
+```json
+{
+    "envinroment_variables": {
+        "UPSONIC_WORKERS_AMOUNT": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "API_WORKERS": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "RUNNER_CONCURRENCY": {
+            "type": "number",
+            "description": "The number of runners for the Upsonic API",
+            "default": 1
+        },
+        "NEW_FEATURE_FLAG": {
+            "type": "string",
+            "description": "New feature flag added in version 2.0",
+            "default": "enabled"
+        }
+    },
+    "machine_spec": {
+        "cpu": 2,
+        "memory": 4096,
+        "storage": 1024
+    },
+    "agent_name": "Company Research & Sales Strategy Agent",
+    "description": "Comprehensive AI agent system that conducts deep company research, analyzes industry trends, performs financial analysis, and develops tailored sales strategies using DeepAgent with specialized subagents",
+    "icon": "briefcase",
+    "language": "python",
+    "streamlit": false,
+    "proxy_agent": false,
+    "dependencies": {
+        "api": [
+            "upsonic",
+            "upsonic[tools]",
+            "upsonic[storage]"
+        ],
+        "development": [
+            "python-dotenv",
+            "pytest"
+        ]
+    },
+    "entrypoints": {
+        "api_file": "main.py",
+        "streamlit_file": "streamlit_app.py"
+    },
+    "input_schema": {
+        "inputs": {
+            "company_name": {
+                "type": "string",
+                "description": "Name of the target company to research (required)",
+                "required": true,
+                "default": null
+            },
+            "company_symbol": {
+                "type": "string",
+                "description": "Optional stock symbol (e.g., AAPL, TSLA) for financial analysis",
+                "required": false,
+                "default": null
+            },
+            "industry": {
+                "type": "string",
+                "description": "Optional industry name for focused industry analysis",
+                "required": false,
+                "default": null
+            },
+            "enable_memory": {
+                "type": "boolean",
+                "description": "Whether to enable memory persistence for session history",
+                "required": false,
+                "default": true
+            },
+            "storage_path": {
+                "type": "string",
+                "description": "Optional path for SQLite storage database file",
+                "required": false,
+                "default": "company_research.db"
+            },
+            "model": {
+                "type": "string",
+                "description": "Optional model identifier (e.g., openai/gpt-4o, openai/gpt-4o-mini)",
+                "required": false,
+                "default": "openai/gpt-4o"
+            }
+        }
+    },
+    "output_schema": {
+        "company_name": {
+            "type": "string",
+            "description": "The researched company name"
+        },
+        "comprehensive_report": {
+            "type": "string",
+            "description": "Comprehensive research report containing company research, industry analysis, financial analysis, and sales strategy"
+        },
+        "research_completed": {
+            "type": "boolean",
+            "description": "Whether the research was successfully completed"
+        }
+    }
+}
+```
+
+## Key Features
+
+### DeepAgent Orchestration
+
+The orchestrator uses DeepAgent's planning capabilities to automatically break down complex research tasks into manageable steps and delegate them to specialized subagents.
+
+### Specialized Subagents
+
+Each subagent is optimized for its specific domain:
+- **Company Researcher**: Web search tools for comprehensive company information
+- **Industry Analyst**: Advanced search for industry trends and market analysis
+- **Financial Analyst**: YFinance integration for real-time financial data
+- **Sales Strategist**: Strategy development based on research synthesis
+
+### Memory Persistence
+
+Uses SQLite database for session persistence, allowing the agent to:
+- Maintain conversation history
+- Store research findings
+- Build upon previous sessions
+- Generate summaries for context
+
+## Repository
+
+View the complete example: [Company Research & Sales Strategy Agent](https://github.com/Upsonic/Examples/company_research_sales_strategy)
+
