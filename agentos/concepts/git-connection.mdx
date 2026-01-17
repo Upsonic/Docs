@@ -1,0 +1,123 @@
+---
+title: "Git Connection"
+description: "Connect your repositories to deploy agents directly from Git"
+---
+
+## What is a Git Connection?
+
+Git Connections allow AgentOS to pull your agent code directly from your repositories. When you push changes to your repository, AgentOS can automatically deploy the updated version of your agent.
+
+**Required Permissions:**
+- Organization/Repository read access
+- Pull permissions
+- Commit history access
+
+---
+
+## GitHub
+
+Connect your GitHub repositories to deploy agents from both GitHub Cloud and GitHub Enterprise Server.
+
+### Setup Steps
+
+1. Navigate to **Settings** > **Git Providers**
+2. Click **Add Git Provider**
+3. Select **GitHub**
+4. Choose between:
+   - **GitHub Cloud** (github.com)
+   - **GitHub Enterprise Server** (on-premises)
+5. Enter your Personal Access Token (PAT)
+6. Provide organization/username
+7. Save the connection
+
+<Frame>
+  <img src="/images/agentos/github-provider-config.png" alt="GitHub Provider Configuration" />
+</Frame>
+
+---
+
+## GitLab
+
+Deploy agents from GitLab repositories, supporting both GitLab Cloud and self-managed instances.
+
+### Setup Steps
+
+1. Go to **Settings** > **Git Providers**
+2. Click **Add Git Provider**
+3. Select **GitLab**
+4. Choose between:
+   - **GitLab Cloud** (gitlab.com)
+   - **GitLab Self-Managed** (on-premises)
+5. Enter your Personal Access Token (PAT)
+6. Provide group/username
+7. Save the connection
+
+<Frame>
+  <img src="/images/agentos/gitlab-provider-config.png" alt="GitLab Provider Configuration" />
+</Frame>
+
+---
+
+## Azure Repos
+
+Integrate Azure DevOps repositories with AgentOS for seamless deployments.
+
+### Setup Steps
+
+1. Navigate to **Settings** > **Git Providers**
+2. Click **Add Git Provider**
+3. Select **Azure Repos**
+4. Choose between:
+   - **Azure DevOps Cloud**
+   - **Azure DevOps Server** (on-premises)
+5. Enter your Personal Access Token (PAT)
+6. Provide organization and project details
+7. Save the connection
+
+<Frame>
+  <img src="/images/agentos/azure-provider-config.png" alt="Azure Repos Provider Configuration" />
+</Frame>
+
+---
+
+## ZIP File Deployment (No Git)
+
+For quick deployments without Git integration, use the ZIP upload method alongside your Git providers.
+
+You can use ZIP deployment even when you have Git providers configured. This is useful for:
+- Quick testing and prototyping
+- Deploying agents without repository setup
+- One-off deployments
+
+### How to Deploy with ZIP
+
+1. Create your agent project using `upsonic init`
+2. Compress the project folder into a ZIP file
+3. Navigate to **New Agent Deployment**
+4. Select **Deploy from ZIP**
+5. Upload your ZIP file
+6. Configure deployment settings
+7. Click **Deploy**
+
+<Frame>
+  <img src="/images/agentos/zip-upload-deployment.png" alt="ZIP File Deployment" />
+</Frame>
+
+---
+
+## Multiple Deployment Options
+
+AgentOS allows you to configure **one Git provider** and use **ZIP upload** alongside it.
+
+You can choose one of the following Git providers:
+- GitHub
+- GitLab (Cloud or Self-Managed)
+- Azure Repos (Cloud or Enterprise)
+
+And use ZIP upload at the same time for quick deployments without Git.
+
+**Benefits:**
+- Use Git for version-controlled deployments
+- Use ZIP for quick testing and prototyping
+- No need to commit every change during development
+- Production agents from Git, test agents from ZIP
