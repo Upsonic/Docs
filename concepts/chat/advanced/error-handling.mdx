@@ -1,0 +1,103 @@
+---
+title: "Error Handling"
+description: "Retry mechanisms and error recovery"
+---
+
+## Retry Configuration
+
+Configure automatic retries for transient failures:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        retry_attempts=5,
+        retry_delay=1.0
+    )
+
+    response = await chat.invoke("Hello")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Retryable Errors
+
+Chat automatically retries on:
+- Network errors (ConnectionError, TimeoutError)
+- Rate limiting
+- Temporary service unavailability
+- Internal server errors
+
+Non-retryable errors are raised immediately.
+
+## Error State Recovery
+
+Check and recover from error states:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
+
+    print(f"State: {chat.state.value}")
+
+    try:
+        response = await chat.invoke("Hello")
+        print(response)
+    except RuntimeError as e:
+        if "error state" in str(e):
+            chat.reset_session()
+            print("Session reset")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Concurrent Invocation Limits
+
+Control maximum concurrent requests:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        max_concurrent_invocations=2
+    )
+
+    tasks = [
+        chat.invoke("Question 1"),
+        chat.invoke("Question 2")
+    ]
+
+    responses = await asyncio.gather(*tasks)
+    for r in responses:
+        print(r[:50] + "...")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```

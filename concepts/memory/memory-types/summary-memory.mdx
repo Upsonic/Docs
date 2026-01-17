@@ -1,78 +1,74 @@
 ---
 title: "Summary Memory"
-description: "Maintain condensed conversation summaries for cost efficiency"
+description: "Maintain evolving conversation summaries for cost efficiency"
 ---
 
-## What is Summary Memory?
+## Overview
 
-Summary Memory maintains an evolving, condensed summary of key conversation points, reducing costs while preserving important context.
+Summary Memory generates and maintains an evolving summary of key conversation points.
 
-## Usage
+## Basic Usage
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# Create storage and memory with summary memory
-storage = SqliteStorage(
-    db_file="memory.db",
-    sessions_table_name="sessions",
-    profiles_table_name="profiles"
-)
+storage = SqliteStorage(db_file="summaries.db")
+
 memory = Memory(
     storage=storage,
-    session_id="session_002",
+    session_id="session_001",
+    full_session_memory=True
     summary_memory=True,
-    model="openai/gpt-4o-mini"  # Model for generating summaries
+    model="openai/gpt-4o-mini"  # Required for summary generation
 )
 
-# Create agent with memory
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# First conversation
-task1 = Task("I'm learning about web development with React and Node.js")
-result1 = agent.do(task1)
-
-# Agent maintains evolving summary
-task2 = Task("What have we been discussing?")
-result2 = agent.do(task2)
-print(result2)
+result1 = agent.do(Task("Let's discuss Python web frameworks"))
+result2 = agent.do(Task("How does Django compare to Flask?"))
+result3 = agent.do(Task("What have we discussed so far?"))
+print(result3)  # Uses summary for context
 ```
 
-### Combined with Conversation Memory
+## Combined with Conversation Memory
+
+Use both for detailed context + cost-efficient summaries:
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# Combined with conversation memory
-storage = SqliteStorage(
-    db_file="agent_memory.db",
-    sessions_table_name="sessions",
-    profiles_table_name="profiles"
-)
+storage = SqliteStorage(db_file="hybrid.db")
+
 memory = Memory(
     storage=storage,
-    session_id="session_002",
+    session_id="session_001",
     full_session_memory=True,
     summary_memory=True,
+    num_last_messages=10,  # Recent history + summary for older context
     model="openai/gpt-4o-mini"
 )
 
 agent = Agent("openai/gpt-4o", memory=memory)
 
-task1 = Task("Let's talk about database optimization")
-result1 = agent.do(task1)
-
-task2 = Task("Continue with more advanced techniques")
-result2 = agent.do(task2)
-print(result2)
+result = agent.do(Task("Continue our database optimization discussion"))
+print(result)
 ```
 
-## Params
+## How It Works
 
-- `summary_memory: bool` - Enable/disable summary generation
-- `session_id: str` - Required identifier for the session
-- `model: str` - Required model for generating summaries
+1. After each completed run, the session summary is updated
+2. Summary includes key points, user preferences, and topics discussed
+3. Summary is injected as context for subsequent interactions
+4. Older message history can be replaced by summary to reduce costs
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `summary_memory` | `bool` | `False` | Enable summary generation |
+| `session_id` | `str` | auto-generated | Session identifier |
+| `model` | `str \| Model` | (required) | Model for generating summaries |

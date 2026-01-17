@@ -109,34 +109,6 @@ print(f"Cache method: {cache_stats.get('cache_method')}")
 print(f"Cache threshold: {cache_stats.get('cache_threshold')}")
 ```
 
-## Task State Information
-
-```python
-from upsonic import Agent, Task
-from upsonic.tools import tool
-
-@tool(external_execution=True)
-def external_api_call(query: str) -> str:
-    """Make an external API call."""
-    return f"API result for: {query}"
-
-# Create agent and execute task
-agent = Agent(model="openai/gpt-4o")
-task = Task(description="Call external API", tools=[external_api_call])
-result = agent.do(task)
-
-# Check task state
-print(f"Task is paused: {task.is_paused}")
-print(f"Tools awaiting execution: {len(task.tools_awaiting_external_execution)}")
-
-# For paused tasks, access external tool calls
-if task.is_paused:
-    for tool_call in task.tools_awaiting_external_execution:
-        print(f"Tool: {tool_call.tool_name}")
-        print(f"Arguments: {tool_call.tool_args}")
-        print(f"Result: {tool_call.result}")
-```
-
 ## Complete Example
 
 ```python

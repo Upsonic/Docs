@@ -7,60 +7,292 @@ description: "Configuration options for the Task"
 
 The Task system is configured through the `Task` class, which provides the following attributes:
 
+### Core Attributes
+
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `description` | str | (required) | A clear statement of what the task entails |
-| `attachments` | List[str] \| None | `None` | List of file paths to attach to the task |
+| `attachments` | List[str] \| None | `None` | List of file paths to attach to the task. Files can also be extracted from `context` if provided. Files and folders in `context` are automatically extracted and added to attachments |
 | `tools` | list[Any] \| None | `None` | The tools/resources the agent can use for this task |
 | `response_format` | Union[Type[BaseModel], type[str], None] | `str` | The expected output format (string or Pydantic model) |
+| `response` | str \| bytes \| None | `None` | Pre-set response value (internal use, typically set via `task_response()` method) |
 | `response_lang` | str \| None | `"en"` | Language for the response |
-| `context` | Any \| None | `None` | Context for this task (files, images, knowledge bases, etc.) |
-| `enable_thinking_tool` | bool \| None | `None` | Enable thinking tool for complex reasoning |
-| `enable_reasoning_tool` | bool \| None | `None` | Enable reasoning tool for multi-step analysis |
-| `guardrail` | Callable \| None | `None` | Function to validate task output before proceeding |
+| `context` | Any \| None | `None` | Context for this task (files, images, knowledge bases, etc.). File paths and folder paths in context are automatically extracted to attachments recursively |
+| `not_main_task` | bool | `False` | Whether this task is a sub-task (not the main task) |
+
+### Tool Configuration
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `enable_thinking_tool` | bool \| None | `None` | Enable thinking tool for complex reasoning. Overrides agent-level setting |
+| `enable_reasoning_tool` | bool \| None | `None` | Enable reasoning tool for multi-step analysis. Overrides agent-level setting |
+| `registered_task_tools` | Dict[str, Any] | `{}` | Dictionary of registered tools for this task (set at runtime) |
+| `task_builtin_tools` | List[Any] | `[]` | List of builtin tools registered for this task (set at runtime) |
+
+### Guardrail Configuration
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `guardrail` | Callable \| None | `None` | Function to validate task output before proceeding. Must be a callable that accepts the task output. Raises `TypeError` if not callable |
 | `guardrail_retries` | int \| None | `None` | Maximum number of retries when guardrail validation fails |
+
+### Cache Configuration
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
 | `enable_cache` | bool | `False` | Whether to enable caching for this task |
-| `cache_method` | str | `"vector_search"` | Method to use for caching: 'vector_search' or 'llm_call' |
-| `cache_threshold` | float | `0.7` | Similarity threshold for cache hits (0.0-1.0) |
-| `cache_embedding_provider` | Any \| None | `None` | Embedding provider for vector search caching |
+| `cache_method` | Literal["vector_search", "llm_call"] | `"vector_search"` | Method to use for caching: 'vector_search' or 'llm_call'. Raises `ValueError` if invalid |
+| `cache_threshold` | float | `0.7` | Similarity threshold for cache hits (0.0-1.0). Must be between 0.0 and 1.0. Raises `ValueError` if out of range |
+| `cache_embedding_provider` | Any \| None | `None` | Embedding provider for vector search caching. Required when `cache_method="vector_search"` and `enable_cache=True`. Auto-detected if not provided |
 | `cache_duration_minutes` | int | `60` | How long to cache results in minutes |
-| `durable_execution` | Any \| None | `None` | DurableExecution instance for checkpoint recovery |
+
+### Vector Search Configuration
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
 | `vector_search_top_k` | int \| None | `None` | Number of top results to return from vector search (for RAG/knowledge base) |
 | `vector_search_alpha` | float \| None | `None` | Hybrid search alpha parameter (0.0 = keyword only, 1.0 = vector only) |
-| `vector_search_fusion_method` | Literal['rrf', 'weighted'] \| None | `None` | Method to fuse vector and keyword search results |
+| `vector_search_fusion_method` | Literal['rrf', 'weighted'] \| None | `None` | Method to fuse vector and keyword search results: 'rrf' (Reciprocal Rank Fusion) or 'weighted' |
 | `vector_search_similarity_threshold` | float \| None | `None` | Minimum similarity score threshold for vector search results |
 | `vector_search_filter` | Dict[str, Any] \| None | `None` | Metadata filters to apply to vector search results |
 
-## Configuration Example
+### Runtime Status Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `status` | RunStatus \| None | `None` | Current execution status of the task. Values: `RUNNING`, `COMPLETED`, `PAUSED`, `CANCELLED`, `ERROR` |
+| `is_paused` | bool | `False` | Whether the task execution is currently paused |
+| `start_time` | int \| None | `None` | Unix timestamp when task execution started (set automatically) |
+| `end_time` | int \| None | `None` | Unix timestamp when task execution ended (set automatically) |
+
+## Properties
+
+The Task class provides the following read-only properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | str | Get the task ID. Auto-generates a UUID if not set |
+| `task_id` | str | Get the task ID. Auto-generates a UUID if not set |
+| `price_id` | str | Get the price ID for cost tracking. Auto-generates a UUID if not set |
+| `duration` | float \| None | Get task execution duration in seconds (end_time - start_time). Returns `None` if not started or not ended |
+| `response` | str \| bytes \| None | Get the task response. Returns `None` if not yet set |
+| `context_formatted` | str \| None | Get the formatted context string (read-only). Set by context management process |
+| `run_id` | str \| None | Get the run ID associated with this task. Allows task continuation with a new agent instance |
+| `is_problematic` | bool | Check if the task's run is problematic (paused, cancelled, or error). Requires `continue_run_async()` instead of `do_async()` |
+| `is_completed` | bool | Check if the task's run is already completed. A completed task cannot be re-run or continued |
+| `cache_hit` | bool | Check if the last response was retrieved from cache |
+| `tool_calls` | List[Dict[str, Any]] | Get all tool calls made during this task's execution. Each dict contains 'tool_name', 'params', and 'tool_result' |
+| `total_cost` | float \| None | Get the total estimated cost of this task in USD. Returns `None` if not available |
+| `total_input_token` | int \| None | Get the total number of input tokens used by this task. Returns `None` if not available |
+| `total_output_token` | int \| None | Get the total number of output tokens used by this task. Returns `None` if not available |
+| `attachments_base64` | List[str] \| None | Convert all attachment files to base64 encoded strings. Returns `None` if no attachments |
+
+## Methods
+
+### Tool Management
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `add_tools` | `add_tools(tools: Union[Any, List[Any]]) -> None` | Add tools to the task's tool list. Tools are processed at runtime when the agent executes the task |
+| `remove_tools` | `remove_tools(tools: Union[str, List[str], Any, List[Any]], agent: Any) -> None` | Remove tools from the task. Supports removing tool names, function objects, agent objects, MCP handlers, class instances, and builtin tools. Requires agent instance for proper cleanup |
+| `validate_tools` | `validate_tools() -> None` | Validates each tool in the tools list. If a tool has a `__control__` method, runs it to verify it returns True |
+
+### Cache Management
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `set_cache_manager` | `set_cache_manager(cache_manager: Any) -> None` | Set the cache manager for this task (called by Agent) |
+| `get_cached_response` | `async get_cached_response(input_text: str, llm_provider: Optional[Any] = None) -> Optional[Any]` | Get cached response for the given input text. Returns cached response if found, `None` otherwise |
+| `store_cache_entry` | `async store_cache_entry(input_text: str, output: Any) -> None` | Store a new cache entry |
+| `get_cache_stats` | `get_cache_stats() -> Dict[str, Any]` | Get cache statistics including total entries, cache hits, cache misses, hit rate, and configuration |
+| `clear_cache` | `clear_cache() -> None` | Clear all cache entries |
+
+### Task Lifecycle
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `task_start` | `task_start(agent: Any) -> None` | Mark task as started. Sets `start_time` and adds canvas tools if agent has canvas |
+| `task_end` | `task_end() -> None` | Mark task as ended. Sets `end_time` |
+| `task_response` | `task_response(model_response: Any) -> None` | Set the task response from model output |
+| `add_tool_call` | `add_tool_call(tool_call: Dict[str, Any]) -> None` | Add a tool call to the task's history. Dict should include 'tool_name', 'params', and 'tool_result' |
+| `add_canvas` | `add_canvas(canvas: Any) -> None` | Add canvas tools to the task. Prevents duplicates |
+| `additional_description` | `async additional_description(client: Any) -> str` | Generate additional description from RAG context. Returns formatted RAG data if available |
+
+### Utility Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `get_task_id` | `get_task_id() -> str` | Get formatted task ID as "Task_{first_8_chars}" |
+| `get_total_cost` | `get_total_cost() -> Optional[Dict[str, Any]]` | Get total cost information including estimated_cost, input_tokens, and output_tokens |
+| `to_dict` | `to_dict(serialize_flag: bool = False) -> Dict[str, Any]` | Convert task to dictionary. If `serialize_flag=True`, uses cloudpickle for tools, guardrail, and response_format |
+| `from_dict` | `@classmethod from_dict(data: Dict[str, Any], deserialize_flag: bool = False) -> Task` | Reconstruct Task from dictionary. If `deserialize_flag=True`, uses cloudpickle to deserialize pickled fields |
+
+## Internal Attributes
+
+The following attributes are internal and typically not set by users:
+
+- `_response`: Internal storage for task response
+- `_context_formatted`: Internal formatted context string
+- `_tool_calls`: Internal list of tool calls
+- `_cache_manager`: Internal cache manager instance (set by Agent)
+- `_cache_hit`: Internal flag for cache hit status
+- `_original_input`: Internal storage for original input description
+- `_last_cache_entry`: Internal storage for last cache entry
+- `_run_id`: Internal run ID for task continuation
+- `_task_todos`: Internal todo list for task planning
+- `price_id_`: Internal price ID (use `price_id` property)
+- `task_id_`: Internal task ID (use `task_id` property)
+- `agent`: Internal reference to agent instance
+
+## Configuration Examples
+
+### Task with Structured Response Format
 
 ```python
 from upsonic import Agent, Task
+from upsonic.tools import tool
 from pydantic import BaseModel
 from typing import List
 
-# Define structured response format
 class AnalysisResult(BaseModel):
     summary: str
     confidence: float
     recommendations: List[str]
 
-# Create agent
+# Create a simple function tool
+@tool
+def get_market_data(year: int, quarter: int) -> str:
+    """Retrieve market data for a specific year and quarter."""
+    # In a real scenario, this would fetch actual data
+    return f"Market data for Q{quarter} {year}: Growth rate 5.2%, Market cap $2.5T"
+
 agent = Agent("openai/gpt-4o")
 
-# Create task with configuration
 task = Task(
     description="Analyze the market trends for Q4 2024",
     response_format=AnalysisResult,
     enable_thinking_tool=True,
-    enable_cache=True,
-    cache_method="llm_call",
-    cache_threshold=0.8,
-    cache_duration_minutes=30
+    tools=[get_market_data]  # Add the function tool to the task
 )
 
-# Execute task
 result = agent.do(task)
 print(result.summary)
 print(f"Confidence: {result.confidence}")
 print(f"Recommendations: {result.recommendations}")
+```
+
+### Task with Caching
+
+```python
+from upsonic import Agent, Task
+from upsonic.embeddings.factory import auto_detect_best_embedding
+
+agent = Agent("openai/gpt-4o")
+
+# Get embedding provider for vector search caching
+embedding_provider = auto_detect_best_embedding()
+
+task = Task(
+    description="Analyze the market trends for Q4 2024",
+    enable_cache=True,
+    cache_method="vector_search",
+    cache_threshold=0.8,
+    cache_duration_minutes=60,
+    cache_embedding_provider=embedding_provider
+)
+
+result = agent.do(task)
+
+# Check if response came from cache
+if task.cache_hit:
+    print("Response retrieved from cache!")
+    
+# Get cache statistics
+stats = task.get_cache_stats()
+print(f"Cache hit rate: {stats['hit_rate']:.2%}")
+```
+
+### Task with Guardrail
+
+```python
+from upsonic import Agent, Task
+
+def validate_output(output: str) -> bool:
+    """Validate that output contains required information."""
+    required_keywords = ["summary", "analysis", "conclusion"]
+    return all(keyword in output.lower() for keyword in required_keywords)
+
+agent = Agent("openai/gpt-4o")
+
+task = Task(
+    description="Write a comprehensive market analysis report",
+    guardrail=validate_output,
+    guardrail_retries=3
+)
+
+result = agent.do(task)
+```
+
+### Task with Context and Attachments
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("openai/gpt-4o")
+
+# Files in context are automatically extracted to attachments
+task = Task(
+    description="Summarize the key points from these documents",
+    context=["/path/to/document1.pdf", "/path/to/document2.pdf", "/path/to/image.png"]
+)
+
+result = agent.do(task)
+```
+
+### Task with Vector Search Configuration
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("openai/gpt-4o")
+
+task = Task(
+    description="Search for relevant information about AI agents",
+    vector_search_top_k=10,
+    vector_search_alpha=0.7,
+    vector_search_fusion_method="rrf",
+    vector_search_similarity_threshold=0.6,
+    vector_search_filter={"category": "technology", "year": 2024}
+)
+
+result = agent.do(task)
+```
+
+### Accessing Task Properties
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("openai/gpt-4o")
+
+task = Task(
+    description="Perform a complex analysis"
+)
+
+result = agent.do(task)
+
+# Access task properties
+print(f"Task ID: {task.id}")
+print(f"Duration: {task.duration:.2f} seconds")
+print(f"Status: {task.status}")
+print(f"Total Cost: ${task.total_cost:.4f}")
+print(f"Input Tokens: {task.total_input_token}")
+print(f"Output Tokens: {task.total_output_token}")
+print(f"Tool Calls: {len(task.tool_calls)}")
+
+# Check task state
+if task.is_completed:
+    print("Task completed successfully")
+elif task.is_problematic:
+    print("Task has issues and needs continuation")
 ```

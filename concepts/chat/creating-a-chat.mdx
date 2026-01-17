@@ -3,11 +3,9 @@ title: "Creating a Chat"
 description: "How to initialize and configure a Chat session"
 ---
 
-## Creating a Chat
-
-A Chat session requires an Agent and session/user identifiers. Optionally configure memory, storage, and retry settings.
-
 ## Basic Creation
+
+A Chat requires an Agent and session/user identifiers:
 
 ```python
 import asyncio
@@ -15,21 +13,16 @@ from upsonic import Agent, Chat
 
 
 async def main():
-    # Create agent
     agent = Agent("openai/gpt-4o")
 
-    # Create chat with minimal configuration
     chat = Chat(
         session_id="session1",
         user_id="user1",
         agent=agent
     )
 
-    # Send a message and get response
-    response = await chat.invoke("Hello! How are you?")
-    print(f"Response: {response}")
-    print(f"\nTotal cost: ${chat.total_cost}")
-    print(f"Messages in history: {len(chat.all_messages)}")
+    response = await chat.invoke("Hello!")
+    print(response)
 
 
 if __name__ == "__main__":
@@ -37,6 +30,8 @@ if __name__ == "__main__":
 ```
 
 ## With Memory Configuration
+
+Enable conversation memory features:
 
 ```python
 import asyncio
@@ -52,16 +47,13 @@ async def main():
         agent=agent,
         full_session_memory=True,
         summary_memory=True,
-        user_analysis_memory=True
+        user_analysis_memory=True,
+        num_last_messages=50
     )
 
-    # Send a message and get response
-    response = await chat.invoke("Hello! How are you?")
-    print(f"Response: {response}")
-    print(f"\nTotal cost: ${chat.total_cost}")
-    print(f"Input tokens: {chat.input_tokens}")
-    print(f"Output tokens: {chat.output_tokens}")
-    print(f"Messages in history: {len(chat.all_messages)}")
+    await chat.invoke("My name is Alice")
+    response = await chat.invoke("What is my name?")
+    print(response)
 
 
 if __name__ == "__main__":
@@ -70,20 +62,16 @@ if __name__ == "__main__":
 
 ## With Custom Storage
 
+Use persistent storage for session data:
+
 ```python
 import asyncio
 from upsonic import Agent, Chat
-from upsonic.storage.providers import SqliteStorage
+from upsonic.storage import SqliteStorage
 
 
 async def main():
-    # Setup persistent storage
-    storage = SqliteStorage(
-        db_file="chat.db",
-        sessions_table_name="sessions",
-        profiles_table_name="profiles"
-    )
-
+    storage = SqliteStorage(db_file="chat.db")
     agent = Agent("openai/gpt-4o")
 
     chat = Chat(
@@ -93,13 +81,8 @@ async def main():
         storage=storage
     )
 
-    # Send a message and get response
-    response = await chat.invoke("Hello! How are you?")
-    print(f"Response: {response}")
-    print(f"\nTotal cost: ${chat.total_cost}")
-    print(f"Input tokens: {chat.input_tokens}")
-    print(f"Output tokens: {chat.output_tokens}")
-    print(f"Messages in history: {len(chat.all_messages)}")
+    response = await chat.invoke("Hello!")
+    print(response)
 
 
 if __name__ == "__main__":
@@ -107,6 +90,8 @@ if __name__ == "__main__":
 ```
 
 ## With Retry Configuration
+
+Configure retry behavior for transient failures:
 
 ```python
 import asyncio
@@ -125,23 +110,17 @@ async def main():
         max_concurrent_invocations=2
     )
 
-    # Send a message and get response
-    response = await chat.invoke("Hello! How are you?")
-    print(f"Response: {response}")
-    print(f"\nTotal cost: ${chat.total_cost}")
-    print(f"Input tokens: {chat.input_tokens}")
-    print(f"Output tokens: {chat.output_tokens}")
-    print(f"Messages in history: {len(chat.all_messages)}")
+    response = await chat.invoke("Hello!")
+    print(response)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Session ID and User ID
+## Session and User IDs
 
-- `session_id`: Unique per conversation session
-- `user_id`: Unique per user (can have multiple sessions)
+- `session_id`: Unique per conversation (e.g., `"user123_session1"`)
+- `user_id`: Unique per user, can have multiple sessions
 
-Use consistent identifiers to maintain conversation context across application restarts.
-
+Use consistent IDs to maintain context across application restarts.

@@ -1,0 +1,60 @@
+---
+title: "Profanity Policies"
+description: "Detect profanity and toxic content using ML models"
+---
+
+## What is Profanity Policy?
+
+Profanity policies detect profanity, toxic content, and inappropriate language using the Detoxify ML library. Supports multiple models including unbiased, original, multilingual, and lightweight variants.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import ProfanityBlockPolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=ProfanityBlockPolicy
+)
+
+task = Task("You are an idiot!")
+result = agent.do(task)
+# Blocked with educational message
+```
+
+## Available Variants
+
+- `ProfanityBlockPolicy`: Standard blocking with unbiased model
+- `ProfanityBlockPolicy_Original`: BERT-based original model
+- `ProfanityBlockPolicy_Multilingual`: Multi-language support (7 languages)
+- `ProfanityBlockPolicy_LLM`: LLM-powered contextual block messages
+- `ProfanityRaiseExceptionPolicy`: Raises DisallowedOperation exception
+- `ProfanityRaiseExceptionPolicy_LLM`: LLM-generated exception messages
+- GPU variants: `ProfanityBlockPolicy_GPU`, `ProfanityRaiseExceptionPolicy_GPU`, etc.
+- CPU variants: `ProfanityBlockPolicy_CPU`, `ProfanityRaiseExceptionPolicy_CPU`, etc.
+
+## Installation
+
+```bash
+uv sync --extra safety-engine
+```
+
+## Custom Policy
+
+```python
+from upsonic.safety_engine.policies.profanity_policies import ProfanityRule, ProfanityBlockAction
+from upsonic.safety_engine.base.policy import Policy
+
+custom_rule = ProfanityRule(
+    model_name="unbiased",  # or "original", "multilingual", "original-small", "unbiased-small"
+    device="cuda"  # or "cpu" or None for auto
+)
+
+policy = Policy(
+    name="Custom Profanity Policy",
+    description="With custom model and device",
+    rule=custom_rule,
+    action=ProfanityBlockAction(min_confidence=0.5)
+)
+```

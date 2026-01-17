@@ -1,99 +1,156 @@
 ---
 title: "Choosing Right Memory Types"
-description: "Learn how to select the appropriate memory types for your use case"
+description: "Select the appropriate memory types for your use case"
 ---
 
-## What is The Selection Criteria?
+## Memory Type Overview
 
-Choose memory types based on your specific needs:
+| Memory Type | Purpose | When to Use |
+|-------------|---------|-------------|
+| **Conversation Memory** | Full chat history | Multi-turn conversations, detailed context |
+| **Summary Memory** | Condensed summaries | Long sessions |
+| **User Analysis Memory** | User profiles | Personalization, cross-session learning |
 
-| Memory Type | When to Use | Requirements |
-|-------------|-------------|--------------|
-| **Conversation Memory** | Customer support, tutoring, detailed conversations | `session_id` |
-| **Summary Memory** | Long conversations, cost reduction | `session_id`, `model` |
-| **User Analysis Memory** | Personalization, user preferences | `user_id`, `model` |
+## Decision Guide
 
-## Making Combination of Memory
+### Conversation Memory Only
 
-You can use one type or combine all three for the most powerful memory system:
-
-### Basic Conversation Memory Only
+Best for: Short sessions, detailed context needed, debugging
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.in_memory import InMemoryStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# Basic conversation memory only
-storage = InMemoryStorage()
+storage = SqliteStorage(db_file="support.db")
+
 memory = Memory(
     storage=storage,
-    session_id="session_001",
+    session_id="support_001",
     full_session_memory=True
 )
 
-# Create agent with memory
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# First conversation
-task1 = Task("My name is Alice and I love Python")
-result1 = agent.do(task1)
-
-# Second conversation - agent remembers
-task2 = Task("What's my name and favorite language?")
-result2 = agent.do(task2)
-print(result2)  # Output: Your name is Alice and you love Python
+result1 = agent.do(Task("My order #12345 hasn't arrived"))
+result2 = agent.do(Task("I ordered it last week"))
+print(result2)  # Agent remembers order context
 ```
 
-### All Three Memory Types
+### Summary Memory
+
+Best for: Long sessions, cost-conscious, overview needed
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.in_memory import InMemoryStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# All three memory types combined
-storage = InMemoryStorage()
+storage = SqliteStorage(db_file="meetings.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="meeting_001",
+    full_session_memory=True
+    summary_memory=True,
+    model="openai/gpt-4o-mini"  # Required for summaries
+)
+
+agent = Agent("openai/gpt-4o", memory=memory)
+
+result1 = agent.do(Task("Let's discuss Q1 revenue targets"))
+result2 = agent.do(Task("Now let's cover hiring plans"))
+result3 = agent.do(Task("Summarize what we've covered"))
+print(result3)
+```
+
+### User Analysis Memory Only
+
+Best for: Cross-session personalization, user preferences
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="users.db")
+
 memory = Memory(
     storage=storage,
     session_id="session_001",
-    user_id="user_001",
-    full_session_memory=True,
-    summary_memory=True,
+    user_id="user_abc",
     user_analysis_memory=True,
     model="openai/gpt-4o"
 )
 
-# Create agent with comprehensive memory
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# First conversation - agent stores everything
-task1 = Task("Hi! I'm Bob, a backend developer who loves microservices")
-result1 = agent.do(task1)
-
-# Agent uses all memory types for rich context
-task2 = Task("What can you tell me about my background?")
-result2 = agent.do(task2)
-print(result2)
+result = agent.do(Task("I'm a backend developer who prefers Python"))
+print(result)  # Agent learns about user
 ```
 
-## Use Case for Conversation Memory
+### Conversation + Summary
 
-- **Customer Support**: Maintain context across support tickets
-- **Tutoring**: Remember what topics have been covered
-- **Long Conversations**: Keep track of detailed discussions
-- **Debugging Sessions**: Remember error states and solutions
+Best for: Long conversations with detailed context needed
 
-## Use Case for Summary Memory
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-- **Long Sessions**: Reduce token costs for very long conversations
-- **Meeting Notes**: Automatically summarize key points
-- **Documentation**: Create evolving summaries of complex topics
-- **Cost Optimization**: Maintain context without full history
+storage = SqliteStorage(db_file="tutoring.db")
 
-## Use Case for User Analysis Memory
+memory = Memory(
+    storage=storage,
+    session_id="lesson_001",
+    full_session_memory=True,
+    summary_memory=True,
+    num_last_messages=20,  # Keep last 20 turns + summary
+    model="openai/gpt-4o-mini"
+)
 
-- **Personalization**: Adapt responses to user preferences
-- **Learning Systems**: Track user progress and expertise
-- **Customer Profiles**: Build comprehensive user understanding
-- **Adaptive Interfaces**: Customize experience based on user traits
+agent = Agent("openai/gpt-4o", memory=memory)
+
+result = agent.do(Task("Let's continue learning Python functions"))
+print(result)
+```
+
+### All Three Memory Types
+
+Best for: Full personalization with context preservation
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="assistant.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    full_session_memory=True,
+    summary_memory=True,
+    user_analysis_memory=True,
+    num_last_messages=15,
+    model="openai/gpt-4o"
+)
+
+agent = Agent("openai/gpt-4o", memory=memory)
+
+result1 = agent.do(Task("Hi! I'm a data scientist learning about LLMs"))
+result2 = agent.do(Task("What recommendations do you have for me?"))
+print(result2)  # Personalized based on user profile
+```
+
+## Use Case Examples
+
+| Use Case | Recommended Configuration |
+|----------|---------------------------|
+| Customer Support | `full_session_memory=True`, `user_analysis_memory=True` |
+| Meeting Notes | `summary_memory=True` |
+| Personal Assistant | All three memory types |
+| Quick Q&A | `full_session_memory=True` only |
+| Learning Platform | `full_session_memory=True`, `summary_memory=True`, `user_analysis_memory=True` |
+| Code Assistant | `full_session_memory=True`, `feed_tool_call_results=True` |

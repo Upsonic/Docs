@@ -29,9 +29,10 @@ The DeepAgent class accepts the following initialization parameters:
 import asyncio
 from upsonic.agent.deepagent import DeepAgent
 from upsonic.agent.deepagent.backends import StateBackend, MemoryBackend, CompositeBackend
-from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic.storage import SqliteStorage
 from upsonic import Agent, Task
 import tempfile
+import os
 
 async def main():
     # Create specialized subagents
@@ -86,10 +87,10 @@ async def main():
         plan = agent.get_current_plan()
         print(f"\nPlan: {len(plan)} tasks")
         
-        await storage.disconnect_async()
+        storage.close()
     finally:
-        import os
-        os.unlink(db_path)
+        if os.path.exists(db_path):
+            os.unlink(db_path)
 
 asyncio.run(main())
 ```

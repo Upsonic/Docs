@@ -3,17 +3,72 @@ title: Team
 sidebarTitle: Team
 ---
 
+The Team class enables multi-agent operations using the Upsonic client. It supports three operational modes: sequential, coordinate, and route.
+
 ## Parameters
 
 | Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
 | ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `agents`                           | `list[Any]`                                           | Required   | List of Direct agent instances to use as team members                                                                                                                                                                           |
+| `agents`                           | `list[Any]`                                           | Required   | List of Agent instances to use as team members                                                                                                                                                                                   |
 | `tasks`                            | `list[Task] \| None`                                  | `None`     | List of tasks to execute (optional)                                                                                                                                                                                             |
-| `model`                   | `Optional[Any]`                                        | `None`     | The model provider instance for any internal agents (leader, router)                                                                                                                                                            |
+| `model`                            | `Optional[Any]`                                       | `None`     | The model provider instance for any internal agents (leader, router). Required for 'coordinate' and 'route' modes                                                                                                                                                                            |
 | `response_format`                  | `Any`                                                 | `str`      | The response format for the end task (optional)                                                                                                                                                                                  |
-| `ask_other_team_members`           | `bool`                                                | `False`    | A flag to automatically add other agents as tools                                                                                                                                                                               |
+| `ask_other_team_members`           | `bool`                                                | `False`    | A flag to automatically add other agents as tools to each task. When True, `add_tool()` is called during initialization                                                                                                                                                                    |
 | `mode`                             | `Literal["sequential", "coordinate", "route"]`       | `"sequential"` | The operational mode for the team ('sequential', 'coordinate', or 'route')                                                                                                                                                  |
-| `memory`                           | `Optional[Memory]`                                    | `None`     | Memory manager for the team coordination                                                                                                                                                                                        |
+| `memory`                           | `Optional[Memory]`                                    | `None`     | Memory instance for team operations. In sequential mode, if provided, it will be shared with all agents that don't already have memory configured                                                                                                                                            |
+| `debug`                            | `bool`                                                | `False`    | Enable debug logging                                                                                                                                                                                                            |
+| `debug_level`                      | `int`                                                 | `1`        | Debug level (1 = standard, 2 = detailed). Only used when debug=True                                                                                                                                                             |
+
+## Operational Modes
+
+### Sequential Mode
+
+Tasks are assigned to agents sequentially based on task-agent matching. The system:
+1. Builds a selection context from current task, all tasks, task index, agents, and previous results
+2. Selects the best agent for each task using intelligent task assignment
+3. Enhances task context with information from previous tasks and results
+4. Executes tasks one by one
+5. Combines results if multiple tasks are executed (or returns single result if only one task)
+
+**Memory Behavior:** If `memory` is provided, it is automatically shared with all agents that don't already have memory configured.
+
+**Result Handling:** If multiple tasks are executed, results are combined using a result combiner. If only one task is executed, the single result is returned directly.
+
+### Coordinate Mode
+
+A leader agent coordinates task delegation to team members. This mode:
+1. Creates a leader agent with a system prompt containing team roster and mission objectives
+2. Provides a delegation tool that allows the leader to assign tasks to team members
+3. The leader agent analyzes the mission and delegates tasks to appropriate team members
+4. Team members execute delegated tasks with shared memory context
+5. Returns the final response from the leader agent
+
+**Requirements:**
+- `model` must be set (raises ValueError if not provided)
+- Creates an internal `leader_agent` (accessible via `team.leader_agent`)
+- Automatically creates memory if not provided (uses InMemoryStorage with `full_session_memory=True`)
+
+**Memory Behavior:** If no memory is provided, a new Memory instance is automatically created with InMemoryStorage for the coordinator session.
+
+### Route Mode
+
+A router agent selects the best specialist for the entire request. This mode:
+1. Creates a router agent with a system prompt containing team roster and mission objectives
+2. Provides a routing tool that allows the router to select a single team member
+3. The router analyzes the full mission and selects the best specialist
+4. All tasks are consolidated into a single task with all attachments and tools
+5. The selected agent executes the consolidated task
+6. Returns the response from the selected agent
+
+**Requirements:**
+- `model` must be set (raises ValueError if not provided)
+- Creates an internal `leader_agent` (accessible via `team.leader_agent`)
+
+**Task Consolidation:** All tasks are merged into a single task with:
+- Combined descriptions
+- All attachments from all tasks
+- All unique tools from all tasks
+- The specified `response_format`
 
 ## Functions
 
@@ -22,11 +77,9 @@ sidebarTitle: Team
 Execute multi-agent operations with the predefined agents and tasks (alias for `do`).
 
 **Parameters:**
-
-- `tasks` (list[Task] | Task | None): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
+- `tasks` (`list[Task] | Task | None`): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
 
 **Returns:**
-
 - The response from the multi-agent operation
 
 ### `print_complete`
@@ -34,49 +87,45 @@ Execute multi-agent operations with the predefined agents and tasks (alias for `
 Execute the multi-agent operation and print the result (alias for `print_do`).
 
 **Parameters:**
-
-- `tasks` (list[Task] | Task | None): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
+- `tasks` (`list[Task] | Task | None`): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
 
 **Returns:**
-
 - The response from the multi-agent operation
 
 ### `do`
 
-Execute multi-agent operations with the predefined agents and tasks.
+Execute multi-agent operations with the predefined agents and tasks. This is the main entry point for team execution.
 
 **Parameters:**
-
-- `tasks` (list[Task] | Task | None): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
+- `tasks` (`list[Task] | Task | None`): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
 
 **Returns:**
-
 - The response from the multi-agent operation
 
 ### `multi_agent`
 
-Execute multi-agent operations with agent configurations and tasks.
+Execute multi-agent operations with agent configurations and tasks. This method automatically handles event loop detection - if a loop is already running, it uses `run_coroutine_threadsafe`, otherwise it creates a new event loop.
 
 **Parameters:**
-
-- `agent_configurations` (List[Agent]): List of agent configurations
-- `tasks` (Any): Tasks to execute
+- `agent_configurations` (`List[Agent]`): List of agent configurations
+- `tasks` (`Any`): Tasks to execute
 
 **Returns:**
-
 - The response from the multi-agent operation
 
 ### `multi_agent_async`
 
-Asynchronous version of the multi_agent method.
+Asynchronous version of the multi_agent method. Supports three operational modes:
+
+- **sequential**: Tasks are assigned to agents sequentially based on task-agent matching. Results are combined if multiple tasks are executed.
+- **coordinate**: A leader agent coordinates task delegation to team members. Requires a `model` to be set.
+- **route**: A router agent selects the best specialist for the task. Requires a `model` to be set.
 
 **Parameters:**
-
-- `agent_configurations` (List[Agent]): List of agent configurations
-- `tasks` (Any): Tasks to execute
+- `agent_configurations` (`List[Agent]`): List of agent configurations
+- `tasks` (`Any`): Tasks to execute
 
 **Returns:**
-
 - The response from the multi-agent operation
 
 ### `print_do`
@@ -84,13 +133,25 @@ Asynchronous version of the multi_agent method.
 Execute the multi-agent operation and print the result.
 
 **Parameters:**
-
-- `tasks` (list[Task] | Task | None): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
+- `tasks` (`list[Task] | Task | None`): Optional list of tasks or single task to execute. If not provided, uses tasks from initialization
 
 **Returns:**
-
 - The response from the multi-agent operation
 
 ### `add_tool`
 
-Add agents as a tool to each Task object.
+Add agents as tools to each Task object in `self.tasks`. This method is automatically called when `ask_other_team_members` is set to `True` during initialization.
+
+**Behavior:**
+- Iterates through all tasks in `self.tasks`
+- Adds all team agents to each task's tools list
+- If a task doesn't have a `tools` attribute, it creates an empty list first
+- If `tools` is not a list, it replaces it with the agents list
+
+## Internal Attributes
+
+### `leader_agent`
+
+An internal Agent instance created for 'coordinate' and 'route' modes. This is the leader/router agent that manages task delegation or routing. Accessible via `team.leader_agent` after execution in these modes.
+
+**Type:** `Optional[Agent]`

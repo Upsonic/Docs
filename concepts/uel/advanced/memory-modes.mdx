@@ -1,0 +1,209 @@
+---
+title: "Model Memory Modes"
+description: "Understanding and configuring memory modes for UEL Model chains"
+---
+
+# Model Memory Modes
+
+The UEL Model supports four memory modes that control how conversation history is loaded and saved during chain execution.
+
+## Quick Reference
+
+| Mode | Loading | Saving | Use Case |
+|------|---------|--------|----------|
+| `auto` | Skip if placeholder, load otherwise | Last exchange only | **Recommended** - Multi-chain RAG, complex workflows |
+| `always` | Always load | Last exchange only | Simple chatbots without placeholders |
+| `never` | Never load | Last exchange only | Logging/analytics |
+| `record_all` | Skip if placeholder, load otherwise | ALL messages | Complete audit trails |
+
+## Usage
+
+```python
+from upsonic.models import infer_model
+
+# Default - recommended for most cases
+model = infer_model("openai/gpt-4o").add_memory(history=True)
+
+# Explicit mode selection
+model = infer_model("openai/gpt-4o").add_memory(history=True, mode="auto")
+model = infer_model("openai/gpt-4o").add_memory(history=True, mode="always")
+model = infer_model("openai/gpt-4o").add_memory(history=True, mode="never")
+model = infer_model("openai/gpt-4o").add_memory(history=True, mode="record_all")
+
+# Enable debug logging
+model = infer_model("openai/gpt-4o").add_memory(history=True, debug=True)
+```
+
+## Mode Details
+
+### `auto` (Default)
+
+**Smart detection mode** - automatically detects if the input contains placeholder history and adjusts behavior accordingly.
+
+**Loading:**
+- If placeholder history detected → **Skip** loading from memory
+- If no placeholder history → **Load** from memory
+
+**Saving:**
+- Saves only the **last request + response** (prevents duplicates)
+
+**Best for:**
+- Multi-chain RAG patterns
+- Complex workflows where same model is used multiple times
+- When you want automatic conflict resolution
+
+```python
+model = infer_model("gpt-4o").add_memory(history=True, mode="auto")
+
+# Works correctly with placeholders
+chain = ChatPromptTemplate.from_messages([
+    ("system", "Answer concisely."),
+    ("placeholder", {"variable_name": "chat_history"}),
+    ("human", "{question}")
+]) | model | StrOutputParser()
+```
+
+### `always`
+
+**Always load mode** - ignores placeholder detection and always loads from memory.
+
+<Warning>
+Can cause **duplicate history** if used with placeholder-based templates!
+</Warning>
+
+**Loading:**
+- **Always** loads from memory (ignores placeholder detection)
+
+**Saving:**
+- Saves only the last request + response
+
+**Best for:**
+- Simple single-chain chatbots
+- Scenarios where you **never** use placeholder history
+
+```python
+model = infer_model("gpt-4o").add_memory(history=True, mode="always")
+
+# Use ONLY with simple templates (no placeholders!)
+chain = ChatPromptTemplate.from_template("{question}") | model
+```
+
+### `never`
+
+**Never load mode** - never loads from memory but still saves for logging purposes.
+
+**Loading:**
+- **Never** loads from memory
+
+**Saving:**
+- Saves only the last request + response
+
+**Best for:**
+- Analytics and logging
+- When history is always provided via external sources
+- Recording conversations without affecting model context
+
+```python
+model = infer_model("gpt-4o").add_memory(history=True, mode="never")
+
+# Model won't remember previous conversations
+# But you can retrieve memory later for analytics
+```
+
+### `record_all`
+
+**Full audit mode** - like `auto` for loading, but saves ALL messages including placeholder history.
+
+<Warning>
+Can cause **exponential memory growth** with duplicates in multi-turn conversations!
+</Warning>
+
+**Loading:**
+- Same as `auto` (skip if placeholder, load otherwise)
+
+**Saving:**
+- Saves **ALL messages** including placeholder history
+
+**Best for:**
+- Complete audit trails
+- Single-chain scenarios where you need full history recorded
+- Debugging (handle duplicates yourself)
+
+```python
+model = infer_model("gpt-4o").add_memory(history=True, mode="record_all")
+
+# Memory will contain everything - including duplicates!
+# Turn 1: Memory = [H1, A1, Q1, R1]
+# Turn 2: Memory = [H1, A1, Q1, R1, H1, A1, Q1, R1, Q2, R2]  ← duplicates!
+```
+
+## Scenario Behavior Matrix
+
+The table below shows what the model **receives** during inference for each mode and scenario:
+
+| Scenario | Input Type | Memory State | auto | always | never | record_all |
+|----------|------------|--------------|------|--------|-------|------------|
+| S1 | No placeholder | Empty | Current | Current | Current | Current |
+| S2 | No placeholder | Has history | Memory+Current ✅ | Memory+Current ✅ | Current ⚠️ | Memory+Current ✅ |
+| S3 | Placeholder | Empty | Placeholder | Placeholder | Placeholder | Placeholder |
+| S4 | Placeholder | Has history | Placeholder ✅ | Memory+Placeholder ⚠️ | Placeholder ✅ | Placeholder ✅ |
+
+**Legend:**
+- ✅ Optimal behavior
+- ⚠️ Potential issue (duplicates or missing context)
+
+## Multi-Chain RAG Pattern
+
+When using the same model in multiple chains (e.g., contextualize + answer), use `mode="auto"`:
+
+```python
+model = infer_model("gpt-4o").add_memory(history=True, mode="auto")
+
+# Chain 1: Contextualize
+contextualize_chain = ChatPromptTemplate.from_messages([
+    ("system", "Rephrase to standalone question."),
+    ("placeholder", {"variable_name": "chat_history"}),
+    ("human", "{question}")
+]) | model | StrOutputParser()
+
+# Chain 2: Answer
+answer_chain = ChatPromptTemplate.from_messages([
+    ("system", "Answer concisely."),
+    ("placeholder", {"variable_name": "chat_history"}),
+    ("human", "{contextualized_question}")
+]) | model | StrOutputParser()
+
+# Both chains use the same model, but mode="auto" prevents pollution
+# Chain 2 won't see Chain 1's internal exchange
+```
+
+## Debug Mode
+
+Enable debug logging to see exactly what's happening:
+
+```python
+model = infer_model("gpt-4o").add_memory(history=True, mode="auto", debug=True)
+```
+
+This will print:
+- Current mode
+- Whether placeholder history is detected
+- Whether memory is loaded or skipped
+- What messages are saved to memory
+
+## Key Concepts
+
+### Placeholder History vs Model Memory
+
+- **Placeholder History**: External history passed via `chat_history` input parameter
+- **Model Memory**: Internal storage that accumulates across invocations
+
+When placeholder history is provided, it's **not** stored in model memory (except with `record_all`). This prevents duplication.
+
+### Why `auto` is Recommended
+
+1. **Handles both cases**: Works with and without placeholder history
+2. **Prevents pollution**: Same model can be used in multiple chains safely
+3. **Minimal memory growth**: Only saves new exchanges
+4. **Smart detection**: Automatically knows when to skip memory loading
+

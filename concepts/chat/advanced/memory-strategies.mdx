@@ -1,0 +1,122 @@
+---
+title: "Memory Strategies"
+description: "Advanced memory configuration"
+---
+
+## Message History Limit
+
+Limit context size to reduce token usage:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        num_last_messages=20
+    )
+
+    for i in range(30):
+        await chat.invoke(f"Message {i}")
+
+    print(f"Total stored: {len(chat.all_messages)}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Summarization
+
+Enable automatic conversation summarization:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        full_session_memory=True,
+        summary_memory=True
+    )
+
+    await chat.invoke("Tell me about machine learning")
+    await chat.invoke("What about deep learning?")
+    await chat.invoke("Summarize what we discussed")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Tool Call Results
+
+Include tool execution results in memory:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+def get_weather(city: str) -> str:
+    """Get current weather for a city."""
+    return f"Sunny, 22°C in {city}"
+
+
+async def main():
+    agent = Agent("openai/gpt-4o", tools=[get_weather])
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        feed_tool_call_results=True
+    )
+
+    response = await chat.invoke("What is the weather in Paris?")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Memory Mode
+
+Control how user profiles are updated:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+
+    chat = Chat(
+        session_id="session1",
+        user_id="user1",
+        agent=agent,
+        user_analysis_memory=True,
+        user_memory_mode="update"
+    )
+
+    await chat.invoke("I like Python")
+    await chat.invoke("I also like JavaScript")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```

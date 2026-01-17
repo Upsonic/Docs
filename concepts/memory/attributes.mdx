@@ -3,37 +3,34 @@ title: "Attributes"
 description: "Configuration options for the Memory class"
 ---
 
-## Attributes
+## Memory Class Parameters
 
-The Memory system is configured through the `Memory` class, which provides the following attributes:
-
-| Attribute | Type | Default | Description |
+| Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `storage` | Storage | (required) | Storage backend for memory persistence |
-| `session_id` | str \| None | `None` | Session identifier for conversation/summary memory |
-| `user_id` | str \| None | `None` | User identifier for user analysis memory |
-| `full_session_memory` | bool | `True` | Enable complete chat history |
-| `summary_memory` | bool | `False` | Enable conversation summaries |
-| `user_analysis_memory` | bool | `False` | Enable user learning and profiles |
-| `num_last_messages` | int \| None | `None` | Limit history to last N message turns |
-| `model` | str \| Model \| None | `None` | Model for analysis and summaries |
-| `user_profile_schema` | BaseModel \| None | `None` | Custom user profile schema |
-| `dynamic_user_profile` | bool | `True` | Allow agent to create custom profile fields |
-| `user_memory_mode` | str | `"update"` | User profile update mode: 'update' or 'replace' |
-| `feed_tool_call_results` | bool | `False` | Include tool calls in memory |
-| `debug` | bool | `False` | Enable debug logging |
+| `storage` | `Storage` | (required) | Storage backend for persistence |
+| `session_id` | `str \| None` | `None` | Session identifier (auto-generated if not provided) |
+| `user_id` | `str \| None` | `None` | User identifier (auto-generated if not provided) |
+| `full_session_memory` | `bool` | `False` | Enable complete chat history persistence |
+| `summary_memory` | `bool` | `False` | Enable automatic session summaries |
+| `user_analysis_memory` | `bool` | `False` | Enable user trait extraction |
+| `num_last_messages` | `int \| None` | `None` | Limit history to last N message turns |
+| `model` | `str \| Model \| None` | `None` | Model for summaries/user analysis |
+| `user_profile_schema` | `BaseModel \| None` | `None` | Custom Pydantic model for user profiles |
+| `dynamic_user_profile` | `bool` | `False` | Let agent create custom profile fields |
+| `user_memory_mode` | `Literal['update', 'replace']` | `'update'` | How to update user profiles |
+| `feed_tool_call_results` | `bool` | `False` | Include tool call results in history |
+| `debug` | `bool` | `False` | Enable debug logging |
+| `debug_level` | `int` | `1` | Debug verbosity (1-2) |
 
-## Configuration Example
+## Basic Configuration
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.sqlite import SqliteStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# Create storage
-storage = SqliteStorage(db_file="agent_memory.db", sessions_table_name="sessions", profiles_table_name="profiles")
+storage = SqliteStorage(db_file="agent.db")
 
-# Create memory with configuration
 memory = Memory(
     storage=storage,
     session_id="session_001",
@@ -41,17 +38,101 @@ memory = Memory(
     full_session_memory=True,
     summary_memory=True,
     user_analysis_memory=True,
-    num_last_messages=20,
-    model="openai/gpt-4o-mini",
-    feed_tool_call_results=False,
-    debug=True
+    model="openai/gpt-4o-mini"
 )
 
-# Create agent with memory
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# Use agent - memory is automatic
-task = Task("Hello! I'm interested in learning Python")
-result = agent.do(task)
+result = agent.do(Task("Hello! I'm learning Python"))
+print(result)
+```
+
+## Message Limiting
+
+Control memory size by limiting message history:
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="agent.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=True,
+    num_last_messages=10  # Keep only last 10 turns
+)
+
+agent = Agent("openai/gpt-4o", memory=memory)
+
+result = agent.do(Task("What topics have we discussed?"))
+print(result)
+```
+
+## Custom User Profile Schema
+
+Define specific fields for user profiles:
+
+```python
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+class CustomerProfile(BaseModel):
+    name: Optional[str] = Field(None, description="Customer name")
+    company: Optional[str] = Field(None, description="Company name")
+    role: Optional[str] = Field(None, description="Job role")
+    interests: Optional[List[str]] = Field(None, description="Areas of interest")
+
+storage = SqliteStorage(db_file="customer.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="customer_456",
+    user_analysis_memory=True,
+    user_profile_schema=CustomerProfile,
+    model="openai/gpt-4o"
+)
+
+agent = Agent("openai/gpt-4o", memory=memory)
+
+result = agent.do(Task("I'm John from Acme Corp, working as a data engineer"))
+print(result)
+```
+
+## Update Modes
+
+Control how user profiles are updated:
+
+| Mode | Behavior |
+|------|----------|
+| `'update'` | Merge new traits with existing profile |
+| `'replace'` | Replace entire profile with new traits |
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="profiles.db")
+
+# Update mode - accumulates traits over time
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_789",
+    user_analysis_memory=True,
+    user_memory_mode='update',  # Default: merge new with existing
+    model="openai/gpt-4o"
+)
+
+agent = Agent("openai/gpt-4o", memory=memory)
+
+result = agent.do(Task("I prefer dark mode and use vim"))
 print(result)
 ```

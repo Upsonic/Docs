@@ -1,0 +1,253 @@
+---
+title: "Accessing Agent Output"
+description: "Working with AgentRunOutput for complete execution results"
+---
+
+After running an agent, you can access the complete execution context via `AgentRunOutput`. This provides the final output, tool executions, usage statistics, and more.
+
+## Using `return_output` Flag
+
+The simplest way to get the full `AgentRunOutput` is using `return_output=True`:
+
+```python
+from upsonic import Agent, Task
+
+# Create agent
+agent = Agent("openai/gpt-4o")
+
+# Run with return_output=True to get full AgentRunOutput
+task = Task("What is 2 + 2?")
+run_output = agent.do(task, return_output=True)
+
+# Access the output
+print(run_output.output)  # "4"
+print(run_output.status.value)  # "completed"
+```
+
+### Async Version
+
+```python
+import asyncio
+from upsonic import Agent, Task
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+    task = Task("What is the capital of France?")
+    
+    # Get full output with return_output=True
+    run_output = await agent.do_async(task, return_output=True)
+    
+    print(f"Output: {run_output.output}")
+    print(f"Status: {run_output.status.value}")
+
+asyncio.run(main())
+```
+
+## Using `get_run_output()` Method
+
+Alternatively, access the last run's output via `agent.get_run_output()`:
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("openai/gpt-4o")
+
+# Run normally (returns just the content)
+result = agent.do("What is 2 + 2?")
+print(result)  # "4"
+
+# Access the full run output after execution
+run_output = agent.get_run_output()
+print(run_output.output)  # "4"
+print(run_output.status.value)  # "completed"
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `output` | `str \| bytes \| None` | Final agent output |
+| `status` | `RunStatus` | Run status: `running`, `completed`, `paused`, `cancelled`, `error` |
+| `usage` | `RunUsage \| None` | Token usage and cost statistics |
+| `tools` | `List[ToolExecution] \| None` | All tool executions during the run |
+| `messages` | `List[ModelMessage] \| None` | New messages from this run |
+| `chat_history` | `List[ModelMessage]` | Full conversation history |
+| `thinking_content` | `str \| None` | Reasoning content (for supported models) |
+| `images` | `List[BinaryContent] \| None` | Generated images |
+| `files` | `List[BinaryContent] \| None` | Generated files |
+| `step_results` | `List[StepResult]` | Execution step tracking |
+| `execution_stats` | `PipelineExecutionStats \| None` | Pipeline execution statistics |
+
+## Status Checking
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("openai/gpt-4o")
+run_output = agent.do(Task("Hello!"), return_output=True)
+
+# Check run status
+if run_output.is_complete:
+    print("Run completed successfully")
+elif run_output.is_paused:
+    print(f"Run paused: {run_output.pause_reason}")
+elif run_output.is_error:
+    print(f"Run failed: {run_output.error_details}")
+elif run_output.is_cancelled:
+    print("Run was cancelled")
+```
+
+## Accessing Usage Statistics
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("openai/gpt-4o")
+run_output = agent.do(Task("Explain AI briefly"), return_output=True)
+
+if run_output.usage:
+    print(f"Input tokens: {run_output.usage.input_tokens}")
+    print(f"Output tokens: {run_output.usage.output_tokens}")
+    print(f"Total tokens: {run_output.usage.total_tokens}")
+    print(f"Cost: ${run_output.usage.cost}")
+    print(f"Duration: {run_output.usage.duration}s")
+    print(f"Tool calls: {run_output.usage.tool_calls}")
+```
+
+## Accessing Tool Executions
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def calculate(x: int, y: int) -> int:
+    """Add two numbers."""
+    return x + y
+
+agent = Agent("openai/gpt-4o", tools=[calculate])
+run_output = agent.do(Task("Calculate 5 + 3"), return_output=True)
+
+if run_output.tools:
+    for tool_exec in run_output.tools:
+        print(f"Tool: {tool_exec.tool_name}")
+        print(f"Args: {tool_exec.tool_args}")
+        print(f"Result: {tool_exec.result}")
+```
+
+## Accessing Messages
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("openai/gpt-4o")
+run_output = agent.do(Task("Hello!"), return_output=True)
+
+# Get only new messages from this run
+new_messages = run_output.new_messages()
+print("\n--------------------------------\n")
+print(new_messages)
+
+# Get all messages
+all_messages = run_output.all_messages()
+print("\n--------------------------------\n")
+print(all_messages)
+# Get the last model response
+last_response = run_output.get_last_model_response()
+print("\n--------------------------------\n")
+print(last_response)
+```
+
+## Serialization
+
+`AgentRunOutput` supports full serialization for persistence:
+
+```python
+from upsonic import Agent, Task
+from upsonic.run.agent.output import AgentRunOutput
+
+agent = Agent("openai/gpt-4o")
+run_output = agent.do(Task("Hello!"), return_output=True)
+
+# Serialize to dict
+data = run_output.to_dict()
+
+# Serialize to JSON
+json_str = run_output.to_json()
+
+# Deserialize
+restored = AgentRunOutput.from_dict(data)
+print(restored.output)
+```
+
+## Streaming with Output Access
+
+After streaming completes, access the final output:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+
+async def main():
+    agent = Agent("openai/gpt-4o")
+    task = Task("Write a haiku")
+    
+    async for chunk in agent.astream(task):
+        print(chunk, end='', flush=True)
+    
+    # Access complete output after streaming
+    run_output = agent.get_run_output()
+    print(f"\n\nFinal output: {run_output.output}")
+    print(f"Status: {run_output.status.value}")
+
+asyncio.run(main())
+```
+
+## HITL (Human-in-the-Loop) Requirements
+
+For external tool execution:
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(external_execution=True)
+def send_email(to: str, subject: str, body: str) -> str:
+    """
+    Send an email to a recipient.
+    
+    This tool requires external execution - the actual email sending
+    must be handled by an external process or service.
+    
+    Args:
+        to: Email address of the recipient
+        subject: Email subject line
+        body: Email body content
+        
+    Returns:
+        Confirmation message indicating email was sent
+    """
+    # This function body won't execute - it requires external execution
+    # The external executor will handle the actual email sending
+    return f"Email sent to {to} with subject: {subject}"
+
+agent = Agent("openai/gpt-4o", tools=[send_email])
+run_output = agent.do(Task("Send an email to john@example.com with subject 'Hello' and body 'This is a test email'"), return_output=True)
+
+# Check for pending external tools
+if run_output.has_pending_external_tools():
+    print("External tools detected:")
+    for req in run_output.active_requirements:
+        if req.needs_external_execution:
+            print(f"  - Tool: {req.tool_execution.tool_name}")
+            print(f"    Arguments: {req.tool_execution.tool_args}")
+            print(f"    Tool Call ID: {req.tool_execution.tool_call_id}")
+        
+# Get tools awaiting external execution (from requirements)
+external_requirements = run_output.get_external_tool_requirements()
+print(f"\nExternal tool requirements: {len(external_requirements)}")
+
+# Also check tools directly (may be empty if stored in requirements)
+pending_tools = run_output.tools_awaiting_external_execution
+print(f"Tools awaiting execution (direct): {len(pending_tools)}")
+```

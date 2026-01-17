@@ -104,6 +104,7 @@ print(result)
 - `timeout_seconds` (int): Connection timeout in seconds (default: 5)
 - `include_tools` (List[str]): Optional list of tool names to include
 - `exclude_tools` (List[str]): Optional list of tool names to exclude
+- `tool_name_prefix` (str): Optional prefix to add to all tool names from this handler (useful for preventing tool name collisions)
 
 ## Features
 
@@ -169,10 +170,65 @@ print(f"Sample Data: {result.sample_data}")
 print(f"Summary: {result.summary}")
 ```
 
+## Tool Name Prefix
+
+When working with multiple MCP handlers that expose tools with the same names, use `tool_name_prefix` to prevent tool name collisions:
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+
+# Create two handlers pointing to different databases
+# Without prefix, tools like "create_table" would collide
+users_db = MCPHandler(
+    command="uvx mcp-server-sqlite --db-path /tmp/users.db",
+    tool_name_prefix="users_db",  # Tools become: users_db_create_table, users_db_read_query, etc.
+    timeout_seconds=60
+)
+
+products_db = MCPHandler(
+    command="uvx mcp-server-sqlite --db-path /tmp/products.db",
+    tool_name_prefix="products_db",  # Tools become: products_db_create_table, products_db_read_query, etc.
+    timeout_seconds=60
+)
+
+# Create agent with both handlers
+agent = Agent(
+    name="Multi-DB Agent",
+    role="Database operations specialist",
+    goal="Work with multiple databases without tool name collisions",
+    tools=[users_db, products_db],
+    tool_call_limit=15
+)
+
+# Create task that uses both databases
+task = Task(
+    description="""
+    IMPORTANT: You have access to two separate databases with prefixed tools.
+    - Users database: Use tools prefixed with 'users_db_' (e.g., users_db_create_table)
+    - Products database: Use tools prefixed with 'products_db_' (e.g., products_db_create_table)
+    
+    Step 1: In the users database, create a 'users' table with id and name columns.
+    Step 2: In the products database, create a 'products' table with id and product_name columns.
+    Step 3: Insert 2 sample records into each table.
+    Step 4: Query both tables to verify the data.
+    """
+)
+
+result = agent.do(task)
+print(result)
+```
+
+The `tool_name_prefix` is especially useful when:
+- Multiple MCP servers expose tools with identical names
+- You need to clearly distinguish which server's tool to use
+- Working with multiple instances of the same server type (e.g., multiple databases)
+
 ## When to Use
 
 - Single MCP server connection
 - Need more control over connection parameters
 - Want automatic resource cleanup
 - Need tool filtering capabilities
+- Need to prevent tool name collisions with `tool_name_prefix`
 

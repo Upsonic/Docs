@@ -3,107 +3,172 @@ title: Memory
 sidebarTitle: Memory
 ---
 
+The Memory class orchestrates session and user memory operations with runtime session type selection. It serves as the central coordinator for memory operations in the Upsonic agent framework.
+
+## Key Design Principle
+
+Session memory type is selected at **RUNTIME**, not at init time. The same Memory instance can be shared across Agent, Team, and Workflow. When methods are called (save, get), the caller passes `session_type` and Memory routes to the correct session memory implementation.
+
 ## Parameters
 
 | Parameter                          | Type                                                  | Default    | Description                                                                                                                                                                                                                      |
 | ---------------------------------- | ----------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `storage`                          | `Storage`                                             | Required   | Storage backend to use for persistence                                                                                                                                                                                          |
-| `session_id`                       | `Optional[str]`                                       | `None`     | Session ID for session-based memory features                                                                                                                                                                                     |
-| `user_id`                          | `Optional[str]`                                       | `None`     | User ID for user-specific memory features                                                                                                                                                                                        |
-| `full_session_memory`              | `bool`                                                | `False`    | Enable full session memory storage                                                                                                                                                                                               |
+| `session_id`                       | `Optional[str]`                                       | `None`     | Session ID for session-based memory features (auto-generated if None)                                                                                                                                                           |
+| `user_id`                          | `Optional[str]`                                       | `None`     | User ID for user-specific memory features (auto-generated if None)                                                                                                                                                               |
+| `full_session_memory`              | `bool`                                                | `False`    | Enable full session memory storage (chat history persistence)                                                                                                                                                                    |
 | `summary_memory`                   | `bool`                                                | `False`    | Enable session summary generation and storage                                                                                                                                                                                    |
 | `user_analysis_memory`             | `bool`                                                | `False`    | Enable user trait analysis and profile building                                                                                                                                                                                  |
-| `user_profile_schema`              | `Optional[Type[BaseModel]]`                           | `None`     | Custom schema for user profile data                                                                                                                                                                                              |
+| `user_profile_schema`              | `Optional[Type[BaseModel]]`                           | `None`     | Custom Pydantic schema for user profile data structure                                                                                                                                                                           |
 | `dynamic_user_profile`             | `bool`                                                | `False`    | Enable dynamic user profile schema generation                                                                                                                                                                                    |
 | `num_last_messages`                | `Optional[int]`                                       | `None`     | Limit conversation history to last N messages                                                                                                                                                                                    |
-| `model`                            | `Optional[Union[Model, str]]`                        | `None`     | Model provider for memory analysis tasks                                                                                                                                                                                         |
+| `model`                            | `Optional[Union[Model, str]]`                        | `None`     | Model provider for memory analysis tasks (summary generation, user profile extraction). Required if `summary_memory` or `user_analysis_memory` is enabled                                                                       |
 | `debug`                            | `bool`                                                | `False`    | Enable debug logging                                                                                                                                                                                                             |
+| `debug_level`                      | `int`                                                 | `1`        | Debug verbosity level (1-3). Only used when `debug=True`                                                                                                                                                                         |
 | `feed_tool_call_results`           | `bool`                                                | `False`    | Include tool call results in memory analysis                                                                                                                                                                                      |
-| `user_memory_mode`                 | `Literal['update', 'replace']`                       | `'update'` | Mode for updating user memory (update existing or replace)                                                                                                                                                                       |
+| `user_memory_mode`                 | `Literal['update', 'replace']`                       | `'update'` | Mode for updating user memory ('update' to merge with existing profile, 'replace' to overwrite)                                                                                                                               |
 
-## Functions
+## Properties
+
+### `user_memory`
+
+Returns the user memory instance if `user_analysis_memory` is enabled, otherwise `None`.
+
+**Type:** `Optional[BaseUserMemory]`
+
+## Methods
+
+### `get_session_memory`
+
+Get or create session memory for the given session type. This is the runtime selection method - called when Agent/Team/Workflow invokes save or get operations.
+
+**IMPORTANT:** Session memory is ALWAYS created if storage is available. This is required for HITL (Human-in-the-Loop) checkpointing to work. Even when `full_session_memory` and `summary_memory` are disabled, incomplete runs (paused, error, cancelled) MUST be saved to storage to enable cross-process resumption.
+
+**Parameters:**
+- `session_type` (`SessionType`): The type of session (AGENT, TEAM, WORKFLOW)
+
+**Returns:**
+- `Optional[BaseSessionMemory]`: The appropriate session memory instance, or None if no storage available
 
 ### `prepare_inputs_for_task`
 
-Gathers all relevant memory data before a task execution, correctly parsing and limiting the chat history.
+Gather all relevant memory data before task execution. This method prepares:
+- Message history (from session memory)
+- Context injection (session summary)
+- System prompt injection (user profile)
+- Metadata injection (session + agent metadata)
+
+**Parameters:**
+- `session_type` (`Optional[SessionType]`): The session type (defaults to AGENT)
+- `agent_metadata` (`Optional[Dict[str, Any]]`): Optional metadata from the caller to inject
 
 **Returns:**
-
 - `Dict[str, Any]`: Dictionary containing:
-  - `message_history`: List of validated and limited message history
+  - `message_history`: List of message history
   - `context_injection`: Context string for session summary
   - `system_prompt_injection`: System prompt injection for user profile
+  - `metadata_injection`: Metadata string with session and agent information
 
-### `update_memories_after_task`
+### `save_session_async`
 
-Updates all relevant memories after a task has been completed, saving the chat history in the correct format.
+Save session to storage. This is the centralized method for ALL session saving operations.
 
-**Parameters:**
+**For INCOMPLETE runs** (paused, error, cancelled):
+- Saves checkpoint state for HITL resumption
+- Does NOT process memory features (summary, user profile)
 
-- `model_response`: The model response containing new messages to store
-
-### `_update_interaction_session`
-
-Helper method to handle updating the InteractionSession object.
-
-**Parameters:**
-
-- `model_response`: The model response containing new messages
-
-### `_update_user_profile`
-
-Helper method to handle updating the UserProfile object.
+**For COMPLETED runs**:
+- Saves the completed run output
+- Processes memory features if enabled:
+  - Generates session summary (if `summary_memory` enabled)
+  - Analyzes user profile (if `user_analysis_memory` enabled)
 
 **Parameters:**
+- `output` (`AgentRunOutput`): The run output (AgentRunOutput, TeamRunOutput, etc.)
+- `session_type` (`Optional[SessionType]`): The session type (defaults to AGENT)
+- `agent_id` (`Optional[str]`): Optional agent identifier
 
-- `model_response`: The model response containing new messages
+### `get_session_async` / `get_session`
 
-### `_limit_message_history`
-
-Limits conversation history to the last N runs, creating a new synthetic first request that combines the original system prompt with the user prompt from the beginning of the limited window.
-
-**Parameters:**
-
-- `message_history` (List): The full, flat list of ModelRequest and ModelResponse objects
+Get the current session from storage.
 
 **Returns:**
+- `Optional[Session]`: The current session, or None if not found
 
-- `List`: A new, limited message history list
+### `get_messages_async` / `get_messages`
 
-### `_generate_new_summary`
-
-Generates a new session summary based on the previous summary and new conversation turn.
-
-**Parameters:**
-
-- `previous_summary` (str): The previous session summary
-- `model_response`: The model response containing new messages
+Get messages from the current session.
 
 **Returns:**
+- `list`: List of messages from the current session, or empty list if no session
 
-- `str`: The updated session summary
+### `set_metadata_async` / `set_metadata`
 
-### `_extract_user_prompt_content`
-
-Extracts the content string from all UserPromptParts in a list of messages.
-
-**Parameters:**
-
-- `messages` (list): List of messages to extract user prompts from
-
-**Returns:**
-
-- `list[str]`: List of user prompt content strings
-
-### `_analyze_interaction_for_traits`
-
-Analyzes user interaction to extract traits using the configured model provider.
+Set metadata on the current session.
 
 **Parameters:**
+- `metadata` (`Dict[str, Any]`): Dictionary of metadata to set/update
 
-- `current_profile` (dict): Current user profile data
-- `model_response`: The model response containing new messages
+### `get_metadata_async` / `get_metadata`
+
+Get metadata from the current session.
 
 **Returns:**
+- `Optional[Dict[str, Any]]`: Session metadata, or None if no session
 
-- `Tuple[dict, Literal['update', 'replace']]`: Updated traits and update mode
+### `list_sessions_async` / `list_sessions`
+
+List sessions, optionally filtered by user_id.
+
+**Parameters:**
+- `user_id` (`Optional[str]`): Optional user ID to filter by (defaults to instance user_id)
+
+**Returns:**
+- `list`: List of sessions
+
+### `find_session_async` / `find_session`
+
+Find a specific session by session_id.
+
+**Parameters:**
+- `session_id` (`Optional[str]`): Session ID to find (defaults to instance session_id)
+
+**Returns:**
+- `Optional[Session]`: The session if found, None otherwise
+
+### `delete_session_async` / `delete_session`
+
+Delete the current or specified session.
+
+**Parameters:**
+- `session_id` (`Optional[str]`): Session ID to delete (defaults to instance session_id)
+
+**Returns:**
+- `bool`: True if deleted successfully, False otherwise
+
+### `load_resumable_run_async` / `load_resumable_run`
+
+Load a resumable run from storage by run_id. Resumable runs include:
+- `paused`: External tool execution pause
+- `error`: Durable execution (error recovery)
+- `cancelled`: Cancel run resumption
+
+**Parameters:**
+- `run_id` (`str`): The run ID to search for
+- `session_type` (`Optional[SessionType]`): The session type (defaults to AGENT)
+- `agent_id` (`Optional[str]`): Optional agent_id to search across sessions
+
+**Returns:**
+- `Optional[RunData]`: RunData if found and resumable, None otherwise
+
+### `load_run_async` / `load_run`
+
+Load a run from storage by run_id (regardless of status). Unlike `load_resumable_run_async`, this returns any run regardless of status. Used for checking if a run is completed before attempting to continue.
+
+**Parameters:**
+- `run_id` (`str`): The run ID to search for
+- `session_type` (`Optional[SessionType]`): The session type (defaults to AGENT)
+- `agent_id` (`Optional[str]`): Optional agent_id to search across sessions
+
+**Returns:**
+- `Optional[RunData]`: RunData if found, None otherwise

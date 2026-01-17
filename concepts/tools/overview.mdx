@@ -16,6 +16,20 @@ Tools enable agents to perform actions beyond text generation. They can execute 
 - **Type Safety**: Automatic schema generation from Python type hints
 - **Parallel Execution**: Run multiple tools simultaneously for better performance
 
+## Supported Tool Types
+
+The tools list accepts any combination of:
+
+| Type | Example | Registered As |
+|------|---------|---------------|
+| Function tool | `@tool` decorated function | Function name |
+| ToolKit instance | `DataProcessor()` | All `@tool` methods |
+| Class instance | `Calculator()` | All public methods |
+| Agent instance | `analyzer_agent` | `ask_{agent_name}` |
+| MCP Handler | `MCPHandler(...)` | All MCP-provided tools |
+| KnowledgeBase | `KnowledgeBase(...)` | `search_{kb_name}` |
+| Builtin tools | `WebSearchTool()` | Provider-specific |
+
 ## Example
 
 Create your own tools using Python functions or classes. Perfect for business logic, API integrations, and domain-specific functionality.

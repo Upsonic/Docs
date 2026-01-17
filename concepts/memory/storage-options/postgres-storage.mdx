@@ -1,22 +1,23 @@
 ---
 title: "PostgresStorage"
-description: "PostgreSQL database storage for production systems"
+description: "PostgreSQL storage for production systems"
 ---
 
-## Usage
+## Overview
+
+`PostgresStorage` provides a PostgreSQL-based storage backend. Ideal for production deployments, multi-node systems, and applications requiring ACID compliance.
+
+## Basic Usage
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.postgres import PostgresStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.postgres import PostgresStorage
 
-# Create PostgreSQL storage and memory
 storage = PostgresStorage(
-    db_url="postgresql://user:pass@localhost:5432/agentdb",
-    schema="public",
-    sessions_table_name="agent_sessions",
-    profiles_table_name="user_profiles"
+    db_url="postgresql://user:password@localhost:5432/mydb"
 )
+
 memory = Memory(
     storage=storage,
     session_id="session_001",
@@ -27,51 +28,31 @@ memory = Memory(
     model="openai/gpt-4o"
 )
 
-# Create agent with memory
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# First conversation
-task1 = Task("My name is Alice and I love Python")
-result1 = agent.do(task1)
-
-# Second conversation - agent remembers
-task2 = Task("What's my name and favorite language?")
-result2 = agent.do(task2)
-print(result2)  # Output: Your name is Alice and you love Python
+result1 = agent.do(Task("My name is Alice"))
+result2 = agent.do(Task("What's my name?"))
+print(result2)  # "Your name is Alice"
 ```
 
-### With Pre-existing Connection Pool
+## Parameters
 
-```python
-import asyncpg
-from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.postgres import PostgresStorage
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `db_url` | `str \| None` | `None` | PostgreSQL connection URL |
+| `db_engine` | `Engine \| None` | `None` | Pre-configured SQLAlchemy Engine |
+| `db_schema` | `str \| None` | `"public"` | PostgreSQL schema to use |
+| `session_table` | `str \| None` | `"upsonic_sessions"` | Session table name |
+| `user_memory_table` | `str \| None` | `"upsonic_user_memories"` | User memory table name |
+| `create_schema` | `bool` | `True` | Auto-create schema if not exists |
+| `id` | `str \| None` | auto-generated | Storage instance ID |
 
-async def setup_and_run():
-    pool = await asyncpg.create_pool("postgresql://user:pass@localhost:5432/agentdb")
-    storage = PostgresStorage(pool=pool)
-    memory = Memory(
-        storage=storage,
-        session_id="session_001",
-        full_session_memory=True
-    )
-    
-    agent = Agent("openai/gpt-4o", memory=memory)
-    
-    task1 = Task("Explain PostgreSQL indexing")
-    result1 = agent.do(task1)
-    
-    task2 = Task("What are the benefits of using it?")
-    result2 = agent.do(task2)
-    return result2
+## Storage Type
+
+`PostgresStorage` is a **synchronous** storage implementation using SQLAlchemy with psycopg2 driver.
+
+## Requirements
+
+```bash
+pip install sqlalchemy psycopg2-binary
 ```
-
-## Params
-
-- `pool: Optional[asyncpg.Pool]` - Optional pre-existing connection pool (user manages lifecycle)
-- `db_url: Optional[str]` - PostgreSQL connection URL (required if pool not provided)
-- `schema: str` - Database schema (default: "public")
-- `sessions_table_name: Optional[str]` - Name of sessions table (default: "sessions")
-- `profiles_table_name: Optional[str]` - Name of profiles table (default: "profiles")
-- `cultural_knowledge_table_name: Optional[str]` - Name of cultural knowledge table (default: "cultural_knowledge")

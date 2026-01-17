@@ -1,22 +1,24 @@
 ---
 title: "MongoStorage"
-description: "MongoDB storage for scalable document-based systems"
+description: "MongoDB storage for document-based scalable systems"
 ---
 
-## Usage
+## Overview
+
+`MongoStorage` provides a MongoDB-based storage backend. Ideal for document-based applications, flexible schemas, and horizontally scalable deployments.
+
+## Basic Usage
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.mongo import MongoStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.mongo import MongoStorage
 
-# Create MongoDB storage and memory
 storage = MongoStorage(
     db_url="mongodb://localhost:27017",
-    database_name="agent_memory",
-    sessions_collection_name="interaction_sessions",
-    profiles_collection_name="user_profiles"
+    db_name="agent_memory"
 )
+
 memory = Memory(
     storage=storage,
     session_id="session_001",
@@ -27,81 +29,30 @@ memory = Memory(
     model="openai/gpt-4o"
 )
 
-# Create agent with memory
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# First conversation
-task1 = Task("My name is Alice and I love Python")
-result1 = agent.do(task1)
-
-# Second conversation - agent remembers
-task2 = Task("What's my name and favorite language?")
-result2 = agent.do(task2)
-print(result2)  # Output: Your name is Alice and you love Python
+result1 = agent.do(Task("My name is Alice"))
+result2 = agent.do(Task("What's my name?"))
+print(result2)  # "Your name is Alice"
 ```
 
-### MongoDB with Authentication
+## Parameters
 
-```python
-from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.mongo import MongoStorage
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `db_url` | `str \| None` | `None` | MongoDB connection URL |
+| `db_client` | `MongoClient \| None` | `None` | Pre-existing pymongo client |
+| `db_name` | `str \| None` | `"upsonic"` | Database name |
+| `session_collection` | `str \| None` | `"upsonic_sessions"` | Sessions collection name |
+| `user_memory_collection` | `str \| None` | `"upsonic_user_memories"` | User memory collection name |
+| `id` | `str \| None` | auto-generated | Storage instance ID |
 
-# MongoDB with authentication
-storage = MongoStorage(
-    db_url="mongodb://user:password@localhost:27017/agentdb",
-    database_name="production_memory",
-    sessions_collection_name="sessions",
-    profiles_collection_name="profiles"
-)
-memory = Memory(
-    storage=storage,
-    session_id="session_001",
-    full_session_memory=True
-)
+## Storage Type
 
-agent = Agent("openai/gpt-4o", memory=memory)
+`MongoStorage` is a **synchronous** storage implementation using pymongo driver.
 
-task1 = Task("Help me design a document schema")
-result1 = agent.do(task1)
+## Requirements
 
-task2 = Task("How should I handle relationships in it?")
-result2 = agent.do(task2)
-print(result2)
+```bash
+pip install pymongo
 ```
-
-### With Pre-existing Client
-
-```python
-from motor.motor_asyncio import AsyncIOMotorClient
-from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.mongo import MongoStorage
-
-client = AsyncIOMotorClient("mongodb://localhost:27017")
-storage = MongoStorage(client=client, database_name="agent_memory")
-memory = Memory(
-    storage=storage,
-    session_id="session_001",
-    full_session_memory=True
-)
-
-agent = Agent("openai/gpt-4o", memory=memory)
-
-task1 = Task("Explain MongoDB aggregation pipelines")
-result1 = agent.do(task1)
-
-task2 = Task("Can you give me a simple example?")
-result2 = agent.do(task2)
-print(result2)
-```
-
-## Params
-
-- `database: Optional[AsyncIOMotorDatabase]` - Optional pre-existing database (user manages lifecycle)
-- `client: Optional[AsyncIOMotorClient]` - Optional pre-existing client (user manages lifecycle)
-- `db_url: Optional[str]` - MongoDB connection string (required if database/client not provided)
-- `database_name: Optional[str]` - Name of the database (required if database not provided)
-- `sessions_collection_name: str` - Name of sessions collection (default: "interaction_sessions")
-- `profiles_collection_name: str` - Name of profiles collection (default: "user_profiles")
-- `cultural_knowledge_collection_name: str` - Name of cultural knowledge collection (default: "cultural_knowledge")

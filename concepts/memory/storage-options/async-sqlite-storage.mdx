@@ -1,0 +1,59 @@
+---
+title: "AsyncSqliteStorage"
+description: "Async SQLite database storage for local development"
+---
+
+## Overview
+
+`AsyncSqliteStorage` provides an asynchronous file-based SQLite storage backend using SQLAlchemy with aiosqlite. Ideal for async applications, local development, and single-node deployments.
+
+## Basic Usage
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import AsyncSqliteStorage
+
+async def main():
+    storage = AsyncSqliteStorage(db_file="memory.db")
+
+    memory = Memory(
+        storage=storage,
+        session_id="session_001",
+        user_id="user_123",
+        full_session_memory=True,
+        summary_memory=True,
+        user_analysis_memory=True,
+        model="openai/gpt-4o"
+    )
+
+    agent = Agent("openai/gpt-4o", memory=memory)
+
+    result1 = await agent.ado(Task("My name is Alice"))
+    result2 = await agent.ado(Task("What's my name?"))
+    print(result2)  # "Your name is Alice"
+
+asyncio.run(main())
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `db_file` | `str` | `None` | Path to the SQLite database file |
+| `db_url` | `str` | `None` | SQLAlchemy async database URL (e.g., `sqlite+aiosqlite:///./data.db`) |
+| `db_engine` | `AsyncEngine` | `None` | Pre-configured SQLAlchemy AsyncEngine |
+| `session_table` | `str` | `None` | Custom name for the session table |
+| `user_memory_table` | `str` | `None` | Custom name for the user memory table |
+| `id` | `str` | `None` | Unique identifier for this storage instance |
+
+<Note>
+If no connection parameter is provided, the storage defaults to creating `./upsonic.db` in the current directory.
+</Note>
+
+## Requirements
+
+```bash
+pip install sqlalchemy aiosqlite
+```

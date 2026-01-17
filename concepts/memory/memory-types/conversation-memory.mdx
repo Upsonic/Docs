@@ -3,67 +3,92 @@ title: "Conversation Memory"
 description: "Store complete chat history for maintaining context"
 ---
 
-## What is Conversation Memory?
+## Overview
 
-Conversation Memory stores the complete chat history for a session, allowing your agent to reference previous messages and maintain context throughout the conversation.
+Conversation Memory persists the complete chat history for a session, enabling agents to reference previous messages and maintain context across interactions.
 
-## Usage
+## Basic Usage
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.in_memory import InMemoryStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# Create storage and memory with conversation memory
-storage = InMemoryStorage()
+storage = SqliteStorage(db_file="chat.db")
+
 memory = Memory(
     storage=storage,
     session_id="session_001",
     full_session_memory=True
 )
 
-# Create agent with memory
 agent = Agent("openai/gpt-4o", memory=memory)
 
-# First conversation
-task1 = Task("My name is Alice and I love Python")
-result1 = agent.do(task1)
-
-# Second conversation - agent remembers
-task2 = Task("What's my name and favorite language?")
-result2 = agent.do(task2)
-print(result2)  # Output: Your name is Alice and you love Python
+result1 = agent.do(Task("My name is Alice"))
+result2 = agent.do(Task("What's my name?"))
+print(result2)  # "Your name is Alice"
 ```
 
-### With Message Limiting
+## With Message Limiting
+
+Control memory size by limiting to the last N conversation turns:
 
 ```python
 from upsonic import Agent, Task
-from upsonic.storage import Memory
-from upsonic.storage.providers.in_memory import InMemoryStorage
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
 
-# With message limiting
-storage = InMemoryStorage()
+storage = SqliteStorage(db_file="limited.db")
+
 memory = Memory(
     storage=storage,
     session_id="session_001",
     full_session_memory=True,
-    num_last_messages=10  # Keep last 10 conversation turns
+    num_last_messages=10  # Keep last 10 turns only
 )
 
 agent = Agent("openai/gpt-4o", memory=memory)
 
-task1 = Task("Let's discuss machine learning")
-result1 = agent.do(task1)
-
-task2 = Task("What were we talking about?")
-result2 = agent.do(task2)
-print(result2)
+result = agent.do(Task("Let's continue our discussion"))
+print(result)
 ```
 
-## Params
+## With Tool Call Results
 
-- `full_session_memory: bool` - Enable/disable conversation memory
-- `session_id: str` - Required identifier for the session
-- `num_last_messages: int` - Optional limit on conversation history
-- `feed_tool_call_results: bool` - Include/exclude tool calls from memory
+Include tool execution results in the conversation history:
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+from upsonic.tools import tool
+
+@tool
+def get_weather(city: str) -> str:
+    """Get weather for a city."""
+    return f"Weather in {city}: 72°F, Sunny"
+
+storage = SqliteStorage(db_file="tools.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=True,
+    feed_tool_call_results=True  # Include tool outputs in history
+)
+
+agent = Agent("openai/gpt-4o", tools=[get_weather], memory=memory)
+
+result1 = agent.do(Task("What's the weather in NYC?"))
+result2 = agent.do(Task("What was the weather you just told me?"))
+print(result2)  # Can reference previous tool results
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `full_session_memory` | `bool` | `False` | Enable conversation history |
+| `session_id` | `str` | auto-generated | Session identifier |
+| `num_last_messages` | `int \| None` | `None` | Limit to last N turns |
+| `feed_tool_call_results` | `bool` | `False` | Include tool outputs |

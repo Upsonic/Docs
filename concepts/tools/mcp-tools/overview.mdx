@@ -91,17 +91,27 @@ multi_handler = MultiMCPHandler(
         "uvx mcp-server-sqlite --db-path /tmp/db1.db",
         "uvx mcp-server-sqlite --db-path /tmp/db2.db",
     ],
+    tool_name_prefixes=["users_db", "products_db"],  # Prevent tool name collisions
     timeout_seconds=60
 )
 
 agent = Agent(model="openai/gpt-4o")
 task = Task(
-    description="Connect to both databases, query the user table from db1 and the products table from db2, and cross-reference the data.",
+    description="""
+    Connect to both databases using prefixed tools:
+    - Use 'users_db_*' tools to query the users database
+    - Use 'products_db_*' tools to query the products database
+    Cross-reference the data between both databases.
+    """,
     tools=[multi_handler]
 )
 result = agent.do(task)
 print(result)
 ```
+
+<Tip>
+Use `tool_name_prefix` or `tool_name_prefixes` when connecting to multiple servers that expose tools with the same names. This prevents collisions and makes it clear which server's tools to use.
+</Tip>
 
 ## MCP Server Resources
 

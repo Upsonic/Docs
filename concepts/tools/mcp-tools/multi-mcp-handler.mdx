@@ -72,6 +72,8 @@ print(result)
 - `timeout_seconds` (int): Connection timeout for all servers (default: 5)
 - `include_tools` (List[str]): Optional list of tool names to include from all servers
 - `exclude_tools` (List[str]): Optional list of tool names to exclude from all servers
+- `tool_name_prefix` (str): Optional single prefix for all servers (becomes `prefix_0`, `prefix_1`, etc.)
+- `tool_name_prefixes` (List[str]): Optional list of specific prefixes for each server (must match number of servers)
 
 ## Features
 
@@ -180,10 +182,86 @@ print(f"Total Records: {result.total_records}")
 print(f"Operations Summary: {result.operations_summary}")
 ```
 
+## Tool Name Prefixes
+
+When connecting to multiple servers of the same type, tools may have identical names (e.g., both SQLite servers have `create_table`). Use prefixes to distinguish them:
+
+### Using `tool_name_prefixes` (Recommended)
+
+Specify exact prefixes for each server:
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MultiMCPHandler
+
+# Create multi-handler with specific prefixes for each server
+multi_handler = MultiMCPHandler(
+    commands=[
+        "uvx mcp-server-sqlite --db-path /tmp/users.db",
+        "uvx mcp-server-sqlite --db-path /tmp/orders.db",
+    ],
+    tool_name_prefixes=["users_db", "orders_db"],  # Must match number of servers
+    timeout_seconds=60
+)
+
+# Create agent
+agent = Agent(
+    name="Multi-DB Agent",
+    role="Multi-database operations specialist",
+    goal="Work with multiple databases using prefixed tools"
+)
+
+# Create task with clear tool prefixes
+task = Task(
+    description="""
+    IMPORTANT: You have access to TWO separate databases with prefixed tools.
+    - Users database: Use tools prefixed with 'users_db_' (e.g., users_db_create_table, users_db_read_query)
+    - Orders database: Use tools prefixed with 'orders_db_' (e.g., orders_db_create_table, orders_db_read_query)
+    
+    Step 1: Using users_db tools, create a 'users' table with id, name, and email columns.
+    Insert 3 sample users.
+    
+    Step 2: Using orders_db tools, create an 'orders' table with id, user_id, and product columns.
+    Insert 4 sample orders.
+    
+    Step 3: Query both databases to show all records.
+    """,
+    tools=[multi_handler]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+### Using `tool_name_prefix` (Auto-indexed)
+
+Use a single base prefix that gets automatically indexed:
+
+```python
+from upsonic.tools.mcp import MultiMCPHandler
+
+# Single prefix becomes: db_0_create_table, db_1_create_table, etc.
+multi_handler = MultiMCPHandler(
+    commands=[
+        "uvx mcp-server-sqlite --db-path /tmp/db1.db",
+        "uvx mcp-server-sqlite --db-path /tmp/db2.db",
+    ],
+    tool_name_prefix="db",  # Becomes db_0_*, db_1_*, etc.
+    timeout_seconds=60
+)
+```
+
+### Prefix Benefits
+
+- **Prevents Collisions**: Multiple servers with same tool names work together
+- **Clear Identification**: Agents know exactly which server's tool to use
+- **Better Instructions**: Task descriptions can reference specific prefixed tools
+
 ## When to Use
 
 - Need to work with multiple MCP servers simultaneously
 - Want to aggregate tools from different servers
 - Need to coordinate operations across multiple databases/services
 - Want unified tool interface for multiple connections
+- Use prefixes when servers have overlapping tool names
 

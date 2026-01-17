@@ -1,0 +1,80 @@
+---
+title: "Storage Tables"
+description: "What data is stored in the session and user memory tables"
+---
+
+## Overview
+
+The Memory system uses two primary tables/collections to persist data:
+- **Sessions Table**: Stores conversation history, summaries, runs, and metadata
+- **User Memory Table**: Stores user profiles and extracted traits
+
+## Sessions Table Schema
+
+Stores all session-related data including messages, runs, and summaries.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `session_id` | `string` | Primary key, unique session identifier |
+| `session_type` | `string` | Type: `"agent"`, `"team"`, or `"workflow"` |
+| `agent_id` | `string` | Associated agent ID |
+| `team_id` | `string` | Associated team ID (for team sessions) |
+| `workflow_id` | `string` | Associated workflow ID (for workflow sessions) |
+| `user_id` | `string` | User identifier for cross-session tracking |
+| `messages` | `json` | Full conversation history (ModelRequest/ModelResponse) |
+| `summary` | `string` | Generated session summary (if `summary_memory=True`) |
+| `runs` | `json` | Individual run outputs with status, requirements, usage |
+| `metadata` | `json` | Custom session metadata |
+| `usage` | `json` | Aggregated token usage for the session |
+| `created_at` | `integer` | Unix timestamp of creation |
+| `updated_at` | `integer` | Unix timestamp of last update |
+
+
+## User Memory Table Schema
+
+Stores user profiles and traits extracted from conversations.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `user_id` | `string` | Primary key, unique user identifier |
+| `user_memory` | `json` | Extracted user traits and preferences |
+| `agent_id` | `string` | Agent that extracted these traits (optional) |
+| `team_id` | `string` | Team that extracted these traits (optional) |
+| `created_at` | `integer` | Unix timestamp of creation |
+| `updated_at` | `integer` | Unix timestamp of last update |
+
+
+## Accessing Stored Data
+
+### Via Memory Class
+
+```python
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="data.db")
+memory = Memory(storage=storage, session_id="session_001")
+
+# Get current session
+session = memory.get_session()
+print(session.messages)
+print(session.summary)
+
+# List all sessions for a user
+sessions = memory.list_sessions(user_id="user_123")
+```
+
+### Direct Storage Access
+
+```python
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="data.db")
+
+# Get session directly
+session = storage.get_session(session_id="session_001", deserialize=True)
+
+# Get user memory directly
+user_memory = storage.get_user_memory(user_id="user_123", deserialize=True)
+print(user_memory.user_memory)  # Dict of traits
+```

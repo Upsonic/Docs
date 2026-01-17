@@ -1,66 +1,78 @@
 ---
 title: "Attributes"
-description: "Configuration options for the Chat"
+description: "Configuration options for the Chat class"
 ---
 
-## Attributes
+## Constructor Parameters
 
-The Chat system is configured through the `Chat` class, which provides the following attributes:
-
-| Attribute | Type | Default | Description |
+| Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `session_id` | `str` | (required) | Unique identifier for this chat session |
 | `user_id` | `str` | (required) | Unique identifier for the user |
 | `agent` | `Agent` | (required) | The Agent instance to handle conversations |
-| `storage` | `Storage \| None` | `None` | Storage backend (defaults to InMemoryStorage) |
-| `full_session_memory` | `bool` | `True` | Enable full conversation history storage |
+| `storage` | `Storage` | `None` | Storage backend (defaults to InMemoryStorage) |
+| `full_session_memory` | `bool` | `True` | Store full conversation history |
 | `summary_memory` | `bool` | `False` | Enable conversation summarization |
 | `user_analysis_memory` | `bool` | `False` | Enable user profile analysis |
-| `user_profile_schema` | `type \| None` | `None` | Custom user profile schema |
-| `dynamic_user_profile` | `bool` | `False` | Enable dynamic profile schema generation |
-| `num_last_messages` | `int \| None` | `None` | Limit conversation history to last N messages |
+| `user_profile_schema` | `type` | `None` | Custom Pydantic schema for user profiles |
+| `dynamic_user_profile` | `bool` | `False` | Auto-generate profile schema from conversations |
+| `num_last_messages` | `int` | `None` | Limit history to last N messages |
 | `feed_tool_call_results` | `bool` | `False` | Include tool calls in memory |
-| `user_memory_mode` | `Literal['update', 'replace']` | `'update'` | How to update user profiles |
+| `user_memory_mode` | `'update' \| 'replace'` | `'update'` | How to update user profiles |
 | `debug` | `bool` | `False` | Enable debug logging |
+| `debug_level` | `int` | `1` | Debug verbosity (1=standard, 2=detailed) |
 | `max_concurrent_invocations` | `int` | `1` | Maximum concurrent invoke calls |
 | `retry_attempts` | `int` | `3` | Number of retry attempts for failed calls |
-| `retry_delay` | `float` | `1.0` | Delay between retry attempts |
+| `retry_delay` | `float` | `1.0` | Delay between retry attempts (seconds) |
 
-## Configuration Example
+## Instance Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `state` | `SessionState` | Current session state (IDLE, AWAITING_RESPONSE, STREAMING, ERROR) |
+| `all_messages` | `List[ChatMessage]` | All messages in the session |
+| `input_tokens` | `int` | Total input tokens used |
+| `output_tokens` | `int` | Total output tokens used |
+| `total_tokens` | `int` | Total tokens (input + output) |
+| `total_cost` | `float` | Total cost in USD |
+| `total_requests` | `int` | Total API requests made |
+| `total_tool_calls` | `int` | Total tool calls made |
+| `run_duration` | `float` | Total run duration in seconds |
+| `time_to_first_token` | `float` | Time to first token in seconds |
+| `start_time` | `float` | Session start time (Unix timestamp) |
+| `end_time` | `float` | Session end time (None if active) |
+| `duration` | `float` | Session duration in seconds |
+| `last_activity` | `float` | Time since last activity in seconds |
+| `is_closed` | `bool` | Whether the session is closed |
+
+## Example
 
 ```python
 import asyncio
-from upsonic import Agent, Task, Chat
-from upsonic.storage.providers import InMemoryStorage
+from upsonic import Agent, Chat
 
 
 async def main():
-    # Setup storage (in-memory, no dependencies required)
-    storage = InMemoryStorage()
-
-    # Create agent
     agent = Agent("openai/gpt-4o")
 
-    # Create chat with configuration
     chat = Chat(
         session_id="session1",
         user_id="user1",
         agent=agent,
-        storage=storage,
         full_session_memory=True,
         summary_memory=True,
-        user_analysis_memory=True,
         num_last_messages=50,
-        retry_attempts=3,
-        retry_delay=1.0
+        retry_attempts=3
     )
 
-    # Use chat
     response = await chat.invoke("Hello!")
     print(response)
+
+    print(f"State: {chat.state.value}")
+    print(f"Cost: ${chat.total_cost:.4f}")
+    print(f"Tokens: {chat.total_tokens}")
 
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
-

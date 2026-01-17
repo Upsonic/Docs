@@ -39,6 +39,21 @@ print(result)
 ## Parameters
 
 - `url` (str): The SSE endpoint URL of the MCP server
+- `tool_name_prefix` (str): Optional prefix to add to all tool names (prevents collisions)
+
+## Using Tool Name Prefix
+
+Add a `tool_name_prefix` when using multiple SSE-based MCP servers with overlapping tool names:
+
+```python
+class FetchMCP:
+    url = "https://fetch-mcp.example.com/sse"
+    tool_name_prefix = "fetch"  # Tools become: fetch_get_url, etc.
+
+class SearchMCP:
+    url = "https://search-mcp.example.com/sse"
+    tool_name_prefix = "search"  # Tools become: search_query, etc.
+```
 
 ## Characteristics
 

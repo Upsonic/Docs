@@ -1,31 +1,37 @@
 ---
-title: "Memory Management Strategies"
-description: "Advanced memory configuration and optimization"
+title: "Storage Backends"
+description: "Persistence options for Chat sessions"
 ---
 
-## Memory Management Strategies
+## Available Backends
 
-Configure memory behavior for optimal performance and cost.
+- **InMemoryStorage**: Ephemeral (default)
+- **SqliteStorage**: SQLite database
+- **PostgresStorage**: PostgreSQL
+- **MongoStorage**: MongoDB
+- **RedisStorage**: Redis with TTL
+- **JSONStorage**: File-based JSON
 
-## Limiting Message History
+## SQLite Storage
 
 ```python
 import asyncio
 from upsonic import Agent, Chat
+from upsonic.storage import SqliteStorage
 
 
 async def main():
+    storage = SqliteStorage(db_file="chat.db")
     agent = Agent("openai/gpt-4o")
 
     chat = Chat(
         session_id="session1",
         user_id="user1",
         agent=agent,
-        num_last_messages=20  # Only keep last 20 messages in context
+        storage=storage
     )
 
-    # Invoke chat
-    response = await chat.invoke("What is Machine Learning?")
+    response = await chat.invoke("Hello")
     print(response)
 
 
@@ -33,26 +39,28 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Memory with Summarization
+## PostgreSQL Storage
 
 ```python
 import asyncio
 from upsonic import Agent, Chat
+from upsonic.storage import PostgresStorage
 
 
 async def main():
+    storage = PostgresStorage(
+        db_url="postgresql://user:pass@localhost:5432/dbname"
+    )
     agent = Agent("openai/gpt-4o")
 
     chat = Chat(
         session_id="session1",
         user_id="user1",
         agent=agent,
-        full_session_memory=True,
-        summary_memory=True  # Automatically summarize long conversations
+        storage=storage
     )
 
-    # Invoke chat
-    response = await chat.invoke("Explain Deep Learning")
+    response = await chat.invoke("Hello")
     print(response)
 
 
@@ -60,25 +68,29 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Tool Call Results in Memory
+## MongoDB Storage
 
 ```python
 import asyncio
 from upsonic import Agent, Chat
+from upsonic.storage import MongoStorage
 
 
 async def main():
+    storage = MongoStorage(
+        db_url="mongodb://localhost:27017",
+        db_name="chat_db"
+    )
     agent = Agent("openai/gpt-4o")
 
     chat = Chat(
         session_id="session1",
         user_id="user1",
         agent=agent,
-        feed_tool_call_results=True  # Include tool execution results in memory
+        storage=storage
     )
 
-    # Invoke chat
-    response = await chat.invoke("What is NLP?")
+    response = await chat.invoke("Hello")
     print(response)
 
 
@@ -86,26 +98,30 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## User Profile Management
+## Redis Storage
 
 ```python
 import asyncio
 from upsonic import Agent, Chat
+from upsonic.storage import RedisStorage
 
 
 async def main():
+    storage = RedisStorage(
+        db_url="redis://localhost:6379/0",
+        db_prefix="chat",
+        expire=3600
+    )
     agent = Agent("openai/gpt-4o")
 
     chat = Chat(
         session_id="session1",
         user_id="user1",
         agent=agent,
-        user_analysis_memory=True,
-        user_memory_mode="update"  # Incrementally update profiles
+        storage=storage
     )
 
-    # Invoke chat
-    response = await chat.invoke("Describe Computer Vision")
+    response = await chat.invoke("Hello")
     print(response)
 
 
@@ -113,36 +129,29 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Dynamic Profile Schema
+## JSON Storage
 
 ```python
 import asyncio
 from upsonic import Agent, Chat
+from upsonic.storage import JSONStorage
 
 
 async def main():
+    storage = JSONStorage(db_path="./chat_data")
     agent = Agent("openai/gpt-4o")
 
     chat = Chat(
         session_id="session1",
         user_id="user1",
         agent=agent,
-        dynamic_user_profile=True  # Generate profile schema automatically
+        storage=storage
     )
 
-    # Invoke chat
-    response = await chat.invoke("What is Reinforcement Learning?")
+    response = await chat.invoke("Hello")
     print(response)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
-
-## Memory Optimization Tips
-
-1. Use `num_last_messages` to limit context size
-2. Enable `summary_memory` for long conversations
-3. Use `user_memory_mode="update"` for incremental profiles
-4. Disable `feed_tool_call_results` if tool outputs are large
-

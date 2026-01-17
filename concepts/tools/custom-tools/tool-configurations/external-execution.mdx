@@ -10,6 +10,7 @@ Mark a tool for execution outside the framework.
 ## Usage
 
 ```python
+import asyncio
 from upsonic.tools import tool
 from upsonic import Agent, Task
 
@@ -24,26 +25,32 @@ def external_database_query(query: str) -> str:
     Returns:
         Query results
     """
-    return f"Query executed: {query}"
+    return f"Query executed: {query} | Results: 10 rows returned"
 
-# Usage with external execution handling
-task = Task(
-    description="CALL external_database_query tool with the query 'SELECT * FROM users'",
-    tools=[external_database_query]
-)
-
-agent = Agent(model="openai/gpt-4o")
-result = agent.do(task)
-
-# Handle external execution
-if task.is_paused and task.tools_awaiting_external_execution:
-    for external_call in task.tools_awaiting_external_execution:
-        # Execute the actual external operation
-        result = external_database_query(**external_call.args)
-        external_call.result = result
-
+async def main():
+    agent = Agent(model="openai/gpt-4o-mini")
+    task = Task(
+        description="CALL external_database_query tool with the query 'SELECT * FROM users'",
+        tools=[external_database_query]
+    )
+    
+    output = await agent.do_async(task, return_output=True)
+    
+    # Handle external execution
+    for requirement in output.active_requirements:
+        if requirement.is_external_tool_execution:
+            tool_exec = requirement.tool_execution
+            tool_args = tool_exec.tool_args
+            # Execute the actual external operation
+            result = external_database_query(**tool_args)
+            requirement.set_external_execution_result(result)
+    
     # Continue execution
-    final_result = agent.continue_run(task)
+    final_result = await agent.continue_run_async(task=task, return_output=True)
+    return final_result
+
+# Run the async function
+result = asyncio.run(main())
 ```
 
 ## Parameters

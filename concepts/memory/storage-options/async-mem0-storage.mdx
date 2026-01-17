@@ -1,0 +1,83 @@
+---
+title: "AsyncMem0Storage"
+description: "Async Mem0 Platform and Open Source integration"
+---
+
+## Overview
+
+`AsyncMem0Storage` provides asynchronous integration with the Mem0 memory platform. Supports both the hosted Mem0 Platform (AsyncMemoryClient) and self-hosted Mem0 Open Source (AsyncMemory) deployments.
+
+## Basic Usage
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.mem0 import AsyncMem0Storage
+
+async def main():
+    storage = AsyncMem0Storage(
+        api_key="your_mem0_api_key",
+        org_id="your_org_id",
+        project_id="your_project_id"
+    )
+
+    memory = Memory(
+        storage=storage,
+        session_id="session_001",
+        user_id="user_123",
+        full_session_memory=True,
+        summary_memory=True,
+        user_analysis_memory=True,
+        model="openai/gpt-4o"
+    )
+
+    agent = Agent("openai/gpt-4o", memory=memory)
+
+    result1 = await agent.ado(Task("My name is Alice"))
+    result2 = await agent.ado(Task("What's my name?"))
+    print(result2)  # "Your name is Alice"
+
+asyncio.run(main())
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `memory_client` | `AsyncMemory` or `AsyncMemoryClient` | `None` | Pre-configured async Mem0 client |
+| `api_key` | `str` | `None` | Mem0 Platform API key (or use `MEM0_API_KEY` env var) |
+| `host` | `str` | `None` | Mem0 Platform host URL |
+| `org_id` | `str` | `None` | Mem0 Platform organization ID |
+| `project_id` | `str` | `None` | Mem0 Platform project ID |
+| `config` | `MemoryConfig` | `None` | Configuration for self-hosted AsyncMemory |
+| `session_table` | `str` | `None` | Custom name for the session table (used in metadata) |
+| `user_memory_table` | `str` | `None` | Custom name for the user memory table |
+| `default_user_id` | `str` | `"upsonic_default"` | Default user ID for Mem0 operations |
+| `id` | `str` | `None` | Unique identifier for this storage instance |
+
+## Self-Hosted Usage
+
+```python
+import asyncio
+from mem0 import AsyncMemory
+from mem0.configs.base import MemoryConfig
+from upsonic.storage.mem0 import AsyncMem0Storage
+
+async def main():
+    # Option 1: With custom config
+    config = MemoryConfig(...)
+    storage = AsyncMem0Storage(config=config)
+
+    # Option 2: With existing client
+    memory_client = AsyncMemory()
+    storage = AsyncMem0Storage(memory_client=memory_client)
+
+asyncio.run(main())
+```
+
+## Requirements
+
+```bash
+pip install mem0ai
+```

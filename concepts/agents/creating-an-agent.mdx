@@ -31,6 +31,59 @@ task = Task(description="Trending startups and products.")
 agent.print_do(task)
 ```
 
+## Setting a System Prompt
+
+You can customize your agent's behavior by providing a `system_prompt` or `instructions` parameter. The `system_prompt` gives you full control over the system message sent to the model, while `instructions` provides high-level guidance that gets incorporated into the agent's default prompt.
+
+### Using instructions (Recommended for most cases)
+
+The `instructions` parameter is the simplest way to guide your agent's behavior:
+
+```python
+from upsonic import Agent
+
+agent = Agent(
+    model="openai/gpt-4o",
+    instructions="You are a helpful assistant that specializes in Python programming. Be concise and provide code examples when relevant."
+)
+```
+
+### Using system_prompt (Full control)
+
+For complete control over the system message, use `system_prompt`:
+
+```python
+from upsonic import Agent
+
+agent = Agent(
+    model="openai/gpt-4o",
+    system_prompt="""You are an expert financial analyst. 
+Your responses should:
+- Be data-driven and analytical
+- Include relevant metrics when available
+- Maintain a professional tone
+- Cite sources when making claims"""
+)
+```
+
+### Combining with Agent Identity
+
+You can also define your agent's identity using `role`, `goal`, and other attributes:
+
+```python
+from upsonic import Agent
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="DataBot",
+    role="Data Analyst",
+    goal="Help users understand and visualize their data",
+    instructions="Always ask clarifying questions before analyzing data. Provide visualizations when possible.",
+    education="PhD in Statistics",
+    work_experience="10 years of experience in data science and analytics"
+)
+```
+
 ## Run your Agent
 
 When running your agent, use the `Agent.print_do()` method to print the response in the terminal. This is only for development purposes and not recommended for production use. In production, use the `Agent.do()` or `Agent.do_async()` methods. For example:
@@ -64,10 +117,9 @@ async def main():
     print(result)
 
     ################ STREAM RESPONSE #################
-    async with agent.stream(task) as result:
-        async for text_chunk in result.stream_output():
-            print(text_chunk, end='', flush=True)
-        print()  # New line after streaming
+    async for text_chunk in agent.astream(task):
+        print(text_chunk, end='', flush=True)
+    print()  # New line after streaming
 
 if __name__ == "__main__":
     asyncio.run(main())
