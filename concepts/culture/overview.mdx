@@ -1,0 +1,230 @@
+---
+title: "Cultural Knowledge"
+description: "Share knowledge, principles, and best practices across all your agents"
+sidebarTitle: Overview
+hideToc: true
+---
+
+## Overview
+
+Think of agents that continuously improve by capturing insights from every conversation and making those discoveries available to the entire team. A research assistant agent finds that breaking complex topics into digestible sections with visual aids increases comprehension. A code analysis agent learns that prioritizing security checks before performance optimization leads to better outcomes. These valuable patterns shouldn't disappear—they should evolve into a collective intelligence that every agent can leverage immediately.
+
+Culture establishes a common knowledge foundation where agents preserve universal guidelines, proven strategies, and transferable wisdom that enhance every interaction. While Memory captures individual user details ("John likes detailed explanations"), Culture preserves collective insights that help everyone ("Break complex concepts into smaller, digestible parts with examples").
+
+After completing work, agents can analyze successful approaches and convert those patterns into cultural knowledge. Then, whenever any agent encounters a comparable scenario, it instantly taps into this shared culture and implements those proven strategies.
+
+The Culture feature automatically:
+- Extracts structured knowledge from natural language descriptions
+- Combines user-provided knowledge with stored knowledge (if storage is configured)
+- Injects cultural guidelines into agent system prompts
+- Persists cultural knowledge across sessions and agents (optional, requires storage)
+
+**Note**: Storage is optional. Cultural knowledge works with or without a storage backend.
+
+## Key Features
+
+- **Flexible Input**: Provide cultural knowledge as structured `CulturalKnowledge` instances or natural language strings
+- **Automatic Extraction**: Use AI to extract structured knowledge from plain text descriptions
+- **Knowledge Combination**: Automatically merge user input with existing stored knowledge
+- **Persistent Storage**: Save and retrieve cultural knowledge across sessions using any storage backend
+- **System Prompt Integration**: Cultural knowledge is automatically injected into agent system prompts
+
+## Quick Start
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+# Setup storage and memory with culture enabled
+storage = SqliteStorage(db_file="culture.db")
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    culture_memory_enabled=True,
+    model="openai/gpt-4o"
+)
+
+# Create agent with cultural knowledge as a string
+agent = Agent(
+    model="openai/gpt-4o",
+    memory=memory,
+    cultural_knowledge="I want my agent to be helpful, professional, and always prioritize customer satisfaction"
+)
+
+# Use the agent - cultural knowledge is automatically applied
+result = agent.do(Task("A customer is upset about a delayed order. How should I respond?"))
+print(result)
+```
+
+## Usage Scenarios
+
+Cultural knowledge works in five scenarios:
+1. **String input with storage** - Combines user string with stored knowledge
+2. **Instance input with storage** - Combines user instance with stored knowledge
+3. **Storage-only** - Uses only stored knowledge
+4. **String input without storage** - Uses only user string (no storage needed)
+5. **Instance input without storage** - Uses only user instance (no storage needed)
+
+### 1. String Input (Automatic Extraction)
+
+Provide cultural knowledge as a natural language string. The system automatically extracts structured knowledge:
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="culture_string.db")
+memory = Memory(
+    storage=storage,
+    session_id="string_session",
+    user_id="user_123",
+    culture_memory_enabled=True,
+    model="openai/gpt-4o"
+)
+
+agent = Agent(
+    model="openai/gpt-4o",
+    memory=memory,
+    cultural_knowledge="Act like a friendly hotel concierge who welcomes guests warmly"
+)
+
+# Use the agent
+result = agent.do(Task("Greet me as a guest arriving at your hotel"))
+print(result)
+```
+
+### 2. Structured Instance (Direct Use)
+
+Provide a structured `CulturalKnowledge` instance for precise control:
+
+```python
+from upsonic import Agent, Task
+from upsonic.culture import CulturalKnowledge
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="culture_instance.db")
+memory = Memory(
+    storage=storage,
+    session_id="instance_session",
+    user_id="user_123",
+    culture_memory_enabled=True,
+    model="openai/gpt-4o"
+)
+
+code_review_standards = CulturalKnowledge(
+    name="Code Review Standards",
+    summary="Focus on maintainability, security, and performance",
+    categories=["engineering", "code-review"],
+    content=(
+        "- Check for security vulnerabilities first\n"
+        "- Verify error handling is comprehensive\n"
+        "- Ensure code is self-documenting\n"
+        "- Suggest performance optimizations where relevant"
+    ),
+    notes=["Always be constructive", "Focus on teaching"]
+)
+
+agent = Agent(
+    model="openai/gpt-4o",
+    memory=memory,
+    cultural_knowledge=code_review_standards
+)
+
+# Use the agent
+result = agent.do(Task("Review this code: def add(a, b): return a + b"))
+print(result)
+```
+
+### 3. Storage-Only (No User Input)
+
+Use cultural knowledge that's already stored in your database (requires storage):
+
+```python
+from upsonic import Agent, Task
+from upsonic.culture import CulturalKnowledge
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+import uuid
+
+# First, store cultural knowledge
+storage = SqliteStorage(db_file="culture_storage.db")
+customer_service = CulturalKnowledge(
+    id=str(uuid.uuid4()),
+    name="Customer Service Excellence",
+    summary="Always prioritize customer satisfaction",
+    categories=["customer-service"],
+    content=(
+        "- Respond promptly and professionally\n"
+        "- Use clear, simple language\n"
+        "- Acknowledge customer concerns empathetically"
+    )
+)
+storage.upsert_cultural_knowledge(customer_service)
+
+# Create memory and agent
+memory = Memory(
+    storage=storage,
+    session_id="storage_session",
+    user_id="user_123",
+    culture_memory_enabled=True,  # Loads stored knowledge
+    model="openai/gpt-4o"
+)
+
+# No cultural_knowledge parameter - uses stored knowledge only
+agent = Agent(
+    model="openai/gpt-4o",
+    memory=memory
+)
+
+# Use the agent
+result = agent.do(Task("A customer is upset about a delayed shipment. How should I respond?"))
+print(result)
+```
+
+### 4. String Input Without Storage
+
+Works without any storage backend:
+
+```python
+from upsonic import Agent, Task
+
+# No storage needed - just provide cultural knowledge
+agent = Agent(
+    model="openai/gpt-4o",
+    cultural_knowledge="Be helpful and professional"
+)
+
+result = agent.do(Task("How should I greet a customer?"))
+print(result)
+```
+
+### 5. Instance Input Without Storage
+
+Works without any storage backend:
+
+```python
+from upsonic import Agent, Task
+from upsonic.culture import CulturalKnowledge
+
+knowledge = CulturalKnowledge(
+    name="Code Review Standards",
+    content="Focus on security and performance"
+)
+
+agent = Agent(
+    model="openai/gpt-4o",
+    cultural_knowledge=knowledge
+)
+
+result = agent.do(Task("Review this code: def add(a, b): return a + b"))
+print(result)
+```
+
+## Navigation
+
+- [Usage Guide](/concepts/culture/usage) - Detailed usage examples and patterns
+- [Concepts](/concepts/culture/concepts) - Understanding CulturalKnowledge, CultureManager, and storage
