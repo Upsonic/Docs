@@ -7,6 +7,16 @@ description: "Redis storage for distributed and high-performance systems"
 
 `RedisStorage` provides a Redis-based storage backend. Ideal for distributed systems, high-performance requirements, and applications needing TTL-based expiration.
 
+## Install
+
+<Note>
+  Install the Redis storage optional dependency group:
+
+  ```bash
+  pip install "upsonic[redis-storage]"
+  ```
+</Note>
+
 ## Basic Usage
 
 ```python
@@ -59,8 +69,3 @@ Keys are structured as: `{db_prefix}:{table}:{id}`
 
 Example: `myapp:sessions:session_001`
 
-## Requirements
-
-```bash
-pip install redis
-```

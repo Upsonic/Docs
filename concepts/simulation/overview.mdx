@@ -1,0 +1,70 @@
+---
+title: "Simulation"
+sidebarTitle: "Overview"
+description: "Run LLM-powered time-series simulations for forecasting and scenario analysis"
+---
+
+Simulation enables running time-series simulations powered by LLMs to forecast metrics and analyze scenarios over time. Each simulation scenario models real-world dynamics using AI reasoning to predict future states.
+
+## Available Scenarios
+
+<CardGroup cols={2}>
+
+  <Card title="Merchant Revenue Forecast" icon="chart-line" href="/simulation/scenarios/merchant_revenue_forecast">
+
+    Forecast e-commerce merchant revenue with customer behavior and market dynamics
+
+  </Card>
+
+</CardGroup>
+
+## How Simulations Work
+
+Simulations iterate through time steps, using LLMs to predict metric values based on previous state and contextual factors. Each simulation:
+
+* Builds prompts with previous state and business context
+
+* Calls the LLM to predict next-step metrics with structured output
+
+* Tracks metrics throughout the simulation timeline
+
+* Generates comprehensive reports in multiple formats
+
+## Using Simulations
+
+Simulations are created with a scenario object and configuration:
+
+```python
+from upsonic.simulation import Simulation
+from upsonic.simulation.scenarios import MerchantRevenueForecastSimulation
+
+simulation = Simulation(
+    MerchantRevenueForecastSimulation(
+        merchant_name="TechCo",
+        sector="E-commerce",
+        location="San Francisco",
+        current_monthly_revenue_usd=50000
+    ),
+    model="openai/gpt-4o",
+    time_step="daily",
+    simulation_duration=100,
+    metrics_to_track=["monthly recurring revenue"]
+)
+
+result = simulation.run()
+
+# Export reports with chainable methods
+result.report("summary").to_json("summary.json")
+# result.report("summary").to_csv("summary.csv")
+# result.report("summary").to_html("summary.html")
+# result.report("summary").to_pdf("summary.pdf")
+# result.report("summary").show()
+
+# Other report types:
+# result.report("detailed").to_json("detailed.json")
+# result.report("visual").to_html("charts.html")
+# result.report("statistical").to_json("stats.json")
+
+# Save all reports at once:
+# result.reports().save_all(directory="./reports", format="json")
+```
