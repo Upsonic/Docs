@@ -7,12 +7,32 @@ description: "How to add documents to your KnowledgeBase"
 
 KnowledgeBase accepts multiple types of sources: individual files, directories, or direct string content. It automatically detects file types and uses appropriate loaders.
 
-## Dependencies
+## Installation
 
-```bash
-uv pip install "upsonic[rag]"
-# pip install "upsonic[rag]"
-```
+To add files to your KnowledgeBase, you'll need a vector database provider and document loaders for the file types you want to process.
+
+<Note>
+  **Example: Setting up for PDF files with Chroma**
+
+  To process PDF files and store them in ChromaDB:
+
+  ```bash
+  pip install "upsonic[chroma]"
+  pip install "upsonic[pdf-loader]"
+  ```
+
+  Or install both at once:
+
+  ```bash
+  pip install "upsonic[chroma,pdf-loader]"
+  ```
+
+  **What you need:**
+  - A vector database provider (e.g., `chroma`, `qdrant`, `milvus`, `weaviate`, `pinecone`, `faiss`, or `pgvector`)
+  - Document loaders for your file types (e.g., `pdf-loader`, `docx-loader`, `csv-loader`, `markdown-loader`, `html-loader`, `json-loader`, `xml-loader`, `yaml-loader`, `text-loader`)
+
+  The examples below use Chroma and PDF loader, but you can use any combination of supported providers and loaders. See [Storage Providers](/knowledgebase/storage-providers/chroma) and [Loaders](/knowledgebase/loaders/pypdf) for all options.
+</Note>
 
 ## Examples
 
