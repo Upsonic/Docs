@@ -7,6 +7,16 @@ description: "Lightweight SQLite database storage for local development"
 
 `SqliteStorage` provides a file-based SQLite storage backend. Ideal for local development, single-node deployments, and testing.
 
+## Install
+
+<Note>
+  Install the SQLite storage optional dependency group:
+
+  ```bash
+  uv pip install "upsonic[sqlite-storage]"
+  ```
+</Note>
+
 ## Basic Usage
 
 ```python
@@ -48,8 +58,3 @@ print(result2)  # "Your name is Alice"
 
 `SqliteStorage` is a **synchronous** storage implementation. It uses SQLAlchemy with thread-safe scoped sessions.
 
-## Requirements
-
-```bash
-pip install sqlalchemy
-```

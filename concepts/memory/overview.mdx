@@ -9,12 +9,26 @@ hideToc: true
 
 Memory enables agents to remember conversations and learn about users across sessions. It maintains chat history, generates summaries, and builds user profiles for personalized interactions.
 
+## Installation
+
+Memory requires a storage backend to persist data. Choose the storage option that fits your deployment needs.
+
 <Note>
-  **Storage Installation**
+  **Example: Setting up Memory with SQLite**
+
+  For local development and testing, use SQLite storage:
 
   ```bash
-  pip install upsonic[storage]
+  uv pip install "upsonic[sqlite-storage]"
   ```
+
+  **Other storage options:**
+  - `[redis-storage]` - Redis for distributed, high-performance systems
+  - `[postgres-storage]` - PostgreSQL for production, multi-node deployments
+  - `[mongo-storage]` - MongoDB for document-based, scalable systems
+  - `[mem0-storage]` - Mem0 Platform integration
+
+  For production deployments, PostgreSQL or Redis are recommended. See [Storage Options](/concepts/memory/storage-options/sqlite-storage) for detailed configuration.
 </Note>
 
 ## Key Features

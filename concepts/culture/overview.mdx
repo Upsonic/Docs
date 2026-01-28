@@ -1,0 +1,47 @@
+---
+title: "Culture"
+description: "Define agent behavior and communication guidelines"
+sidebarTitle: Overview
+hideToc: true
+---
+
+## Overview
+
+Culture allows you to define how your agents should behave, communicate, and interact. Unlike User Memory (which stores user-specific traits and preferences), Culture defines universal behavioral guidelines of the agent that apply to all interactions.
+
+## Culture vs. User Memory
+
+| Aspect | Culture | User Memory |
+|--------|---------|-------------|
+| **Scope** | Universal, applies to all interactions | User-specific, per-user, per-session |
+| **Purpose** | Behavioral guidelines, communication style, principles | User traits, preferences, characteristics |
+| **Storage** | No storage required (works standalone) | Requires storage backend |
+| **Use Case** | "You are a 5-star hotel receptionist" | "User prefers formal tone, interests in sport" |
+| **Example** | Agent behavior and communication style | User's name, expertise, preferences |
+
+## Quick Example
+
+```python
+from upsonic import Agent, Task
+from upsonic.culture import Culture
+
+# Create Culture with description
+my_culture = Culture(
+    description="You are a 5-star hotel receptionist",
+    add_system_prompt=True,  # Add to system prompt (default: True)
+    repeat=False,            # Repeat periodically (default: False)
+    repeat_interval=5        # Messages between repeats (default: 5)
+)
+
+# Create Agent with Culture
+agent = Agent("openai/gpt-4o", culture=my_culture)
+
+# Use the agent - culture guidelines are automatically applied
+result = agent.do(Task("Greet me as I arrive at the hotel"))
+print(result)
+```
+
+The Culture feature automatically:
+- Extracts structured guidelines from your description (Tone of Speech, Topics to Avoid, Topics to Help, Things to Pay Attention To)
+- Injects culture guidelines into the agent's system prompt
+- Optionally repeats culture guidelines periodically during conversations

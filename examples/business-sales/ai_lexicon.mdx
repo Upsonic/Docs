@@ -1,0 +1,626 @@
+---
+title: "AI Governance Lexicon Agent"
+description: "Use Upsonic's Agent to research and explain AI governance terms with structured educational content including detailed explanations and frequently asked questions"
+---
+
+This example demonstrates how to create and use an **Upsonic Agent** to research AI governance terms and provide structured educational content. The example showcases how to leverage Upsonic's web search integration to gather authoritative information and generate comprehensive explanations with FAQs.
+
+## Overview
+
+Upsonic framework provides seamless integration for AI agents with web search capabilities. This example showcases:
+
+1. **Agent Integration** — Using Upsonic Agent with specialized system prompts for educational content
+2. **Web Research** — Using DuckDuckGo for real-time AI governance term research
+3. **Structured Output** — Pydantic schemas for consistent, machine-readable responses
+4. **Educational Content** — Generating detailed explanations and FAQs for complex terms
+5. **FastAPI Server** — Running the agent as a production-ready API server
+
+The agent acts as an AI Governance Lexicon Expert that:
+- Researches AI governance terms using web search
+- Provides comprehensive, accessible explanations
+- Generates relevant FAQs with detailed answers
+- Returns structured, validated output
+
+## Project Structure
+
+```
+ai_lexicon/
+├── main.py                    # Entry point with main() and amain()
+├── agent.py                   # Agent configuration and system prompts
+├── tools.py                   # Search tool configuration
+├── schemas.py                 # Pydantic output schemas
+├── upsonic_configs.json       # Upsonic CLI configuration
+└── README.md                  # Quick start guide
+```
+
+### Environment Variables
+
+You can configure the model using environment variables:
+
+```bash
+# Required: Set OpenAI API key
+export OPENAI_API_KEY="your-api-key"
+```
+
+## Installation
+
+```bash
+# Install dependencies from upsonic_configs.json
+upsonic install
+```
+
+### Managing Dependencies
+
+```bash
+# Add a package
+upsonic add <package> <section>
+upsonic add pandas api
+
+# Remove a package
+upsonic remove <package> <section>
+upsonic remove streamlit api
+```
+
+**Sections:** `api`, `streamlit`, `development`
+
+## Usage
+
+### Option 1: Run Directly
+
+```bash
+python3 main.py
+```
+
+Runs the agent with default test inputs (Gap analysis for AI governance).
+
+### Option 2: Run as API Server
+
+```bash
+upsonic run
+```
+
+Server starts at `http://localhost:8000`. API documentation at `/docs`.
+
+**Example API call:**
+```bash
+curl -X POST http://localhost:8000/call \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputs": {
+      "term": "Gap analysis for AI governance"
+    }
+  }'
+```
+
+## How It Works
+
+| Component | Description |
+|-----------|-------------|
+| Agent | Upsonic Agent configured as AI Governance Lexicon Expert |
+| Web Search Tool | DuckDuckGo integration for researching terms |
+| System Prompt | Specialized prompt for educational content generation |
+| Output Schema | Pydantic model ensuring structured responses |
+| Task Execution | Research → Synthesis → Structured Output |
+
+### Example Output
+
+**Query:**
+```json
+{
+  "term": "Gap analysis for AI governance"
+}
+```
+
+**Response:**
+```json
+{
+  "term": "Gap analysis for AI governance",
+  "brief_explanation": "Gap analysis for AI governance is a systematic process...",
+  "faqs": [
+    {
+      "question": "What is the purpose of gap analysis in AI governance?",
+      "answer": "Gap analysis helps organizations identify..."
+    }
+  ]
+}
+```
+
+## Complete Implementation
+
+### main.py
+
+```python
+"""
+Main entry point for AI Governance Lexicon Agent.
+
+This module provides the entry point that coordinates the research 
+and explanation generation for AI governance terms.
+"""
+
+from __future__ import annotations
+
+from typing import Dict, Any
+
+from upsonic import Task
+
+try:
+    from .agent import create_lexicon_agent
+    from .schemas import LexiconEntry
+except ImportError:
+    from agent import create_lexicon_agent
+    from schemas import LexiconEntry
+
+
+def main(inputs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Main function for AI Lexicon agent.
+    
+    Args:
+        inputs: Dictionary containing:
+            - term: The AI governance term to explain (required)
+            - model: Optional model identifier (default: "openai/gpt-4o")
+            - max_search_results: Optional max search results (default: 10)
+    
+    Returns:
+        Dictionary containing the detailed explanation and FAQs
+    """
+    term = inputs.get("term")
+    if not term:
+        # Fallback for "keyword" if "term" is not provided
+        term = inputs.get("keyword")
+        
+    if not term:
+        raise ValueError("term or keyword is required in inputs")
+    
+    model = inputs.get("model", "openai/gpt-4o")
+    max_search_results_input = inputs.get("max_search_results", 10)
+    max_search_results: int = int(max_search_results_input) if max_search_results_input is not None else 10
+    
+    # Initialize the agent
+    agent = create_lexicon_agent(
+        model=model,
+        max_search_results=max_search_results
+    )
+    
+    # Define the task
+    task_description = f"""
+    Research and explain the AI governance term: "{term}"
+    
+    1. Search for current definitions, frameworks, and best practices.
+    2. Provide a brief but comprehensive explanation.
+    3. Generate 3-5 relevant FAQs with answers.
+    """
+    
+    task = Task(task_description, response_format=LexiconEntry)
+    
+    # Execute the agent
+    result = agent.do(task)
+    
+    # Return result as dictionary
+    return result.model_dump(mode='json')
+
+
+async def amain(inputs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Async main function for AI Lexicon agent.
+    
+    Args:
+        inputs: Dictionary containing:
+            - term: The AI governance term to explain (required)
+            - model: Optional model identifier (default: "openai/gpt-4o")
+            - max_search_results: Optional max search results (default: 10)
+    
+    Returns:
+        Dictionary containing the detailed explanation and FAQs
+    """
+    term = inputs.get("term")
+    if not term:
+        # Fallback for "keyword" if "term" is not provided
+        term = inputs.get("keyword")
+        
+    if not term:
+        raise ValueError("term or keyword is required in inputs")
+    
+    model = inputs.get("model", "openai/gpt-4o")
+    max_search_results_input = inputs.get("max_search_results", 10)
+    max_search_results: int = int(max_search_results_input) if max_search_results_input is not None else 10
+    
+    # Initialize the agent
+    agent = create_lexicon_agent(
+        model=model,
+        max_search_results=max_search_results
+    )
+    
+    # Define the task
+    task_description = f"""
+    Research and explain the AI governance term: "{term}"
+    
+    1. Search for current definitions, frameworks, and best practices.
+    2. Provide a brief but comprehensive explanation.
+    3. Generate 3-5 relevant FAQs with answers.
+    """
+    
+    task = Task(task_description, response_format=LexiconEntry)
+    
+    # Execute the agent
+    result = await agent.do_async(task)
+    
+    # Return result as dictionary
+    return result.model_dump(mode='json')
+
+
+if __name__ == "__main__":
+    import json
+    import sys
+    
+    test_inputs = {
+        "term": "Gap analysis for AI governance",
+        "model": "openai/gpt-4o",
+    }
+    
+    if len(sys.argv) > 1:
+        try:
+            with open(sys.argv[1], "r") as f:
+                file_inputs = json.load(f)
+                if file_inputs:
+                    test_inputs = file_inputs
+        except Exception as e:
+            print(f"Error loading JSON file: {e}")
+            print("Using default test inputs")
+    
+    try:
+        print(f"Researching term: {test_inputs.get('term') or test_inputs.get('keyword')}...")
+        result = main(test_inputs)
+        
+        print("\n" + "=" * 80)
+        print("LEXICON ENTRY GENERATED")
+        print("=" * 80)
+        
+        print(f"\n{result.get('term')}:")
+        print(f"\n{result.get('brief_explanation')}")
+        
+        print(f"\nFAQs:")
+        for i, faq in enumerate(result.get('faqs', []), 1):
+            print(f"\nQ{i}: {faq.get('question')}")
+            print(f"A{i}: {faq.get('answer')}")
+            
+    except Exception as e:
+        print(f"\n❌ Error during execution: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+```
+
+### agent.py
+
+```python
+"""
+Agent configuration for the AI Lexicon Agent.
+
+This module creates and configures the Upsonic Agent with 
+appropriate tools and system prompts for AI governance term explanations.
+"""
+
+from __future__ import annotations
+
+from typing import Optional
+
+from upsonic import Agent
+
+try:
+    from .tools import get_all_tools
+except ImportError:
+    from tools import get_all_tools
+
+
+LEXICON_SYSTEM_PROMPT = """You are an AI Governance Lexicon Expert. Your role is to provide comprehensive, 
+accurate, and educational explanations of AI-related governance terms and concepts.
+
+When given an AI governance term or concept, you must:
+
+1. RESEARCH: Use the web search tool to find current, authoritative information about the term.
+   Search for definitions, frameworks, best practices, and real-world applications.
+
+2. EXPLAIN: Provide a detailed but accessible explanation that covers:
+   - Clear definition of the term
+   - Why it matters in AI governance
+   - Key components or aspects
+   - Practical applications and examples
+   - Relationship to other governance concepts
+
+3. FAQs: Generate 3-5 frequently asked questions that someone learning about this term 
+   would likely have, along with comprehensive answers.
+
+Your explanations should be:
+- Accurate and well-researched (use search tools to verify information)
+- Educational and accessible to both technical and non-technical audiences
+- Practical with real-world examples when possible
+- Current and up-to-date with latest industry practices
+
+Always search the internet first to ensure your explanations are based on current 
+best practices and authoritative sources."""
+
+
+def create_lexicon_agent(
+    model: str = "openai/gpt-4o",
+    max_search_results: int = 10,
+) -> Agent:
+    """
+    Create and configure the AI Lexicon agent.
+    
+    Args:
+        model: The LLM model identifier to use
+        max_search_results: Maximum search results per query
+        
+    Returns:
+        Configured Agent instance ready for lexicon tasks
+    """
+    tools = get_all_tools(max_search_results=max_search_results)
+    
+    agent = Agent(
+        name="AI Governance Lexicon Agent",
+        model=model,
+        system_prompt=LEXICON_SYSTEM_PROMPT,
+    )
+    
+    agent.add_tools(tools)
+    
+    return agent
+```
+
+### tools.py
+
+```python
+"""
+Tools for the AI Lexicon Agent.
+
+This module provides web search tools for researching AI governance terms
+and retrieving comprehensive information from the internet.
+"""
+
+from __future__ import annotations
+
+from typing import Callable
+
+
+def get_search_tool(max_results: int = 10) -> Callable:
+    """
+    Get the DuckDuckGo search tool for researching AI terms.
+    
+    Args:
+        max_results: Maximum number of search results to return
+        
+    Returns:
+        A configured search tool function
+    """
+    from upsonic.tools.common_tools.duckduckgo import duckduckgo_search_tool
+    
+    return duckduckgo_search_tool(
+        duckduckgo_client=None,
+        max_results=max_results
+    )
+
+
+def get_all_tools(max_search_results: int = 10) -> list:
+    """
+    Get all tools configured for the AI Lexicon agent.
+    
+    Args:
+        max_search_results: Maximum search results per query
+        
+    Returns:
+        List of all configured tools
+    """
+    return [
+        get_search_tool(max_results=max_search_results),
+    ]
+```
+
+### schemas.py
+
+```python
+"""
+Output schemas for the AI Lexicon Agent.
+
+This module defines the Pydantic models for structured output
+from the AI governance lexicon explanations.
+"""
+
+from __future__ import annotations
+
+from typing import List
+from pydantic import BaseModel, Field
+
+
+class FAQ(BaseModel):
+    """A single frequently asked question with its answer."""
+    
+    question: str = Field(
+        description="A common question about the AI governance term"
+    )
+    answer: str = Field(
+        description="A comprehensive answer to the question"
+    )
+
+
+class LexiconEntry(BaseModel):
+    """
+    Complete lexicon entry for an AI governance term.
+    
+    This represents the full output of the AI Lexicon agent,
+    containing a brief explanation and FAQs for the given term.
+    """
+    
+    term: str = Field(
+        description="The AI governance term being explained"
+    )
+    brief_explanation: str = Field(
+        description="A detailed but concise explanation of the term, covering its definition, importance, and practical applications in AI governance"
+    )
+    faqs: List[FAQ] = Field(
+        default_factory=list,
+        description="List of frequently asked questions and their answers about the term"
+    )
+    
+    def format_output(self) -> str:
+        """Format the lexicon entry as a readable string."""
+        output_lines = [
+            f"{self.term}:",
+            "",
+            self.brief_explanation,
+            "",
+            "FAQs:",
+            ""
+        ]
+        
+        for i, faq in enumerate(self.faqs, 1):
+            output_lines.append(f"Q{i}: {faq.question}")
+            output_lines.append(f"A{i}: {faq.answer}")
+            output_lines.append("")
+        
+        return "\n".join(output_lines)
+```
+
+### upsonic_configs.json
+
+```json
+{
+    "envinroment_variables": {
+        "UPSONIC_WORKERS_AMOUNT": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "API_WORKERS": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "RUNNER_CONCURRENCY": {
+            "type": "number",
+            "description": "The number of runners for the Upsonic API",
+            "default": 1
+        }
+    },
+    "machine_spec": {
+        "cpu": 2,
+        "memory": 4096,
+        "storage": 1024
+    },
+    "agent_name": "AI Governance Lexicon Agent",
+    "description": "An educational AI agent that takes an AI governance term as input, researches it using web tools, and provides a detailed explanation along with frequently asked questions.",
+    "icon": "book-open",
+    "language": "python",
+    "streamlit": false,
+    "proxy_agent": false,
+    "dependencies": {
+        "api": [
+            "upsonic",
+            "upsonic[tools]"
+        ],
+        "development": [
+            "python-dotenv",
+            "pytest"
+        ]
+    },
+    "entrypoints": {
+        "api_file": "main.py",
+        "streamlit_file": "streamlit_app.py"
+    },
+    "input_schema": {
+        "inputs": {
+            "term": {
+                "type": "string",
+                "description": "The AI governance term to research and explain (e.g., 'Gap analysis for AI governance')",
+                "required": true,
+                "default": null
+            },
+            "model": {
+                "type": "string",
+                "description": "Optional model identifier",
+                "required": false,
+                "default": "openai/gpt-4o"
+            },
+            "max_search_results": {
+                "type": "number",
+                "description": "Maximum number of search results to use for research",
+                "required": false,
+                "default": 10
+            }
+        }
+    },
+    "output_schema": {
+        "term": {
+            "type": "string",
+            "description": "The AI governance term being explained"
+        },
+        "brief_explanation": {
+            "type": "string",
+            "description": "A detailed but concise explanation of the term"
+        },
+        "faqs": {
+            "type": "array",
+            "description": "List of frequently asked questions and their answers",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "description": "The question"
+                    },
+                    "answer": {
+                        "type": "string",
+                        "description": "The answer"
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+## Key Features
+
+### Agent Configuration
+
+The agent is configured with a specialized system prompt that guides it to:
+- Research terms using web search tools
+- Provide comprehensive, accessible explanations
+- Generate relevant FAQs with detailed answers
+- Ensure accuracy through authoritative sources
+
+### Web Search Integration
+
+Uses DuckDuckGo search tool to:
+- Find current definitions and frameworks
+- Gather best practices and real-world applications
+- Verify information from authoritative sources
+- Stay up-to-date with industry practices
+
+### Structured Output
+
+Pydantic schemas ensure:
+- Consistent response format
+- Type validation
+- Machine-readable output
+- Clear documentation of expected structure
+
+### Educational Focus
+
+The agent is designed to:
+- Explain complex terms in accessible language
+- Provide practical examples and applications
+- Generate relevant FAQs for learning
+- Cover both technical and non-technical aspects
+
+## Example Queries
+
+- "Gap analysis for AI governance"
+- "Model interpretability techniques"
+- "EU AI Act compliance requirements"
+- "AI safety frameworks"
+- "Algorithmic bias mitigation"
+
+## Repository
+
+View the complete example: [AI Governance Lexicon Agent](https://github.com/Upsonic/Examples/task_examples/ai_lexicon)

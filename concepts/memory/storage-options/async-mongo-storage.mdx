@@ -7,6 +7,16 @@ description: "Async MongoDB storage for document-based scalable systems"
 
 `AsyncMongoStorage` provides an asynchronous MongoDB-based storage backend. Supports both Motor (legacy) and PyMongo async (recommended) clients. Ideal for document-based applications, flexible schemas, and horizontally scalable deployments.
 
+## Install
+
+<Note>
+  Install the MongoDB storage optional dependency group:
+
+  ```bash
+  uv pip install "upsonic[mongo-storage]"
+  ```
+</Note>
+
 ## Basic Usage
 
 ```python
@@ -52,15 +62,6 @@ asyncio.run(main())
 | `id` | `str` | `None` | Unique identifier for this storage instance |
 
 <Note>
-When both Motor and PyMongo async are available, PyMongo async is preferred. Install using `pip install -U 'pymongo>=4.9'` (recommended) or `pip install -U motor` (legacy).
+When both Motor and PyMongo async are available, PyMongo async is preferred. Install using `uv pip install -U 'pymongo>=4.9'` (recommended) or `uv pip install -U motor` (legacy).
 </Note>
 
-## Requirements
-
-```bash
-# Recommended
-pip install 'pymongo>=4.9'
-
-# Or legacy Motor
-pip install motor
-```

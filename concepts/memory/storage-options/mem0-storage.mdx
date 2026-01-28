@@ -7,6 +7,16 @@ description: "Mem0 Platform and Open Source integration"
 
 `Mem0Storage` integrates with the Mem0 memory platform. Supports both the hosted Mem0 Platform and self-hosted Mem0 Open Source deployments.
 
+## Install
+
+<Note>
+  Install the Mem0 storage optional dependency group:
+
+  ```bash
+  uv pip install "upsonic[mem0-storage]"
+  ```
+</Note>
+
 ## Basic Usage
 
 ```python
@@ -52,8 +62,3 @@ print(result2)  # "Your name is Alice"
 | `default_user_id` | `str` | `"upsonic_default"` | Default user ID for Mem0 operations |
 | `id` | `str \| None` | auto-generated | Storage instance ID |
 
-## Requirements
-
-```bash
-pip install mem0ai
-```

@@ -7,6 +7,16 @@ description: "Async SQLite database storage for local development"
 
 `AsyncSqliteStorage` provides an asynchronous file-based SQLite storage backend using SQLAlchemy with aiosqlite. Ideal for async applications, local development, and single-node deployments.
 
+## Install
+
+<Note>
+  Install the SQLite storage optional dependency group:
+
+  ```bash
+  uv pip install "upsonic[sqlite-storage]"
+  ```
+</Note>
+
 ## Basic Usage
 
 ```python
@@ -52,8 +62,3 @@ asyncio.run(main())
 If no connection parameter is provided, the storage defaults to creating `./upsonic.db` in the current directory.
 </Note>
 
-## Requirements
-
-```bash
-pip install sqlalchemy aiosqlite
-```

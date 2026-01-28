@@ -18,21 +18,27 @@ KnowledgeBase enables you to build Retrieval-Augmented Generation (RAG) systems 
 - **Hybrid Search**: Combines dense vector search with full-text search for better results
 - **Tool Integration**: Can be used as a tool, allowing agents to actively search and retrieve information
 
+## Installation
+
+To use KnowledgeBase, you'll need to install the required dependencies for your chosen vector database, document loaders, and embedding providers.
+
 <Note>
-  **RAG Installation**
+  **Example: Setting up KnowledgeBase with Chroma**
+
+  For a complete RAG setup using Chroma as the vector database, PDF loader, and OpenAI embeddings:
 
   ```bash
-  pip install upsonic[vectordb]
-  pip install upsonic[loaders]
-  pip install upsonic[embeddings]
+  uv pip install "upsonic[chroma]"
+  uv pip install "upsonic[pdf-loader]"
+  uv pip install "upsonic[embeddings]"
   ```
 
-  These install Upsonic with RAG dependencies:
-  - `[vectordb]` - Vector database clients (Chroma, Milvus, Qdrant, Pinecone, Weaviate, FAISS, PGVector)
-  - `[loaders]` - Document loaders for PDFs, Markdown, DOCX, CSV, JSON, HTML, and more
-  - `[embeddings]` - Embedding providers for creating vector representations
+  **What each optional group provides:**
+  - `[chroma]` - ChromaDB vector database client
+  - `[pdf-loader]` - PDF document loader (PyPDF)
+  - `[embeddings]` - Embedding providers (OpenAI, Anthropic, etc.)
 
-  You'll have access to all knowledge base components through a unified interface without needing to configure each one separately.
+  For other vector databases, replace `chroma` with `qdrant`, `milvus`, `weaviate`, `pinecone`, `faiss`, or `pgvector`. For other loaders, see the [Loaders documentation](/knowledgebase/loaders/pypdf).
 </Note>
 
 ## Example

@@ -1,0 +1,62 @@
+---
+title: "Merchant Revenue Forecast"
+description: "Forecast e-commerce merchant revenue with AI-powered time-series simulation"
+---
+
+The Merchant Revenue Forecast simulation models revenue trajectory over time, considering business characteristics, market dynamics, seasonality, and customer behavior.
+
+## Overview
+
+This simulation predicts merchant revenue metrics including:
+- Monthly Recurring Revenue (MRR)
+- Daily revenue
+- Customer count and churn rate
+- Average order value
+- Growth rates and market sentiment
+
+## Example
+
+```python
+from upsonic.simulation import Simulation
+from upsonic.simulation.scenarios import MerchantRevenueForecastSimulation
+
+# Create simulation scenario
+sim_object = MerchantRevenueForecastSimulation(
+    merchant_name="TechCo",
+    shareholders=["Alice", "Bob"],
+    sector="E-commerce",
+    location="San Francisco",
+    current_monthly_revenue_usd=50000,
+    current_customer_count=500,
+    average_order_value=75.0
+)
+
+# Initialize simulation
+simulation = Simulation(
+    sim_object,
+    model="openai/gpt-4o",
+    time_step="daily",
+    simulation_duration=100,
+    metrics_to_track=["monthly recurring revenue", "customer count"]
+)
+
+# Run simulation
+result = simulation.run()
+
+# Export summary report to JSON
+result.report("summary").to_json("revenue_forecast_summary.json")
+
+# Other available report file types (commented out):
+# result.report("summary").to_csv("revenue_forecast_summary.csv")
+# result.report("summary").to_html("revenue_forecast_summary.html")
+# result.report("summary").to_pdf("revenue_forecast_summary.pdf")
+# result.report("summary").show()
+
+# Other available report types:
+# result.report("detailed").to_json("detailed_report.json")  # Step-by-step data
+# result.report("visual").to_html("charts.html")  # Interactive charts
+# result.report("statistical").to_json("stats.json")  # Statistical analysis
+
+# Save all reports at once:
+# result.reports().save_all(directory="./reports", format="json")
+```

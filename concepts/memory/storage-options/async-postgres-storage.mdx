@@ -7,6 +7,16 @@ description: "Async PostgreSQL storage for production systems"
 
 `AsyncPostgresStorage` provides an asynchronous PostgreSQL-based storage backend using SQLAlchemy with asyncpg. Ideal for production deployments, multi-node systems, and applications requiring ACID compliance with async support.
 
+## Install
+
+<Note>
+  Install the PostgreSQL storage optional dependency group:
+
+  ```bash
+  uv pip install "upsonic[postgres-storage]"
+  ```
+</Note>
+
 ## Basic Usage
 
 ```python
@@ -55,8 +65,3 @@ asyncio.run(main())
 Connection pool is automatically configured with `pool_pre_ping=True` and `pool_recycle=3600` for robust connection handling.
 </Note>
 
-## Requirements
-
-```bash
-pip install sqlalchemy asyncpg
-```

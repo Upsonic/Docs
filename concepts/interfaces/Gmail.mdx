@@ -6,6 +6,14 @@ description: "Host agents as Gmail email assistants"
 
 Use the Gmail interface to serve Agents via Gmail. It mounts API routes on a FastAPI app and enables automated email processing and replies.
 
+## Installation
+
+Install the Gmail interface dependencies:
+
+```bash
+uv pip install upsonic[gmail-interface]
+```
+
 ## Setup
 
 Required environment variables:
@@ -85,7 +93,7 @@ Mounted under the `/gmail` prefix:
 
 * Manually triggers a check for unread emails and processes them.
 
-* Query parameter: `count` (default: 10) - maximum number of emails to process.
+* Query parameter: `count` (default: 3) - maximum number of emails to process.
 
 * Requires `X-Upsonic-Gmail-Secret` header if `GMAIL_API_SECRET` is configured.
 
