@@ -5,9 +5,26 @@ description: "Build intelligent RAG systems with vector databases"
 hideToc: true
 ---
 
+## What is a Knowledge Base?
+
+A Knowledge Base is a searchable repository of information that your agents can query to retrieve relevant context. It uses Retrieval-Augmented Generation (RAG) to find the most relevant information from your documents using vector embeddings and similarity search.
+
+Behind the scenes, KnowledgeBase automatically loads documents, splits them into chunks, creates vector embeddings, and stores them in a vector database. When agents need information, it retrieves the most relevant chunks based on semantic similarity.
+
+## Why use Knowledge Bases?
+
+Knowledge Bases solve the challenge of working with large amounts of information:
+
+- **Ground responses in facts**: Reduce hallucinations by providing verified information from your documents
+- **Handle large documents**: Process documents too large to fit in LLM context windows
+- **Dynamic retrieval**: Automatically find relevant information without manual searching
+- **Domain expertise**: Give agents access to specialized knowledge, documentation, and data
+- **Cost efficiency**: Only include relevant context instead of entire documents
+- **Always up-to-date**: Update knowledge base without retraining models
+
 ## Overview
 
-KnowledgeBase enables you to build Retrieval-Augmented Generation (RAG) systems by automatically processing documents, creating embeddings, and storing them in vector databases. It integrates seamlessly with Agent and Task to provide relevant context for AI-powered queries.
+KnowledgeBase automatically processes documents, creates embeddings, and stores them in vector databases. It supports multiple document formats (PDF, Markdown, DOCX, CSV, etc.), intelligent chunking strategies, and flexible storage options (Chroma, Qdrant, Pinecone, Weaviate, etc.).
 
 ## Key Features
 
