@@ -13,7 +13,7 @@ After task execution, you can access various aspects of the task results and met
 from upsonic import Agent, Task
 
 # Create agent and execute task
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 task = Task(description="What is the capital of France?")
 result = agent.do(task)
 
@@ -28,7 +28,7 @@ print(f"Task response: {task.response}")
 from upsonic import Agent, Task
 
 # Create agent and execute task
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 task = Task(description="Explain quantum computing in simple terms")
 result = agent.do(task)
 
@@ -46,7 +46,7 @@ print(f"End time: {task.end_time}")
 from upsonic import Agent, Task
 
 # Create agent and execute task
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 task = Task(description="Write a short poem about technology")
 result = agent.do(task)
 
@@ -72,7 +72,7 @@ def get_weather(city: str) -> str:
     return f"Weather in {city}: Sunny, 25°C"
 
 # Create agent and execute task with tools
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 task = Task(description="What's the weather in Paris?", tools=[get_weather])
 result = agent.do(task)
 print(result)
@@ -92,7 +92,7 @@ for i, tool_call in enumerate(tool_calls):
 from upsonic import Agent, Task
 
 # Create agent and execute task with caching
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 task = Task(
     description="What is machine learning?",
     enable_cache=True,
@@ -122,7 +122,7 @@ class ReportResult(BaseModel):
     confidence: float
 
 # Create and execute task
-agent = Agent(model="openai/gpt-4o", name="Analysis Agent")
+agent = Agent(model="openai/gpt-5", name="Analysis Agent")
 task = Task(
     description="Generate a market analysis report",
     response_format=ReportResult,

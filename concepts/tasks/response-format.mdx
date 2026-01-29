@@ -13,7 +13,7 @@ Tasks support various response formats to structure the output according to your
 from upsonic import Agent, Task
 
 # Create agent
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 
 # Default string response
 task = Task(
@@ -39,7 +39,7 @@ class AnalysisResult(BaseModel):
     key_metrics: dict[str, float]
 
 # Create agent
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 
 # Task with structured response
 task = Task(
@@ -81,7 +81,7 @@ class DetailedAnalysis(BaseModel):
     risk_factors: Optional[List[str]] = None
 
 # Create agent
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 
 # Task with complex structured response
 task = Task(
@@ -126,7 +126,7 @@ def create_analysis_task(analysis_type: str):
         return Task(description="Analyze AI trends", response_format=None)  # defaults to str
 
 # Create agent
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 
 # Use dynamic task creation
 task = create_analysis_task("detailed")

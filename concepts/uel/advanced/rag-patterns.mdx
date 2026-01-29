@@ -13,7 +13,7 @@ UEL provides powerful patterns for building Retrieval-Augmented Generation (RAG)
 from upsonic.uel import ChatPromptTemplate, RunnablePassthrough, StrOutputParser, itemgetter
 from upsonic.models import infer_model
 
-model = infer_model("openai/gpt-4o")
+model = infer_model("openai/gpt-5")
 parser = StrOutputParser()
 
 # Simulate a retriever (replace with actual retriever)
@@ -43,7 +43,7 @@ print(result)
 from upsonic.uel import ChatPromptTemplate, RunnablePassthrough, StrOutputParser, itemgetter
 from upsonic.models import infer_model
 
-model = infer_model("openai/gpt-4o").add_memory(history=True, mode="auto")
+model = infer_model("openai/gpt-5").add_memory(history=True, mode="auto")
 parser = StrOutputParser()
 
 contextualize_template = ChatPromptTemplate.from_messages([
@@ -102,7 +102,7 @@ print(result)
 from upsonic.uel import ChatPromptTemplate, StrOutputParser, itemgetter
 from upsonic.models import infer_model
 
-model = infer_model("openai/gpt-4o")
+model = infer_model("openai/gpt-5")
 parser = StrOutputParser()
 
 # Simulate multiple retrievers
@@ -147,7 +147,7 @@ from upsonic.models import infer_model
 @chain
 def rag_with_reranking(input_dict):
     """RAG with re-ranking step"""
-    model = infer_model("openai/gpt-4o")
+    model = infer_model("openai/gpt-5")
     parser = StrOutputParser()
     question = input_dict["question"]
     
@@ -204,7 +204,7 @@ def streaming_rag(question):
     context = f"Context for: {question}"
     
     # Create agent
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("openai/gpt-5")
     
     # Build prompt with context
     prompt = f"Answer based on this context:\n\nContext: {context}\n\nQuestion: {question}"
@@ -233,7 +233,7 @@ from upsonic.models import infer_model
 
 def non_streaming_rag(question):
     """RAG without streaming using UEL chain"""
-    model = infer_model("openai/gpt-4o")
+    model = infer_model("openai/gpt-5")
     parser = StrOutputParser()
     context = f"Context for: {question}"
     

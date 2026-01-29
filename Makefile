@@ -4,7 +4,7 @@
 .DEFAULT_GOAL := help
 
 # Run the development server
-run: dev
+run: dev install
 
 # Start Mintlify development server
 dev:
@@ -33,4 +33,5 @@ help:
 	@echo "  make help       - Show this help message"
 	@echo ""
 	@echo "💡 Quick start: make run"
+
 

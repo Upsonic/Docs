@@ -15,7 +15,7 @@ from upsonic.models.openai import OpenAIChatModel
 from upsonic.utils.package.exception import ModelHTTPError
 
 try:
-    model = OpenAIChatModel(model_name="gpt-4o")
+    model = OpenAIChatModel(model_name="gpt-5")
     agent = Agent(model=model)
     task = Task("Hello")
     result = agent.do(task)
@@ -93,7 +93,7 @@ from upsonic.utils.package.exception import ModelHTTPError
 
 try:
     settings = ModelSettings(max_tokens=4096)
-    model = OpenAIChatModel(model_name="gpt-4o")
+    model = OpenAIChatModel(model_name="gpt-5")
     agent = Agent(model=model, settings=settings)
     result = agent.do(very_long_task)
 except ModelHTTPError as e:
@@ -114,7 +114,7 @@ class ResponseFormat(BaseModel):
     confidence: float
 
 try:
-    model = OpenAIChatModel(model_name="gpt-4o")
+    model = OpenAIChatModel(model_name="gpt-5")
     model = model.with_structured_output(ResponseFormat)
     result = await model.ainvoke("What is AI?")
 except ValidationError as e:

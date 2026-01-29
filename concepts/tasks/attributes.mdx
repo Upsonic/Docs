@@ -166,7 +166,7 @@ def get_market_data(year: int, quarter: int) -> str:
     # In a real scenario, this would fetch actual data
     return f"Market data for Q{quarter} {year}: Growth rate 5.2%, Market cap $2.5T"
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("openai/gpt-5")
 
 task = Task(
     description="Analyze the market trends for Q4 2024",
@@ -187,7 +187,7 @@ print(f"Recommendations: {result.recommendations}")
 from upsonic import Agent, Task
 from upsonic.embeddings.factory import auto_detect_best_embedding
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("openai/gpt-5")
 
 # Get embedding provider for vector search caching
 embedding_provider = auto_detect_best_embedding()
@@ -222,7 +222,7 @@ def validate_output(output: str) -> bool:
     required_keywords = ["summary", "analysis", "conclusion"]
     return all(keyword in output.lower() for keyword in required_keywords)
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("openai/gpt-5")
 
 task = Task(
     description="Write a comprehensive market analysis report",
@@ -238,7 +238,7 @@ result = agent.do(task)
 ```python
 from upsonic import Agent, Task
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("openai/gpt-5")
 
 # Files in context are automatically extracted to attachments
 task = Task(
@@ -254,7 +254,7 @@ result = agent.do(task)
 ```python
 from upsonic import Agent, Task
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("openai/gpt-5")
 
 task = Task(
     description="Search for relevant information about AI agents",
@@ -273,7 +273,7 @@ result = agent.do(task)
 ```python
 from upsonic import Agent, Task
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("openai/gpt-5")
 
 task = Task(
     description="Perform a complex analysis"

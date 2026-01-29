@@ -44,7 +44,7 @@ The DeepAgent class accepts the following initialization parameters:
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `model` | `str` or `Model` | `"openai/gpt-4o"` | Model identifier or Model instance |
+| `model` | `str` or `Model` | `"openai/gpt-5"` | Model identifier or Model instance |
 | `subagents` | `List[Agent]` | `None` | List of Agent instances to use as subagents (each must have a name) |
 | `instructions` | `str` | `None` | Additional instructions to append to system prompt |
 | `tool_call_limit` | `int` | `100` | Maximum tool calls per execution |
@@ -97,7 +97,7 @@ write_todos(todos: List[Todo]) -> str
 ```python
 from upsonic import DeepAgent, Task
 
-agent = DeepAgent("openai/gpt-4o")
+agent = DeepAgent("openai/gpt-5")
 task = Task("""
 Create a complete web application with:
 - User authentication system
@@ -216,7 +216,7 @@ edit_file(file_path: str, old_string: str, new_string: str, replace_all: bool = 
 ```python
 from upsonic import DeepAgent, Task
 
-agent = DeepAgent("openai/gpt-4o")
+agent = DeepAgent("openai/gpt-5")
 
 # Add initial files
 agent.add_file("/app/main.py", "print('Hello World')")
@@ -283,20 +283,20 @@ from upsonic import DeepAgent, Agent, Task
 
 # Create specialized agents with names
 researcher = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="researcher",
     system_prompt="You are a research expert focused on gathering information"
 )
 
 code_reviewer = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="code-reviewer",
     system_prompt="You are a code review expert focused on quality and best practices"
 )
 
 # Create Deep Agent with subagents
 agent = DeepAgent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     subagents=[researcher, code_reviewer]
 )
 
@@ -308,10 +308,10 @@ result = agent.do(task)
 **Adding Subagents Dynamically:**
 
 ```python
-agent = DeepAgent("openai/gpt-4o")
+agent = DeepAgent("openai/gpt-5")
 
 # Add subagent after creation
-analyst = Agent("openai/gpt-4o", name="analyst", system_prompt="Data analysis expert")
+analyst = Agent("openai/gpt-5", name="analyst", system_prompt="Data analysis expert")
 agent.add_subagent(analyst)
 ```
 
@@ -371,11 +371,11 @@ A simple example demonstrating Deep Agent's core capabilities: automatic todo cr
 ```python
 from upsonic import DeepAgent, Task
 
-agent = DeepAgent("openai/gpt-4o")
+agent = DeepAgent("openai/gpt-5")
 ```
 
 This creates a basic Deep Agent with:
-- Default model: GPT-4o
+- Default model: gpt-5
 - Auto-created InMemoryStorage-based memory
 - Tool call limit: 100
 - All default Deep Agent tools enabled
@@ -386,7 +386,7 @@ This creates a basic Deep Agent with:
 from upsonic import DeepAgent, Task
 
 # Create a Deep Agent
-agent = DeepAgent("openai/gpt-4o")
+agent = DeepAgent("openai/gpt-5")
 
 # Complex task that benefits from planning
 task = Task("Analyze the codebase and create a comprehensive report with recommendations")
@@ -413,26 +413,26 @@ from upsonic import DeepAgent, Agent, Task
 
 # Create specialized development team
 frontend_dev = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="frontend",
     system_prompt="You are a frontend development expert specializing in React and modern web technologies"
 )
 
 backend_dev = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="backend",
     system_prompt="You are a backend development expert specializing in Node.js, Python, and database design"
 )
 
 tester = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="tester",
     system_prompt="You are a QA and testing expert focused on automation and comprehensive test coverage"
 )
 
 # Create Deep Agent with specialized team
 agent = DeepAgent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     subagents=[frontend_dev, backend_dev, tester]
 )
 ```
@@ -444,26 +444,26 @@ from upsonic import DeepAgent, Agent, Task
 
 # Create specialized development team
 frontend_dev = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="frontend",
     system_prompt="You are a frontend development expert specializing in React and modern web technologies"
 )
 
 backend_dev = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="backend",
     system_prompt="You are a backend development expert specializing in Node.js, Python, and database design"
 )
 
 tester = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="tester",
     system_prompt="You are a QA and testing expert focused on automation and comprehensive test coverage"
 )
 
 # Create Deep Agent with specialized team
 agent = DeepAgent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     subagents=[frontend_dev, backend_dev, tester]
 )
 
@@ -495,26 +495,26 @@ from upsonic import DeepAgent, Agent, Task
 
 # Create research team
 data_analyst = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="data-analyst",
     system_prompt="You are a data analysis and statistics expert"
 )
 
 researcher = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="researcher",
     system_prompt="You are a research and information gathering expert"
 )
 
 writer = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="writer",
     system_prompt="You are a technical writing and report creation expert"
 )
 
 # Create Deep Agent with research team
 agent = DeepAgent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     subagents=[data_analyst, researcher, writer]
 )
 ```
@@ -526,26 +526,26 @@ from upsonic import DeepAgent, Agent, Task
 
 # Create research team
 data_analyst = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="data-analyst",
     system_prompt="You are a data analysis and statistics expert"
 )
 
 researcher = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="researcher",
     system_prompt="You are a research and information gathering expert"
 )
 
 writer = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="writer",
     system_prompt="You are a technical writing and report creation expert"
 )
 
 # Create Deep Agent with research team
 agent = DeepAgent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     subagents=[data_analyst, researcher, writer]
 )
 
@@ -575,26 +575,26 @@ from upsonic import DeepAgent, Agent, Task
 
 # Create content creation team
 researcher = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="researcher",
     system_prompt="You are a research and fact-checking expert"
 )
 
 writer = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="writer",
     system_prompt="You are a content writing and editing expert"
 )
 
 reviewer = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="reviewer",
     system_prompt="You are a content review and quality assurance expert"
 )
 
 # Create Deep Agent with content team
 agent = DeepAgent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     subagents=[researcher, writer, reviewer]
 )
 ```
@@ -606,26 +606,26 @@ from upsonic import DeepAgent, Agent, Task
 
 # Create content creation team
 researcher = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="researcher",
     system_prompt="You are a research and fact-checking expert"
 )
 
 writer = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="writer",
     system_prompt="You are a content writing and editing expert"
 )
 
 reviewer = Agent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     name="reviewer",
     system_prompt="You are a content review and quality assurance expert"
 )
 
 # Create Deep Agent with content team
 agent = DeepAgent(
-    "openai/gpt-4o",
+    "openai/gpt-5",
     subagents=[researcher, writer, reviewer]
 )
 

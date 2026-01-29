@@ -33,7 +33,7 @@ uv pip install upsonic
 from upsonic import Agent, Task
 from upsonic.tools.common_tools import YFinanceTools
 
-agent = Agent(model="openai/gpt-4o", name="Stock Analyst Agent")
+agent = Agent(model="openai/gpt-5", name="Stock Analyst Agent")
 
 task = Task(description="Give me a summary about tesla stock with tesla car models", tools=[YFinanceTools()])
 
@@ -65,7 +65,7 @@ memory = Memory(
     full_session_memory=True
 )
 
-agent = Agent(model="openai/gpt-4o", memory=memory)
+agent = Agent(model="openai/gpt-5", memory=memory)
 
 task1 = Task(description="My name is John")
 agent.print_do(task1)
@@ -134,7 +134,7 @@ kb = KnowledgeBase(
     loaders=[loader]  # Explicitly provide the loader
 )
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 
 task = Task(
     description="What is the telemetry information of the upsonic",
@@ -173,14 +173,14 @@ Create a team of agents that work together to solve complex tasks.
 from upsonic import Agent, Task, Team
 
 researcher = Agent(
-    model="openai/gpt-4o",
+    model="openai/gpt-5",
     name="Researcher",
     role="Research Specialist",
     goal="Find accurate information and data"
 )
 
 writer = Agent(
-    model="openai/gpt-4o",
+    model="openai/gpt-5",
     name="Writer",
     role="Content Writer",
     goal="Create clear and engaging content"

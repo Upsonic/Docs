@@ -243,7 +243,7 @@ from typing import Optional
 class ContractAnalyzerConfig:
     """Configuration for the Contract Analyzer Agent."""
     
-    model: str = field(default_factory=lambda: os.getenv("CONTRACT_ANALYZER_MODEL", "openai/gpt-4o"))
+    model: str = field(default_factory=lambda: os.getenv("CONTRACT_ANALYZER_MODEL", "openai/gpt-5"))
     
     debug: bool = field(default_factory=lambda: os.getenv("DEBUG", "false").lower() == "true")
     
@@ -1251,6 +1251,6 @@ Statements of fact or commitments about the subject matter. Types:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `OPENAI_API_KEY` | OpenAI API key | Required |
-| `CONTRACT_ANALYZER_MODEL` | Model to use | `openai/gpt-4o` |
+| `CONTRACT_ANALYZER_MODEL` | Model to use | `openai/gpt-5` |
 | `DEBUG` | Enable debug mode | `false` |
 | `VECTORDB_PATH` | Vector database path | `./data/vectordb` |

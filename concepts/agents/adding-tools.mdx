@@ -19,7 +19,7 @@ def web_search(query: str) -> str:
     return f"Search results for: {query}"
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="openai/gpt-5",
     tools=[web_search]
 )
 ```
@@ -36,7 +36,7 @@ def calculator(a: float, b: float) -> float:
     return a + b
 
 # Create agent
-agent = Agent("openai/gpt-4o")
+agent = Agent("openai/gpt-5")
 
 # Add tools dynamically
 agent.add_tools([calculator])
@@ -59,7 +59,7 @@ def calculator(a: float, b: float) -> float:
     """Add two numbers."""
     return a + b
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("openai/gpt-5")
 agent.add_tools([calculator])
 
 # Access registered tools

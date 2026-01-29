@@ -13,7 +13,7 @@ Tasks in Upsonic are created directly in code using the `Task` class constructor
 from upsonic import Agent, Task
 
 # Simple task with just a description
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 task = Task(description="What is the capital of France?")
 
 # Execute task
@@ -38,7 +38,7 @@ def calculator(operation: str, a: float, b: float) -> str:
     return "Invalid operation"
 
 # Create agent and task with tools
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 task = Task(
     description="Calculate 10 + 5 using the calculator tool",
     tools=[calculator]
@@ -61,7 +61,7 @@ class AnalysisResult(BaseModel):
     recommendations: list[str]
 
 # Create agent and task with structured response
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 task = Task(
     description="Analyze the current state of renewable energy and provide structured results",
     response_format=AnalysisResult
@@ -86,7 +86,7 @@ def validate_output(result):
     return False
 
 # Create agent and task with advanced features
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="openai/gpt-5")
 task = Task(
     description="Generate a comprehensive report on AI trends",
     enable_cache=True,

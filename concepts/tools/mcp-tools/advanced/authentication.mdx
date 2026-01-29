@@ -47,7 +47,7 @@ task = Task(
 # Create agent
 agent = Agent(
     name="Integration Agent",
-    model="openai/gpt-4o"
+    model="openai/gpt-5"
 )
 
 # Execute
@@ -89,7 +89,7 @@ task = Task(
     tools=[SecureMCP]
 )
 
-agent = Agent(name="Secure Agent", model="openai/gpt-4o")
+agent = Agent(name="Secure Agent", model="openai/gpt-5")
 result = agent.do(task)
 print(result)
 ```
@@ -110,7 +110,7 @@ task = Task(
     tools=[AuthenticatedSSE]
 )
 
-agent = Agent(name="SSE Agent", model="openai/gpt-4o")
+agent = Agent(name="SSE Agent", model="openai/gpt-5")
 result = agent.do(task)
 print(result)
 ```

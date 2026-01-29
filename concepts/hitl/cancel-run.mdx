@@ -25,7 +25,7 @@ def long_running_task(seconds: int) -> str:
 
 async def main():
     db = SqliteDatabase(db_file="my_app.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", db=db)
+    agent = Agent("openai/gpt-5-mini", db=db)
     task = Task(
         description="Call long_running_task with 10 seconds.",
         tools=[long_running_task]
@@ -77,7 +77,7 @@ Check if a run was cancelled by inspecting the output:
 ```python
 from upsonic import Agent, Task
 
-agent = Agent("openai/gpt-4o-mini")
+agent = Agent("openai/gpt-5-mini")
 task = Task("Your task description")
 
 output = await agent.do_async(task, return_output=True)
@@ -122,7 +122,7 @@ def long_running_task(seconds: int) -> str:
 
 async def cancel_and_resume_same_agent():
     db = SqliteDatabase(db_file="cancel.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", db=db)
+    agent = Agent("openai/gpt-5-mini", db=db)
     task = Task(
         description="Call long_running_task with 10 seconds.",
         tools=[long_running_task]
@@ -167,7 +167,7 @@ def long_running_task(seconds: int) -> str:
 
 async def cancel_and_resume_with_task():
     db = SqliteDatabase(db_file="cancel.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", db=db)
+    agent = Agent("openai/gpt-5-mini", db=db)
     task = Task(
         description="Call long_running_task with 10 seconds.",
         tools=[long_running_task]
@@ -213,7 +213,7 @@ def long_running_task(seconds: int) -> str:
 
 async def cancel_and_resume_new_agent():
     db = SqliteDatabase(db_file="cancel.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", db=db)
+    agent = Agent("openai/gpt-5-mini", db=db)
     task = Task(
         description="Call long_running_task with 10 seconds.",
         tools=[long_running_task]
@@ -232,7 +232,7 @@ async def cancel_and_resume_new_agent():
     if output.status == RunStatus.cancelled:
         # Create NEW agent instance to resume
         new_db = SqliteDatabase(db_file="cancel.db", session_id="session_1", user_id="user_1")
-        new_agent = Agent("openai/gpt-4o-mini", db=new_db)
+        new_agent = Agent("openai/gpt-5-mini", db=new_db)
         result = await new_agent.continue_run_async(run_id=run_id, return_output=True)
         return result
     
@@ -262,7 +262,7 @@ def long_running_task(seconds: int) -> str:
 
 async def cancel_and_resume_new_agent_with_task():
     db = SqliteDatabase(db_file="cancel.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", db=db)
+    agent = Agent("openai/gpt-5-mini", db=db)
     task = Task(
         description="Call long_running_task with 10 seconds.",
         tools=[long_running_task]
@@ -280,7 +280,7 @@ async def cancel_and_resume_new_agent_with_task():
     if output.status == RunStatus.cancelled:
         # Create NEW agent instance with task
         new_db = SqliteDatabase(db_file="cancel.db", session_id="session_1", user_id="user_1")
-        new_agent = Agent("openai/gpt-4o-mini", db=new_db)
+        new_agent = Agent("openai/gpt-5-mini", db=new_db)
         result = await new_agent.continue_run_async(task=task, return_output=True)
         return result
     
@@ -312,7 +312,7 @@ def long_running_task(seconds: int) -> str:
 
 async def verify_resume_from_cutoff():
     db = SqliteDatabase(db_file="cancel.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", db=db, debug=True)
+    agent = Agent("openai/gpt-5-mini", db=db, debug=True)
     task = Task(
         description="Call long_running_task with 10 seconds.",
         tools=[long_running_task]

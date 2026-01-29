@@ -20,7 +20,7 @@ from upsonic import Agent, Task
 from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
 
 agent = Agent(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-5-mini",
     user_policy=CryptoBlockPolicy,
     user_policy_feedback=True,
     user_policy_feedback_loop=1
@@ -49,7 +49,7 @@ from upsonic import Agent, Task
 from upsonic.safety_engine.policies.pii_policies import PIIBlockPolicy
 
 agent = Agent(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-5-mini",
     agent_policy=PIIBlockPolicy,
     agent_policy_feedback=True,
     agent_policy_feedback_loop=3  # Allow up to 3 retries
@@ -82,7 +82,7 @@ from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
 from upsonic.safety_engine.policies.pii_policies import PIIBlockPolicy
 
 agent = Agent(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-5-mini",
     # User input protection
     user_policy=CryptoBlockPolicy,
     user_policy_feedback=True,
@@ -174,7 +174,7 @@ company_secrets_policy = Policy(
 )
 
 agent = Agent(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-5-mini",
     name="Customer Support Agent",
     # Block sensitive user queries
     user_policy=company_secrets_policy,

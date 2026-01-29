@@ -96,7 +96,7 @@ Select the best model using rule-based logic.
 
 - `task_description` (str): Description of the task
 - `criteria` (Optional[SelectionCriteria]): Optional selection criteria
-- `default_model` (str): Fallback model if no good match found (default: "openai/gpt-4o")
+- `default_model` (str): Fallback model if no good match found (default: "openai/gpt-5")
 
 **Returns:**
 
@@ -104,7 +104,7 @@ Select the best model using rule-based logic.
 
 ### `LLMBasedSelector`
 
-LLM-based model selector using GPT-4o for intelligent recommendations.
+LLM-based model selector using gpt-5 for intelligent recommendations.
 
 **Parameters:**
 
@@ -130,7 +130,7 @@ Select the best model using an LLM for analysis.
 
 - `task_description` (str): Description of the task
 - `criteria` (Optional[SelectionCriteria]): Optional selection criteria
-- `default_model` (str): Fallback model if needed (default: "openai/gpt-4o")
+- `default_model` (str): Fallback model if needed (default: "openai/gpt-5")
 
 **Returns:**
 
@@ -170,7 +170,7 @@ Select the best model for a task (synchronous wrapper).
 - `criteria` (Optional[SelectionCriteria]): Optional selection criteria
 - `use_llm` (bool): Whether to use LLM-based selection (default: False)
 - `agent` (Optional[Any]): Agent instance for LLM calls
-- `default_model` (str): Fallback model (default: "openai/gpt-4o")
+- `default_model` (str): Fallback model (default: "openai/gpt-5")
 
 **Returns:**
 
@@ -186,7 +186,7 @@ Select the best model for a task (asynchronous).
 - `criteria` (Optional[SelectionCriteria]): Optional selection criteria
 - `use_llm` (bool): Whether to use LLM-based selection (default: False)
 - `agent` (Optional[Any]): Agent instance for LLM calls
-- `default_model` (str): Fallback model (default: "openai/gpt-4o")
+- `default_model` (str): Fallback model (default: "openai/gpt-5")
 
 **Returns:**
 
@@ -288,7 +288,7 @@ The rule-based selector analyzes task descriptions using keyword matching and sc
 
 ### LLM-Based Selection
 
-The LLM-based selector uses GPT-4o for intelligent analysis:
+The LLM-based selector uses gpt-5 for intelligent analysis:
 
 - **Contextual Understanding**: Better understanding of complex task requirements
 - **Model Comparison**: Comprehensive comparison of available models

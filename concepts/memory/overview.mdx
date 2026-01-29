@@ -73,11 +73,11 @@ memory = Memory(
     full_session_memory=True,    # Enable chat history
     summary_memory=True,         # Enable summaries
     user_analysis_memory=True,   # Enable user profiles
-    model="openai/gpt-4o"        # Required for summaries & user analysis
+    model="openai/gpt-5"        # Required for summaries & user analysis
 )
 
 # Attach memory to agent
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("openai/gpt-5", memory=memory)
 
 # First interaction
 result1 = agent.do(Task("My name is Alice and I'm a Python developer"))

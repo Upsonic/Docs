@@ -20,7 +20,7 @@ You can control how many times an agent attempts to execute a task before failin
 from upsonic import Agent, Task
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="openai/gpt-5",
     retry=3,         # Will try up to 4 times total (1 initial + 3 retries)
     mode="raise"     # Raise the exception if all retries fail
 )
@@ -40,7 +40,7 @@ If you prefer the agent to return `False` instead of crashing your application o
 
 ```python
 agent = Agent(
-    model="openai/gpt-4o",
+    model="openai/gpt-5",
     retry=2,
     mode="return_false"  # Return False instead of raising Exception
 )

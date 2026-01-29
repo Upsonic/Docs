@@ -179,7 +179,7 @@ def main(inputs: Dict[str, Any]) -> Dict[str, Any]:
             - brand_tone: Optional brand tone (default: "professional")
             - enable_memory: Whether to enable memory persistence (default: True)
             - storage_path: Optional path for SQLite storage (default: "landing_page_generation.db")
-            - model: Optional model identifier (default: "openai/gpt-4o")
+            - model: Optional model identifier (default: "openai/gpt-5")
     
     Returns:
         Dictionary containing comprehensive landing page specification
@@ -200,7 +200,7 @@ def main(inputs: Dict[str, Any]) -> Dict[str, Any]:
     brand_tone = inputs.get("brand_tone", "professional")
     enable_memory = inputs.get("enable_memory", True)
     storage_path = inputs.get("storage_path")
-    model = inputs.get("model", "openai-responses/gpt-4o")
+    model = inputs.get("model", "openai-responses/gpt-5")
     output_folder = inputs.get("output_folder", "landing_page_images")
     
     orchestrator = create_orchestrator_agent(
@@ -253,7 +253,7 @@ async def amain(inputs: Dict[str, Any]) -> Dict[str, Any]:
             - brand_tone: Optional brand tone (default: "professional")
             - enable_memory: Whether to enable memory persistence (default: True)
             - storage_path: Optional path for SQLite storage (default: "landing_page_generation.db")
-            - model: Optional model identifier (default: "openai/gpt-4o")
+            - model: Optional model identifier (default: "openai/gpt-5")
     
     Returns:
         Dictionary containing comprehensive landing page specification
@@ -274,7 +274,7 @@ async def amain(inputs: Dict[str, Any]) -> Dict[str, Any]:
     brand_tone = inputs.get("brand_tone", "professional")
     enable_memory = inputs.get("enable_memory", True)
     storage_path = inputs.get("storage_path")
-    model = inputs.get("model", "openai-responses/gpt-4o")
+    model = inputs.get("model", "openai-responses/gpt-5")
     output_folder = inputs.get("output_folder", "landing_page_images")
     
     orchestrator = create_orchestrator_agent(
@@ -331,7 +331,7 @@ if __name__ == "__main__":
         "brand_tone": "friendly and professional",
         "enable_memory": False,
         "storage_path": None,
-        "model": "openai-responses/gpt-4o",
+        "model": "openai-responses/gpt-5",
         "output_folder": "landing_page_images",
     }
     
@@ -394,7 +394,7 @@ except ImportError:
 
 
 def create_orchestrator_agent(
-    model: str = "openai-responses/gpt-4o",
+    model: str = "openai-responses/gpt-5",
     storage_path: Optional[str] = None,
     enable_memory: bool = True,
 ) -> DeepAgent:
@@ -473,7 +473,7 @@ if TYPE_CHECKING:
     pass
 
 
-def create_content_writer_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
+def create_content_writer_subagent(model: str = "openai/gpt-5-mini") -> Agent:
     """Create specialized subagent for landing page content creation.
     
     Args:
@@ -502,7 +502,7 @@ def create_content_writer_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
     )
 
 
-def create_designer_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
+def create_designer_subagent(model: str = "openai/gpt-5-mini") -> Agent:
     """Create specialized subagent for landing page design recommendations.
     
     Args:
@@ -530,7 +530,7 @@ def create_designer_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
     )
 
 
-def create_seo_specialist_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
+def create_seo_specialist_subagent(model: str = "openai/gpt-5-mini") -> Agent:
     """Create specialized subagent for SEO optimization.
     
     Args:
@@ -768,9 +768,9 @@ def build_landing_page_task(
             },
             "model": {
                 "type": "string",
-                "description": "Optional model identifier (e.g., openai-responses/gpt-4o, openai-responses/gpt-4o-mini)",
+                "description": "Optional model identifier (e.g., openai-responses/gpt-5, openai-responses/gpt-5-mini)",
                 "required": false,
-                "default": "openai-responses/gpt-4o"
+                "default": "openai-responses/gpt-5"
             },
             "output_folder": {
                 "type": "string",

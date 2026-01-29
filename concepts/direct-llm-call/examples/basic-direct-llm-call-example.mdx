@@ -14,7 +14,7 @@ This example demonstrates a practical use case for Direct LLM Call: extracting s
 
 ## Direct LLM Call Configuration
 
-**Model Selection**: We use `"openai/gpt-4o"` for its strong vision and reasoning capabilities, essential for document understanding.
+**Model Selection**: We use `"openai/gpt-5"` for its strong vision and reasoning capabilities, essential for document understanding.
 
 **Task Configuration**:
 - **Description**: Clear instruction for the LLM
@@ -47,8 +47,8 @@ class InvoiceData(BaseModel):
     line_items: list[LineItem]
 
 
-# Initialize Direct with GPT-4o
-direct = Direct(model="openai/gpt-4o")
+# Initialize Direct with gpt-5
+direct = Direct(model="openai/gpt-5")
 
 # Create task with document attachment and structured response
 task = Task(

@@ -31,7 +31,7 @@ from upsonic.models import infer_model
 # Chain components with the pipe operator
 chain = (
     ChatPromptTemplate.from_template("Tell me about {topic}") 
-    | infer_model("openai/gpt-4o")
+    | infer_model("openai/gpt-5")
 )
 
 result = chain.invoke({"topic": "quantum computing"})
@@ -132,7 +132,7 @@ Models implement the Runnable interface and can be enhanced with memory, tools, 
 from upsonic.models import infer_model
 from upsonic.uel import ChatPromptTemplate
 
-model = infer_model("openai/gpt-4o")
+model = infer_model("openai/gpt-5")
 
 chain = (
     ChatPromptTemplate.from_template("Explain {concept} simply")
@@ -219,7 +219,7 @@ Execute multiple chains simultaneously and collect results in a dictionary.
 from upsonic.uel import RunnableParallel, ChatPromptTemplate
 from upsonic.models import infer_model
 
-model = infer_model("openai/gpt-4o")
+model = infer_model("openai/gpt-5")
 
 # Method 1: Using RunnableParallel class
 parallel = RunnableParallel(
@@ -351,7 +351,7 @@ Route execution to different chains based on conditions.
 from upsonic.uel import RunnableBranch, ChatPromptTemplate
 from upsonic.models import infer_model
 
-model = infer_model("openai/gpt-4o")
+model = infer_model("openai/gpt-5")
 
 # Define specialized chains
 technical_chain = (
@@ -425,7 +425,7 @@ prompt2 = ChatPromptTemplate.from_template("Rate this joke: {joke}")
 @chain
 def custom_chain(input_dict):
     """Multi-step processing with custom logic"""
-    model = infer_model("openai/gpt-4o")
+    model = infer_model("openai/gpt-5")
     
     # Step 1: Generate joke
     joke_prompt = prompt1.invoke({"topic": input_dict["topic"]})
@@ -706,7 +706,7 @@ chain = prompt | model
 ### Chatbot with Memory
 
 ```python
-model_with_memory = infer_model("openai/gpt-4o").add_memory(history=True)
+model_with_memory = infer_model("openai/gpt-5").add_memory(history=True)
 
 chat_chain = (
     ChatPromptTemplate.from_messages([
@@ -759,7 +759,7 @@ def get_date() -> str:
     return datetime.now().strftime("%Y-%m-%d")
 
 agent_model = (
-    infer_model("openai/gpt-4o")
+    infer_model("openai/gpt-5")
     .bind_tools([calculator, get_date])
 )
 

@@ -43,7 +43,7 @@ kb = KnowledgeBase(
 )
 
 # Step 5: Create agent
-agent = Agent("openai/gpt-4o")
+agent = Agent("openai/gpt-5")
 
 # Step 6: Create task with knowledge base context
 task = Task(
@@ -113,7 +113,7 @@ Create an agent that will use the knowledge base to answer questions.
 ```python
 from upsonic import Agent
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("openai/gpt-5")
 ```
 
 ### 5. Create Task with Context
@@ -167,7 +167,7 @@ async def main():
         loaders=[loader]
     )
 
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("openai/gpt-5")
     task = Task(
         description="What is the main topic?",
         context=[kb]

@@ -30,7 +30,7 @@ memory = Memory(
     full_session_memory=True
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("openai/gpt-5", memory=memory)
 
 result1 = agent.do(Task("My order #12345 hasn't arrived"))
 result2 = agent.do(Task("I ordered it last week"))
@@ -53,10 +53,10 @@ memory = Memory(
     session_id="meeting_001",
     full_session_memory=True
     summary_memory=True,
-    model="openai/gpt-4o-mini"  # Required for summaries
+    model="openai/gpt-5-mini"  # Required for summaries
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("openai/gpt-5", memory=memory)
 
 result1 = agent.do(Task("Let's discuss Q1 revenue targets"))
 result2 = agent.do(Task("Now let's cover hiring plans"))
@@ -80,10 +80,10 @@ memory = Memory(
     session_id="session_001",
     user_id="user_abc",
     user_analysis_memory=True,
-    model="openai/gpt-4o"
+    model="openai/gpt-5"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("openai/gpt-5", memory=memory)
 
 result = agent.do(Task("I'm a backend developer who prefers Python"))
 print(result)  # Agent learns about user
@@ -106,10 +106,10 @@ memory = Memory(
     full_session_memory=True,
     summary_memory=True,
     num_last_messages=20,  # Keep last 20 turns + summary
-    model="openai/gpt-4o-mini"
+    model="openai/gpt-5-mini"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("openai/gpt-5", memory=memory)
 
 result = agent.do(Task("Let's continue learning Python functions"))
 print(result)
@@ -134,10 +134,10 @@ memory = Memory(
     summary_memory=True,
     user_analysis_memory=True,
     num_last_messages=15,
-    model="openai/gpt-4o"
+    model="openai/gpt-5"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("openai/gpt-5", memory=memory)
 
 result1 = agent.do(Task("Hi! I'm a data scientist learning about LLMs"))
 result2 = agent.do(Task("What recommendations do you have for me?"))

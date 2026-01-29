@@ -22,7 +22,7 @@ from upsonic.storage import SqliteStorage
 
 async def main():
     storage = SqliteStorage(db_file="chat.db")
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("openai/gpt-5")
 
     chat = Chat(
         session_id="session1",
@@ -51,7 +51,7 @@ async def main():
     storage = PostgresStorage(
         db_url="postgresql://user:pass@localhost:5432/dbname"
     )
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("openai/gpt-5")
 
     chat = Chat(
         session_id="session1",
@@ -81,7 +81,7 @@ async def main():
         db_url="mongodb://localhost:27017",
         db_name="chat_db"
     )
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("openai/gpt-5")
 
     chat = Chat(
         session_id="session1",
@@ -112,7 +112,7 @@ async def main():
         db_prefix="chat",
         expire=3600
     )
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("openai/gpt-5")
 
     chat = Chat(
         session_id="session1",
@@ -139,7 +139,7 @@ from upsonic.storage import JSONStorage
 
 async def main():
     storage = JSONStorage(db_path="./chat_data")
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("openai/gpt-5")
 
     chat = Chat(
         session_id="session1",
