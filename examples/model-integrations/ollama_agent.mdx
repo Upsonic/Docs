@@ -53,7 +53,7 @@ upsonic remove <package> <section>
 ### Option 1: Run Directly
 
 ```bash
-python3 main.py
+uv run main.py
 ```
 
 Runs the agent with a default test query ("Hello, how are you?").
@@ -138,19 +138,17 @@ async def main(inputs: dict) -> dict:
 
 
 if __name__ == "__main__":
+    import asyncio
+    
     print("🤖 Running Ollama Agent directly...")
+    inputs = {"user_query": "Hello, how are you?"}
+    print(f"Task: {inputs['user_query']}")
     
-    agent = Agent(model=model)
-    
-    task_text = "Hello, how are you?"
-    print(f"Task: {task_text}")
-    task = Task(task_text)
-    
-    result = agent.do(task)
+    result = asyncio.run(main(inputs))
     
     print("-" * 50)
     print("Result:")
-    print(result)
+    print(result["bot_response"])
     print("-" * 50)
 ```
 

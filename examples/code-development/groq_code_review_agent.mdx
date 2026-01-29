@@ -26,7 +26,7 @@ The agent analyzes code across multiple dimensions:
 
 ```
 groq_code_review_agent/
-├── main.py                    # Entry point with main() and amain()
+├── main.py                    # Entry point with async main() function
 ├── agent.py                   # Agent creation with Groq configuration
 ├── schemas.py                 # Pydantic output schemas
 ├── task_builder.py            # Task description builder
@@ -69,7 +69,7 @@ upsonic remove streamlit api
 ### Option 1: Run Directly
 
 ```bash
-python3 main.py
+uv run main.py
 ```
 
 Runs the agent with default test inputs (Python code with security issues).
@@ -213,8 +213,21 @@ except ImportError:
     from schemas import CodeReviewOutput
 
 
-def main(inputs: Dict[str, Any]) -> Dict[str, Any]:
-    """Main function for code review and best practices analysis."""
+async def main(inputs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Main function for code review and best practices analysis.
+    
+    Args:
+        inputs: Dictionary containing:
+            - code: The code snippet to review (required)
+            - language: Programming language of the code (required)
+            - focus_areas: Optional list of areas to focus on (security, performance, etc.)
+            - context: Optional context about the codebase or project
+            - model: Optional model identifier (default: "groq/llama-3.3-70b-versatile")
+    
+    Returns:
+        Dictionary containing comprehensive code review
+    """
     code = inputs.get("code")
     if not code:
         raise ValueError("code is required in inputs")
@@ -236,17 +249,171 @@ def main(inputs: Dict[str, Any]) -> Dict[str, Any]:
         context=context,
     )
     
-    # Pass response_format to Task for structured output
     task = Task(task_description, response_format=CodeReviewOutput)
     
-    result = agent.do(task)
+    result = await agent.do_async(task)
     
     return {
         "language": language,
         "focus_areas": focus_areas,
-        "review_report": result,  # This is a CodeReviewOutput instance
+        "review_report": result,
         "review_completed": True,
     }
+
+
+
+if __name__ == "__main__":
+    import asyncio
+    import json
+    import sys
+    
+    test_code = '''
+def calculate_discount(price, discount_percent):
+    if discount_percent > 100:
+        discount_percent = 100
+    final_price = price - (price * discount_percent / 100)
+    return final_price
+
+def process_user_data(user_input):
+    query = "SELECT * FROM users WHERE name = '" + user_input + "'"
+    return execute_query(query)
+
+class UserManager:
+    users = []
+    
+    def add_user(self, name, email):
+        self.users.append({"name": name, "email": email})
+    
+    def get_user(self, name):
+        for user in self.users:
+            if user["name"] == name:
+                return user
+        return None
+'''
+    
+    test_inputs = {
+        "code": test_code,
+        "language": "python",
+        "focus_areas": ["security", "performance", "best_practices"],
+        "context": "E-commerce application backend",
+        "model": "groq/llama-3.3-70b-versatile",
+    }
+    
+    if len(sys.argv) > 1:
+        try:
+            with open(sys.argv[1], "r") as f:
+                test_inputs = json.load(f)
+        except Exception as e:
+            print(f"Error loading JSON file: {e}")
+            print("Using default test inputs")
+    
+    async def run_main():
+        try:
+            result = await main(test_inputs)
+            report: CodeReviewOutput = result.get('review_report')
+            
+            print("\n" + "=" * 80)
+            print("🔍 CODE REVIEW COMPLETED SUCCESSFULLY")
+            print("=" * 80)
+            
+            print(f"\n📋 Language: {result.get('language')}")
+            print(f"🎯 Focus Areas: {', '.join(result.get('focus_areas', []))}")
+            print(f"⭐ Overall Rating: {report.overall_rating.upper()}")
+            
+            print("\n" + "-" * 80)
+            print("📝 SUMMARY")
+            print("-" * 80)
+            print(report.summary)
+            
+            print("\n" + "-" * 80)
+            print(f"🚨 ISSUES FOUND ({len(report.issues)})")
+            print("-" * 80)
+            for i, issue in enumerate(report.issues, 1):
+                severity_icons = {
+                    "critical": "🔴",
+                    "high": "🟠", 
+                    "medium": "🟡",
+                    "low": "🟢",
+                    "info": "🔵"
+                }
+                icon = severity_icons.get(issue.severity, "⚪")
+                print(f"\n{i}. {icon} [{issue.severity.upper()}] {issue.title}")
+                print(f"   Category: {issue.category}")
+                if issue.line_reference:
+                    print(f"   Location: {issue.line_reference}")
+                print(f"   Description: {issue.description}")
+                print(f"   Suggestion: {issue.suggestion}")
+                if issue.code_example:
+                    print(f"   Example: {issue.code_example}")
+            
+            print("\n" + "-" * 80)
+            print("🔒 SECURITY ANALYSIS")
+            print("-" * 80)
+            sec = report.security_analysis
+            print(f"   Risk Level: {sec.risk_level.upper()}")
+            print(f"   Vulnerabilities Found: {sec.vulnerabilities_found}")
+            if sec.owasp_categories:
+                print(f"   OWASP Categories: {', '.join(sec.owasp_categories)}")
+            if sec.recommendations:
+                print("   Recommendations:")
+                for rec in sec.recommendations:
+                    print(f"     • {rec}")
+            
+            print("\n" + "-" * 80)
+            print("⚡ PERFORMANCE ANALYSIS")
+            print("-" * 80)
+            perf = report.performance_analysis
+            if perf.complexity_issues:
+                print("   Complexity Issues:")
+                for issue in perf.complexity_issues:
+                    print(f"     • {issue}")
+            if perf.memory_concerns:
+                print("   Memory Concerns:")
+                for concern in perf.memory_concerns:
+                    print(f"     • {concern}")
+            if perf.optimization_opportunities:
+                print("   Optimization Opportunities:")
+                for opp in perf.optimization_opportunities:
+                    print(f"     • {opp}")
+            
+            print("\n" + "-" * 80)
+            print("📊 CODE QUALITY METRICS")
+            print("-" * 80)
+            quality = report.code_quality
+            print(f"   Readability: {quality.readability_score}")
+            print(f"   Maintainability: {quality.maintainability_score}")
+            print(f"   Documentation: {quality.documentation_quality}")
+            print(f"   Test Coverage: {quality.test_coverage_suggestion}")
+            
+            if report.positive_aspects:
+                print("\n" + "-" * 80)
+                print("✅ POSITIVE ASPECTS")
+                print("-" * 80)
+                for aspect in report.positive_aspects:
+                    print(f"   • {aspect}")
+            
+            print("\n" + "-" * 80)
+            print("🎯 PRIORITY FIXES")
+            print("-" * 80)
+            for i, fix in enumerate(report.priority_fixes, 1):
+                print(f"   {i}. {fix}")
+            
+            if report.learning_resources:
+                print("\n" + "-" * 80)
+                print("📚 LEARNING RESOURCES")
+                print("-" * 80)
+                for resource in report.learning_resources:
+                    print(f"   • {resource}")
+            
+            print("\n" + "=" * 80)
+            
+        except Exception as e:
+            print(f"\n❌ Error during execution: {e}")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+    
+    asyncio.run(run_main())
 ```
 
 The result contains a typed `CodeReviewOutput` object that you can access programmatically:
@@ -338,6 +505,14 @@ def create_code_review_agent(
         - Specific code suggestions for fixes
         - References to relevant documentation or best practices
         
+        **CRITICAL JSON FORMATTING REQUIREMENTS**:
+        - NEVER include duplicate keys in your JSON response (each key must appear only once)
+        - Use plain text strings for suggestion, code_example, description, and title fields - DO NOT wrap them in JSON objects
+        - Escape quotes inside strings with backslash: \\" (e.g., "query = \\"SELECT * FROM users\\"")
+        - Ensure all strings are properly closed with quotes
+        - Validate your JSON is parseable before returning it
+        - Example: "suggestion": "Use parameterized queries" (plain string, NOT "{ \\"fix\\": ... }")
+        
         Be constructive and educational in your feedback. Help developers understand 
         not just what to fix, but why.""",
         tools=agent_tools,
@@ -345,6 +520,94 @@ def create_code_review_agent(
     )
     
     return agent
+
+
+def create_security_focused_agent(
+    model: str = "groq/llama-3.1-8b-instant",
+) -> Agent:
+    """Create a security-focused code review agent.
+    
+    Args:
+        model: Groq model identifier for the agent
+        
+    Returns:
+        Configured Agent instance for security review
+    """
+    ddg_search = duckduckgo_search_tool(duckduckgo_client=None, max_results=5)
+    
+    return Agent(
+        model=model,
+        name="security-review-agent",
+        role="Application Security Specialist",
+        goal="Identify and report security vulnerabilities in code with remediation guidance",
+        system_prompt="""You are a security expert specializing in application security and 
+        secure coding practices. Your focus is on identifying:
+        
+        - SQL Injection vulnerabilities
+        - Cross-Site Scripting (XSS)
+        - Cross-Site Request Forgery (CSRF)
+        - Insecure Direct Object References
+        - Security Misconfiguration
+        - Sensitive Data Exposure
+        - Authentication/Authorization flaws
+        - Input validation issues
+        - Cryptographic weaknesses
+        - Race conditions and timing attacks
+        
+        For each vulnerability found:
+        1. Explain the attack vector
+        2. Demonstrate potential exploit scenarios
+        3. Provide secure code alternatives
+        4. Reference OWASP guidelines when applicable
+        
+        Use web search to find current CVEs and security advisories related to the 
+        libraries or patterns being used.""",
+        tools=[ddg_search],
+        tool_call_limit=8,
+    )
+
+
+def create_performance_focused_agent(
+    model: str = "groq/llama-3.1-8b-instant",
+) -> Agent:
+    """Create a performance-focused code review agent.
+    
+    Args:
+        model: Groq model identifier for the agent
+        
+    Returns:
+        Configured Agent instance for performance review
+    """
+    ddg_search = duckduckgo_search_tool(duckduckgo_client=None, max_results=5)
+    
+    return Agent(
+        model=model,
+        name="performance-review-agent",
+        role="Performance Engineering Specialist",
+        goal="Analyze code for performance bottlenecks and optimization opportunities",
+        system_prompt="""You are a performance engineering specialist with expertise in:
+        
+        - Algorithmic complexity analysis (Big O notation)
+        - Memory management and optimization
+        - Database query optimization
+        - Caching strategies
+        - Concurrent programming and parallelism
+        - I/O optimization
+        - Profiling and benchmarking
+        
+        When analyzing code:
+        1. Identify inefficient algorithms or data structures
+        2. Spot memory leaks or excessive allocations
+        3. Find N+1 query problems and database issues
+        4. Suggest caching opportunities
+        5. Identify blocking operations that could be async
+        6. Recommend profiling strategies
+        
+        Use web search to find current benchmarks and performance best practices 
+        for the specific language and framework being used.""",
+        tools=[ddg_search],
+        tool_call_limit=8,
+    )
 ```
 
 ### schemas.py
@@ -383,11 +646,11 @@ class CodeIssue(BaseModel):
         description="Detailed description of the issue"
     )
     suggestion: str = Field(
-        description="Suggested fix or improvement"
+        description="Suggested fix or improvement as a plain text string. Do NOT wrap in JSON objects. Example: 'Use parameterized queries or prepared statements'"
     )
     code_example: Optional[str] = Field(
         default=None,
-        description="Example of correct/improved code"
+        description="Example of correct/improved code as a plain text string. Do NOT wrap in JSON objects. Escape quotes with backslash. Example: 'query = \\\"SELECT * FROM users WHERE name = ?\\\"'"
     )
 
 
