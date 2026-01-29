@@ -153,7 +153,7 @@ documents = [
 for doc in documents:
     task = Task(
         description=f"Extract key information from {doc}",
-        attachments=[doc],
+        context=[doc],
         response_format=DocumentInfo
     )
     result = agent.do(task)
@@ -170,7 +170,7 @@ class DocumentFields(BaseModel):
 
 task = Task(
     description="Extract all key fields from the tax certificate",
-    attachments=["vergi_levhasi.png"],
+    context=["vergi_levhasi.png"],
     response_format=DocumentFields
 )
 ```
