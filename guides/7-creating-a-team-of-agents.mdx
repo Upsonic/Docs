@@ -50,21 +50,21 @@ from upsonic import Agent
 
 # Specialized agents with clear roles
 research_agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="Research Specialist",
     role="Market Research and Data Collection",
     goal="Gather comprehensive market data and insights"
 )
 
 analysis_agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="Analysis Expert", 
     role="Financial Analysis and Risk Assessment",
     goal="Analyze data and provide investment recommendations"
 )
 
 reporting_agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="Report Writer",
     role="Report Generation and Documentation", 
     goal="Create comprehensive reports from analysis results"
@@ -77,9 +77,9 @@ reporting_agent = Agent(
 from upsonic import Agent
 
 # Generic agents without clear specialization (BAD: vague roles and goals)
-agent1 = Agent(model="openai/gpt-5", name="Agent 1", role="Helper")
-agent2 = Agent(model="openai/gpt-5", name="Agent 2", role="Helper") 
-agent3 = Agent(model="openai/gpt-5", name="Agent 3", role="Helper")
+agent1 = Agent(model="openai/gpt-4o", name="Agent 1", role="Helper")
+agent2 = Agent(model="openai/gpt-4o", name="Agent 2", role="Helper") 
+agent3 = Agent(model="openai/gpt-4o", name="Agent 3", role="Helper")
 ```
 
 ## Team Operational Modes
@@ -156,7 +156,7 @@ class InvestmentSuggestion(BaseModel):
 
 # Agents
 savings_agent = Agent(
-    model="openai/gpt-5-mini",
+    model="openai/gpt-4o-mini",
     name="Virtual Savings Advisor",
     role="Analyzes user spending habits",
     goal="Provide weekly saving recommendations",
@@ -164,7 +164,7 @@ savings_agent = Agent(
 )
 
 investment_agent = Agent(
-    model="openai/gpt-5-mini",
+    model="openai/gpt-4o-mini",
     name="Investment Suggestion Agent",
     role="Generates safe investment suggestions",
     goal="Provide low-risk investment options based on savings advice",

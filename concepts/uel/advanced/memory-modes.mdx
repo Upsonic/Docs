@@ -22,16 +22,16 @@ The UEL Model supports four memory modes that control how conversation history i
 from upsonic.models import infer_model
 
 # Default - recommended for most cases
-model = infer_model("openai/gpt-5").add_memory(history=True)
+model = infer_model("openai/gpt-4o").add_memory(history=True)
 
 # Explicit mode selection
-model = infer_model("openai/gpt-5").add_memory(history=True, mode="auto")
-model = infer_model("openai/gpt-5").add_memory(history=True, mode="always")
-model = infer_model("openai/gpt-5").add_memory(history=True, mode="never")
-model = infer_model("openai/gpt-5").add_memory(history=True, mode="record_all")
+model = infer_model("openai/gpt-4o").add_memory(history=True, mode="auto")
+model = infer_model("openai/gpt-4o").add_memory(history=True, mode="always")
+model = infer_model("openai/gpt-4o").add_memory(history=True, mode="never")
+model = infer_model("openai/gpt-4o").add_memory(history=True, mode="record_all")
 
 # Enable debug logging
-model = infer_model("openai/gpt-5").add_memory(history=True, debug=True)
+model = infer_model("openai/gpt-4o").add_memory(history=True, debug=True)
 ```
 
 ## Mode Details
@@ -53,7 +53,7 @@ model = infer_model("openai/gpt-5").add_memory(history=True, debug=True)
 - When you want automatic conflict resolution
 
 ```python
-model = infer_model("gpt-5").add_memory(history=True, mode="auto")
+model = infer_model("gpt-4o").add_memory(history=True, mode="auto")
 
 # Works correctly with placeholders
 chain = ChatPromptTemplate.from_messages([
@@ -82,7 +82,7 @@ Can cause **duplicate history** if used with placeholder-based templates!
 - Scenarios where you **never** use placeholder history
 
 ```python
-model = infer_model("gpt-5").add_memory(history=True, mode="always")
+model = infer_model("gpt-4o").add_memory(history=True, mode="always")
 
 # Use ONLY with simple templates (no placeholders!)
 chain = ChatPromptTemplate.from_template("{question}") | model
@@ -104,7 +104,7 @@ chain = ChatPromptTemplate.from_template("{question}") | model
 - Recording conversations without affecting model context
 
 ```python
-model = infer_model("gpt-5").add_memory(history=True, mode="never")
+model = infer_model("gpt-4o").add_memory(history=True, mode="never")
 
 # Model won't remember previous conversations
 # But you can retrieve memory later for analytics
@@ -130,7 +130,7 @@ Can cause **exponential memory growth** with duplicates in multi-turn conversati
 - Debugging (handle duplicates yourself)
 
 ```python
-model = infer_model("gpt-5").add_memory(history=True, mode="record_all")
+model = infer_model("gpt-4o").add_memory(history=True, mode="record_all")
 
 # Memory will contain everything - including duplicates!
 # Turn 1: Memory = [H1, A1, Q1, R1]
@@ -157,7 +157,7 @@ The table below shows what the model **receives** during inference for each mode
 When using the same model in multiple chains (e.g., contextualize + answer), use `mode="auto"`:
 
 ```python
-model = infer_model("gpt-5").add_memory(history=True, mode="auto")
+model = infer_model("gpt-4o").add_memory(history=True, mode="auto")
 
 # Chain 1: Contextualize
 contextualize_chain = ChatPromptTemplate.from_messages([
@@ -182,7 +182,7 @@ answer_chain = ChatPromptTemplate.from_messages([
 Enable debug logging to see exactly what's happening:
 
 ```python
-model = infer_model("gpt-5").add_memory(history=True, mode="auto", debug=True)
+model = infer_model("gpt-4o").add_memory(history=True, mode="auto", debug=True)
 ```
 
 This will print:

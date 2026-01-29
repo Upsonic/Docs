@@ -32,7 +32,7 @@ def execute_tool_externally(requirement) -> str:
         raise ValueError(f"Unknown tool: {tool_name}")
 
 async def main():
-    agent = Agent("openai/gpt-5-mini", name="email_agent")
+    agent = Agent("openai/gpt-4o-mini", name="email_agent")
     task = Task(
         description="Send an email to test@example.com with subject 'Hello' and body 'Test message'.",
         tools=[send_email]
@@ -122,7 +122,7 @@ When the agent pauses for external tools, access the requirements:
 ```python
 from upsonic import Agent, Task
 
-agent = Agent("openai/gpt-5-mini")
+agent = Agent("openai/gpt-4o-mini")
 task = Task("Your task description", tools=[send_email])
 
 output = await agent.do_async(task, return_output=True)
@@ -167,7 +167,7 @@ def execute_tool_externally(requirement) -> str:
         raise ValueError(f"Unknown tool: {tool_name}")
 
 async def external_with_run_id_same_agent():
-    agent = Agent("openai/gpt-5-mini", name="external_tool_agent")
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent")
     task = Task(
         description="Send an email to test@example.com with subject 'Hello' and body 'Test message'.",
         tools=[send_email]
@@ -212,7 +212,7 @@ def execute_tool_externally(requirement) -> str:
         raise ValueError(f"Unknown tool: {tool_name}")
 
 async def external_with_task_same_agent():
-    agent = Agent("openai/gpt-5-mini", name="external_tool_agent")
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent")
     task = Task(
         description="Send an email to test@example.com with subject 'Hello' and body 'Test message'.",
         tools=[send_email]
@@ -259,7 +259,7 @@ def execute_tool_externally(requirement) -> str:
 
 async def external_with_run_id_new_agent():
     db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-5-mini", name="external_tool_agent", db=db)
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
     task = Task(
         description="Send an email to test@example.com with subject 'Hello' and body 'Test message'.",
         tools=[send_email]
@@ -275,7 +275,7 @@ async def external_with_run_id_new_agent():
             requirement.tool_execution.result = result
     
     # Create NEW agent to resume (simulates different process)
-    new_agent = Agent("openai/gpt-5-mini", name="external_tool_agent", db=db)
+    new_agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
     result = await new_agent.continue_run_async(
         run_id=run_id,
         requirements=output.requirements,  # Pass requirements with results
@@ -314,7 +314,7 @@ def execute_tool_externally(requirement) -> str:
 
 async def external_with_task_new_agent():
     db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-5-mini", name="external_tool_agent", db=db)
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
     task = Task(
         description="Send an email to test@example.com with subject 'Hello' and body 'Test message'.",
         tools=[send_email]
@@ -328,7 +328,7 @@ async def external_with_task_new_agent():
             requirement.tool_execution.result = result
     
     # Create NEW agent with task
-    new_agent = Agent("openai/gpt-5-mini", name="external_tool_agent", db=db)
+    new_agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
     result = await new_agent.continue_run_async(
         task=task,
         requirements=output.requirements,
@@ -385,7 +385,7 @@ def execute_tool_externally(requirement) -> str:
         raise ValueError(f"Unknown tool: {tool_name}")
 
 async def external_multiple_tools_loop():
-    agent = Agent("openai/gpt-5-mini", name="external_tool_agent")
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent")
     task = Task(
         description=(
             "First, send an email to admin@example.com with subject 'Report' and body 'Monthly report'. "
@@ -457,7 +457,7 @@ def execute_tool_externally(requirement) -> str:
         raise ValueError(f"Unknown tool: {tool_name}")
 
 async def external_multiple_tools_loop_task():
-    agent = Agent("openai/gpt-5-mini", name="external_tool_agent")
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent")
     task = Task(
         description=(
             "First, send an email to admin@example.com with subject 'Report' and body 'Monthly report'. "
@@ -528,7 +528,7 @@ def execute_tool_externally(requirement) -> str:
         raise ValueError(f"Unknown tool: {tool_name}")
 
 async def external_multiple_tools_with_executor():
-    agent = Agent("openai/gpt-5-mini", name="external_tool_agent")
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent")
     task = Task(
         description=(
             "First, send an email to admin@example.com with subject 'Report' and body 'Monthly report'. "
@@ -590,7 +590,7 @@ async def external_cross_process():
     db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
     
     # STEP 1: Initial run pauses for external tool
-    agent = Agent("openai/gpt-5-mini", name="external_tool_agent", db=db)
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
     task = Task(
         description="Send an email to test@example.com with subject 'Test' and body 'Hello'.",
         tools=[send_email]
@@ -618,7 +618,7 @@ async def external_cross_process():
     # STEP 3: New agent resumes (simulates different process)
     print(f"\nCreating new agent to resume run {run_id}...")
     new_db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
-    new_agent = Agent("openai/gpt-5-mini", name="external_tool_agent", db=new_db)
+    new_agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=new_db)
     
     result = await new_agent.continue_run_async(
         run_id=run_id,
@@ -659,7 +659,7 @@ async def external_cross_process_task():
     db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
     
     # STEP 1: Initial run
-    agent = Agent("openai/gpt-5-mini", name="external_tool_agent", db=db)
+    agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=db)
     task = Task(
         description="Send an email to test@example.com with subject 'Test' and body 'Hello'.",
         tools=[send_email]
@@ -679,7 +679,7 @@ async def external_cross_process_task():
     
     # STEP 3: New agent uses task for continuation
     new_db = SqliteDatabase(db_file="external.db", session_id="session_1", user_id="user_1")
-    new_agent = Agent("openai/gpt-5-mini", name="external_tool_agent", db=new_db)
+    new_agent = Agent("openai/gpt-4o-mini", name="external_tool_agent", db=new_db)
     
     result = await new_agent.continue_run_async(
         task=task,

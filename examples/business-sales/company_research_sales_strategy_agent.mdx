@@ -167,7 +167,7 @@ def main(inputs: Dict[str, Any]) -> Dict[str, Any]:
             - industry: Optional industry name for focused analysis
             - enable_memory: Whether to enable memory persistence (default: True)
             - storage_path: Optional path for SQLite storage (default: "company_research.db")
-            - model: Optional model identifier (default: "openai/gpt-5")
+            - model: Optional model identifier (default: "openai/gpt-4o")
     
     Returns:
         Dictionary containing comprehensive research report
@@ -180,7 +180,7 @@ def main(inputs: Dict[str, Any]) -> Dict[str, Any]:
     industry = inputs.get("industry")
     enable_memory = inputs.get("enable_memory", True)
     storage_path = inputs.get("storage_path")
-    model = inputs.get("model", "openai/gpt-5")
+    model = inputs.get("model", "openai/gpt-4o")
     
     orchestrator = create_orchestrator_agent(
         model=model,
@@ -218,7 +218,7 @@ async def amain(inputs: Dict[str, Any]) -> Dict[str, Any]:
             - industry: Optional industry name for focused analysis
             - enable_memory: Whether to enable memory persistence (default: True)
             - storage_path: Optional path for SQLite storage (default: "company_research.db")
-            - model: Optional model identifier (default: "openai/gpt-5")
+            - model: Optional model identifier (default: "openai/gpt-4o")
     
     Returns:
         Dictionary containing comprehensive research report
@@ -231,7 +231,7 @@ async def amain(inputs: Dict[str, Any]) -> Dict[str, Any]:
     industry = inputs.get("industry")
     enable_memory = inputs.get("enable_memory", True)
     storage_path = inputs.get("storage_path")
-    model = inputs.get("model", "openai/gpt-5")
+    model = inputs.get("model", "openai/gpt-4o")
     
     orchestrator = create_orchestrator_agent(
         model=model,
@@ -268,7 +268,7 @@ if __name__ == "__main__":
         "industry": "Artificial Intelligence",
         "enable_memory": False,
         "storage_path": None,
-        "model": "openai/gpt-5-mini",
+        "model": "openai/gpt-4o-mini",
     }
     
     if len(sys.argv) > 1:
@@ -336,7 +336,7 @@ except ImportError:
 
 
 def create_orchestrator_agent(
-    model: str = "openai/gpt-5",
+    model: str = "openai/gpt-4o",
     storage_path: Optional[str] = None,
     enable_memory: bool = True,
 ) -> DeepAgent:
@@ -422,7 +422,7 @@ if TYPE_CHECKING:
     pass
 
 
-def create_research_subagent(model: str = "openai/gpt-5-mini") -> Agent:
+def create_research_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
     """Create specialized subagent for company research.
     
     Args:
@@ -448,7 +448,7 @@ def create_research_subagent(model: str = "openai/gpt-5-mini") -> Agent:
     )
 
 
-def create_industry_analyst_subagent(model: str = "openai/gpt-5-mini") -> Agent:
+def create_industry_analyst_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
     """Create specialized subagent for industry analysis.
     
     Args:
@@ -481,7 +481,7 @@ def create_industry_analyst_subagent(model: str = "openai/gpt-5-mini") -> Agent:
     )
 
 
-def create_financial_analyst_subagent(model: str = "openai/gpt-5-mini") -> Agent:
+def create_financial_analyst_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
     """Create specialized subagent for financial analysis.
     
     Args:
@@ -512,7 +512,7 @@ def create_financial_analyst_subagent(model: str = "openai/gpt-5-mini") -> Agent
     )
 
 
-def create_sales_strategist_subagent(model: str = "openai/gpt-5-mini") -> Agent:
+def create_sales_strategist_subagent(model: str = "openai/gpt-4o-mini") -> Agent:
     """Create specialized subagent for sales strategy development.
     
     Args:
@@ -621,9 +621,9 @@ def create_sales_strategist_subagent(model: str = "openai/gpt-5-mini") -> Agent:
             },
             "model": {
                 "type": "string",
-                "description": "Optional model identifier (e.g., openai/gpt-5, openai/gpt-5-mini)",
+                "description": "Optional model identifier (e.g., openai/gpt-4o, openai/gpt-4o-mini)",
                 "required": false,
-                "default": "openai/gpt-5"
+                "default": "openai/gpt-4o"
             }
         }
     },

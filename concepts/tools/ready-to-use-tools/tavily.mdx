@@ -23,7 +23,7 @@ task = Task(
 )
 
 # Create agent
-agent = Agent(model="openai/gpt-5", name="Tavily Search Agent")
+agent = Agent(model="openai/gpt-4o", name="Tavily Search Agent")
 
 # Execute
 result = agent.do(task)
@@ -50,7 +50,7 @@ task = Task(
     tools=[tavily_search]
 )
 
-agent = Agent(model="openai/gpt-5", name="Advanced Search Agent")
+agent = Agent(model="openai/gpt-4o", name="Advanced Search Agent")
 result = agent.do(task)
 print(result)
 ```

@@ -41,7 +41,7 @@ The `Direct` class accepts the following attributes during initialization:
 
 | Attribute | Type | Description | Default |
 |-----------|------|-------------|---------|
-| **model** | `Union[str, Any, None]` | Model identifier (e.g., "openai/gpt-5"), Model instance, or None | `"openai/gpt-5"` (when None) |
+| **model** | `Union[str, Any, None]` | Model identifier (e.g., "openai/gpt-4o"), Model instance, or None | `"openai/gpt-4o"` (when None) |
 | **settings** | `Optional[ModelSettings]` | Model-specific configuration including temperature, max_tokens, etc. | `None` |
 | **profile** | `Optional[ModelProfileSpec]` | Model profile configuration for advanced customization | `None` |
 | **provider** | `Optional[Union[str, Provider]]` | Provider name or Provider instance for custom provider integration | `None` |
@@ -77,7 +77,7 @@ This example demonstrates a practical use case for Direct LLM Call: extracting s
 
 #### Direct LLM Call Configuration
 
-**Model Selection**: We use `"openai/gpt-5"` for its strong vision and reasoning capabilities, essential for document understanding.
+**Model Selection**: We use `"openai/gpt-4o"` for its strong vision and reasoning capabilities, essential for document understanding.
 
 **Task Configuration**:
 - **Description**: Clear instruction for the LLM
@@ -110,8 +110,8 @@ class InvoiceData(BaseModel):
     line_items: list[LineItem]
 
 
-# Initialize Direct with gpt-5
-direct = Direct(model="openai/gpt-5")
+# Initialize Direct with gpt-4o
+direct = Direct(model="openai/gpt-4o")
 
 # Create task with document attachment and structured response
 task = Task(

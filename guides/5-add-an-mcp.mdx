@@ -131,7 +131,7 @@ class DatabaseReport(BaseModel):
 
 # Agent Creation with MCP Tools
 database_agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="Database Management Expert",
     role="Database operations and data management specialist",
     goal="Provide comprehensive database management with structured reporting"
@@ -164,7 +164,7 @@ print(f"Summary: {structured_result.summary}")
 
 # Example 3: Combined MCP and Regular Tools
 research_agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="Research and Database Agent",
     role="Combined research and data management specialist",
     goal="Research topics and store findings in a structured database"
@@ -182,7 +182,7 @@ print(combined_result)
 
 # Example 4: Multiple MCP Workflow
 workflow_agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="Multi-MCP Workflow Agent",
     role="Multi-tool specialist",
     goal="Use multiple MCP tools to accomplish complex tasks"

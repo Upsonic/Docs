@@ -33,7 +33,7 @@ from upsonic import Agent
 agent = Agent()
 ```
 
-**Warning**: When creating an agent without specifying a model, it defaults to `"openai/gpt-5"`. Make sure you have the appropriate API key set in your environment.
+**Warning**: When creating an agent without specifying a model, it defaults to `"openai/gpt-4o"`. Make sure you have the appropriate API key set in your environment.
 
 ### Agent with Custom Configuration
 
@@ -45,7 +45,7 @@ from upsonic import Agent
 # Create agent with custom settings for financial analysis
 agent = Agent(
     name="FinancialAnalyst",
-    model="openai/gpt-5-mini",
+    model="openai/gpt-4o-mini",
     debug=True,
     retry=3,
     mode="raise"
@@ -91,7 +91,7 @@ print(f"Agent: {agent.name}, ID: {agent.agent_id}")
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `model` | `Union[str, Model]` | `"openai/gpt-5"` | Model specification (string or Model instance) |
+| `model` | `Union[str, Model]` | `"openai/gpt-4o"` | Model specification (string or Model instance) |
 | `retry` | `int` | `1` | Number of retry attempts for failed calls |
 | `mode` | `RetryMode` | `"raise"` | Retry behavior: "raise" or "return_false" |
 | `debug` | `bool` | `False` | Enable debug mode for detailed logging |
@@ -99,7 +99,7 @@ print(f"Agent: {agent.name}, ID: {agent.agent_id}")
 **Example:**
 ```python
 agent = Agent(
-    model="openai/gpt-5-mini",
+    model="openai/gpt-4o-mini",
     retry=5,
     mode="raise",
     debug=True
@@ -278,7 +278,7 @@ memory = Memory(
     full_session_memory=True,
     summary_memory=True,
     user_analysis_memory=True,
-    model=OpenAIChatModel("gpt-5-mini"),
+    model=OpenAIChatModel("gpt-4o-mini"),
     debug=True
 )
 
@@ -314,7 +314,7 @@ memory = Memory(
     user_analysis_memory=True,
     num_last_messages=10,  # Keep only last 10 conversation turns
     user_memory_mode='update',  # Update existing profile data
-    model=OpenAIChatModel("gpt-5-mini")
+    model=OpenAIChatModel("gpt-4o-mini")
 )
 ```
 
@@ -610,7 +610,7 @@ memory = Memory(
     full_session_memory=True,
     summary_memory=True,
     user_analysis_memory=True,
-    model=OpenAIChatModel("gpt-5-mini")
+    model=OpenAIChatModel("gpt-4o-mini")
 )
 
 # Create reliability layer
@@ -623,7 +623,7 @@ agent = Agent(
     agent_id_="banking_analyst_001",
     
     # Model and performance
-    model="openai/gpt-5-mini",
+    model="openai/gpt-4o-mini",
     retry=3,
     mode="raise",
     debug=True,

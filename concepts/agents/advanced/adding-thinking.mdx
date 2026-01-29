@@ -37,7 +37,7 @@ def get_population(city: str) -> str:
 
 # Enable thinking for multi-tool orchestration
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="CityAnalyst",
     tools=[get_weather, get_population],
     enable_thinking_tool=True,
@@ -94,7 +94,7 @@ def analyze_sentiment(text: str) -> str:
 
 # Enable thinking for all tasks
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="ResearchAgent",
     tools=[search_web, analyze_sentiment],
     enable_thinking_tool=True
@@ -124,7 +124,7 @@ def analyze_sentiment(text: str) -> str:
 
 # Create agent without thinking enabled by default
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="ResearchAgent",
     tools=[search_web, analyze_sentiment]
 )
@@ -157,7 +157,7 @@ def analyze_sentiment(text: str) -> str:
 
 # Agent with thinking enabled
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="AnalysisAgent",
     tools=[search_web, analyze_sentiment],
     enable_thinking_tool=True
@@ -204,7 +204,7 @@ finance_tools = YFinanceTools(
 
 # Create agent with thinking for multi-step analysis
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="FinancialAnalyst",
     tools=finance_tools.functions(),
     enable_thinking_tool=True,
@@ -250,7 +250,7 @@ def get_attractions(city: str) -> str:
     return f"Top attractions in {city}: Museums, Parks, Historic sites"
 
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="TravelAdvisor",
     tools=[get_weather, get_population, get_attractions],
     enable_thinking_tool=True,
@@ -297,7 +297,7 @@ def get_population(city: str) -> str:
 
 # Monitor performance with debug mode
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="Analyst",
     tools=[get_weather, get_population],
     enable_thinking_tool=True,

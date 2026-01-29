@@ -52,7 +52,7 @@ kb = KnowledgeBase(
 )
 
 # Step 5: Create agent
-agent = Agent("openai/gpt-5")
+agent = Agent("openai/gpt-4o")
 
 # Step 6: Create task with knowledge base as a tool
 task = Task(
@@ -127,7 +127,7 @@ kb2 = KnowledgeBase(
 )
 
 # Use with Agent
-agent = Agent("openai/gpt-5")
+agent = Agent("openai/gpt-4o")
 task = Task(
     description="Compare the API rate limits defined in the technical documentation with the usage limits described in the user guide",
     tools=[kb1, kb2]

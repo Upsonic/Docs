@@ -22,7 +22,7 @@ memory = Memory(
     full_session_memory=True
 )
 
-agent = Agent("openai/gpt-5", memory=memory)
+agent = Agent("openai/gpt-4o", memory=memory)
 
 result1 = agent.do(Task("My name is Alice"))
 result2 = agent.do(Task("What's my name?"))
@@ -47,7 +47,7 @@ memory = Memory(
     num_last_messages=10  # Keep last 10 turns only
 )
 
-agent = Agent("openai/gpt-5", memory=memory)
+agent = Agent("openai/gpt-4o", memory=memory)
 
 result = agent.do(Task("Let's continue our discussion"))
 print(result)
@@ -77,7 +77,7 @@ memory = Memory(
     feed_tool_call_results=True  # Include tool outputs in history
 )
 
-agent = Agent("openai/gpt-5", tools=[get_weather], memory=memory)
+agent = Agent("openai/gpt-4o", tools=[get_weather], memory=memory)
 
 result1 = agent.do(Task("What's the weather in NYC?"))
 result2 = agent.do(Task("What was the weather you just told me?"))

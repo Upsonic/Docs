@@ -56,7 +56,7 @@ def calculator(a: float, b: float, operation: str) -> float:
 # LLM node
 def llm_node(state: AgentState) -> dict:
     """Let the LLM reason and use tools."""
-    model = infer_model("openai/gpt-5-mini")
+    model = infer_model("openai/gpt-4o-mini")
     
     # Bind tools to the model
     model_with_tools = model.bind_tools([calculator])
@@ -124,7 +124,7 @@ class LoopingAgentState(TypedDict):
 
 def agent_loop(state: LoopingAgentState) -> Command[Literal["agent_loop", END]]:
     """Agent that loops until task is complete."""
-    model = infer_model("openai/gpt-5-mini")
+    model = infer_model("openai/gpt-4o-mini")
     
     # Check if we should continue
     if state["iterations"] >= state["max_iterations"]:

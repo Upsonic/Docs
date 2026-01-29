@@ -14,7 +14,7 @@ The simplest way to run an agent is using the `do()` method, which executes sync
 from upsonic import Agent, Task
 
 # Create agent
-agent = Agent("openai/gpt-5")
+agent = Agent("openai/gpt-4o")
 
 # Execute with Task object
 task = Task("What is the capital of France?")
@@ -36,7 +36,7 @@ import asyncio
 
 async def main():
     # Create agent
-    agent = Agent("openai/gpt-5")
+    agent = Agent("openai/gpt-4o")
     
     # Execute asynchronously (accepts Task or string)
     result = await agent.do_async("Explain quantum computing in simple terms")
@@ -57,7 +57,7 @@ from upsonic import Agent, Task
 
 async def main():
     # Create agent and task
-    agent = Agent("openai/gpt-5")
+    agent = Agent("openai/gpt-4o")
     task = Task("Write a short poem about coding")
     
     # Stream the output
@@ -92,7 +92,7 @@ def calculate(x: int, y: int) -> int:
     return x + y
 
 async def main():
-    agent = Agent("openai/gpt-5")
+    agent = Agent("openai/gpt-4o")
     task = Task("Calculate 5 + 3", tools=[calculate])
     
     async for event in agent.astream(task, events=True):
@@ -223,7 +223,7 @@ For synchronous code, use `stream()` with `events=True`:
 from upsonic import Agent, Task
 from upsonic.run.events.events import TextDeltaEvent, PipelineStartEvent, PipelineEndEvent
 
-agent = Agent("openai/gpt-5")
+agent = Agent("openai/gpt-4o")
 task = Task("Explain AI briefly")
 
 # Stream events synchronously
@@ -276,7 +276,7 @@ def another_tool() -> str:
     return "Another tool"
 
 # Add tools during initialization
-agent = Agent("openai/gpt-5", tools=[calculate])
+agent = Agent("openai/gpt-4o", tools=[calculate])
 
 # Or add tools after initialization
 agent.add_tools([another_tool])

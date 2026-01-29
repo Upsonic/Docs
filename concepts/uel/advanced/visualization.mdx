@@ -22,7 +22,7 @@ from upsonic.models import infer_model
 # Create a chain
 chain = (
     ChatPromptTemplate.from_template("Tell me about {topic}")
-    | infer_model("openai/gpt-5")
+    | infer_model("openai/gpt-4o")
     | StrOutputParser()
 )
 
@@ -48,7 +48,7 @@ StrOutputParser()
 from upsonic.uel import ChatPromptTemplate, RunnableParallel, RunnableLambda, StrOutputParser
 from upsonic.models import infer_model
 
-model = infer_model("openai/gpt-5")
+model = infer_model("openai/gpt-4o")
 parser = StrOutputParser()
 
 # Create a complex chain
@@ -103,7 +103,7 @@ StrOutputParser()
 from upsonic.uel import ChatPromptTemplate, RunnableParallel, StrOutputParser
 from upsonic.models import infer_model
 
-model = infer_model("openai/gpt-5")
+model = infer_model("openai/gpt-4o")
 parser = StrOutputParser()
 
 # Create a complex chain
@@ -155,7 +155,7 @@ from upsonic.models import infer_model
 
 # Note: @chain decorated functions don't have get_graph() method
 # To visualize, build the chain explicitly instead
-model = infer_model("openai/gpt-5")
+model = infer_model("openai/gpt-4o")
 parser = StrOutputParser()
 
 # Build chain explicitly for visualization
@@ -175,7 +175,7 @@ graph.print_ascii()
 # Or use @chain for custom logic, but visualize the returned chain
 @chain_decorator
 def custom_chain(input_dict):
-    model = infer_model("openai/gpt-5")
+    model = infer_model("openai/gpt-4o")
     parser = StrOutputParser()
     prompt1 = ChatPromptTemplate.from_template("Step 1: {input}")
     prompt2 = ChatPromptTemplate.from_template("Step 2: {input}")
@@ -199,7 +199,7 @@ from upsonic.models import infer_model
 # Create a chain
 chain = (
     ChatPromptTemplate.from_template("Tell me about {topic}")
-    | infer_model("openai/gpt-5")
+    | infer_model("openai/gpt-4o")
     | StrOutputParser()
 )
 
@@ -221,7 +221,7 @@ from upsonic.models import infer_model
 # Visualize before execution to understand flow
 chain = (
     ChatPromptTemplate.from_template("Process: {input}")
-    | infer_model("openai/gpt-5")
+    | infer_model("openai/gpt-4o")
     | StrOutputParser()
 )
 

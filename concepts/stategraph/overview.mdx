@@ -102,7 +102,7 @@ def calculator(a: float, b: float, operation: str) -> float:
 
 def agent_node(state: AgentState) -> dict:
     """Agent node with tool access."""
-    model = infer_model("openai/gpt-5-mini")
+    model = infer_model("openai/gpt-4o-mini")
     model_with_tools = model.bind_tools([calculator])
     
     user_message = state["messages"][-1] if state["messages"] else "Hello"

@@ -26,7 +26,7 @@ In Upsonic, all model classes inherit from the base `Model` class, which provide
 from upsonic import Agent, Task
 from upsonic.models.openai import OpenAIChatModel
 
-model = OpenAIChatModel(model_name="gpt-5")
+model = OpenAIChatModel(model_name="gpt-4o")
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")
@@ -39,7 +39,7 @@ print(result)
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 
 task = Task("Hello, how are you?")
 result = agent.do(task)

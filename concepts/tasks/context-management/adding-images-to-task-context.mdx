@@ -12,7 +12,7 @@ Tasks can include image attachments for processing. The framework automatically 
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 
 # Task with single image
 task = Task(
@@ -29,7 +29,7 @@ print(result)
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 
 # Task with multiple images
 task = Task(
@@ -46,7 +46,7 @@ print(result)
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 
 # Task with images and other context
 task = Task(
@@ -71,7 +71,7 @@ The framework supports various image formats including:
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 
 # Example with different image formats
 task = Task(
@@ -95,7 +95,7 @@ def image_analyzer(image_path: str) -> str:
     # Your image analysis logic here
     return f"Analysis of {image_path}"
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 
 # Task combining image attachments with image analysis tools
 task = Task(

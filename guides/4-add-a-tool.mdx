@@ -170,7 +170,7 @@ task = Task(
     tools=[delete_file]
 )
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 result = agent.do(task)
 # User will be prompted: "Proceed? (y/n): "
 ```
@@ -196,7 +196,7 @@ task = Task(
     tools=[authenticate_service]
 )
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 result = agent.do(task)
 # User will be prompted for each field:
 # Enter value for 'api_key': 
@@ -240,7 +240,7 @@ task = Task(
     tools=[execute_shell_command]
 )
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 
 # Initial execution - agent pauses when tool is needed
 output = agent.do(task, return_output=True)
@@ -280,7 +280,7 @@ task = Task(
     tools=[delete_production_data]
 )
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 
 # Initial execution - agent pauses when tool is needed
 output = agent.do(task, return_output=True)
@@ -422,7 +422,7 @@ async def analyze_seo_metrics(html_content: str) -> Dict[str, Any]:
 
 # Agent Creation with Custom Tools
 website_analyzer_agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="Website Analysis Expert",
     role="Website Performance and SEO Specialist",
     goal="Provide comprehensive website analysis with actionable insights for optimization"

@@ -30,7 +30,7 @@ task = Task(
 # Create agent
 agent = Agent(
     name="Data Fetcher",
-    model="openai/gpt-5"
+    model="openai/gpt-4o"
 )
 
 # Execute
@@ -71,7 +71,7 @@ task = Task(
     tools=[UsersDB, OrdersDB]
 )
 
-agent = Agent(name="Multi-DB Agent", model="openai/gpt-5")
+agent = Agent(name="Multi-DB Agent", model="openai/gpt-4o")
 result = agent.do(task)
 ```
 

@@ -40,7 +40,7 @@ task = Task(
     context=[knowledge_base]
 )
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 
 result = agent.do(task)
 print(result)
@@ -78,7 +78,7 @@ kb2 = KnowledgeBase(
 )
 
 # Task with multiple knowledge bases
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 task = Task(
     description="Find information about both technical procedures and company policies",
     context=[kb1, kb2]
@@ -106,7 +106,7 @@ knowledge_base = KnowledgeBase(
     vectordb=vectordb
 )
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 task = Task(
     description="What are the key features mentioned in the product information?",
     context=[knowledge_base]
@@ -139,7 +139,7 @@ knowledge_base = KnowledgeBase(
     splitter_config={"chunk_overlap": 200}
 )
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 task = Task(description="Search the knowledge base for relevant information", context=[knowledge_base])
 result = agent.do(task)
 print(result)
@@ -164,7 +164,7 @@ knowledge_base = KnowledgeBase(
     vectordb=vectordb
 )
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 
 # Task with search filter
 task = Task(
@@ -206,7 +206,7 @@ knowledge_base = KnowledgeBase(
     vectordb=vectordb
 )
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 task = Task(description="What insights can you find in the knowledge base?", context=[knowledge_base])
 result = agent.do(task)
 print(result)

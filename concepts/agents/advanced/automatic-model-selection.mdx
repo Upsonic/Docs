@@ -39,7 +39,7 @@ Fast, deterministic selection using keyword analysis and scoring algorithms. Ide
 
 ### LLM-Based Selection (Advanced)
 
-Uses gpt-5 to analyze your task and intelligently select the best model. Recommended for complex or ambiguous tasks.
+Uses gpt-4o to analyze your task and intelligently select the best model. Recommended for complex or ambiguous tasks.
 
 - ✅ **Intelligent**: Deep understanding of task nuances
 - ✅ **Context-Aware**: Considers subtle requirements
@@ -207,7 +207,7 @@ agent = Agent()
 recommendation = agent.recommend_model_for_task("Analyze financial data and create investment recommendations")
 
 # Access recommendation properties
-print(f"Model: {recommendation.model_name}")           # e.g., "openai/gpt-5"
+print(f"Model: {recommendation.model_name}")           # e.g., "openai/gpt-4o"
 print(f"Reason: {recommendation.reason}")               # Explanation for selection
 print(f"Confidence: {recommendation.confidence_score}")     # 0.0 to 1.0
 print(f"Alternatives: {recommendation.alternative_models}")   # List of alternatives
@@ -230,7 +230,7 @@ from upsonic import Agent, Task
 
 # Create agent with default model selection settings
 agent = Agent(
-    model="openai/gpt-5-mini",  # Default model
+    model="openai/gpt-4o-mini",  # Default model
     debug=True
 )
 
@@ -302,7 +302,7 @@ from upsonic import Agent, Task
 
 # Agent with default selection criteria
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     model_selection_criteria={
         "prioritize_cost": True,
         "max_cost_tier": 5,
@@ -339,7 +339,7 @@ print(result)
 
 The framework includes comprehensive metadata for:
 
-- **OpenAI**: gpt-5, gpt-5-mini, O1-Pro, O1-mini
+- **OpenAI**: gpt-4o, gpt-4o-mini, O1-Pro, O1-mini
 - **Anthropic**: Claude 4 Opus, Claude 3.7 Sonnet, Claude 3.5 Haiku
 - **Google**: Gemini 2.5 Pro, Gemini 2.5 Flash
 - **Meta**: Llama 3.3 70B
@@ -358,7 +358,7 @@ Each model includes benchmark scores (MMLU, HumanEval, MATH, etc.), capabilities
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-5-mini")
+agent = Agent(model="openai/gpt-4o-mini")
 
 recommendation = agent.recommend_model_for_task(
     "Perform risk assessment and regulatory compliance analysis",
@@ -384,7 +384,7 @@ print(result)
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-5-mini")
+agent = Agent(model="openai/gpt-4o-mini")
 
 recommendation = agent.recommend_model_for_task(
     "Handle customer inquiries in real-time chat",
@@ -409,7 +409,7 @@ print(result)
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-5-mini")
+agent = Agent(model="openai/gpt-4o-mini")
 
 recommendation = agent.recommend_model_for_task(
     "Solve complex mathematical proofs",

@@ -28,7 +28,7 @@ def external_database_query(query: str) -> str:
     return f"Query executed: {query} | Results: 10 rows returned"
 
 async def main():
-    agent = Agent(model="openai/gpt-5-mini")
+    agent = Agent(model="openai/gpt-4o-mini")
     task = Task(
         description="CALL external_database_query tool with the query 'SELECT * FROM users'",
         tools=[external_database_query]

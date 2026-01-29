@@ -23,7 +23,7 @@ from upsonic import Canvas, Agent, Task
 
 # Create canvas and pass it to agent
 canvas = Canvas("My Project Notes")
-agent = Agent("openai/gpt-5", canvas=canvas)
+agent = Agent("openai/gpt-4o", canvas=canvas)
 
 # Agent automatically has access to canvas tools
 task = Task("Add a project overview section to the canvas")
@@ -37,7 +37,7 @@ from upsonic import Canvas, Agent, Task
 
 # Create canvas-enabled agent
 canvas = Canvas("Meeting Notes")
-agent = Agent("openai/gpt-5", canvas=canvas)
+agent = Agent("openai/gpt-4o", canvas=canvas)
 
 # Agent can create and organize meeting notes
 task = Task("""
@@ -60,8 +60,8 @@ result = agent.do(task)
 from upsonic import Canvas, Agent, Task
 
 # Canvas can use a different model for editing operations
-canvas = Canvas("Technical Notes", model="openai/gpt-5-mini")
-agent = Agent("openai/gpt-5", canvas=canvas)
+canvas = Canvas("Technical Notes", model="openai/gpt-4o-mini")
+agent = Agent("openai/gpt-4o", canvas=canvas)
 
 task = Task("Create a project summary document")
 result = agent.do(task)
@@ -75,7 +75,7 @@ result = agent.do(task)
 from upsonic import Canvas, Agent, Task
 
 canvas = Canvas("Project Documentation")
-agent = Agent("openai/gpt-5", canvas=canvas)
+agent = Agent("openai/gpt-4o", canvas=canvas)
 
 # Agent can review and update existing canvas content
 task = Task("""
@@ -95,7 +95,7 @@ result = agent.do(task)
 from upsonic import Canvas, Agent, Task
 
 canvas = Canvas("API Documentation")
-agent = Agent("openai/gpt-5", canvas=canvas)
+agent = Agent("openai/gpt-4o", canvas=canvas)
 
 task = Task("""
 Create comprehensive API documentation for our user management endpoints:

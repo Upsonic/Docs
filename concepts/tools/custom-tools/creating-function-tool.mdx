@@ -34,7 +34,7 @@ task = Task(
 )
 
 # Create agent
-agent = Agent(model="openai/gpt-5", name="Calculator Agent")
+agent = Agent(model="openai/gpt-4o", name="Calculator Agent")
 
 # Execute
 result = agent.do(task)
@@ -72,7 +72,7 @@ task = Task(
     tools=[fetch_weather]
 )
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 result = await agent.do_async(task)  # Use do_async for async tools
 print(result)
 ```

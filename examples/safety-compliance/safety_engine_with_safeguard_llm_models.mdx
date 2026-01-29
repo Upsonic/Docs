@@ -1,15 +1,15 @@
 ---
 title: "Safety Engine with Safeguard LLM Models"
-description: "Use Upsonic's Safety Engine with PIIBlockPolicy_LLM, OpenAI's gpt-5 for responses, and gpt-oss-safeguard-20b for policy enforcement via OpenRouter"
+description: "Use Upsonic's Safety Engine with PIIBlockPolicy_LLM, OpenAI's gpt-4o for responses, and gpt-oss-safeguard-20b for policy enforcement via OpenRouter"
 ---
 
-This example demonstrates how to use **Upsonic's Safety Engine** with the prebuilt **PIIBlockPolicy_LLM** to automatically detect and block personally identifiable information (PII) in user inputs. The agent uses OpenAI's `gpt-5` for main responses, while the policy enforcement is powered by OpenAI's safety-focused `gpt-oss-safeguard-20b` model via OpenRouter.
+This example demonstrates how to use **Upsonic's Safety Engine** with the prebuilt **PIIBlockPolicy_LLM** to automatically detect and block personally identifiable information (PII) in user inputs. The agent uses OpenAI's `gpt-4o` for main responses, while the policy enforcement is powered by OpenAI's safety-focused `gpt-oss-safeguard-20b` model via OpenRouter.
 
 ## Overview
 
 The Safety Engine is a powerful feature in Upsonic that allows you to enforce content policies on your LLM agents. This example showcases:
 
-1. **Dual Model Architecture** — Using `gpt-5` for agent responses and `gpt-oss-safeguard-20b` for policy enforcement
+1. **Dual Model Architecture** — Using `gpt-4o` for agent responses and `gpt-oss-safeguard-20b` for policy enforcement
 2. **OpenRouter Provider** — Accessing OpenAI's safety models through the OpenRouter API
 3. **PII Block Policy LLM** — LLM-powered detection and blocking of personal information (emails, phone numbers, SSN, etc.)
 4. **User Policy Feedback** — Providing helpful guidance instead of just blocking content
@@ -26,7 +26,7 @@ The `PIIBlockPolicy_LLM` is a prebuilt policy that uses LLM-powered detection to
 ## Key Features
 
 - **Prebuilt Policy**: No need to implement PII detection logic — Upsonic provides it out of the box
-- **Dual Model Setup**: Uses `gpt-5` for high-quality responses and `gpt-oss-safeguard-20b` for safety enforcement
+- **Dual Model Setup**: Uses `gpt-4o` for high-quality responses and `gpt-oss-safeguard-20b` for safety enforcement
 - **LLM-Powered Detection**: Policy uses an LLM for contextual understanding of PII, not just pattern matching
 - **Safety-Focused Model**: Policy enforcement uses OpenAI's gpt-oss-safeguard-20b, specifically designed for safe interactions
 - **Helpful Feedback**: Instead of just blocking, provides guidance on how to rephrase queries
@@ -50,7 +50,7 @@ Set your API keys:
 # For policy enforcement (gpt-oss-safeguard-20b via OpenRouter)
 export OPENROUTER_API_KEY="your-openrouter-api-key"
 
-# For main agent responses (gpt-5)
+# For main agent responses (gpt-4o)
 export OPENAI_API_KEY="your-openai-api-key"
 ```
 
@@ -137,14 +137,14 @@ This example demonstrates how to use the OpenAI's gpt-oss-safeguard-20b model
 with Upsonic's safety policies (PIIBlockPolicy_LLM) to create a secure AI agent.
 
 The agent:
-- Uses OpenAI's gpt-5 for main agent responses
+- Uses OpenAI's gpt-4o for main agent responses
 - Uses OpenRouter's gpt-oss-safeguard-20b (OpenAI's safety-focused model) for policy enforcement
 - Applies PIIBlockPolicy_LLM to detect and block PII in user inputs
 - Provides helpful feedback when policy violations occur
 
 Requirements:
 - Set OPENROUTER_API_KEY environment variable
-- Set OPENAI_API_KEY environment variable (for gpt-5)
+- Set OPENAI_API_KEY environment variable (for gpt-4o)
 """
 
 from upsonic import Task, Agent
@@ -174,7 +174,7 @@ async def main(inputs):
     PIIBlockPolicy_LLM.base_llm = policy_llm
     
     agent = Agent(
-        model='openai/gpt-5',
+        model='openai/gpt-4o',
         user_policy=PIIBlockPolicy_LLM,
         user_policy_feedback=True,
         user_policy_feedback_loop=1,
@@ -222,7 +222,7 @@ if __name__ == "__main__":
         },
         "OPENAI_API_KEY": {
             "type": "string",
-            "description": "OpenAI API key for gpt-5 (for main agent responses)",
+            "description": "OpenAI API key for gpt-4o (for main agent responses)",
             "required": true
         },
         "UPSONIC_WORKERS_AMOUNT": {
@@ -252,7 +252,7 @@ if __name__ == "__main__":
         "storage": 1024
     },
     "agent_name": "Safety Agent",
-    "description": "OpenRouter Safety Agent with PII Protection - Uses gpt-5 for responses and gpt-oss-safeguard-20b for policy enforcement with PIIBlockPolicy_LLM",
+    "description": "OpenRouter Safety Agent with PII Protection - Uses gpt-4o for responses and gpt-oss-safeguard-20b for policy enforcement with PIIBlockPolicy_LLM",
     "icon": "book",
     "language": "book",
     "streamlit": false,
@@ -308,7 +308,7 @@ if __name__ == "__main__":
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `OPENROUTER_API_KEY` | OpenRouter API key for policy enforcement (gpt-oss-safeguard-20b) | Yes |
-| `OPENAI_API_KEY` | OpenAI API key for main agent responses (gpt-5) | Yes |
+| `OPENAI_API_KEY` | OpenAI API key for main agent responses (gpt-4o) | Yes |
 
 
 For more information on Safety Engine and custom policies, visit: [Upsonic Safety Engine Documentation](https://docs.upsonic.ai/concepts/safety-engine/overview)

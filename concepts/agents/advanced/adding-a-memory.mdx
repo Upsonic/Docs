@@ -39,12 +39,12 @@ memory = Memory(
     full_session_memory=True,
     summary_memory=True,
     user_analysis_memory=True,
-    model=OpenAIChatModel("gpt-5-mini")
+    model=OpenAIChatModel("gpt-4o-mini")
 )
 
 # Create agent with memory
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="BankingAssistant",
     memory=memory,
     feed_tool_call_results=True
@@ -81,7 +81,7 @@ memory = Memory(
 
 # Create agent with memory
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     memory=memory
 )
 
@@ -100,7 +100,7 @@ from upsonic.models.openai import OpenAIChatModel
 
 # Create storage and model
 storage = SqliteStorage(db_file="full_memory.db")
-model = OpenAIChatModel("gpt-5-mini")
+model = OpenAIChatModel("gpt-4o-mini")
 
 # Full memory configuration with all options
 memory = Memory(
@@ -121,7 +121,7 @@ memory = Memory(
 
 # Create agent with full memory
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="AdvancedMemoryAgent",
     memory=memory
 )
@@ -152,7 +152,7 @@ memory = Memory(
 )
 
 # Create agent
-agent = Agent(model="openai/gpt-5", memory=memory)
+agent = Agent(model="openai/gpt-4o", memory=memory)
 
 # First message
 result1 = agent.do(Task("My favorite color is blue"))
@@ -179,11 +179,11 @@ memory = Memory(
     storage=storage,
     session_id="session_001",
     summary_memory=True,
-    model=OpenAIChatModel("gpt-5-mini")
+    model=OpenAIChatModel("gpt-4o-mini")
 )
 
 # Create agent
-agent = Agent(model="openai/gpt-5", memory=memory)
+agent = Agent(model="openai/gpt-4o", memory=memory)
 
 # Have a conversation that will be summarized
 task = Task("Tell me about the benefits of cloud computing")
@@ -208,11 +208,11 @@ memory = Memory(
     session_id="session_001",
     user_id="user_001",
     user_analysis_memory=True,
-    model=OpenAIChatModel("gpt-5-mini")
+    model=OpenAIChatModel("gpt-4o-mini")
 )
 
 # Create agent
-agent = Agent(model="openai/gpt-5", memory=memory)
+agent = Agent(model="openai/gpt-4o", memory=memory)
 
 # Share user preferences
 task = Task("I'm a software developer interested in AI and machine learning")
@@ -237,12 +237,12 @@ memory = Memory(
     user_id="investor_001",
     full_session_memory=True,
     user_analysis_memory=True,
-    model=OpenAIChatModel("gpt-5-mini")
+    model=OpenAIChatModel("gpt-4o-mini")
 )
 
 # Create agent with memory
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="InvestmentAdvisor",
     memory=memory
 )
@@ -283,11 +283,11 @@ async def main():
         full_session_memory=True,
         user_analysis_memory=True,
         summary_memory=True,
-        model=OpenAIChatModel("gpt-5-mini")
+        model=OpenAIChatModel("gpt-4o-mini")
     )
 
     # Create agent with memory
-    agent = Agent(model="openai/gpt-5", memory=memory)
+    agent = Agent(model="openai/gpt-4o", memory=memory)
 
     # First, have a conversation to build memory
     task = Task("My name is John and I'm interested in technology stocks")
@@ -327,7 +327,7 @@ memory = Memory(
 
 # Create agent with memory configuration
 agent = Agent(
-    model="openai/gpt-5",
+    model="openai/gpt-4o",
     name="FinancialAdvisor",
     memory=memory,
     feed_tool_call_results=True,  # Include tool results in memory
@@ -359,7 +359,7 @@ class CustomUserTraits(BaseModel):
 
 # Create storage and model
 storage = SqliteStorage(db_file="custom_profile_memory.db")
-model = OpenAIChatModel("gpt-5-mini")
+model = OpenAIChatModel("gpt-4o-mini")
 
 # Create memory with custom profile schema
 memory = Memory(
@@ -372,7 +372,7 @@ memory = Memory(
 )
 
 # Create agent
-agent = Agent(model="openai/gpt-5", memory=memory)
+agent = Agent(model="openai/gpt-4o", memory=memory)
 
 # Share investment preferences
 task = Task("I have a high risk tolerance and I'm interested in tech stocks and crypto")
@@ -389,7 +389,7 @@ from upsonic.models.openai import OpenAIChatModel
 
 # Create storage and model
 storage = SqliteStorage(db_file="dynamic_profile_memory.db")
-model = OpenAIChatModel("gpt-5-mini")
+model = OpenAIChatModel("gpt-4o-mini")
 
 # Memory with dynamic profile generation
 memory = Memory(
@@ -402,7 +402,7 @@ memory = Memory(
 )
 
 # Create agent
-agent = Agent(model="openai/gpt-5", memory=memory)
+agent = Agent(model="openai/gpt-4o", memory=memory)
 
 # The agent will dynamically build a profile based on the conversation
 task = Task("I'm a retired teacher looking for safe investments with steady income")
@@ -428,7 +428,7 @@ memory = Memory(
 )
 
 # Create agent
-agent = Agent(model="openai/gpt-5", memory=memory)
+agent = Agent(model="openai/gpt-4o", memory=memory)
 
 # Test limited history
 task = Task("Remember that my favorite number is 42")

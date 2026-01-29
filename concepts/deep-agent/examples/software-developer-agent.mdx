@@ -17,21 +17,21 @@ from upsonic import Agent, Task
 async def main():
     # Create specialized development team
     frontend_dev = Agent(
-        model="openai/gpt-5-mini",
+        model="openai/gpt-4o-mini",
         name="frontend",
         role="Frontend Developer",
         system_prompt="You are a frontend development expert specializing in React and modern web technologies"
     )
     
     backend_dev = Agent(
-        model="openai/gpt-5-mini",
+        model="openai/gpt-4o-mini",
         name="backend",
         role="Backend Developer",
         system_prompt="You are a backend development expert specializing in Python, APIs, and database design"
     )
     
     tester = Agent(
-        model="openai/gpt-5-mini",
+        model="openai/gpt-4o-mini",
         name="tester",
         role="QA Engineer",
         system_prompt="You are a QA and testing expert focused on automation and comprehensive test coverage"
@@ -39,7 +39,7 @@ async def main():
     
     # Create Deep Agent with specialized team
     agent = DeepAgent(
-        model="openai/gpt-5",
+        model="openai/gpt-4o",
         subagents=[frontend_dev, backend_dev, tester]
     )
     

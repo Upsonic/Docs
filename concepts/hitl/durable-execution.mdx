@@ -15,7 +15,7 @@ from upsonic.db.database import SqliteDatabase
 
 async def main():
     db = SqliteDatabase(db_file="durable.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-5-mini", db=db, retry=1)
+    agent = Agent("openai/gpt-4o-mini", db=db, retry=1)
     task = Task("What is 7 + 7? Reply with just the number.")
     
     try:
@@ -57,7 +57,7 @@ from upsonic.db.database import SqliteDatabase
 
 async def durable_recovery_same_agent():
     db = SqliteDatabase(db_file="durable.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-5-mini", db=db, retry=1)
+    agent = Agent("openai/gpt-4o-mini", db=db, retry=1)
     task = Task("What is 7 + 7? Reply with just the number.")
     
     try:
@@ -87,7 +87,7 @@ from upsonic.db.database import SqliteDatabase
 
 async def durable_recovery_with_task():
     db = SqliteDatabase(db_file="durable.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-5-mini", db=db, retry=1)
+    agent = Agent("openai/gpt-4o-mini", db=db, retry=1)
     task = Task("What is 7 + 7? Reply with just the number.")
     
     try:
@@ -113,7 +113,7 @@ from upsonic.db.database import SqliteDatabase
 
 async def durable_recovery_new_agent():
     db = SqliteDatabase(db_file="durable.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-5-mini", db=db, retry=1)
+    agent = Agent("openai/gpt-4o-mini", db=db, retry=1)
     task = Task("What is 7 + 7? Reply with just the number.")
     
     run_id = None
@@ -130,7 +130,7 @@ async def durable_recovery_new_agent():
         if run_id:
             print(f"Creating new agent to recover with run_id: {run_id}")
             new_db = SqliteDatabase(db_file="durable.db", session_id="session_1", user_id="user_1")
-            new_agent = Agent("openai/gpt-5-mini", db=new_db, retry=1)
+            new_agent = Agent("openai/gpt-4o-mini", db=new_db, retry=1)
             result = await new_agent.continue_run_async(run_id=run_id, return_output=True)
             return result
         raise
@@ -149,7 +149,7 @@ from upsonic.db.database import SqliteDatabase
 
 async def durable_recovery_new_agent_with_task():
     db = SqliteDatabase(db_file="durable.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-5-mini", db=db, retry=1)
+    agent = Agent("openai/gpt-4o-mini", db=db, retry=1)
     task = Task("What is 7 + 7? Reply with just the number.")
     
     try:
@@ -159,7 +159,7 @@ async def durable_recovery_new_agent_with_task():
         print(f"Error caught: {e}")
         print("Creating new agent to recover with task...")
         new_db = SqliteDatabase(db_file="durable.db", session_id="session_1", user_id="user_1")
-        new_agent = Agent("openai/gpt-5-mini", db=new_db, retry=1)
+        new_agent = Agent("openai/gpt-4o-mini", db=new_db, retry=1)
         result = await new_agent.continue_run_async(task=task, return_output=True)
         return result
 

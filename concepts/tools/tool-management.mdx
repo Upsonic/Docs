@@ -19,7 +19,7 @@ from upsonic.tools import tool
 def add(a: int, b: int) -> int:
     return a + b
 
-agent = Agent("openai/gpt-5", tools=[add])
+agent = Agent("openai/gpt-4o", tools=[add])
 ```
 
 ### Dynamically
@@ -43,7 +43,7 @@ def subtract(a: int, b: int) -> int:
     """Subtract two numbers."""
     return a - b
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 agent.add_tools(multiply)              # Single tool
 agent.add_tools([divide, subtract])    # Multiple tools
 
@@ -89,7 +89,7 @@ def search(query: str) -> str:
     """Search for information."""
     return f"Results: {query}"
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 agent.add_tools(search)
 
 # Execute task with search tool
@@ -115,7 +115,7 @@ class MathToolKit(ToolKit):
         return a + b
 
 toolkit = MathToolKit()
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 agent.add_tools(toolkit)
 
 # Execute task
@@ -139,7 +139,7 @@ class Calculator:
         return a + b
 
 calc = Calculator()
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 agent.add_tools(calc)
 
 # Execute task
@@ -158,10 +158,10 @@ print(result)
 from upsonic import Agent, Task
 
 # Create a math agent that can be used as a tool
-math_agent = Agent(model="openai/gpt-5", name="Math Agent")
+math_agent = Agent(model="openai/gpt-4o", name="Math Agent")
 
 # Main agent that uses math_agent as a tool
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 agent.add_tools(math_agent)
 
 # Execute task - will delegate to math_agent when needed
@@ -190,7 +190,7 @@ agent.remove_tools("read_query")   # Remove specific tool provided by mcp (keeps
 
 ```python
 # Auto-added with enable_thinking_tool=True
-agent = Agent("openai/gpt-5", enable_thinking_tool=True)
+agent = Agent("openai/gpt-4o", enable_thinking_tool=True)
 agent.remove_tools("plan_and_execute")
 
 # Or add explicitly
@@ -217,7 +217,7 @@ def multiply(a: int, b: int) -> int:
     """Multiply two numbers."""
     return a * b
 
-agent = Agent(model="openai/gpt-5")
+agent = Agent(model="openai/gpt-4o")
 task = Task(description="Calculate 5 + 3", tools=[add])
 task.add_tools(multiply)
 
@@ -251,7 +251,7 @@ def add(a: int, b: int) -> int:
     """Add two numbers."""
     return a + b
 
-agent = Agent("openai/gpt-5")
+agent = Agent("openai/gpt-4o")
 
 # First registration
 agent.add_tools(add)
@@ -279,7 +279,7 @@ class MathKit(ToolKit):
         return a + b
 
 kit = MathKit()
-agent = Agent("openai/gpt-5")
+agent = Agent("openai/gpt-4o")
 
 # Add toolkit
 agent.add_tools(kit)
