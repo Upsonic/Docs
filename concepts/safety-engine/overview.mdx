@@ -10,15 +10,26 @@ hideToc: true
 
 Safety Engine provides content filtering and policy enforcement for AI agents. It controls what goes into agents (user input) and what comes out (agent responses) by applying policies that detect and handle sensitive content.
 
+## Why you Should Use Safety Policies
+
+Safety policies are essential for protecting sensitive information and ensuring compliance with your organization's security and privacy requirements. When you send data to LLM providers, that data may be used for training, stored in logs, or processed in ways that could expose sensitive information. Safety policies act as a critical first line of defense by:
+
+- **Preventing Data Leaks**: Stop sensitive information like PII, financial data, or confidential business information from being sent to LLM providers
+- **Ensuring Compliance**: Meet regulatory requirements (GDPR, HIPAA, etc.) by automatically detecting and handling sensitive content
+- **Enforcing Company Policies**: Automatically apply your organization's content safety rules across all agent interactions
+- **Maintaining Control**: Track and monitor what content is being filtered, giving you visibility into safety policy enforcement
+- **LLM-Agnostic Protection**: Once created, your policies work with any LLM provider, ensuring consistent safety regardless of the underlying model
+
 ## Key Features
 
-- **Input/Output Filtering**: Validate user input and agent responses
-- **Tool Safety Policies**: Validate tools at registration and before execution
+- **Policy Points**: You can use three different points to put your policies
+    - User Inputs
+    - Agent Outputs
+    - Tool Interactions
 - **Pre-built Policies**: Ready-to-use policies for PII, adult content, hate speech, profanity, etc.
 - **Custom Policies**: Create your own rules and actions
-- **Multiple Actions**: Block, anonymize, replace, or raise exceptions
+- **Pre-built Action Types**: Block, anonymize, replace, or raise exceptions
 - **Multi-language Support**: Automatically adapts to user's language
-- **LLM-Powered Detection**: Use LLMs for context-aware content detection
 
 ## Example
 
@@ -29,7 +40,8 @@ from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
 # Create agent with PII anonymization
 agent = Agent(
     "openai/gpt-4o",
-    agent_policy=PIIAnonymizePolicy
+    user_policy=PIIAnonymizePolicy,  # Prevents data leak to LLM Providers
+    debug=True  # Enable debug to see policy application
 )
 
 # User input with PII
@@ -37,57 +49,15 @@ task = Task(
     description="My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
 )
 
-# Execute - PII will be anonymized in output
+# Execute - PII will be anonymized in input before sending to LLM
+# The policy detects and anonymizes PII, preventing it from reaching LLM providers
 result = agent.do(task)
-print(result)  # PII like email and phone will be anonymized
-```
-
-## Tool Safety Policies
-
-Tool safety policies provide two validation points:
-
-- **Pre-execution (`tool_policy_pre`)**: Validates tools during registration before task execution
-- **Post-execution (`tool_policy_post`)**: Validates tool calls before execution when LLM invokes a tool
-
-```python
-from upsonic import Agent, Task
-from upsonic.tools import tool
-from upsonic.safety_engine.policies.tool_safety_policies import HarmfulToolBlockPolicy
-
-# Apply tool safety policies
-agent = Agent(
-    "openai/gpt-4o",
-    name="Test Agent",
-    tool_policy_pre=HarmfulToolBlockPolicy,   # Validate at registration
-    tool_policy_post=HarmfulToolBlockPolicy,   # Validate before execution
-    debug=True  # Enable debug to see policy logs
-)
-
-# Create a potentially harmful tool to test tool_policy_pre (registration validation)
-@tool
-def delete_file(filepath: str) -> str:
-    """Delete a file from the system."""
-    import os
-    if os.path.exists(filepath):
-        os.remove(filepath)
-        return f"Deleted {filepath}"
-    return f"File {filepath} not found"
-
-# Create a task object that will test both policies:
-# - tool_policy_pre: Validates the delete_file tool when it's registered
-# - tool_policy_post: Validates the tool call before execution
-task = Task(
-    description="Use the delete_file tool to delete /tmp/test_file.txt",
-    tools=[delete_file]
-)
-
-# Execute the task - this will trigger both tool_policy_pre and tool_policy_post if it passes tool_policy_pre!
-result = agent.do(task)
-print(f"Task result: {result}")
+print(result)  # Input PII is anonymized before reaching LLM providers
 ```
 
 ## Navigation
 
+- [Policy Points](/concepts/safety-engine/policy-points) - Learn where and when to apply safety policies in your agent
 - [Pre-built Policies](/concepts/safety-engine/prebuilt-policies/pii-policies) - Ready-to-use policies for PII, adult content, hate speech, profanity, and more
 - [Custom Policy](/concepts/safety-engine/custom-policy/creating-policy) - Create your own safety policies with custom rules and actions
 - [Creating Rules](/concepts/safety-engine/custom-policy/creating-rule) - Define custom detection rules for content filtering

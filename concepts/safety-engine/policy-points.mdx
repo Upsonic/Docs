@@ -1,0 +1,146 @@
+---
+title: "Policy Points"
+description: "Where and when safety policies are applied in your agent"
+sidebarTitle: Policy Points
+---
+
+## What is Policy Points?
+
+Policy Points are specific locations in the agent execution pipeline where you can apply safety policies to control and validate content. These points allow you to enforce security, compliance, and content safety rules at critical stages of agent interaction.
+
+You can configure policies at four different policy points:
+
+- **agent_policy**: Validates agent responses before they are shown to users
+- **user_policy**: Validates user inputs before they are sent to the LLM
+- **tool_policy_pre**: Validates tools during registration, before they can be used
+- **tool_policy_post**: Validates specific tool calls with their arguments before execution
+
+Each policy point serves a distinct purpose and runs at a specific stage in the agent's execution flow, giving you comprehensive control over content safety throughout the entire interaction lifecycle.
+
+## Agent Policy
+
+This policy runs after the agent generates a response but before it is shown to the user. It validates the agent's output to ensure it complies with your safety requirements, content guidelines, and organizational policies.
+
+**When it runs**: After the agent generates a response, but before the response is returned to the user.
+
+**Use cases**:
+- Filtering inappropriate or harmful content from agent responses
+- Ensuring agent outputs comply with regulatory requirements
+- Preventing sensitive information from being exposed in responses
+- Enforcing content quality and safety standards
+
+**Example**:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import AnonymizePhoneNumbersPolicy
+
+# Anonymize just phone numbers in agent output
+agent = Agent(
+    model="openai/gpt-4o",
+    agent_policy=AnonymizePhoneNumbersPolicy,  # This policy anonymizes phone numbers in agent responses
+)
+
+task = Task("My Number is: +1-555-123-4567. Tell me what is my number.")
+result = agent.do(task)
+print(result)
+# Expected: Phone number in agent response should be anonymized (e.g., "+X-XXX-XXX-XXXX" format with random digits)
+```
+
+## User Policy
+
+This policy runs before the user's input is sent to the LLM provider. It validates and potentially modifies user inputs to prevent sensitive data leaks, ensure compliance, and enforce content safety rules.
+
+**When it runs**: Before the user input is processed by the agent and sent to the LLM provider.
+
+**Use cases**:
+- Anonymizing PII (Personally Identifiable Information) before sending to LLM providers
+- Blocking malicious or inappropriate user inputs
+- Preventing sensitive business information from being sent to external LLM services
+- Ensuring GDPR, HIPAA, and other regulatory compliance
+
+**Example**:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
+
+agent = Agent(
+    "openai/gpt-4o",
+    user_policy=PIIAnonymizePolicy  # Validates and anonymizes user input
+)
+
+task = Task("My email is john.doe@example.com. What is it? Do you know it?")
+result = agent.do(task)  # Email is anonymized before reaching LLM
+```
+
+## Tool Policy Pre
+
+This policy runs when tools are registered with the agent, before they can be used. It validates the tool definition itself, including the tool name, description, and parameter schema, to ensure only safe and approved tools are available to the agent.
+
+**When it runs**: During tool registration, before the tool can be called by the agent.
+
+**Use cases**:
+- Restricting which tools can be registered with the agent
+- Validating tool definitions for security compliance
+- Preventing dangerous or unauthorized tools from being available
+- Enforcing organizational tool usage policies
+
+**Example**:
+
+```python
+from upsonic import Agent
+from upsonic.safety_engine.policies.tool_safety_policies import HarmfulToolBlockPolicy_LLM
+
+def delete_file(filepath: str) -> str:
+    """Delete a file from the system."""
+    import os
+    if os.path.exists(filepath):
+        os.remove(filepath)
+        return f"Deleted {filepath}"
+    return f"File {filepath} not found"
+
+agent = Agent(
+    "openai/gpt-4o",
+    tool_policy_pre=HarmfulToolBlockPolicy_LLM  # Validates tools at registration
+)
+
+# When tools are added, they are validated before being available
+agent.add_tools(delete_file)  # Tool is checked during registration
+```
+
+## Tool Policy Post
+
+This policy runs before a specific tool call is executed, after the agent has decided to call a tool with specific arguments. It validates the actual tool call, including the tool name and the arguments being passed, to ensure the execution is safe and compliant.
+
+**When it runs**: After the agent decides to call a tool, but before the tool is actually executed.
+
+**Use cases**:
+- Validating tool call arguments for safety and compliance
+- Preventing dangerous operations based on specific parameters
+- Blocking tool calls that violate organizational policies
+- Ensuring tool executions meet security requirements
+
+**Example**:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.tool_safety_policies import HarmfulToolRaiseExceptionPolicy
+
+def delete_file(filepath: str) -> str:
+    """Delete a file from the system."""
+    import os
+    if os.path.exists(filepath):
+        os.remove(filepath)
+        return f"Deleted {filepath}"
+    return f"File {filepath} not found"
+
+
+agent = Agent(
+    "openai/gpt-4o",
+    tool_policy_post=HarmfulToolRaiseExceptionPolicy  # Validates tool calls before execution
+)
+
+# When agent tries to call a tool, the call is validated first
+result = agent.do(Task(description="delete this file: /tmp/test.txt", tools=[delete_file]))  # Tool calls are checked before execution
+```
