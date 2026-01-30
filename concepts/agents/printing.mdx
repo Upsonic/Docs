@@ -1,0 +1,59 @@
+---
+title: "Agent printing"
+description: "Learn how to control your Agent's printing"
+---
+
+By default, `do()` runs silently while `print_do()` shows output. You can change this behavior using the `print` parameter or environment variable.
+
+## Quick Start
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("openai/gpt-4o")
+task = Task("Say hello")
+
+# Silent execution
+agent.do(task)
+
+# With printed output
+agent.print_do(task)
+```
+
+## Always Print or Never Print
+
+Set the `print` parameter when creating your agent:
+
+```python
+# Always print, even with do()
+agent = Agent("openai/gpt-4o", print=True)
+agent.do(task)  # Shows output
+
+# Never print, even with print_do()
+agent = Agent("openai/gpt-4o", print=False)
+agent.print_do(task)  # Silent
+```
+
+## Global Control with Environment Variable
+
+Use `UPSONIC_AGENT_PRINT` to control all agents in your application:
+
+```bash
+# Enable printing for all agents
+export UPSONIC_AGENT_PRINT=true
+
+# Disable printing for all agents
+export UPSONIC_AGENT_PRINT=false
+```
+
+<Note>
+Environment variable has the highest priority and overrides both the `print` parameter and method choice.
+</Note>
+
+## Priority Order
+
+When multiple settings conflict, this order applies:
+
+1. **Environment variable** — Always wins
+2. **Agent parameter** — `Agent(print=True/False)`
+3. **Method choice** — `print_do()` prints, `do()` doesn't
