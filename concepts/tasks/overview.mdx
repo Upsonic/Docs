@@ -7,11 +7,27 @@ hideToc: true
 
 ![Concepts Task](/images/concepts-task.png)
 
-Detailed guide on managing and creating tasks within the Upsonic framework.
+## What is a Task?
+
+A `Task` represents a specific assignment or goal that an Agent should accomplish. It's the unit of work that defines *what* needs to be done, along with all the context, tools, and constraints needed to complete it successfully.
+
+Tasks encapsulate everything an agent needs to know: the objective, available tools, expected output format, relevant context (files, images, other tasks), and validation rules.
+
+## Why use Tasks?
+
+Tasks provide structure and control over agent execution:
+
+- **Clear objectives**: Define exactly what needs to be done in natural language
+- **Tool provisioning**: Specify which tools the agent can use for this specific task
+- **Output validation**: Define expected response format and validate results
+- **Context management**: Attach relevant files, images, or other task results
+- **Caching & optimization**: Reuse results for identical tasks to save time and costs
+- **Collaboration**: Chain tasks together for complex multi-step workflows
+- **Safety**: Apply guardrails and validation rules to ensure quality output
 
 ## Overview
 
-In the Upsonic framework, a `Task` is a specific assignment completed by an `Agent`. Tasks provide all necessary details for execution, such as a description, tools, response format, caching options, and more, facilitating a wide range of action complexities. Tasks within Upsonic can be collaborative, requiring multiple agents to work together through context sharing and task dependencies. Tasks are executed by agents in a single-threaded manner, with each task processed sequentially. The execution flow includes task validation, context processing, tool processing, agent execution, response processing, and caching.
+In the Upsonic framework, tasks provide all necessary details for execution—from simple queries to complex multi-step workflows. Tasks can be collaborative, requiring multiple agents to work together through context sharing and task dependencies. The execution flow includes task validation, context processing, tool processing, agent execution, response processing, and caching.
 
 ## Key Features
 

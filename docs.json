@@ -28,9 +28,10 @@
                         "icon": "https://mintlify-assets.b-cdn.net/compass-2.svg",
                         "pages": [
                             "get-started/introduction",
-                            "get-started/installation",
                             "get-started/quickstart",
-                            "get-started/guides"
+                            "get-started/installation",
+                            "get-started/guides",
+                            "get-started/examples"
                         ]
                     },
 
@@ -40,38 +41,50 @@
                         "pages": [
                             {
                                 "group": "Agent",
+                                "icon": "user-robot",
                                 "pages": [
                                     "concepts/agents/overview",
                                     "concepts/agents/attributes",
                                     "concepts/agents/creating-an-agent",
-                                    "concepts/agents/adding-tools",
-                                    "concepts/agents/image-generation-agent",
                                     "concepts/agents/running-agents",
                                     "concepts/agents/access_output",
                                     "concepts/agents/debugging-agents",
                                     {
-                                        "group": "Advanced",
+                                        "group": "🔧 Configuration",
+                                        "pages": [
+                                            "concepts/agents/adding-tools",
+                                            "concepts/agents/image-generation-agent"
+                                        ]
+                                    },
+                                    {
+                                        "group": "🧠 Intelligence & Memory",
                                         "pages": [
                                             "concepts/agents/advanced/adding-a-memory",
                                             "concepts/agents/advanced/adding-reasoning",
                                             "concepts/agents/advanced/adding-thinking",
+                                            "concepts/agents/advanced/company-knowledge"
+                                        ]
+                                    },
+                                    {
+                                        "group": "⚡ Optimization & Reliability",
+                                        "pages": [
                                             "concepts/agents/advanced/automatic-model-selection",
                                             "concepts/agents/advanced/reliability-and-retries",
                                             "concepts/agents/advanced/reflection",
-                                            "concepts/agents/advanced/context-compression",
-                                            "concepts/agents/advanced/company-knowledge"
+                                            "concepts/agents/advanced/context-compression"
                                         ]
                                     }
                                 ]
                             },
                             {
                                 "group": "LLM Support",
+                                "icon": "brain-circuit",
                                 "pages": [
                                     "concepts/llm-support/llm-overview",
                                     "concepts/llm-support/model-as-string",
                                     "concepts/llm-support/compatibility-overview",
                                     {
-                                        "group": "Native Providers",
+                                        "group": "🎯 Native Providers",
                                         "pages": [
                                             {
                                                 "group": "OpenAI",
@@ -88,7 +101,7 @@
                                         ]
                                     },
                                     {
-                                        "group": "Cloud Providers",
+                                        "group": "☁️ Cloud Providers",
                                         "pages": [
                                             "concepts/llm-support/cloud-providers/cloud-providers-azure",
                                             "concepts/llm-support/cloud-providers/cloud-providers-bedrock",
@@ -96,14 +109,14 @@
                                         ]
                                     },
                                     {
-                                        "group": "Local Providers",
+                                        "group": "💻 Local Providers",
                                         "pages": [
                                             "concepts/llm-support/local-providers/local-providers-ollama",
                                             "concepts/llm-support/local-providers/local-providers-vllm"
                                         ]
                                     },
                                     {
-                                        "group": "Model Gateways",
+                                        "group": "🌐 Model Gateways",
                                         "pages": [
                                             "concepts/llm-support/model-gateways/model-gateways-groq",
                                             "concepts/llm-support/model-gateways/model-gateways-litellm",
@@ -117,6 +130,7 @@
                             },
                             {
                                 "group": "Task",
+                                "icon": "list-check",
                                 "pages": [
                                     "concepts/tasks/overview",
                                     "concepts/tasks/attributes",
@@ -124,9 +138,10 @@
                                     "concepts/tasks/adding-tools",
                                     "concepts/tasks/response-format",
                                     "concepts/tasks/results",
+                                    "concepts/tasks/metrics",
                                     "concepts/tasks/task-caching",
                                     {
-                                        "group": "Context Management",
+                                        "group": "📎 Context Management",
                                         "pages": [
                                             "concepts/tasks/context-management/adding-document-context-to-task",
                                             "concepts/tasks/context-management/adding-tasks-to-other-tasks-as-context",
@@ -138,11 +153,12 @@
                             },
                             {
                                 "group": "Tools",
+                                "icon": "wrench",
                                 "pages": [
                                     "concepts/tools/overview",
                                     "concepts/tools/tool-management",
                                     {
-                                        "group": "Custom Tools",
+                                        "group": "🛠️ Custom Tools",
                                         "pages": [
                                             "concepts/tools/custom-tools/overview",
                                             "concepts/tools/custom-tools/attributes",
@@ -150,24 +166,34 @@
                                             "concepts/tools/custom-tools/creating-class-tool",
                                             "concepts/tools/custom-tools/creating-toolkit",
                                             {
-                                                "group": "Tool Configurations",
+                                                "group": "⚙️ Behavior & Control",
                                                 "pages": [
                                                     "concepts/tools/custom-tools/tool-configurations/required-confirmation",
                                                     "concepts/tools/custom-tools/tool-configurations/requires-user-input",
                                                     "concepts/tools/custom-tools/tool-configurations/user-input-fields",
                                                     "concepts/tools/custom-tools/tool-configurations/external-execution",
                                                     "concepts/tools/custom-tools/tool-configurations/show-result",
-                                                    "concepts/tools/custom-tools/tool-configurations/stop-after-tool-call",
+                                                    "concepts/tools/custom-tools/tool-configurations/stop-after-tool-call"
+                                                ]
+                                            },
+                                            {
+                                                "group": "⚡ Performance & Execution",
+                                                "pages": [
                                                     "concepts/tools/custom-tools/tool-configurations/sequential-parallel-run",
                                                     "concepts/tools/custom-tools/tool-configurations/caching",
-                                                    "concepts/tools/custom-tools/tool-configurations/tool-hooks",
                                                     "concepts/tools/custom-tools/tool-configurations/timeout",
+                                                    "concepts/tools/custom-tools/tool-configurations/tool-hooks"
+                                                ]
+                                            },
+                                            {
+                                                "group": "📝 Schema & Documentation",
+                                                "pages": [
                                                     "concepts/tools/custom-tools/tool-configurations/strict",
                                                     "concepts/tools/custom-tools/tool-configurations/docstring-format"
                                                 ]
                                             },
                                             {
-                                                "group": "Advanced",
+                                                "group": "🔗 Composition",
                                                 "pages": [
                                                     "concepts/tools/custom-tools/advanced/agent-as-tool",
                                                     "concepts/tools/custom-tools/advanced/combining-multiple-tools"
@@ -176,13 +202,13 @@
                                         ]
                                     },
                                     {
-                                        "group": "MCP Tools",
+                                        "group": "🔌 MCP Tools (Model Context Protocol)",
                                         "pages": [
                                             "concepts/tools/mcp-tools/overview",
                                             "concepts/tools/mcp-tools/mcp-handler",
                                             "concepts/tools/mcp-tools/multi-mcp-handler",
                                             {
-                                                "group": "MCP Types",
+                                                "group": "Server Types",
                                                 "pages": [
                                                     "concepts/tools/mcp-tools/mcp-types/sse-server",
                                                     "concepts/tools/mcp-tools/mcp-types/npx-based",
@@ -191,7 +217,7 @@
                                                 ]
                                             },
                                             {
-                                                "group": "Advanced",
+                                                "group": "Security",
                                                 "pages": [
                                                     "concepts/tools/mcp-tools/advanced/authentication"
                                                 ]
@@ -199,7 +225,7 @@
                                         ]
                                     },
                                     {
-                                        "group": "Ready to Use Tools",
+                                        "group": "📦 Ready-to-Use Tools",
                                         "pages": [
                                             "concepts/tools/ready-to-use-tools/yfinance-tools",
                                             "concepts/tools/ready-to-use-tools/duckduckgo",
@@ -207,11 +233,11 @@
                                         ]
                                     },
                                     {
-                                        "group": "Model Provider Tools",
+                                        "group": "🤖 Model Provider Tools",
                                         "pages": [
                                             "concepts/tools/model-provider-tools/supported-providers",
                                             {
-                                                "group": "Tools",
+                                                "group": "Available Tools",
                                                 "pages": [
                                                     "concepts/tools/model-provider-tools/tools/web-search-tool",
                                                     "concepts/tools/model-provider-tools/tools/web-search-user-location",
@@ -227,32 +253,53 @@
                             },
                             {
                                 "group": "Safety Engine (Guardrails)",
+                                "icon": "shield-check",
                                 "pages": [
                                     "concepts/safety-engine/overview",
                                     "concepts/safety-engine/policy-points",
                                     {
-                                        "group": "Prebuilt Policies",
+                                        "group": "🔒 Privacy & Compliance",
                                         "pages": [
-                                            "concepts/safety-engine/prebuilt-policies/cryptocurrency-policies",
                                             "concepts/safety-engine/prebuilt-policies/pii-policies",
                                             "concepts/safety-engine/prebuilt-policies/phone-number-policies",
-                                            "concepts/safety-engine/prebuilt-policies/adult-content-policies",
-                                            "concepts/safety-engine/prebuilt-policies/sensitive-social-policies",
-                                            "concepts/safety-engine/prebuilt-policies/financial-information-policies",
-                                            "concepts/safety-engine/prebuilt-policies/medical-information-policies",
-                                            "concepts/safety-engine/prebuilt-policies/legal-information-policies",
-                                            "concepts/safety-engine/prebuilt-policies/technical-security-policies",
-                                            "concepts/safety-engine/prebuilt-policies/cybersecurity-policies",
-                                            "concepts/safety-engine/prebuilt-policies/data-privacy-policies",
-                                            "concepts/safety-engine/prebuilt-policies/fraud-detection-policies",
-                                            "concepts/safety-engine/prebuilt-policies/phishing-policies",
-                                            "concepts/safety-engine/prebuilt-policies/insider-threat-policies",
-                                            "concepts/safety-engine/prebuilt-policies/tool-safety-policies",
-                                            "concepts/safety-engine/prebuilt-policies/profanity-policies"
+                                            "concepts/safety-engine/prebuilt-policies/data-privacy-policies"
                                         ]
                                     },
                                     {
-                                        "group": "Custom Policy",
+                                        "group": "💰 Financial & Legal",
+                                        "pages": [
+                                            "concepts/safety-engine/prebuilt-policies/financial-information-policies",
+                                            "concepts/safety-engine/prebuilt-policies/cryptocurrency-policies",
+                                            "concepts/safety-engine/prebuilt-policies/legal-information-policies",
+                                            "concepts/safety-engine/prebuilt-policies/medical-information-policies"
+                                        ]
+                                    },
+                                    {
+                                        "group": "🛡️ Security & Threats",
+                                        "pages": [
+                                            "concepts/safety-engine/prebuilt-policies/cybersecurity-policies",
+                                            "concepts/safety-engine/prebuilt-policies/technical-security-policies",
+                                            "concepts/safety-engine/prebuilt-policies/fraud-detection-policies",
+                                            "concepts/safety-engine/prebuilt-policies/phishing-policies",
+                                            "concepts/safety-engine/prebuilt-policies/insider-threat-policies"
+                                        ]
+                                    },
+                                    {
+                                        "group": "🚫 Content Moderation",
+                                        "pages": [
+                                            "concepts/safety-engine/prebuilt-policies/adult-content-policies",
+                                            "concepts/safety-engine/prebuilt-policies/profanity-policies",
+                                            "concepts/safety-engine/prebuilt-policies/sensitive-social-policies"
+                                        ]
+                                    },
+                                    {
+                                        "group": "🔧 Tool Safety",
+                                        "pages": [
+                                            "concepts/safety-engine/prebuilt-policies/tool-safety-policies"
+                                        ]
+                                    },
+                                    {
+                                        "group": "✏️ Custom Policies",
                                         "pages": [
                                             "concepts/safety-engine/custom-policy/creating-rule",
                                             "concepts/safety-engine/custom-policy/creating-action",
@@ -263,25 +310,26 @@
                                 ]
                             },
                             {
-                                "group": "OCR",
+                                "group": "OCR (Optical Character Recognition)",
+                                "icon": "scanner-image",
                                 "pages": [
                                     "concepts/ocr/overview",
                                     "concepts/ocr/attributes",
+                                    "concepts/ocr/metrics-and-performance",
+                                    "concepts/ocr/advanced-features",
                                     {
-                                        "group": "Providers",
+                                        "group": "🔤 OCR Providers",
                                         "pages": [
                                             "concepts/ocr/providers/easyocr",
                                             "concepts/ocr/providers/rapidocr",
                                             "concepts/ocr/providers/tesseract",
+                                            "concepts/ocr/providers/paddleocr",
                                             "concepts/ocr/providers/deepseek-ocr",
-                                            "concepts/ocr/providers/deepseek-ocr-ollama",
-                                            "concepts/ocr/providers/paddleocr"
+                                            "concepts/ocr/providers/deepseek-ocr-ollama"
                                         ]
                                     },
-                                    "concepts/ocr/metrics-and-performance",
-                                    "concepts/ocr/advanced-features",
                                     {
-                                        "group": "Examples",
+                                        "group": "📘 Examples",
                                         "pages": [
                                             "concepts/ocr/examples/basic-ocr-example"
                                         ]
@@ -289,7 +337,8 @@
                                 ]
                             },
                             {
-                                "group": "HITL",
+                                "group": "HITL (Human in the Loop)",
+                                "icon": "user-check",
                                 "pages": [
                                     "concepts/hitl/overview",
                                     "concepts/hitl/durable-execution",
@@ -299,12 +348,13 @@
                             },
                             {
                                 "group": "Memory",
+                                "icon": "brain",
                                 "pages": [
                                     "concepts/memory/overview",
                                     "concepts/memory/attributes",
                                     "concepts/memory/choosing-right-memory-types",
                                     {
-                                        "group": "Types",
+                                        "group": "🧠 Memory Types",
                                         "pages": [
                                             "concepts/memory/memory-types/conversation-memory",
                                             "concepts/memory/memory-types/summary-memory",
@@ -312,7 +362,7 @@
                                         ]
                                     },
                                     {
-                                        "group": "Storage Options",
+                                        "group": "💾 Synchronous Storage",
                                         "pages": [
                                             "concepts/memory/storage-options/inmemory-storage",
                                             "concepts/memory/storage-options/json-storage",
@@ -320,7 +370,12 @@
                                             "concepts/memory/storage-options/postgres-storage",
                                             "concepts/memory/storage-options/redis-storage",
                                             "concepts/memory/storage-options/mem0-storage",
-                                            "concepts/memory/storage-options/mongo-storage",
+                                            "concepts/memory/storage-options/mongo-storage"
+                                        ]
+                                    },
+                                    {
+                                        "group": "⚡ Async Storage",
+                                        "pages": [
                                             "concepts/memory/storage-options/async-sqlite-storage",
                                             "concepts/memory/storage-options/async-postgres-storage",
                                             "concepts/memory/storage-options/async-mongo-storage",
@@ -329,7 +384,7 @@
                                     },
                                     "concepts/memory/storage-tables",
                                     {
-                                        "group": "Examples",
+                                        "group": "📘 Examples",
                                         "pages": [
                                             "concepts/memory/examples/basic-memory-example"
                                         ]
@@ -338,18 +393,20 @@
                             },
                             {
                                 "group": "Culture",
+                                "icon": "users-gear",
                                 "pages": [
                                     "concepts/culture/overview"
                                 ]
                             },
                             {
                                 "group": "Team",
+                                "icon": "people-group",
                                 "pages": [
                                     "concepts/team/overview",
                                     "concepts/team/attributes",
                                     "concepts/team/choosing-right-team-mode",
                                     {
-                                        "group": "Modes",
+                                        "group": "🔄 Team Modes",
                                         "pages": [
                                             "concepts/team/modes/sequential",
                                             "concepts/team/modes/coordinate",
@@ -358,7 +415,7 @@
                                     },
                                     "concepts/team/assigning-tasks-manually",
                                     {
-                                        "group": "Examples",
+                                        "group": "📘 Examples",
                                         "pages": [
                                             "concepts/team/examples/basic-team-example"
                                         ]
@@ -367,11 +424,12 @@
                             },
                             {
                                 "group": "Deep Agent",
+                                "icon": "brain-circuit",
                                 "pages": [
                                     "concepts/deep-agent/overview",
                                     "concepts/deep-agent/attributes",
                                     {
-                                        "group": "Capabilities",
+                                        "group": "🎯 Capabilities",
                                         "pages": [
                                             "concepts/deep-agent/capabilities/planning",
                                             "concepts/deep-agent/capabilities/to-do-management",
@@ -382,7 +440,7 @@
                                     },
                                     "concepts/deep-agent/advanced",
                                     {
-                                        "group": "Examples",
+                                        "group": "📘 Examples",
                                         "pages": [
                                             "concepts/deep-agent/examples/basic-deep-agent-example",
                                             "concepts/deep-agent/examples/software-developer-agent",
@@ -393,31 +451,8 @@
                                 ]
                             },
                             {
-                                "group": "Direct LLM Call",
-                                "pages": [
-                                    "concepts/direct-llm-call/overview",
-                                    "concepts/direct-llm-call/attributes",
-                                    "concepts/direct-llm-call/image-processing",
-                                    {
-                                        "group": "Examples",
-                                        "pages": [
-                                            "concepts/direct-llm-call/examples/basic-direct-llm-call-example"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Interfaces",
-                                "pages": [
-                                    "concepts/interfaces/Overview",
-                                    "concepts/interfaces/Gmail",
-                                    "concepts/interfaces/Slack",
-                                    "concepts/interfaces/Whatsapp"
-                                ]
-                            },
-                            "concepts/canvas",
-                            {
                                 "group": "Chat",
+                                "icon": "messages",
                                 "pages": [
                                     "concepts/chat/overview",
                                     "concepts/chat/attributes",
@@ -427,7 +462,7 @@
                                     "concepts/chat/metrics",
                                     "concepts/chat/storage-backends",
                                     {
-                                        "group": "Advanced",
+                                        "group": "⚙️ Advanced Features",
                                         "pages": [
                                             "concepts/chat/advanced/context-manager",
                                             "concepts/chat/advanced/error-handling",
@@ -435,7 +470,7 @@
                                         ]
                                     },
                                     {
-                                        "group": "Examples",
+                                        "group": "📘 Examples",
                                         "pages": [
                                             "concepts/chat/examples/basic",
                                             "concepts/chat/examples/multi-session",
@@ -446,7 +481,8 @@
                                 ]
                             },
                             {
-                                "group": "Knowledge Base",
+                                "group": "Knowledge Base (RAG)",
+                                "icon": "book-open",
                                 "pages": [
                                     "concepts/knowledgebase/overview",
                                     "concepts/knowledgebase/attributes",
@@ -456,71 +492,115 @@
                                     "concepts/knowledgebase/examples",
                                     "concepts/knowledgebase/advanced",
                                     {
-                                        "group": "Embedding Providers",
+                                        "group": "🎯 Embeddings",
                                         "pages": [
+                                            "concepts/knowledgebase/embedding-providers/openai",
                                             "concepts/knowledgebase/embedding-providers/azure",
-                                            "concepts/knowledgebase/embedding-providers/bedrock",
-                                            "concepts/knowledgebase/embedding-providers/fastembed",
                                             "concepts/knowledgebase/embedding-providers/google",
+                                            "concepts/knowledgebase/embedding-providers/bedrock",
                                             "concepts/knowledgebase/embedding-providers/huggingface",
-                                            "concepts/knowledgebase/embedding-providers/ollama",
-                                            "concepts/knowledgebase/embedding-providers/openai"
+                                            "concepts/knowledgebase/embedding-providers/fastembed",
+                                            "concepts/knowledgebase/embedding-providers/ollama"
                                         ]
                                     },
                                     {
-                                        "group": "Loaders",
+                                        "group": "📄 Document Loaders",
                                         "pages": [
-                                            "concepts/knowledgebase/loaders/csv",
-                                            "concepts/knowledgebase/loaders/docling",
-                                            "concepts/knowledgebase/loaders/docx",
-                                            "concepts/knowledgebase/loaders/html",
-                                            "concepts/knowledgebase/loaders/json",
+                                            "concepts/knowledgebase/loaders/text",
                                             "concepts/knowledgebase/loaders/markdown",
+                                            "concepts/knowledgebase/loaders/json",
+                                            "concepts/knowledgebase/loaders/csv",
+                                            "concepts/knowledgebase/loaders/html",
+                                            "concepts/knowledgebase/loaders/xml",
+                                            "concepts/knowledgebase/loaders/yml",
+                                            "concepts/knowledgebase/loaders/docx",
+                                            "concepts/knowledgebase/loaders/pypdf",
                                             "concepts/knowledgebase/loaders/pdfplumber",
                                             "concepts/knowledgebase/loaders/pymupdf",
-                                            "concepts/knowledgebase/loaders/pypdf",
-                                            "concepts/knowledgebase/loaders/text",
-                                            "concepts/knowledgebase/loaders/xml",
-                                            "concepts/knowledgebase/loaders/yml"
+                                            "concepts/knowledgebase/loaders/docling"
                                         ]
                                     },
                                     {
-                                        "group": "Splitters",
+                                        "group": "✂️ Text Splitters",
                                         "pages": [
-                                            "concepts/knowledgebase/splitters/agentic",
+                                            "concepts/knowledgebase/splitters/recursive",
                                             "concepts/knowledgebase/splitters/character",
+                                            "concepts/knowledgebase/splitters/semantic",
+                                            "concepts/knowledgebase/splitters/agentic",
+                                            "concepts/knowledgebase/splitters/markdown",
                                             "concepts/knowledgebase/splitters/html",
                                             "concepts/knowledgebase/splitters/json",
-                                            "concepts/knowledgebase/splitters/markdown",
-                                            "concepts/knowledgebase/splitters/python",
-                                            "concepts/knowledgebase/splitters/recursive",
-                                            "concepts/knowledgebase/splitters/semantic"
+                                            "concepts/knowledgebase/splitters/python"
                                         ]
                                     },
                                     {
-                                        "group": "Storage Providers",
+                                        "group": "🗄️ Vector Databases",
                                         "pages": [
                                             "concepts/knowledgebase/storage-providers/chroma",
-                                            "concepts/knowledgebase/storage-providers/faiss",
+                                            "concepts/knowledgebase/storage-providers/qdrant",
+                                            "concepts/knowledgebase/storage-providers/pinecone",
+                                            "concepts/knowledgebase/storage-providers/weaviate",
                                             "concepts/knowledgebase/storage-providers/milvus",
                                             "concepts/knowledgebase/storage-providers/pgvector",
-                                            "concepts/knowledgebase/storage-providers/pinecone",
-                                            "concepts/knowledgebase/storage-providers/qdrant",
-                                            "concepts/knowledgebase/storage-providers/weaviate"
+                                            "concepts/knowledgebase/storage-providers/faiss"
                                         ]
                                     }
                                 ]
                             },
-                            "concepts/graph",
+                            {
+                                "group": "Direct LLM Call",
+                                "icon": "message-bot",
+                                "pages": [
+                                    "concepts/direct-llm-call/overview",
+                                    "concepts/direct-llm-call/attributes",
+                                    "concepts/direct-llm-call/image-processing",
+                                    {
+                                        "group": "📘 Examples",
+                                        "pages": [
+                                            "concepts/direct-llm-call/examples/basic-direct-llm-call-example"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "group": "Interfaces",
+                                "icon": "plug",
+                                "pages": [
+                                    "concepts/interfaces/Overview",
+                                    {
+                                        "group": "📧 Communication Platforms",
+                                        "pages": [
+                                            "concepts/interfaces/Gmail",
+                                            "concepts/interfaces/Slack",
+                                            "concepts/interfaces/Whatsapp"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "group": "Canvas",
+                                "icon": "paintbrush",
+                                "pages": [
+                                    "concepts/canvas"
+                                ]
+                            },
+                            {
+                                "group": "Graph",
+                                "icon": "diagram-next",
+                                "pages": [
+                                    "concepts/graph"
+                                ]
+                            },
                             {
                                 "group": "StateGraph",
+                                "icon": "diagram-project",
                                 "pages": [
                                     "concepts/stategraph/overview",
                                     "concepts/stategraph/quickstart",
                                     "concepts/stategraph/core-concepts",
                                     "concepts/stategraph/attributes",
                                     {
-                                        "group": "Advanced",
+                                        "group": "🔧 Advanced Features",
                                         "pages": [
                                             "concepts/stategraph/advanced/advanced-features",
                                             "concepts/stategraph/advanced/building-agents",
@@ -532,17 +612,23 @@
                                 ]
                             },
                             {
-                                "group": "UEL",
+                                "group": "UEL (Execution Layer)",
+                                "icon": "layer-group",
                                 "pages": [
                                     "concepts/uel/overview",
                                     "concepts/uel/attributes",
                                     {
-                                        "group": "Advanced",
+                                        "group": "⚡ Execution Patterns",
                                         "pages": [
                                             "concepts/uel/advanced/async-execution",
-                                            "concepts/uel/advanced/conditional-routing",
-                                            "concepts/uel/advanced/custom-chains",
                                             "concepts/uel/advanced/parallel-execution",
+                                            "concepts/uel/advanced/conditional-routing",
+                                            "concepts/uel/advanced/custom-chains"
+                                        ]
+                                    },
+                                    {
+                                        "group": "🔗 Integration Patterns",
+                                        "pages": [
                                             "concepts/uel/advanced/rag-patterns",
                                             "concepts/uel/advanced/memory-modes",
                                             "concepts/uel/advanced/visualization"
@@ -552,10 +638,11 @@
                             },
                             {
                                 "group": "Simulation",
+                                "icon": "flask",
                                 "pages": [
                                     "concepts/simulation/overview",
                                     {
-                                        "group": "Scenarios",
+                                        "group": "📊 Scenarios",
                                         "pages": [
                                             "concepts/simulation/scenarios/merchant_revenue_forecast"
                                         ]
