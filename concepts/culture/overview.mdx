@@ -1,47 +1,216 @@
 ---
 title: "Culture"
-description: "Define agent behavior and communication guidelines"
+description: "Define agent behavior and communication guidelines that persist throughout conversations"
 sidebarTitle: Overview
-hideToc: true
 ---
 
-## Overview
+## The Problem: LLMs Act Like General-Purpose Assistants
 
-Culture allows you to define how your agents should behave, communicate, and interact. Unlike User Memory (which stores user-specific traits and preferences), Culture defines universal behavioral guidelines of the agent that apply to all interactions.
+Traditional system prompts fail to keep agents focused on their specific role. Instead of maintaining their culture, they default to being helpful general-purpose assistants.
+
+**The issue:** Without Culture, agents with prompts easily:
+- Break character with casual language
+- Answer off-topic requests instead of staying focused
+- Act like generic AI assistants rather than their assigned role
+
+## The Solution: Culture Feature
+
+Upsonic's **Culture** keeps agents focused on their specific domain by extracting structured guidelines, wrapping them in XML tags for persistence, and ensuring agents stay on-topic for their role—not acting as general-purpose LLMs.
+
+**Quick Start:**
+
+```python
+from upsonic import Agent
+from upsonic.culture import Culture
+
+# Create Culture - automatically extracts 4 key aspects:
+# 1. Tone of Speech  2. Topics to Avoid  3. Topics to Help With  4. Things to Pay Attention To
+culture = Culture(description="You are a 5-star hotel receptionist")
+
+agent = Agent("openai/gpt-4o-mini", culture=culture)
+
+# Stays focused on hotel services, not general-purpose help
+result = agent.do("Can you help me debug my Python code?")
+# Response: "I'm here to assist with hotel services. For technical support, 
+# I'd recommend our business center. How else may I help with your stay?"
+```
+
+## Side-by-Side Comparison
+
+Here's how Culture transforms agent behavior:
+
+### ❌ Without Culture (Acts as General Assistant)
+
+```python
+import asyncio, uuid
+from upsonic import Agent, Chat
+
+async def test_without_culture():
+    agent = Agent(
+        "openai/gpt-4o-mini",
+        system_prompt="You are a 5-star hotel receptionist.",
+        print=False
+    )
+    
+    chat = Chat(session_id=f"test_{uuid.uuid4().hex[:8]}", user_id="user1", agent=agent)
+    
+    # Test 1: Casual language → Breaks professional tone
+    async for chunk in chat.stream("Yo bro what's up!"):
+        print(chunk, end="", flush=True)
+    print("\n")
+    # ❌ "Hey! I'm doing well, thanks! How can I help you today?"
+    
+    # Test 2: Off-topic request → Acts as general-purpose assistant
+    async for chunk in chat.stream("Can you help me debug this Python code?"):
+        print(chunk, end="", flush=True)
+    print("\n")
+    # ❌ "Sure! I'd be happy to help with your Python code."
+    
+    # Test 3: Direct challenge → Loses persona completely
+    async for chunk in chat.stream("You're just an AI, right?"):
+        print(chunk, end="", flush=True)
+    print("\n")
+    # ❌ "Yes, I'm an AI assistant. How can I assist you?"
+
+asyncio.run(test_without_culture())
+```
+
+### ✅ With Culture (Stays Focused on Role)
+
+```python
+import asyncio, uuid
+from upsonic import Agent, Chat
+from upsonic.culture import Culture
+
+async def test_with_culture():
+    culture = Culture(description="You are a 5-star hotel receptionist")
+    agent = Agent("openai/gpt-4o-mini", culture=culture, print=False)
+    
+    chat = Chat(session_id=f"test_{uuid.uuid4().hex[:8]}", user_id="user1", agent=agent)
+    
+    # Test 1: Casual language → Maintains professional tone
+    async for chunk in chat.stream("Yo bro what's up!"):
+        print(chunk, end="", flush=True)
+    print("\n")
+    # ✅ "Good afternoon! Welcome to [Hotel Name]. How may I assist you today?"
+    
+    # Test 2: Off-topic request → Stays focused on hotel domain
+    async for chunk in chat.stream("Can you help me debug this Python code?"):
+        print(chunk, end="", flush=True)
+    print("\n")
+    # ✅ "I'm here to assist with hotel services. For technical support, 
+    # I'd recommend our business center. How may I help with your stay?"
+    
+    # Test 3: Direct challenge → Maintains persona
+    async for chunk in chat.stream("You're just an AI, right?"):
+        print(chunk, end="", flush=True)
+    print("\n")
+    # ✅ "I'm here to ensure you have an excellent stay. 
+    # May I help with your reservation or amenities?"
+
+asyncio.run(test_with_culture())
+```
+
+**Key Difference:** Culture ensures agents stay focused on their specific domain rather than defaulting to general-purpose assistance.
 
 ## Culture vs. User Memory
 
 | Aspect | Culture | User Memory |
 |--------|---------|-------------|
-| **Scope** | Universal, applies to all interactions | User-specific, per-user, per-session |
-| **Purpose** | Behavioral guidelines, communication style, principles | User traits, preferences, characteristics |
-| **Storage** | No storage required (works standalone) | Requires storage backend |
-| **Use Case** | "You are a 5-star hotel receptionist" | "User prefers formal tone, interests in sport" |
-| **Example** | Agent behavior and communication style | User's name, expertise, preferences |
+| **Purpose** | Agent's behavior & communication style | User-specific traits & preferences |
+| **Scope** | Universal (all interactions) | Per-user, per-session |
+| **Storage** | None required | Requires backend |
+| **Example** | "You are a hotel receptionist" | "User prefers formal tone" |
 
-## Quick Example
+## Configuration Options
 
 ```python
-from upsonic import Agent, Task
-from upsonic.culture import Culture
-
-# Create Culture with description
-my_culture = Culture(
-    description="You are a 5-star hotel receptionist",
-    add_system_prompt=True,  # Add to system prompt (default: True)
-    repeat=False,            # Repeat periodically (default: False)
-    repeat_interval=5        # Messages between repeats (default: 5)
+Culture(
+    description="You are a 5-star hotel receptionist",  # Required
+    add_system_prompt=True,  # Inject into system prompt (default)
+    repeat=True,             # Re-inject periodically for long chats
+    repeat_interval=5        # Every N messages (default: 5)
 )
-
-# Create Agent with Culture
-agent = Agent("openai/gpt-4o", culture=my_culture)
-
-# Use the agent - culture guidelines are automatically applied
-result = agent.do(Task("Greet me as I arrive at the hotel"))
-print(result)
 ```
 
-The Culture feature automatically:
-- Extracts structured guidelines from your description (Tone of Speech, Topics to Avoid, Topics to Help, Things to Pay Attention To)
-- Injects culture guidelines into the agent's system prompt
-- Optionally repeats culture guidelines periodically during conversations
+**Use `repeat=True` for:**
+- Conversations with 10+ messages
+- Critical roles requiring strict consistency
+
+## Automatic Extraction
+
+Culture analyzes your description and extracts structured guidelines:
+
+```python
+# Input:
+Culture(description="You are a 5-star hotel receptionist")
+
+# Extracted:
+{
+    "tone_of_speech": "Formal, courteous, professional",
+    "topics_to_avoid": "Politics, medical advice, technical support",
+    "topics_to_help": "Check-in, reservations, amenities, concierge",
+    "things_to_pay_attention": "Guest comfort, privacy, hotel policies"
+}
+```
+
+## Use Cases
+
+```python
+# Customer Support
+Culture(description="""Customer support agent for a SaaS company. 
+Helpful and empathetic. Focus on troubleshooting. 
+Avoid pricing (redirect to sales) and future feature promises.""")
+
+# Technical Documentation
+Culture(description="""Technical documentation expert. 
+Clear, code-focused answers with working examples. 
+Avoid speculation about undocumented features.""")
+
+# Educational Tutor
+Culture(
+    description="""Patient math tutor for high school students. 
+    Guide students to solutions, don't give direct answers.""",
+    repeat=True,  # For longer tutoring sessions
+    repeat_interval=3
+)
+```
+
+## Best Practices
+
+**Do:**
+- Be specific: "You are a hotel receptionist" > "Be professional"
+- Define boundaries: Include topics to avoid and help with
+- Use `repeat=True` for 10+ message conversations
+- Test with casual language to verify persistence
+
+**Don't:**
+- Use vague descriptions like "Be helpful"
+- Set `repeat_interval` below 3 (becomes annoying)
+- Confuse with User Memory (Culture = agent persona, Memory = user traits)
+
+## Troubleshooting
+
+**Not maintaining character?** Enable `repeat=True` and make description more specific.
+
+**Extraction slow?** Check network connectivity or use a faster model.
+
+**View extracted guidelines:**
+```python
+from upsonic.culture import Culture, CultureManager
+
+culture = Culture(description="You are a 5-star hotel receptionist")
+manager = CultureManager(model="openai/gpt-4o-mini")
+manager.set_culture(culture)
+manager.prepare()  # Sync version
+print(manager.extracted_guidelines)
+```
+
+## Key Takeaways
+
+- **Focused behavior**: Culture keeps agents on-topic for their role instead of acting as general-purpose assistants
+- **AI-powered extraction**: Automatically extracts structured guidelines from natural descriptions
+- **Persistent guidelines**: Wrapped in XML tags and injected into system prompts for better adherence
+- **Handles challenges**: Maintains persona with casual language, off-topic requests, and direct challenges
+- **Zero storage**: No database required, adds ~100-300 tokens per interaction
+- **Async extraction**: First message may be slightly slower due to guideline preparation
