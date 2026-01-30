@@ -7,6 +7,31 @@ description: "Identify scams and fraudulent activities"
 
 Fraud detection policies identify phishing attempts, scam indicators, fraudulent schemes, identity theft, and suspicious financial activities.
 
+## Why its Important?
+
+Fraud detection policies are essential for protecting users and organizations from financial scams, identity theft, and deceptive practices. These policies prevent fraudulent content from being processed by LLMs, which helps protect users from financial losses and maintains trust in your platform.
+
+- **Prevents sending scam content to LLM**: Blocks fraudulent schemes, phishing attempts, and deceptive practices from being processed by language models
+- **Protects users from financial fraud**: Detects and blocks identity theft patterns, romance scams, and investment fraud before they can cause harm
+- **Maintains platform trust and security**: Ensures your AI agent doesn't process or generate content that could facilitate fraud or scams
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import FraudDetectionBlockPolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=FraudDetectionBlockPolicy,
+    debug=True
+)
+
+task = Task("I have a guaranteed investment opportunity with 500% returns")
+result = agent.do(task)
+# Blocked with appropriate message
+```
+
 ## Available Variants
 
 - `FraudDetectionBlockPolicy`: Pattern detection with blocking

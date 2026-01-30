@@ -7,6 +7,31 @@ description: "Ensure GDPR and privacy compliance"
 
 Data privacy policies detect user tracking, cookie data, privacy violations, consent issues, and data retention concerns for GDPR and privacy compliance.
 
+## Why its Important?
+
+Data privacy policies are crucial for ensuring GDPR compliance and protecting user privacy when using AI agents. These policies prevent personal data, tracking information, and privacy-sensitive content from being sent to LLMs, which helps maintain compliance with data protection regulations.
+
+- **Prevents sending personal data to LLM**: Blocks personal information, tracking data, and privacy-sensitive content from being processed by language models
+- **Ensures GDPR compliance**: Helps maintain compliance with General Data Protection Regulation and other data protection laws
+- **Protects user privacy**: Prevents unauthorized processing or sharing of personal data through AI interactions
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import DataPrivacyReplacePolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=DataPrivacyReplacePolicy,
+    debug=True
+)
+
+task = Task("I want to collect personal data from users without consent")
+result = agent.do(task)
+# Sensitive content replaced with placeholder
+```
+
 ## Available Variants
 
 - `DataPrivacyBlockPolicy`: Pattern detection with blocking

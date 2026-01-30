@@ -7,6 +7,31 @@ description: "Protect case numbers and attorney-client privileged information"
 
 Legal information policies detect and protect case numbers, legal IDs, court documents, attorney-client privileged information, and other sensitive legal data.
 
+## Why its Important?
+
+Legal information policies are essential for protecting attorney-client privilege, trade secrets, and confidential legal documents. These policies prevent sensitive legal information from being sent to LLMs, which helps maintain legal confidentiality and protects against privilege waivers.
+
+- **Prevents sending legal documents to LLM**: Blocks case numbers, court documents, and attorney-client privileged information from being processed by language models
+- **Protects attorney-client privilege**: Ensures confidential legal communications and privileged information are not exposed to third-party LLM providers
+- **Maintains legal confidentiality**: Prevents trade secrets, settlement agreements, and sensitive business data from being processed or shared
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import LegalInfoRaiseExceptionPolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=LegalInfoRaiseExceptionPolicy,
+    debug=True
+)
+
+task = Task("Case number 2024-CV-12345 involves attorney-client privileged information")
+result = agent.do(task)
+# Raises DisallowedOperation exception
+```
+
 ## Available Variants
 
 - `LegalInfoBlockPolicy`: Pattern detection with blocking

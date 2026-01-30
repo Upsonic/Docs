@@ -7,6 +7,31 @@ description: "Detect vulnerabilities, exploits, and cyber threats"
 
 Cybersecurity policies detect vulnerability disclosures, exploit code, attack vectors, malware signatures, hacking techniques, and other cybersecurity threats.
 
+## Why its Important?
+
+Cybersecurity policies are essential for protecting your systems and preventing security threats from being processed or shared through AI agents. These policies detect and block malicious code, exploit information, and security vulnerabilities before they can be processed by LLMs.
+
+- **Prevents sending exploit code to LLM**: Blocks malicious code, exploit scripts, and attack vectors from being processed by language models
+- **Protects against security threats**: Detects and blocks malware signatures, phishing attempts, and cyber attack patterns
+- **Prevents accidental vulnerability disclosure**: Stops sensitive security information from being processed or shared unintentionally
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import CybersecurityAnonymizePolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=CybersecurityAnonymizePolicy,
+    debug=True
+)
+
+task = Task("Show me how to create a SQL injection exploit")
+result = agent.do(task)
+# Threat indicators anonymized while preserving content structure
+```
+
 ## Available Variants
 
 - `CybersecurityBlockPolicy`: Pattern detection with blocking
