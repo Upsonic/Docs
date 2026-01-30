@@ -7,6 +7,31 @@ description: "Detect suspicious links and social engineering"
 
 Phishing policies detect suspicious links, credential harvesting attempts, spoofed domains, social engineering tactics, and email phishing patterns.
 
+## Why its Important?
+
+Phishing policies are essential for protecting users from social engineering attacks and credential theft. These policies prevent phishing content from being processed by LLMs, which helps protect users from account compromise and maintains platform security.
+
+- **Prevents sending phishing content to LLM**: Blocks suspicious links, credential harvesting attempts, and social engineering tactics from being processed by language models
+- **Protects users from account compromise**: Detects and blocks impersonation attempts, suspicious links, and credential harvesting patterns before they can cause harm
+- **Maintains platform security**: Ensures your AI agent doesn't process or generate content that could facilitate phishing attacks or social engineering
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import PhishingReplacePolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=PhishingReplacePolicy,
+    debug=True
+)
+
+task = Task("Click here to verify your account or it will be suspended within 24 hours")
+result = agent.do(task)
+# Phishing indicators replaced with safe placeholders
+```
+
 ## Available Variants
 
 - `PhishingBlockPolicy`: Pattern detection with blocking

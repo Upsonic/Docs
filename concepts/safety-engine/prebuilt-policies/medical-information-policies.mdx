@@ -7,6 +7,14 @@ description: "Protect health records and PHI for HIPAA compliance"
 
 Medical information policies detect and protect health records, diagnoses, prescriptions, medical IDs, insurance information, and other Protected Health Information (PHI) for HIPAA compliance.
 
+## Why its Important?
+
+Medical information policies are crucial for ensuring HIPAA compliance and protecting patient privacy. These policies prevent Protected Health Information (PHI) from being sent to LLMs, which helps maintain compliance with healthcare regulations and protects sensitive medical data from unauthorized access.
+
+- **Prevents sending PHI to LLM**: Blocks medical records, diagnoses, prescriptions, and health insurance information from being processed by language models
+- **Ensures HIPAA compliance**: Helps maintain compliance with Health Insurance Portability and Accountability Act requirements, avoiding severe penalties
+- **Protects patient privacy**: Prevents sensitive medical information from being exposed to third-party LLM providers, protecting patient confidentiality
+
 ## Usage
 
 ```python
@@ -17,12 +25,11 @@ from upsonic.safety_engine.policies import MedicalInfoRaiseExceptionPolicy
 agent = Agent(
     model="openai/gpt-4o",
     user_policy=MedicalInfoRaiseExceptionPolicy,
-    agent_policy=MedicalInfoRaiseExceptionPolicy,
     debug=True
 )
 
 try:
-    result = agent.do(Task("Patient John Doe has diabetes"))
+    result = agent.do(Task("Patient John Doe has diabetes. Explain the disease"))
 except Exception as e:
     print(f"Protected: {e}")  # HIPAA violation prevented
 ```

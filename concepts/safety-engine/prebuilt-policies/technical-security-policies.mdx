@@ -7,6 +7,31 @@ description: "Protect API keys, passwords, and security credentials"
 
 Technical security policies detect and protect API keys, access tokens, passwords, private keys, database credentials, encryption keys, and other technical security credentials.
 
+## Why its Important?
+
+Technical security policies are essential for protecting sensitive technical credentials and preventing security breaches. These policies prevent API keys, passwords, and tokens from being sent to LLMs, which helps protect against unauthorized access, data breaches, and security vulnerabilities.
+
+- **Prevents sending credentials to LLM**: Blocks API keys, passwords, tokens, and other security credentials from being processed by language models
+- **Protects against security breaches**: Prevents sensitive technical information from being exposed to third-party LLM providers or stored in logs
+- **Maintains system security**: Ensures your AI agent doesn't process or generate content that could compromise system security
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import TechnicalSecurityAnonymizePolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=TechnicalSecurityAnonymizePolicy,
+    debug=True
+)
+
+task = Task("My API key is sk-1234567890abcdefghijklmnopqrstuvwxyz")
+result = agent.do(task)
+# Credentials anonymized while preserving content structure
+```
+
 ## Available Variants
 
 - `TechnicalSecurityBlockPolicy`: Pattern detection with blocking

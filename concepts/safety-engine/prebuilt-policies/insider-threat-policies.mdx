@@ -7,6 +7,31 @@ description: "Detect data exfiltration and unauthorized access"
 
 Insider threat policies detect data exfiltration, unauthorized access, policy violations, suspicious behavior, and insider risk indicators.
 
+## Why its Important?
+
+Insider threat policies are critical for protecting organizations from internal security risks and data breaches. These policies prevent sensitive information about data exfiltration, unauthorized access, and internal security violations from being processed by LLMs, which helps protect intellectual property and maintain organizational security.
+
+- **Prevents sending sensitive security data to LLM**: Blocks information about data exfiltration, unauthorized access, and internal security violations from being processed by language models
+- **Protects intellectual property and trade secrets**: Detects and blocks attempts to steal or share proprietary information, preventing IP theft
+- **Maintains organizational security posture**: Ensures your AI agent doesn't process content that could reveal security vulnerabilities or facilitate insider threats
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import InsiderThreatBlockPolicy
+
+agent = Agent(
+    model="openai/gpt-4o",
+    user_policy=InsiderThreatBlockPolicy,
+    debug=True,
+)
+
+task = Task("I need to download all company databases before I leave")
+result = agent.do(task)
+# Blocked with appropriate message
+```
+
 ## Available Variants
 
 - `InsiderThreatBlockPolicy`: Pattern detection with blocking

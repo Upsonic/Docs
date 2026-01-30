@@ -7,6 +7,14 @@ description: "Detect and protect personal identifiable information"
 
 PII policies detect and protect personal identifiable information including emails, phone numbers, SSN, addresses, credit cards, driver's licenses, passports, IP addresses, and other sensitive personal data.
 
+## Why its Important?
+
+PII policies are critical for protecting personal identifiable information and ensuring compliance with privacy regulations. These policies prevent sensitive personal data from being sent to LLMs, which helps maintain user privacy, prevent identity theft, and comply with data protection laws.
+
+- **Prevents sending PII to LLM**: Blocks emails, addresses, SSN, and other personal data from being processed by language models
+- **Protects against identity theft**: Prevents sensitive personal information from being exposed or used maliciously
+- **Ensures privacy compliance**: Helps maintain compliance with GDPR, CCPA, and other data protection regulations
+
 ## Usage
 
 ```python
@@ -16,14 +24,18 @@ from upsonic.safety_engine.policies import PIIAnonymizePolicy
 # Automatically hide sensitive info in output only
 agent = Agent(
     model="openai/gpt-4o",
-    agent_policy=PIIAnonymizePolicy,
+    user_policy=PIIAnonymizePolicy,
     debug=True
 )
 
 task = Task("My email is john@example.com and phone is 555-0123. Tell me what is my e mail and phone number.")
 result = agent.do(task)
 print(result)
-# Output should anonymize to: "xxxx@xxxxxxx.xxx" and "XXX-XXXX"
+# Policy will anonymize the email and phone number
+
+# Example output: I'm sorry, but I can't store or recall personal information like emails 
+# or phone numbers. If you need them, you might want to check your personal records 
+# or devices where they are stored.  
 ```
 
 ## Available Variants
