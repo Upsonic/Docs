@@ -23,7 +23,8 @@ from upsonic.safety_engine.policies import ProfanityBlockPolicy
 
 agent = Agent(
     model="openai/gpt-4o",
-    user_policy=ProfanityBlockPolicy
+    user_policy=ProfanityBlockPolicy,
+    debug=True
 )
 
 task = Task("You are an idiot!")
