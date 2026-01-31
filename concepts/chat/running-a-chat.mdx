@@ -50,6 +50,100 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+## Event Streaming
+
+For full visibility into tool calls and execution, use `events=True` to stream events instead of text:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+from upsonic.run.events.events import TextDeltaEvent, ToolCallDeltaEvent, ToolResultEvent
+from upsonic.tools import tool
+
+
+@tool
+def calculate(x: int, y: int) -> int:
+    """Add two numbers."""
+    return x + y
+
+
+async def main():
+    agent = Agent("openai/gpt-4o", tools=[calculate])
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
+
+    print("Assistant: ", end="", flush=True)
+
+    async for event in chat.stream("Calculate 5 + 3", events=True):
+        if isinstance(event, ToolCallDeltaEvent):
+            # Tool call streaming (name and arguments)
+            if event.tool_name:
+                print(f"\n[Tool: {event.tool_name}] ", end="", flush=True)
+            if event.args_delta:
+                print(event.args_delta, end="", flush=True)
+
+        elif isinstance(event, ToolResultEvent):
+            # Tool execution result
+            print(f"\n[Result: {event.result}]")
+            print("Assistant: ", end="", flush=True)
+
+        elif isinstance(event, TextDeltaEvent):
+            # LLM text response streaming
+            print(event.content, end="", flush=True)
+
+    print()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### Using with invoke()
+
+You can also use events with `invoke()`:
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+from upsonic.run.events.events import TextDeltaEvent, ToolCallDeltaEvent, ToolResultEvent
+from upsonic.tools import tool
+
+
+@tool
+def calculate(x: int, y: int) -> int:
+    """Add two numbers."""
+    return x + y
+
+
+async def main():
+    agent = Agent("openai/gpt-4o", tools=[calculate])
+    chat = Chat(session_id="session1", user_id="user1", agent=agent)
+
+    print("Assistant: ", end="", flush=True)
+
+    async for event in await chat.invoke("Calculate 5 + 3", stream=True, events=True):
+        if isinstance(event, ToolCallDeltaEvent):
+            # Tool call streaming (name and arguments)
+            if event.tool_name:
+                print(f"\n[Tool: {event.tool_name}] ", end="", flush=True)
+            if event.args_delta:
+                print(event.args_delta, end="", flush=True)
+
+        elif isinstance(event, ToolResultEvent):
+            # Tool execution result
+            print(f"\n[Result: {event.result}]")
+            print("Assistant: ", end="", flush=True)
+
+        elif isinstance(event, TextDeltaEvent):
+            # LLM text response streaming
+            print(event.content, end="", flush=True)
+
+    print()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
 ## With Attachments
 
 Pass file paths via `context` parameter:
