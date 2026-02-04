@@ -9,12 +9,12 @@
     },
     "fonts": {
         "heading": {
-        "family": "Helvetica",
-        "weight": 750
+            "family": "Helvetica",
+            "weight": 750
         },
         "body": {
-        "family": "Inter",
-        "weight": 400
+            "family": "Inter",
+            "weight": 400
         }
     },
     "favicon": "/favicon.png",
@@ -33,23 +33,29 @@
                             "get-started/guides"
                         ]
                     },
-
                     {
                         "group": "CONCEPTS",
                         "icon": "https://mintlify-assets.b-cdn.net/star-2.svg",
                         "pages": [
                             {
                                 "group": "Agent",
+                                "icon": "user-robot",
                                 "pages": [
                                     "concepts/agents/overview",
                                     "concepts/agents/attributes",
                                     "concepts/agents/creating-an-agent",
-                                    "concepts/agents/adding-tools",
-                                    "concepts/agents/image-generation-agent",
-                                    "concepts/agents/running-agents",
-                                    "concepts/agents/access_output",
-                                    "concepts/agents/printing",
-                                    "concepts/agents/debugging-agents",
+                                    {
+                                        "group": "Usage",
+                                        "pages": [
+                                            "concepts/agents/adding-tools",
+                                            "concepts/agents/image-generation-agent",
+                                            "concepts/agents/running-agents",
+                                            "concepts/agents/access_output",
+                                            "concepts/agents/printing",
+                                            "concepts/agents/debugging-agents"
+                                        ],
+                                        "collapsed": false
+                                    },
                                     {
                                         "group": "Advanced",
                                         "pages": [
@@ -66,7 +72,314 @@
                                 ]
                             },
                             {
+                                "group": "Safety Engine (Guardrails)",
+                                "icon": "shield-check",
+                                "pages": [
+                                    "concepts/safety-engine/overview",
+                                    "concepts/safety-engine/policy-points",
+                                    {
+                                        "group": "Usage",
+                                        "pages": [
+                                            {
+                                                "group": "Privacy & Compliance",
+                                                "pages": [
+                                                    "concepts/safety-engine/prebuilt-policies/pii-policies",
+                                                    "concepts/safety-engine/prebuilt-policies/phone-number-policies",
+                                                    "concepts/safety-engine/prebuilt-policies/data-privacy-policies"
+                                                ]
+                                            },
+                                            {
+                                                "group": "Financial & Legal",
+                                                "pages": [
+                                                    "concepts/safety-engine/prebuilt-policies/financial-information-policies",
+                                                    "concepts/safety-engine/prebuilt-policies/cryptocurrency-policies",
+                                                    "concepts/safety-engine/prebuilt-policies/legal-information-policies",
+                                                    "concepts/safety-engine/prebuilt-policies/medical-information-policies"
+                                                ]
+                                            },
+                                            {
+                                                "group": "Security & Threats",
+                                                "pages": [
+                                                    "concepts/safety-engine/prebuilt-policies/cybersecurity-policies",
+                                                    "concepts/safety-engine/prebuilt-policies/technical-security-policies",
+                                                    "concepts/safety-engine/prebuilt-policies/fraud-detection-policies",
+                                                    "concepts/safety-engine/prebuilt-policies/phishing-policies",
+                                                    "concepts/safety-engine/prebuilt-policies/insider-threat-policies"
+                                                ]
+                                            },
+                                            {
+                                                "group": "Content Moderation",
+                                                "pages": [
+                                                    "concepts/safety-engine/prebuilt-policies/adult-content-policies",
+                                                    "concepts/safety-engine/prebuilt-policies/profanity-policies",
+                                                    "concepts/safety-engine/prebuilt-policies/sensitive-social-policies"
+                                                ]
+                                            },
+                                            {
+                                                "group": "Tool Safety",
+                                                "pages": [
+                                                    "concepts/safety-engine/prebuilt-policies/tool-safety-policies"
+                                                ]
+                                            }
+                                        ],
+                                        "collapsed": false
+                                    },
+                                    {
+                                        "group": "Advanced",
+                                        "pages": [
+                                            "concepts/safety-engine/custom-policy/creating-rule",
+                                            "concepts/safety-engine/custom-policy/creating-action",
+                                            "concepts/safety-engine/custom-policy/creating-policy",
+                                            "concepts/safety-engine/policy-feedback-loop"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "group": "Task",
+                                "icon": "list-check",
+                                "pages": [
+                                    "concepts/tasks/overview",
+                                    "concepts/tasks/attributes",
+                                    "concepts/tasks/creating-task",
+                                    {
+                                        "group": "Usage",
+                                        "pages": [
+                                            "concepts/tasks/adding-tools",
+                                            "concepts/tasks/response-format",
+                                            "concepts/tasks/results",
+                                            "concepts/tasks/task-caching"
+                                        ],
+                                        "collapsed": false
+                                    },
+                                    {
+                                        "group": "Advanced",
+                                        "pages": [
+                                            "concepts/tasks/context-management/adding-document-context-to-task",
+                                            "concepts/tasks/context-management/adding-tasks-to-other-tasks-as-context",
+                                            "concepts/tasks/context-management/adding-knowledge-base-to-task-context",
+                                            "concepts/tasks/context-management/adding-images-to-task-context"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "group": "Tools",
+                                "icon": "wrench",
+                                "pages": [
+                                    "concepts/tools/overview",
+                                    "concepts/tools/tool-management",
+                                    {
+                                        "group": "Custom Tools",
+                                        "pages": [
+                                            "concepts/tools/custom-tools/overview",
+                                            "concepts/tools/custom-tools/attributes",
+                                            "concepts/tools/custom-tools/creating-function-tool",
+                                            "concepts/tools/custom-tools/creating-class-tool",
+                                            "concepts/tools/custom-tools/creating-toolkit",
+                                            {
+                                                "group": "Behavior & Control",
+                                                "pages": [
+                                                    "concepts/tools/custom-tools/tool-configurations/required-confirmation",
+                                                    "concepts/tools/custom-tools/tool-configurations/requires-user-input",
+                                                    "concepts/tools/custom-tools/tool-configurations/user-input-fields",
+                                                    "concepts/tools/custom-tools/tool-configurations/external-execution",
+                                                    "concepts/tools/custom-tools/tool-configurations/show-result",
+                                                    "concepts/tools/custom-tools/tool-configurations/stop-after-tool-call"
+                                                ]
+                                            },
+                                            {
+                                                "group": "Performance",
+                                                "pages": [
+                                                    "concepts/tools/custom-tools/tool-configurations/sequential-parallel-run",
+                                                    "concepts/tools/custom-tools/tool-configurations/caching",
+                                                    "concepts/tools/custom-tools/tool-configurations/timeout",
+                                                    "concepts/tools/custom-tools/tool-configurations/tool-hooks"
+                                                ]
+                                            },
+                                            {
+                                                "group": "Schema & Validation",
+                                                "pages": [
+                                                    "concepts/tools/custom-tools/tool-configurations/strict",
+                                                    "concepts/tools/custom-tools/tool-configurations/docstring-format"
+                                                ]
+                                            },
+                                            {
+                                                "group": "Advanced Patterns",
+                                                "pages": [
+                                                    "concepts/tools/custom-tools/advanced/agent-as-tool",
+                                                    "concepts/tools/custom-tools/advanced/combining-multiple-tools"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "group": "MCP Tools",
+                                        "pages": [
+                                            "concepts/tools/mcp-tools/overview",
+                                            "concepts/tools/mcp-tools/mcp-handler",
+                                            "concepts/tools/mcp-tools/multi-mcp-handler",
+                                            {
+                                                "group": "Server Types",
+                                                "pages": [
+                                                    "concepts/tools/mcp-tools/mcp-types/sse-server",
+                                                    "concepts/tools/mcp-tools/mcp-types/npx-based",
+                                                    "concepts/tools/mcp-tools/mcp-types/uvx",
+                                                    "concepts/tools/mcp-tools/mcp-types/docker"
+                                                ]
+                                            },
+                                            {
+                                                "group": "Security",
+                                                "pages": [
+                                                    "concepts/tools/mcp-tools/advanced/authentication"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "group": "Ready to Use Tools",
+                                        "pages": [
+                                            "concepts/tools/ready-to-use-tools/yfinance-tools",
+                                            "concepts/tools/ready-to-use-tools/duckduckgo",
+                                            "concepts/tools/ready-to-use-tools/tavily"
+                                        ]
+                                    },
+                                    {
+                                        "group": "Model Provider Tools",
+                                        "pages": [
+                                            "concepts/tools/model-provider-tools/supported-providers",
+                                            {
+                                                "group": "Available Tools",
+                                                "pages": [
+                                                    "concepts/tools/model-provider-tools/tools/web-search-tool",
+                                                    "concepts/tools/model-provider-tools/tools/web-search-user-location",
+                                                    "concepts/tools/model-provider-tools/tools/code-execution-tool",
+                                                    "concepts/tools/model-provider-tools/tools/url-context-tool",
+                                                    "concepts/tools/model-provider-tools/tools/mcp-server-tool",
+                                                    "concepts/tools/model-provider-tools/tools/image-generation-tool"
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "group": "Memory",
+                                "icon": "brain",
+                                "pages": [
+                                    "concepts/memory/overview",
+                                    "concepts/memory/attributes",
+                                    "concepts/memory/examples/basic-memory-example",
+                                    {
+                                        "group": "Usage",
+                                        "pages": [
+                                            "concepts/memory/choosing-right-memory-types",
+                                            "concepts/memory/memory-types/conversation-memory",
+                                            "concepts/memory/memory-types/summary-memory",
+                                            "concepts/memory/memory-types/focus-memory",
+                                            "concepts/memory/storage-options/inmemory-storage",
+                                            "concepts/memory/storage-options/json-storage",
+                                            "concepts/memory/storage-options/sqlite-storage",
+                                            "concepts/memory/storage-options/postgres-storage",
+                                            "concepts/memory/storage-options/redis-storage",
+                                            "concepts/memory/storage-options/mem0-storage",
+                                            "concepts/memory/storage-options/mongo-storage",
+                                            "concepts/memory/storage-tables"
+                                        ],
+                                        "collapsed": false
+                                    },
+                                    {
+                                        "group": "Advanced",
+                                        "pages": [
+                                            "concepts/memory/storage-options/async-sqlite-storage",
+                                            "concepts/memory/storage-options/async-postgres-storage",
+                                            "concepts/memory/storage-options/async-mongo-storage",
+                                            "concepts/memory/storage-options/async-mem0-storage"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "group": "Knowledge Base",
+                                "icon": "book-open",
+                                "pages": [
+                                    "concepts/knowledgebase/overview",
+                                    "concepts/knowledgebase/attributes",
+                                    "concepts/knowledgebase/basic-rag-example",
+                                    {
+                                        "group": "Usage",
+                                        "pages": [
+                                            "concepts/knowledgebase/putting-files",
+                                            "concepts/knowledgebase/using-as-tool",
+                                            "concepts/knowledgebase/examples"
+                                        ],
+                                        "collapsed": false
+                                    },
+                                    {
+                                        "group": "Advanced",
+                                        "pages": [
+                                            "concepts/knowledgebase/advanced",
+                                            "concepts/knowledgebase/embedding-providers/azure",
+                                            "concepts/knowledgebase/embedding-providers/bedrock",
+                                            "concepts/knowledgebase/embedding-providers/fastembed",
+                                            "concepts/knowledgebase/embedding-providers/google",
+                                            "concepts/knowledgebase/embedding-providers/huggingface",
+                                            "concepts/knowledgebase/embedding-providers/ollama",
+                                            "concepts/knowledgebase/embedding-providers/openai",
+                                            "concepts/knowledgebase/loaders/csv",
+                                            "concepts/knowledgebase/loaders/docling",
+                                            "concepts/knowledgebase/loaders/docx",
+                                            "concepts/knowledgebase/loaders/html",
+                                            "concepts/knowledgebase/loaders/json",
+                                            "concepts/knowledgebase/loaders/markdown",
+                                            "concepts/knowledgebase/loaders/pdfplumber",
+                                            "concepts/knowledgebase/loaders/pymupdf",
+                                            "concepts/knowledgebase/loaders/pypdf",
+                                            "concepts/knowledgebase/loaders/text",
+                                            "concepts/knowledgebase/loaders/xml",
+                                            "concepts/knowledgebase/loaders/yml",
+                                            "concepts/knowledgebase/splitters/agentic",
+                                            "concepts/knowledgebase/splitters/character",
+                                            "concepts/knowledgebase/splitters/html",
+                                            "concepts/knowledgebase/splitters/json",
+                                            "concepts/knowledgebase/splitters/markdown",
+                                            "concepts/knowledgebase/splitters/python",
+                                            "concepts/knowledgebase/splitters/recursive",
+                                            "concepts/knowledgebase/splitters/semantic",
+                                            "concepts/knowledgebase/storage-providers/chroma",
+                                            "concepts/knowledgebase/storage-providers/faiss",
+                                            "concepts/knowledgebase/storage-providers/milvus",
+                                            "concepts/knowledgebase/storage-providers/pgvector",
+                                            "concepts/knowledgebase/storage-providers/pinecone",
+                                            "concepts/knowledgebase/storage-providers/qdrant",
+                                            "concepts/knowledgebase/storage-providers/weaviate"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "group": "Team",
+                                "icon": "people-group",
+                                "pages": [
+                                    "concepts/team/overview",
+                                    "concepts/team/attributes",
+                                    "concepts/team/examples/basic-team-example",
+                                    {
+                                        "group": "Usage",
+                                        "pages": [
+                                            "concepts/team/choosing-right-team-mode",
+                                            "concepts/team/modes/sequential",
+                                            "concepts/team/modes/coordinate",
+                                            "concepts/team/modes/route",
+                                            "concepts/team/assigning-tasks-manually"
+                                        ],
+                                        "collapsed": false
+                                    }
+                                ]
+                            },
+                            {
                                 "group": "LLM Support",
+                                "icon": "brain-circuit",
                                 "pages": [
                                     "concepts/llm-support/llm-overview",
                                     "concepts/llm-support/model-as-string",
@@ -117,276 +430,78 @@
                                 ]
                             },
                             {
-                                "group": "Task",
-                                "pages": [
-                                    "concepts/tasks/overview",
-                                    "concepts/tasks/attributes",
-                                    "concepts/tasks/creating-task",
-                                    "concepts/tasks/adding-tools",
-                                    "concepts/tasks/response-format",
-                                    "concepts/tasks/results",
-                                    "concepts/tasks/metrics",
-                                    "concepts/tasks/task-caching",
-                                    {
-                                        "group": "Context Management",
-                                        "pages": [
-                                            "concepts/tasks/context-management/adding-document-context-to-task",
-                                            "concepts/tasks/context-management/adding-tasks-to-other-tasks-as-context",
-                                            "concepts/tasks/context-management/adding-knowledge-base-to-task-context",
-                                            "concepts/tasks/context-management/adding-images-to-task-context"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Tools",
-                                "pages": [
-                                    "concepts/tools/overview",
-                                    "concepts/tools/tool-management",
-                                    {
-                                        "group": "Custom Tools",
-                                        "pages": [
-                                            "concepts/tools/custom-tools/overview",
-                                            "concepts/tools/custom-tools/attributes",
-                                            "concepts/tools/custom-tools/creating-function-tool",
-                                            "concepts/tools/custom-tools/creating-class-tool",
-                                            "concepts/tools/custom-tools/creating-toolkit",
-                                            {
-                                                "group": "Tool Configurations",
-                                                "pages": [
-                                                    "concepts/tools/custom-tools/tool-configurations/required-confirmation",
-                                                    "concepts/tools/custom-tools/tool-configurations/requires-user-input",
-                                                    "concepts/tools/custom-tools/tool-configurations/user-input-fields",
-                                                    "concepts/tools/custom-tools/tool-configurations/external-execution",
-                                                    "concepts/tools/custom-tools/tool-configurations/show-result",
-                                                    "concepts/tools/custom-tools/tool-configurations/stop-after-tool-call",
-                                                    "concepts/tools/custom-tools/tool-configurations/sequential-parallel-run",
-                                                    "concepts/tools/custom-tools/tool-configurations/caching",
-                                                    "concepts/tools/custom-tools/tool-configurations/tool-hooks",
-                                                    "concepts/tools/custom-tools/tool-configurations/timeout",
-                                                    "concepts/tools/custom-tools/tool-configurations/strict",
-                                                    "concepts/tools/custom-tools/tool-configurations/docstring-format"
-                                                ]
-                                            },
-                                            {
-                                                "group": "Advanced",
-                                                "pages": [
-                                                    "concepts/tools/custom-tools/advanced/agent-as-tool",
-                                                    "concepts/tools/custom-tools/advanced/combining-multiple-tools"
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "group": "MCP Tools",
-                                        "pages": [
-                                            "concepts/tools/mcp-tools/overview",
-                                            "concepts/tools/mcp-tools/mcp-handler",
-                                            "concepts/tools/mcp-tools/multi-mcp-handler",
-                                            {
-                                                "group": "MCP Types",
-                                                "pages": [
-                                                    "concepts/tools/mcp-tools/mcp-types/sse-server",
-                                                    "concepts/tools/mcp-tools/mcp-types/npx-based",
-                                                    "concepts/tools/mcp-tools/mcp-types/uvx",
-                                                    "concepts/tools/mcp-tools/mcp-types/docker"
-                                                ]
-                                            },
-                                            {
-                                                "group": "Advanced",
-                                                "pages": [
-                                                    "concepts/tools/mcp-tools/advanced/authentication"
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "group": "Ready to Use Tools",
-                                        "pages": [
-                                            "concepts/tools/ready-to-use-tools/yfinance-tools",
-                                            "concepts/tools/ready-to-use-tools/duckduckgo",
-                                            "concepts/tools/ready-to-use-tools/tavily"
-                                        ]
-                                    },
-                                    {
-                                        "group": "Model Provider Tools",
-                                        "pages": [
-                                            "concepts/tools/model-provider-tools/supported-providers",
-                                            {
-                                                "group": "Tools",
-                                                "pages": [
-                                                    "concepts/tools/model-provider-tools/tools/web-search-tool",
-                                                    "concepts/tools/model-provider-tools/tools/web-search-user-location",
-                                                    "concepts/tools/model-provider-tools/tools/code-execution-tool",
-                                                    "concepts/tools/model-provider-tools/tools/url-context-tool",
-                                                    "concepts/tools/model-provider-tools/tools/mcp-server-tool",
-                                                    "concepts/tools/model-provider-tools/tools/image-generation-tool"
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Safety Engine (Guardrails)",
-                                "pages": [
-                                    "concepts/safety-engine/overview",
-                                    "concepts/safety-engine/policy-points",
-                                    {
-                                        "group": "Prebuilt Policies",
-                                        "pages": [
-                                            "concepts/safety-engine/prebuilt-policies/cryptocurrency-policies",
-                                            "concepts/safety-engine/prebuilt-policies/pii-policies",
-                                            "concepts/safety-engine/prebuilt-policies/phone-number-policies",
-                                            "concepts/safety-engine/prebuilt-policies/adult-content-policies",
-                                            "concepts/safety-engine/prebuilt-policies/sensitive-social-policies",
-                                            "concepts/safety-engine/prebuilt-policies/financial-information-policies",
-                                            "concepts/safety-engine/prebuilt-policies/medical-information-policies",
-                                            "concepts/safety-engine/prebuilt-policies/legal-information-policies",
-                                            "concepts/safety-engine/prebuilt-policies/technical-security-policies",
-                                            "concepts/safety-engine/prebuilt-policies/cybersecurity-policies",
-                                            "concepts/safety-engine/prebuilt-policies/data-privacy-policies",
-                                            "concepts/safety-engine/prebuilt-policies/fraud-detection-policies",
-                                            "concepts/safety-engine/prebuilt-policies/phishing-policies",
-                                            "concepts/safety-engine/prebuilt-policies/insider-threat-policies",
-                                            "concepts/safety-engine/prebuilt-policies/tool-safety-policies",
-                                            "concepts/safety-engine/prebuilt-policies/profanity-policies"
-                                        ]
-                                    },
-                                    {
-                                        "group": "Custom Policy",
-                                        "pages": [
-                                            "concepts/safety-engine/custom-policy/creating-rule",
-                                            "concepts/safety-engine/custom-policy/creating-action",
-                                            "concepts/safety-engine/custom-policy/creating-policy"
-                                        ]
-                                    },
-                                    "concepts/safety-engine/policy-feedback-loop"
-                                ]
-                            },
-                            {
                                 "group": "OCR",
+                                "icon": "scanner-image",
                                 "pages": [
                                     "concepts/ocr/overview",
                                     "concepts/ocr/attributes",
+                                    "concepts/ocr/examples/basic-ocr-example",
                                     {
-                                        "group": "Providers",
+                                        "group": "Usage",
                                         "pages": [
                                             "concepts/ocr/providers/easyocr",
                                             "concepts/ocr/providers/rapidocr",
                                             "concepts/ocr/providers/tesseract",
                                             "concepts/ocr/providers/deepseek-ocr",
                                             "concepts/ocr/providers/deepseek-ocr-ollama",
-                                            "concepts/ocr/providers/paddleocr"
-                                        ]
+                                            "concepts/ocr/providers/paddleocr",
+                                            "concepts/ocr/metrics-and-performance"
+                                        ],
+                                        "collapsed": false
                                     },
-                                    "concepts/ocr/metrics-and-performance",
-                                    "concepts/ocr/advanced-features",
                                     {
-                                        "group": "Examples",
+                                        "group": "Advanced",
                                         "pages": [
-                                            "concepts/ocr/examples/basic-ocr-example"
+                                            "concepts/ocr/advanced-features"
                                         ]
                                     }
                                 ]
                             },
                             {
-                                "group": "HITL",
+                                "group": "HITL (Human in the Loop)",
+                                "icon": "user-check",
                                 "pages": [
                                     "concepts/hitl/overview",
-                                    "concepts/hitl/durable-execution",
-                                    "concepts/hitl/external-tool-execution",
-                                    "concepts/hitl/cancel-run"
-                                ]
-                            },
-                            {
-                                "group": "Memory",
-                                "pages": [
-                                    "concepts/memory/overview",
-                                    "concepts/memory/attributes",
-                                    "concepts/memory/choosing-right-memory-types",
                                     {
-                                        "group": "Types",
+                                        "group": "Usage",
                                         "pages": [
-                                            "concepts/memory/memory-types/conversation-memory",
-                                            "concepts/memory/memory-types/summary-memory",
-                                            "concepts/memory/memory-types/focus-memory"
-                                        ]
-                                    },
-                                    {
-                                        "group": "Storage Options",
-                                        "pages": [
-                                            "concepts/memory/storage-options/inmemory-storage",
-                                            "concepts/memory/storage-options/json-storage",
-                                            "concepts/memory/storage-options/sqlite-storage",
-                                            "concepts/memory/storage-options/postgres-storage",
-                                            "concepts/memory/storage-options/redis-storage",
-                                            "concepts/memory/storage-options/mem0-storage",
-                                            "concepts/memory/storage-options/mongo-storage",
-                                            "concepts/memory/storage-options/async-sqlite-storage",
-                                            "concepts/memory/storage-options/async-postgres-storage",
-                                            "concepts/memory/storage-options/async-mongo-storage",
-                                            "concepts/memory/storage-options/async-mem0-storage"
-                                        ]
-                                    },
-                                    "concepts/memory/storage-tables",
-                                    {
-                                        "group": "Examples",
-                                        "pages": [
-                                            "concepts/memory/examples/basic-memory-example"
-                                        ]
+                                            "concepts/hitl/durable-execution",
+                                            "concepts/hitl/external-tool-execution",
+                                            "concepts/hitl/cancel-run"
+                                        ],
+                                        "collapsed": false
                                     }
                                 ]
                             },
                             {
                                 "group": "Culture",
+                                "icon": "users-gear",
                                 "pages": [
                                     "concepts/culture/overview"
                                 ]
                             },
                             {
-                                "group": "Team",
-                                "pages": [
-                                    "concepts/team/overview",
-                                    "concepts/team/attributes",
-                                    "concepts/team/choosing-right-team-mode",
-                                    {
-                                        "group": "Modes",
-                                        "pages": [
-                                            "concepts/team/modes/sequential",
-                                            "concepts/team/modes/coordinate",
-                                            "concepts/team/modes/route"
-                                        ]
-                                    },
-                                    "concepts/team/assigning-tasks-manually",
-                                    {
-                                        "group": "Examples",
-                                        "pages": [
-                                            "concepts/team/examples/basic-team-example"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
                                 "group": "Deep Agent",
+                                "icon": "brain-circuit",
                                 "pages": [
                                     "concepts/deep-agent/overview",
                                     "concepts/deep-agent/attributes",
+                                    "concepts/deep-agent/examples/basic-deep-agent-example",
                                     {
-                                        "group": "Capabilities",
+                                        "group": "Usage",
                                         "pages": [
                                             "concepts/deep-agent/capabilities/planning",
                                             "concepts/deep-agent/capabilities/to-do-management",
                                             "concepts/deep-agent/capabilities/virtual-file-system",
                                             "concepts/deep-agent/capabilities/subagent-generation",
                                             "concepts/deep-agent/capabilities/backends"
-                                        ]
+                                        ],
+                                        "collapsed": false
                                     },
-                                    "concepts/deep-agent/advanced",
                                     {
-                                        "group": "Examples",
+                                        "group": "Advanced",
                                         "pages": [
-                                            "concepts/deep-agent/examples/basic-deep-agent-example",
+                                            "concepts/deep-agent/advanced",
                                             "concepts/deep-agent/examples/software-developer-agent",
                                             "concepts/deep-agent/examples/research-and-analysis-agent",
                                             "concepts/deep-agent/examples/content-creation-agent"
@@ -396,50 +511,60 @@
                             },
                             {
                                 "group": "Direct LLM Call",
+                                "icon": "message-bot",
                                 "pages": [
                                     "concepts/direct-llm-call/overview",
                                     "concepts/direct-llm-call/attributes",
-                                    "concepts/direct-llm-call/image-processing",
+                                    "concepts/direct-llm-call/examples/basic-direct-llm-call-example",
                                     {
-                                        "group": "Examples",
+                                        "group": "Usage",
                                         "pages": [
-                                            "concepts/direct-llm-call/examples/basic-direct-llm-call-example"
-                                        ]
+                                            "concepts/direct-llm-call/image-processing"
+                                        ],
+                                        "collapsed": false
                                     }
                                 ]
                             },
                             {
                                 "group": "Interfaces",
+                                "icon": "plug",
                                 "pages": [
                                     "concepts/interfaces/Overview",
-                                    "concepts/interfaces/Gmail",
-                                    "concepts/interfaces/Slack",
-                                    "concepts/interfaces/Whatsapp"
+                                    {
+                                        "group": "Usage",
+                                        "pages": [
+                                            "concepts/interfaces/Gmail",
+                                            "concepts/interfaces/Slack",
+                                            "concepts/interfaces/Whatsapp"
+                                        ],
+                                        "collapsed": false
+                                    }
                                 ]
                             },
-                            "concepts/canvas",
                             {
                                 "group": "Chat",
+                                "icon": "messages",
                                 "pages": [
                                     "concepts/chat/overview",
                                     "concepts/chat/attributes",
-                                    "concepts/chat/creating-a-chat",
-                                    "concepts/chat/running-a-chat",
-                                    "concepts/chat/history-management",
-                                    "concepts/chat/metrics",
-                                    "concepts/chat/storage-backends",
+                                    "concepts/chat/examples/basic",
+                                    {
+                                        "group": "Usage",
+                                        "pages": [
+                                            "concepts/chat/creating-a-chat",
+                                            "concepts/chat/running-a-chat",
+                                            "concepts/chat/history-management",
+                                            "concepts/chat/metrics",
+                                            "concepts/chat/storage-backends"
+                                        ],
+                                        "collapsed": false
+                                    },
                                     {
                                         "group": "Advanced",
                                         "pages": [
                                             "concepts/chat/advanced/context-manager",
                                             "concepts/chat/advanced/error-handling",
-                                            "concepts/chat/advanced/memory-strategies"
-                                        ]
-                                    },
-                                    {
-                                        "group": "Examples",
-                                        "pages": [
-                                            "concepts/chat/examples/basic",
+                                            "concepts/chat/advanced/memory-strategies",
                                             "concepts/chat/examples/multi-session",
                                             "concepts/chat/examples/persistent-storage",
                                             "concepts/chat/examples/user-profile"
@@ -448,79 +573,19 @@
                                 ]
                             },
                             {
-                                "group": "Knowledge Base",
-                                "pages": [
-                                    "concepts/knowledgebase/overview",
-                                    "concepts/knowledgebase/attributes",
-                                    "concepts/knowledgebase/putting-files",
-                                    "concepts/knowledgebase/using-as-tool",
-                                    "concepts/knowledgebase/basic-rag-example",
-                                    "concepts/knowledgebase/examples",
-                                    "concepts/knowledgebase/advanced",
-                                    {
-                                        "group": "Embedding Providers",
-                                        "pages": [
-                                            "concepts/knowledgebase/embedding-providers/azure",
-                                            "concepts/knowledgebase/embedding-providers/bedrock",
-                                            "concepts/knowledgebase/embedding-providers/fastembed",
-                                            "concepts/knowledgebase/embedding-providers/google",
-                                            "concepts/knowledgebase/embedding-providers/huggingface",
-                                            "concepts/knowledgebase/embedding-providers/ollama",
-                                            "concepts/knowledgebase/embedding-providers/openai"
-                                        ]
-                                    },
-                                    {
-                                        "group": "Loaders",
-                                        "pages": [
-                                            "concepts/knowledgebase/loaders/csv",
-                                            "concepts/knowledgebase/loaders/docling",
-                                            "concepts/knowledgebase/loaders/docx",
-                                            "concepts/knowledgebase/loaders/html",
-                                            "concepts/knowledgebase/loaders/json",
-                                            "concepts/knowledgebase/loaders/markdown",
-                                            "concepts/knowledgebase/loaders/pdfplumber",
-                                            "concepts/knowledgebase/loaders/pymupdf",
-                                            "concepts/knowledgebase/loaders/pypdf",
-                                            "concepts/knowledgebase/loaders/text",
-                                            "concepts/knowledgebase/loaders/xml",
-                                            "concepts/knowledgebase/loaders/yml"
-                                        ]
-                                    },
-                                    {
-                                        "group": "Splitters",
-                                        "pages": [
-                                            "concepts/knowledgebase/splitters/agentic",
-                                            "concepts/knowledgebase/splitters/character",
-                                            "concepts/knowledgebase/splitters/html",
-                                            "concepts/knowledgebase/splitters/json",
-                                            "concepts/knowledgebase/splitters/markdown",
-                                            "concepts/knowledgebase/splitters/python",
-                                            "concepts/knowledgebase/splitters/recursive",
-                                            "concepts/knowledgebase/splitters/semantic"
-                                        ]
-                                    },
-                                    {
-                                        "group": "Storage Providers",
-                                        "pages": [
-                                            "concepts/knowledgebase/storage-providers/chroma",
-                                            "concepts/knowledgebase/storage-providers/faiss",
-                                            "concepts/knowledgebase/storage-providers/milvus",
-                                            "concepts/knowledgebase/storage-providers/pgvector",
-                                            "concepts/knowledgebase/storage-providers/pinecone",
-                                            "concepts/knowledgebase/storage-providers/qdrant",
-                                            "concepts/knowledgebase/storage-providers/weaviate"
-                                        ]
-                                    }
-                                ]
-                            },
-                            "concepts/graph",
-                            {
                                 "group": "StateGraph",
+                                "icon": "diagram-project",
                                 "pages": [
                                     "concepts/stategraph/overview",
-                                    "concepts/stategraph/quickstart",
-                                    "concepts/stategraph/core-concepts",
                                     "concepts/stategraph/attributes",
+                                    "concepts/stategraph/quickstart",
+                                    {
+                                        "group": "Usage",
+                                        "pages": [
+                                            "concepts/stategraph/core-concepts"
+                                        ],
+                                        "collapsed": false
+                                    },
                                     {
                                         "group": "Advanced",
                                         "pages": [
@@ -535,6 +600,7 @@
                             },
                             {
                                 "group": "UEL",
+                                "icon": "layer-group",
                                 "pages": [
                                     "concepts/uel/overview",
                                     "concepts/uel/attributes",
@@ -554,14 +620,30 @@
                             },
                             {
                                 "group": "Simulation",
+                                "icon": "flask",
                                 "pages": [
                                     "concepts/simulation/overview",
                                     {
-                                        "group": "Scenarios",
+                                        "group": "Usage",
                                         "pages": [
                                             "concepts/simulation/scenarios/merchant_revenue_forecast"
-                                        ]
+                                        ],
+                                        "collapsed": false
                                     }
+                                ]
+                            },
+                            {
+                                "group": "Canvas",
+                                "icon": "palette",
+                                "pages": [
+                                    "concepts/canvas"
+                                ]
+                            },
+                            {
+                                "group": "Graph",
+                                "icon": "sitemap",
+                                "pages": [
+                                    "concepts/graph"
                                 ]
                             }
                         ]
@@ -779,7 +861,9 @@
             "href": "https://github.com/Upsonic/Upsonic"
         }
     },
-    "interaction": {"drilldown": true},
+    "interaction": {
+        "drilldown": true
+    },
     "footer": {
         "socials": {
             "x": "https://x.com/UpsonicAI",

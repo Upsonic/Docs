@@ -39,12 +39,12 @@ agent = Agent("openai/gpt-4o")
 
 # Execute with Task object
 task = Task("What is 2 + 2?")
-result = agent.do(task)
-print(result)  # Output: 4
+agent.print_do(task)
+# agent.do(task)
 
 # Or execute directly with a string (auto-converted to Task)
-result = agent.do("What is 2 + 2?")
-print(result)  # Output: 4
+agent.print_do("What is 2 + 2?")
+# agent.do("What is 2 + 2?")
 ```
 
 <Warning>
@@ -68,8 +68,8 @@ async def main():
     )
     
     # Execute - agent will automatically create todos and manage the workflow
-    result = await agent.do_async(task)
-    print(result)
+    await agent.print_do_async(task)
+    # await agent.do_async(task)
     
     # Check files created
     files = await agent.filesystem_backend.glob("/**/*.txt")
