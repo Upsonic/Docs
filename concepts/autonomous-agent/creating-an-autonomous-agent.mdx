@@ -1,0 +1,145 @@
+---
+title: Creating an Autonomous Agent
+sidebarTitle: Creating an Agent
+description: Learn how to build Autonomous Agents with Upsonic
+hideToc: false
+---
+
+`AutonomousAgent` is perfect for tasks that require filesystem or shell access. It comes pre-configured with:
+
+- **InMemoryStorage** as the default storage backend
+- **Full session memory enabled** for conversation history persistence
+- **Filesystem and shell tools** ready to use
+
+This means you can focus on your task without any configuration.
+
+## Basic Creation
+
+The simplest way to create an autonomous agent:
+
+```python
+from upsonic import AutonomousAgent
+
+# Create with just a model and workspace
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# The agent has filesystem and shell tools ready to use
+agent.print_do("List all Python files and count the total lines of code")
+```
+
+## Workspace Configuration
+
+The workspace is where all file and shell operations take place. It's sandboxed for security:
+
+```python
+from upsonic import AutonomousAgent
+
+# Workspace defaults to current directory if not specified
+agent = AutonomousAgent(model="openai/gpt-4o")
+
+# Or specify a workspace explicitly
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/home/user/projects/my-app"
+)
+
+# All paths are relative to the workspace
+agent.print_do("Read src/main.py")  # Reads /home/user/projects/my-app/src/main.py
+```
+
+## Adding Agent Identity
+
+Give your agent a role and personality:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    name="CodeReviewer",
+    role="Senior Software Engineer",
+    goal="Review code for bugs and suggest improvements",
+    instructions="Be thorough but constructive. Focus on security and performance."
+)
+
+agent.print_do("Review the authentication module for security issues")
+```
+
+## Custom Storage
+
+Use custom storage instead of the default InMemoryStorage:
+
+```python
+from upsonic import AutonomousAgent
+from upsonic.storage import SqliteStorage, Memory
+
+# Create custom storage
+storage = SqliteStorage(db_file="agent_sessions.db")
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=True
+)
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    memory=memory
+)
+```
+
+## Selective Toolkits
+
+Enable only the tools you need:
+
+```python
+from upsonic import AutonomousAgent
+
+# Filesystem only (no shell access)
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    enable_filesystem=True,
+    enable_shell=False
+)
+
+# Shell only (no filesystem access)
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    enable_filesystem=False,
+    enable_shell=True
+)
+```
+
+## Adding Custom Tools
+
+Add your own tools alongside the default ones:
+
+```python
+from upsonic import AutonomousAgent
+from upsonic.tools import tool
+
+@tool
+def deploy_to_staging() -> str:
+    """Deploy the current code to staging environment."""
+    return "Deployed successfully to staging!"
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    tools=[deploy_to_staging]  # Added alongside filesystem and shell tools
+)
+
+agent.print_do("Run tests and if they pass, deploy to staging")
+```
+
+## Next Steps
+
+- [Running an Autonomous Agent](/autonomous-agent/running-an-autonomous-agent) - Learn execution methods
+- [Filesystem Tools](/autonomous-agent/advanced/filesystem-tools) - Detailed filesystem operations
+- [Shell Tools](/autonomous-agent/advanced/shell-tools) - Shell command execution

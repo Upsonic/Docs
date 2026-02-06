@@ -1,0 +1,107 @@
+---
+title: "Shell Tools"
+description: "Terminal command execution in AutonomousAgent"
+---
+
+The `AutonomousShellToolKit` enables secure terminal command execution within the workspace.
+
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `run_command` | Execute shell commands |
+| `run_python` | Execute Python code snippets |
+| `check_command_exists` | Verify if a command is available |
+
+## Configuration Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `shell_timeout` | 120 | Default command timeout in seconds |
+| `shell_max_output` | 10000 | Maximum output characters before truncation |
+| `blocked_commands` | Security defaults | Commands that are blocked |
+
+## Example: Running Commands
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    shell_timeout=60
+)
+
+# Run development tasks
+agent.print_do("Run the test suite and report any failures")
+```
+
+## Example: Python Execution
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# Execute Python code
+agent.print_do("Write and run a Python script that calculates the Fibonacci sequence up to 100")
+```
+
+## Command Blocking
+
+By default, dangerous commands are blocked. You can customize the blocklist:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    blocked_commands=["rm -rf", "sudo", "chmod 777"]
+)
+```
+
+## Environment Variables
+
+Pass custom environment variables to commands:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# The shell toolkit supports environment variables
+# Commands run in the workspace directory
+agent.print_do("Set DEBUG=true and run the application")
+```
+
+## Direct Toolkit Access
+
+Access the shell toolkit directly:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# Direct execution
+result = agent.shell_toolkit.run_command("python3 --version")
+print(result)
+
+# Check command availability
+exists = agent.shell_toolkit.check_command_exists("docker")
+print(f"Docker available: {exists}")
+
+# Run Python code
+output = agent.shell_toolkit.run_python("print([x**2 for x in range(5)])")
+print(output)
+```

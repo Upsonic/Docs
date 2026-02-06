@@ -1,0 +1,71 @@
+---
+title: Workspace Configuration
+sidebarTitle: Workspace
+description: Configure agents with workspace folders containing agent configuration files
+hideToc: false
+---
+
+The Workspace feature allows you to configure your agent using an `Agents.md` file stored in a designated folder. When a workspace is set, the agent reads the configuration file and includes it in the system prompt, and can generate a dynamic greeting message at the start of each session.
+
+## Overview
+
+When you set a `workspace` path on an Agent:
+
+1. **Configuration Loading**: The agent reads the `Agents.md` file from the workspace folder and includes it in the system prompt
+2. **Session Greeting**: You can call `_execute_workspace_greeting()` to generate a personalized greeting based on the configuration
+
+## Example
+
+```python
+from upsonic import Agent, Task
+
+# Create an agent with workspace
+agent = Agent(
+    "openai/gpt-4o",
+    workspace="/path/to/my_agent_folder",
+    session_id="user_session_001"
+)
+
+# Execute the workspace greeting (optional, for new sessions)
+greeting = agent._execute_workspace_greeting()
+print(greeting)
+
+# Run tasks - the Agents.md content is included in the system prompt
+task = Task("What can you help me with?")
+result = agent.do(task)
+print(result)
+```
+
+## The Agents.md File
+
+Create an `Agents.md` file in your workspace folder to define agent configuration:
+
+```markdown
+# Customer Support Agent
+
+default_model: openai/gpt-4o
+name: Support Assistant
+description: A helpful customer support agent for Acme Corp
+
+## Capabilities
+- Answer product questions
+- Process refund requests
+- Provide shipping information
+
+## Guidelines
+- Always be polite and professional
+- Escalate complex issues to human support
+```
+
+The content of this file is automatically injected into the agent's system prompt wrapped in `<AgentConfiguration>` tags.
+
+## Integration with Interfaces
+
+When using Upsonic [interfaces](/concepts/interfaces/Overview) (Telegram, Slack, WhatsApp), the workspace greeting is automatically called when a user resets their session with the `/reset` command. The greeting response is sent to the user, providing a fresh start with a personalized introduction.
+
+## Best Practices
+
+1. **Descriptive Agents.md**: Include clear descriptions of the agent's capabilities and guidelines
+2. **Model Configuration**: Specify the `default_model` in your Agents.md for reference
+3. **Session Management**: Use unique `session_id` values for each user or conversation
+4. **Greeting Once**: The greeting only executes once per agent instance (tracked by `_workspace_greeting_executed`)
