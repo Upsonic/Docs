@@ -24,29 +24,44 @@ Required environment variables:
 
 * Optional: `SLACK_VERIFICATION_TOKEN`
 
+## Operating Modes
+
+* **TASK** (default) – Each message is processed as an independent task; no conversation history. Best for simple Q&A and one-off queries.
+* **CHAT** – Messages from the same user share a conversation session. The agent remembers context. Best for multi-turn assistants and support bots.
+
+## Reset Command (CHAT mode only)
+
+In CHAT mode, users can clear their conversation by sending the reset command (e.g. `/reset`) as a message. Configure it with `reset_command`; set to `None` to disable.
+
+If the agent has a `workspace` configured, the reset command will also trigger a dynamic greeting message based on the workspace configuration. See [Workspace](/agents/advanced/workspace) for details.
+
+## Access Control (Whitelist)
+
+Pass `allowed_user_ids` (list of Slack user IDs, e.g. `["U01ABC123"]`). Only those users are processed; others receive "This operation not allowed". Omit `allowed_user_ids` (or set `None`) to allow all users.
+
 ## Example Usage
 
-Create an agent, expose it with the `SlackInterface` interface, and serve via `InterfaceManager`:
+Create an agent, expose it with the `SlackInterface` interface, and serve via `InterfaceManager`. Example with **CHAT** mode, reset command, and optional whitelist:
 
 ```python
 import os
 from upsonic import Agent
-from upsonic.interfaces import InterfaceManager, SlackInterface
+from upsonic.interfaces import InterfaceManager, SlackInterface, InterfaceMode
 
-# Create an agent
 agent = Agent(
-    model="openai/gpt-4o-mini",  # Ensure OPENAI_API_KEY is set
-    name="SlackBot"
+    model="openai/gpt-4o-mini",
+    name="SlackBot",
 )
 
-# Create Slack interface
 slack = SlackInterface(
     agent=agent,
-    reply_to_mentions_only=True,  # Only reply to @mentions and DMs
-    name="Slack"
+    reply_to_mentions_only=True,
+    name="Slack",
+    mode=InterfaceMode.CHAT,
+    reset_command="/reset",
+    allowed_user_ids=["U0966K32DQV"],
 )
 
-# Create and start the interface manager
 manager = InterfaceManager(interfaces=[slack])
 
 if __name__ == "__main__":
@@ -72,12 +87,17 @@ Main entry point for Upsonic Slack applications.
 | `verification_token` | `Optional[str]` | `None`  | Slack verification token (or set `SLACK_VERIFICATION_TOKEN`). |
 | `name` | `str` | `"Slack"` | Interface name. |
 | `reply_to_mentions_only` | `bool` | `True` | Whether to only reply to @mentions and DMs. |
+| `mode` | `Union[InterfaceMode, str]` | `InterfaceMode.TASK` | `TASK` or `CHAT`. |
+| `reset_command` | `Optional[str]` | `"/reset"` | Message text that resets chat session (CHAT mode). Set `None` to disable. |
+| `storage` | `Optional[Storage]` | `None`  | Storage backend for chat sessions (CHAT mode). |
+| `allowed_user_ids` | `Optional[List[str]]` | `None`  | Whitelist of Slack user IDs (e.g. `"U01ABC123"`). `None` = allow all. |
 
-### Key Method
+### Key Methods
 
 | Method       | Parameters               | Return Type | Description                                        |
 | ------------ | ------------------------ | ----------- | -------------------------------------------------- |
 | `attach_routes` | None | `APIRouter` | Returns the FastAPI router and attaches endpoints. |
+| `is_user_allowed` | `user_id: str` | `bool` | Whether the user is in the whitelist (or whitelist disabled). |
 
 ## Endpoints
 

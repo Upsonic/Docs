@@ -28,30 +28,45 @@ Required environment variables:
 
 </Note>
 
+## Operating Modes
+
+* **TASK** (default) – Each email is processed as an independent task; no conversation history. Best for classification, auto-responders, one-off processing.
+* **CHAT** – Emails from the same sender share a conversation session. The agent can reference earlier emails. Best for support threads and ongoing conversations.
+
+## Reset Command (CHAT mode only)
+
+In CHAT mode, senders can clear their conversation by including the reset command in the email body (e.g. `/reset`). You configure it with `reset_command`; set to `None` to disable.
+
+If the agent has a `workspace` configured, the reset command will also trigger a dynamic greeting message based on the workspace configuration. See [Workspace](/agents/advanced/workspace) for details.
+
+## Access Control (Whitelist)
+
+Pass `allowed_emails` (list of email addresses). Only those senders are processed; others receive a fixed "This operation not allowed" response. Omit `allowed_emails` (or set `None`) to allow all senders.
+
 ## Example Usage
 
-Create an agent, expose it with the `GmailInterface` interface, and serve via `InterfaceManager`:
+Create an agent, expose it with the `GmailInterface` interface, and serve via `InterfaceManager`. Example with **CHAT** mode, reset command, and optional whitelist:
 
 ```python
 import os
 from upsonic import Agent
-from upsonic.interfaces import InterfaceManager, GmailInterface
+from upsonic.interfaces import InterfaceManager, GmailInterface, InterfaceMode
 
-# Create an agent
 agent = Agent(
-    model="openai/gpt-4o-mini",  # Ensure OPENAI_API_KEY is set
-    name="EmailAssistant"
+    model="openai/gpt-4o-mini",
+    name="EmailAssistant",
 )
 
-# Create Gmail interface
 gmail = GmailInterface(
     agent=agent,
-    credentials_path="credentials.json",  # Gmail OAuth credentials
-    token_path="token.json",  # Gmail OAuth token
-    api_secret=os.getenv("GMAIL_API_SECRET"),  # Optional, for endpoint protection
+    credentials_path="credentials.json",
+    token_path="token.json",
+    api_secret=os.getenv("GMAIL_API_SECRET"),
+    mode=InterfaceMode.CHAT,
+    reset_command="/reset",
+    allowed_emails=["support@mycompany.com", "user@example.com"],
 )
 
-# Create and start the interface manager
 manager = InterfaceManager(interfaces=[gmail])
 
 if __name__ == "__main__":
@@ -77,13 +92,18 @@ Main entry point for Upsonic Gmail applications.
 | `credentials_path` | `Optional[str]` | `None`  | Path to Gmail OAuth credentials.json. |
 | `token_path` | `Optional[str]` | `None`  | Path to Gmail OAuth token.json. |
 | `api_secret` | `Optional[str]` | `None`  | Secret token for API authentication (or set `GMAIL_API_SECRET`). |
+| `mode` | `Union[InterfaceMode, str]` | `InterfaceMode.TASK` | `TASK` or `CHAT`. |
+| `reset_command` | `Optional[str]` | `"/reset"` | Text in email body that resets chat session (CHAT mode). Set `None` to disable. |
+| `storage` | `Optional[Storage]` | `None`  | Storage backend for chat sessions (CHAT mode). |
+| `allowed_emails` | `Optional[List[str]]` | `None`  | Whitelist of sender emails; only these are processed. `None` = allow all. |
 
-### Key Method
+### Key Methods
 
 | Method       | Parameters               | Return Type | Description                                        |
 | ------------ | ------------------------ | ----------- | -------------------------------------------------- |
 | `attach_routes` | None | `APIRouter` | Returns the FastAPI router and attaches endpoints. |
 | `check_and_process_emails` | `count: int = 10` | `CheckEmailsResponse` | Manually trigger email check and processing. |
+| `is_email_allowed` | `email: str` | `bool` | Whether the sender is in the whitelist (or whitelist disabled). |
 
 ## Endpoints
 
