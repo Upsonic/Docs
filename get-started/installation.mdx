@@ -9,6 +9,14 @@ Install Upsonic and start building AI agents in minutes.
 
 Upsonic requires Python 3.10 or higher. Follow the steps below to install the framework and verify your installation.
 
+
+## UV Package Manager | For Faster Installations
+UV is a fast and efficient package manager for Python. Use uv for a better experience. That said, our framework is compatible with both uv and pip, so you don't need to choose one. UV is just the faster option.
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
 ## Main Library
 
 Install the core Upsonic framework to start building AI agents:
@@ -139,7 +147,8 @@ Use this when you need to deploy agents with FastAPI/Uvicorn or use Celery for b
 Check your installed version:
 
 ```bash
-pip freeze | grep upsonic
+uv pip freeze | grep upsonic
+# pip freeze | grep upsonic
 ```
 
 You should see something like:

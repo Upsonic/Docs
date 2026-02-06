@@ -166,12 +166,12 @@ def delete_file(file_path: str) -> str:
     return f"File '{file_path}' deleted successfully."
 
 task = Task(
-    description="Delete the old_data.txt file",
+    description="Delete the ./old_data.txt file",
     tools=[delete_file]
 )
 
 agent = Agent(model="openai/gpt-4o")
-result = agent.do(task)
+result = agent.print_do(task)
 # User will be prompted: "Proceed? (y/n): "
 ```
 
@@ -187,17 +187,17 @@ from upsonic import Agent, Task
     requires_user_input=True, 
     user_input_fields=["api_key", "secret_token"]
 )
-def authenticate_service(service_name: str, api_key: str = "", secret_token: str = "") -> str:
-    """Authenticate with an external service."""
-    return f"Authenticated with {service_name}"
+def get_balance(account_number: str, api_key: str = "", secret_token: str = "") -> str:
+    """Get the current balance of the account."""
+    return f"The current balance is 100000 {account_number}"
 
 task = Task(
-    description="Authenticate with the payment service",
-    tools=[authenticate_service]
+    description="Get the current balance of the account 1234567890",
+    tools=[get_balance]
 )
 
 agent = Agent(model="openai/gpt-4o")
-result = agent.do(task)
+result = agent.print_do(task)
 # User will be prompted for each field:
 # Enter value for 'api_key': 
 # Enter value for 'secret_token':
@@ -243,7 +243,7 @@ task = Task(
 agent = Agent(model="openai/gpt-4o")
 
 # Initial execution - agent pauses when tool is needed
-output = agent.do(task, return_output=True)
+output = agent.print_do(task, return_output=True)
 
 # Check if execution paused with external tool requirements
 if output.active_requirements:
@@ -254,56 +254,27 @@ if output.active_requirements:
             print(f"Tool: {tool_exec.tool_name}")
             print(f"Args: {tool_exec.tool_args}")
             
-            # Execute the tool yourself
-            external_result = execute_shell_command(**tool_exec.tool_args)
-            
-            # Set the result back
-            requirement.tool_execution.result = external_result
-    
-    # Continue execution with the results
-    final_result = agent.continue_run(task=task, requirements=output.requirements)
-```
-
-### Security-Sensitive Operations
-
-```python
-from upsonic.tools import tool
-from upsonic import Agent, Task
-
-@tool(external_execution=True)
-def delete_production_data(table_name: str) -> str:
-    """Delete data from production (requires manual execution)."""
-    return f"Deleted data from {table_name}"
-
-task = Task(
-    description="Delete all data from the users table",
-    tools=[delete_production_data]
-)
-
-agent = Agent(model="openai/gpt-4o")
-
-# Initial execution - agent pauses when tool is needed
-output = agent.do(task, return_output=True)
-
-# Review before executing
-if output.active_requirements:
-    for requirement in output.active_requirements:
-        if requirement.is_external_tool_execution:
-            tool_exec = requirement.tool_execution
-            print(f"⚠️  About to delete from: {tool_exec.tool_args['table_name']}")
-            confirm = input("Proceed? (yes/no): ")
-            
+            confirm = input(f"Execute the tool yourself?  {tool_exec.tool_args} (yes/no): ")
             if confirm == "yes":
-                requirement.tool_execution.result = delete_production_data(**tool_exec.tool_args)
+                external_result = execute_shell_command(**tool_exec.tool_args)
+                requirement.tool_execution.result = external_result
             else:
                 requirement.tool_execution.result = "Operation cancelled by user"
     
     final_result = agent.continue_run(task=task, requirements=output.requirements)
+    print(final_result)
 ```
+
+
 
 ## Let's Create Custom Tools for a Website Analysis Agent
 
 In this example, we'll create basic tools and show how to add user confirmation for sensitive operations.
+
+```bash
+uv pip install upsonic
+# pip install upsonic
+```
 
 ```python
 # Upsonic Docs: Create Custom Tools

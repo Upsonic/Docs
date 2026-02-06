@@ -52,7 +52,7 @@ agent = Agent(
 
 # Run the agent with reasoning capabilities
 task = Task("Should I invest in AAPL? Analyze the stock thoroughly.")
-result = agent.do(task)
+result = agent.print_do(task)
 print(result)
 ```
 
@@ -112,7 +112,7 @@ agent = Agent(
 
 # Execute a strategic analysis task
 task = Task("Analyze the competitive position and financials of Apple")
-result = agent.do(task)
+result = agent.print_do(task)
 print(result)
 ```
 
@@ -146,7 +146,7 @@ task = Task(
     enable_reasoning_tool=True
 )
 
-result = agent.do(task)
+result = agent.print_do(task)
 print(result)
 ```
 
@@ -186,7 +186,7 @@ simple_task = Task(
     enable_thinking_tool=False,
     enable_reasoning_tool=False  # Single tool, no analysis needed
 )
-result1 = agent.do(simple_task)
+result1 = agent.print_do(simple_task)
 print("Simple task result:", result1)
 
 # Complex analysis - use full reasoning
@@ -195,7 +195,7 @@ complex_task = Task(
     enable_thinking_tool=True,
     enable_reasoning_tool=True
 )
-result2 = agent.do(complex_task)
+result2 = agent.print_do(complex_task)
 print("Complex task result:", result2)
 ```
 
@@ -242,7 +242,7 @@ task = Task(
 )
 
 # Agent will execute tools with analysis after each step
-result = agent.do(task)
+result = agent.print_do(task)
 print(result)
 ```
 
@@ -292,7 +292,7 @@ task = Task(
     enable_reasoning_tool=True
 )
 
-result = agent.do(task)
+result = agent.print_do(task)
 print(result)
 ```
 
@@ -336,7 +336,7 @@ agent = Agent(
 
 # Run task to see performance metrics
 task = Task("What is the current outlook for renewable energy investments?")
-result = agent.do(task)
+result = agent.print_do(task)
 print(result)
 ```
 

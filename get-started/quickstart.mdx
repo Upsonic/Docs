@@ -16,8 +16,8 @@ Your first agent with a simple and powerful AI Agent Development framework.
 Let's create your first agent with Upsonic by creating an Agent, Task, and Tool.
 
 ```bash
-uv pip install upsonic
-# pip install upsonic
+uv pip install upsonic "upsonic[tools]"
+# pip install upsonic "upsonic[tools]"
 ```
 
 ```python stock_analysis.py
@@ -30,10 +30,15 @@ task = Task(description="Give me a summary about tesla stock with tesla car mode
 
 agent.print_do(task)
 ```
-
 ## Add Memory
 
 Add conversational memory to your agent to remember past interactions.
+
+```bash
+uv pip install upsonic sqlalchemy aiosqlite
+# pip install upsonic sqlalchemy aiosqlite
+```
+
 
 ```python with_memory.py
 from upsonic import Agent, Task
@@ -69,8 +74,8 @@ Learn Details
 Add a knowledge base to provide context and information to your agent.
 
 ```bash
-uv pip install "upsonic[loaders]"
-# pip install "upsonic[loaders]"
+uv pip install "upsonic[loaders]" "upsonic[qdrant]"
+# pip install "upsonic[loaders]" "upsonic[qdrant]"
 ```
 
 ```python with_knowledge.py
@@ -149,7 +154,7 @@ tasks = [
     Task(description="Write a blog post about quantum computing for general audience")
 ]
 
-result = team.do(tasks)
+result = team.print_do(tasks)
 print(result)
 ```
 

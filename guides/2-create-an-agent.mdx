@@ -110,6 +110,11 @@ instructions="Do your best."
 
 At Upsonic, we strive for simplicity and safety. With this in mind, we offer an `Agent` class that allows us to configure our Agent for specific purposes. In this example, we will create an agent that identifies merchant websites and analyzes their product offerings.
 
+```bash
+uv pip install upsonic "upsonic[tools]"
+# pip install upsonic "upsonic[tools]"
+```
+
 ```python
 # Upsonic Docs: Create an Agent
 # https://docs.upsonic.ai/guides/create_an_agent
@@ -117,12 +122,13 @@ At Upsonic, we strive for simplicity and safety. With this in mind, we offer an 
 
 
 # Imports
-from upsonic import Agent
+from upsonic import Agent, Task
+from upsonic.tools import WebSearch, WebRead
 
 
 # Agent Creation
 merchant_analyzer_agent = Agent(
-    model="openai/gpt-4o",
+    model="openai/gpt-4o-mini",
     name="Merchant Analyzer V1",
     role="Analyzing the merchant websites.",
     goal="Getting the right result on their websites and giving as the user requested format",
@@ -133,6 +139,17 @@ merchant_analyzer_agent = Agent(
     Prioritize up-to-date information and highlight any unusual patterns or outliers.
     """
 )
+
+# Let's give our agent a simple task
+simple_task = Task(
+    description="Find information about 'Books to Scrape' website and list their main product categories",
+    tools=[WebSearch, WebRead]
+)
+
+# Execute the task
+result = merchant_analyzer_agent.print_do(simple_task)
+print("\n📊 Analysis Result:")
+print(result)
 
 ```
 

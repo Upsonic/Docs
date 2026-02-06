@@ -92,12 +92,15 @@ When running your agent, use the `Agent.print_do()` method to print the response
 from upsonic import Agent, Task
 from upsonic.tools import tool
 import asyncio
+
+@tool
+def search_web(query: str) -> str:
+    """Search the web for information about a topic."""
+    # Simulated web search - replace with actual implementation
+    return f"Search results for '{query}': Found relevant information about the topic."
+
+
 async def main():
-    @tool
-    def search_web(query: str) -> str:
-        """Search the web for information about a topic."""
-        # Simulated web search - replace with actual implementation
-        return f"Search results for '{query}': Found relevant information about the topic."
 
     agent = Agent(
         model="openai/gpt-4o",
@@ -110,11 +113,11 @@ async def main():
 
     # do() and do_async() methods accept both Task objects and strings
     task = Task(description="Trending startups and products.")
-    result = agent.do(task)
+    #result = agent.do(task)
     # Or: result = agent.do("Trending startups and products.")
 
     # Print the response
-    print(result)
+    #print(result)
 
     ################ STREAM RESPONSE #################
     async for text_chunk in agent.astream(task):

@@ -44,6 +44,10 @@ description="Review the pull request"
 In Upsonic we have a Task class and they are the core parts of anything that you do actually. When you create an task you can use that task in an Direct LLM Call, Agent and Multi-Agent teams. In this example we will add the task to our merchant Website analyzer.
 
 
+```bash
+uv pip install upsonic "upsonic[tools]"
+# pip install upsonic "upsonic[tools]"
+```
 
 ```python
 # Upsonic Docs: Create an Agent
@@ -113,26 +117,107 @@ The `context` attribute is the comprehensive way to provide any contextual infor
 ### Adding Files to Tasks
 
 ```python
-from upsonic import Task
+from upsonic import Agent, Task
 from upsonic.tools import WebRead
+import json
+import csv
+
+# First, create some sample files to work with
+# Create a sample CSV file
+with open("sales_data.csv", "w", newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(["Month", "Revenue", "Units Sold"])
+    writer.writerow(["January", "15000", "120"])
+    writer.writerow(["February", "18000", "145"])
+    writer.writerow(["March", "22000", "180"])
+
+# Create a sample JSON file
+data = {
+    "products": ["Widget A", "Widget B", "Widget C"],
+    "target_market": "Global",
+    "year": 2024
+}
+with open("product_data.json", "w") as f:
+    json.dump(data, f, indent=2)
+
+# Create a sample text report
+with open("report.txt", "w") as f:
+    f.write("Sales Performance Report\n")
+    f.write("========================\n\n")
+    f.write("Q1 Performance: Strong growth across all segments.\n")
+    f.write("Key achievements: Exceeded targets by 15%.\n")
+
+# Create an agent for analysis
+analysis_agent = Agent(
+    model="openai/gpt-4o-mini",
+    name="Data Analyzer",
+    role="Analyzing sales and product data",
+    goal="Extract insights from various file formats"
+)
 
 # Task with file attachments
 task_with_files = Task(
-    description="Analyze the attached documents and extract key information",
-    context=["report.pdf", "data.csv", "image.png"],
-    tools=[WebRead]  # If you need web tools for additional research
+    description="Analyze the sales data, product information, and report to extract key insights",
+    context=["sales_data.csv", "product_data.json", "report.txt"],
 )
 
-# Task with mixed context (files + other tasks + text)
+# Execute the task
+result = analysis_agent.print_do(task_with_files)
+print(result)
+```
+
+### Using Previous Task Results as Context
+
+```python
+from upsonic import Agent, Task
+import json
+
+# Create separate data files for Q3 and Q4
+with open("q3_data.json", "w") as f:
+    json.dump({
+        "quarter": "Q3_2024",
+        "revenue": 50000,
+        "expenses": 35000,
+        "growth": "12%",
+        "new_customers": 145
+    }, f, indent=2)
+
+with open("q4_data.json", "w") as f:
+    json.dump({
+        "quarter": "Q4_2024",
+        "revenue": 58000,
+        "expenses": 38000,
+        "growth": "16%",
+        "new_customers": 178
+    }, f, indent=2)
+
+# Create an agent
+trend_agent = Agent(
+    model="openai/gpt-4o-mini",
+    name="Trend Analyzer",
+    role="Analyzing business trends"
+)
+
+# First task: Analyze Q3 data
+previous_analysis_task = Task(
+    description="Analyze the Q3 2024 performance data and identify key strengths and weaknesses",
+    context=["q3_data.json", "Focus on revenue, growth trends, and customer acquisition"]
+)
+
+trend_agent.print_do(previous_analysis_task)
+
+# Second task: Compare Q4 with Q3 analysis
 task_with_mixed_context = Task(
-    description="Compare the uploaded data with the previous analysis results",
+    description="Compare Q4 2024 data with the Q3 analysis results and identify key trends and improvements",
     context=[
-        "new_data.xlsx",           # File attachment
-        previous_analysis_task,   # Previous task result
-        "Focus on Q4 trends",     # Text context
-        knowledge_base            # Knowledge base
+        "q4_data.json",             # Q4 file attachment
+        previous_analysis_task,     # Previous Q3 analysis result
+        "Focus on quarter-over-quarter improvements and areas of concern"  # Text context
     ]
 )
+
+result = trend_agent.print_do(task_with_mixed_context)
+print(result)
 ```
 
 ### Supported File Types
@@ -145,20 +230,79 @@ The framework automatically handles various file formats:
 - **Code**: Python (.py), JavaScript (.js), etc.
 
 ```python
-from upsonic import Task
+from upsonic import Agent, Task
+import json
+import csv
 
-# Example with multiple file types
+# Create sample files for demonstration
+# 1. CSV file with financial data
+with open("financial_data.csv", "w", newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(["Category", "Q1", "Q2", "Q3", "Q4"])
+    writer.writerow(["Revenue", "100k", "120k", "135k", "150k"])
+    writer.writerow(["Expenses", "60k", "65k", "70k", "72k"])
+
+# 2. JSON file with raw data
+with open("raw_data.json", "w") as f:
+    json.dump({
+        "markets": ["US", "EU", "Asia"],
+        "segments": ["Enterprise", "SMB", "Consumer"],
+        "growth_rate": {"US": "15%", "EU": "12%", "Asia": "25%"}
+    }, f, indent=2)
+
+# 3. Python code file for analysis
+with open("analysis_helpers.py", "w") as f:
+    f.write("""
+def calculate_growth(current, previous):
+    return ((current - previous) / previous) * 100
+
+def format_currency(amount):
+    return f"${amount:,.2f}"
+""")
+
+# 4. Markdown report
+with open("market_report.md", "w") as f:
+    f.write("""# Market Analysis Report
+
+## Key Findings
+- Strong performance in Asian markets
+- Enterprise segment showing consistent growth
+- Q4 revenue targets exceeded by 10%
+
+## Recommendations
+1. Increase investment in Asia-Pacific region
+2. Focus on enterprise customer retention
+""")
+
+# Create agent for comprehensive analysis
+comprehensive_agent = Agent(
+    model="openai/gpt-4o-mini",
+    name="Comprehensive Analyzer",
+    role="Multi-format data analysis"
+)
+
+# Initial research task - analyze market report first
+previous_research_task = Task(
+    description="Review the market report and identify the top 3 key growth areas with specific metrics",
+    context=["market_report.md"]  # Give it the market report to analyze
+)
+
+comprehensive_agent.print_do(previous_research_task)
+
+# Task with multiple file types - now uses the previous analysis
 comprehensive_task = Task(
-    description="Create a comprehensive analysis report",
+    description="Create a comprehensive analysis report combining all data sources and validate the growth areas identified in previous analysis",
     context=[
-        "financial_data.xlsx",    # Excel data
-        "charts.png",            # Image
-        "market_report.pdf",     # PDF document
-        "raw_data.json",         # JSON data
-        previous_research_task,  # Previous task
-        "Additional context: Focus on emerging markets"  # Text context
+        "financial_data.csv",       # CSV data
+        "market_report.md",         # Markdown document
+        "raw_data.json",            # JSON data
+        previous_research_task,     # Previous task result
+        "Additional context: Focus on emerging markets and growth opportunities"  # Text context
     ]
 )
+
+result = comprehensive_agent.print_do(comprehensive_task)
+print(result)
 ```
 
 

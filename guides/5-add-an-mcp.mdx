@@ -100,103 +100,42 @@ class WellDocumentedMCP:
 
 In this example, we'll create a comprehensive database management system using MCP tools and show how to combine them with regular Upsonic tools.
 
+```bash
+uv pip install upsonic
+# pip install upsonic
+```
+
 ```python
 # Upsonic Docs: Add an MCP
 # https://docs.upsonic.ai/guides/5-add-an-mcp
 
 # Imports
-import os
 from upsonic import Agent, Task
-from upsonic.tools import WebSearch, WebRead
-from pydantic import BaseModel
 
-# Set your OpenAI API key (via environment variable or .env file)
-# os.environ["OPENAI_API_KEY"] = "your-api-key"  # Or use .env file
-
-# MCP 1: SQLite Database Operations
+# Define an MCP Server
 class DatabaseMCP:
-    """
-    MCP server for SQLite database operations.
-    Provides comprehensive database management capabilities.
-    """
+    """SQLite database operations MCP server"""
     command = "uvx"
     args = ["mcp-server-sqlite", "--db-path", "/tmp/library.db"]
 
-# Response Format for Structured Output
-class DatabaseReport(BaseModel):
-    tables_created: int
-    records_inserted: int
-    sample_data: str
-    summary: str
-
-# Agent Creation with MCP Tools
+# Create Agent with MCP Tools
 database_agent = Agent(
-    model="openai/gpt-4o",
-    name="Database Management Expert",
-    role="Database operations and data management specialist",
-    goal="Provide comprehensive database management with structured reporting"
+    model="openai/gpt-4o-mini",
+    name="Database Agent",
+    role="Database operations specialist",
+    goal="Manage database operations efficiently"
 )
 
-# Example 1: Basic Database Operations
-basic_task = Task(
-    description="Create a comprehensive library management database. Create a 'books' table with columns: id (integer primary key), title (text), author (text), isbn (text), published_year (integer), and available (boolean). Insert 5 sample books with different authors and years. Then create a 'borrowers' table with columns: id (integer primary key), name (text), email (text), and phone (text). Insert 3 sample borrowers. Finally, show all books and all borrowers in separate queries.",
+# Create and Execute Task with MCP
+task = Task(
+    description="""Create a 'books' table with columns: id, title, author, year. 
+    Insert 3 sample books. Then query and show all books.""",
     tools=[DatabaseMCP]
 )
 
-# Execute the basic database operations
-result = database_agent.do(basic_task)
-print("Basic Database Operations Result:")
+# Run the task
+result = database_agent.print_do(task)
 print(result)
-
-# Example 2: Structured Output with MCP
-structured_task = Task(
-    description="Create a 'products' table with id, name, price, and category columns. Insert 5 sample products with different categories. Then provide a structured report including the number of tables created, records inserted, sample data, and a summary of the operations.",
-    tools=[DatabaseMCP],
-    response_format=DatabaseReport
-)
-
-# Execute with structured output
-structured_result = database_agent.do(structured_task)
-print("\nStructured Database Report:")
-print(f"Tables Created: {structured_result.tables_created}")
-print(f"Records Inserted: {structured_result.records_inserted}")
-print(f"Summary: {structured_result.summary}")
-
-# Example 3: Combined MCP and Regular Tools
-research_agent = Agent(
-    model="openai/gpt-4o",
-    name="Research and Database Agent",
-    role="Combined research and data management specialist",
-    goal="Research topics and store findings in a structured database"
-)
-
-combined_task = Task(
-    description="Research the top 3 programming languages in 2024. Create a 'languages' table with columns: id, name, popularity_rank, description, and use_cases. Insert the research findings into the database. Then query the database to show all languages sorted by popularity rank.",
-    tools=[WebSearch, WebRead, DatabaseMCP]
-)
-
-# Execute the combined workflow
-combined_result = research_agent.do(combined_task)
-print("\nCombined Research and Database Result:")
-print(combined_result)
-
-# Example 4: Multiple MCP Workflow
-workflow_agent = Agent(
-    model="openai/gpt-4o",
-    name="Multi-MCP Workflow Agent",
-    role="Multi-tool specialist",
-    goal="Use multiple MCP tools to accomplish complex tasks"
-)
-
-workflow_task = Task(
-    description="Create a 'companies' table with id, name, industry, and revenue columns. Research 3 tech companies and insert their information into the database. Then create a 'employees' table and insert sample employee data for these companies. Finally, provide a comprehensive report of all data.",
-    tools=[WebSearch, WebRead, DatabaseMCP]
-)
-
-# Execute the workflow
-workflow_result = workflow_agent.do(workflow_task)
-print("\nMulti-MCP Workflow Result:")
-print(workflow_result)
 ```
 
 **Need more advanced features?** The MCP integration supports many powerful configuration options including:

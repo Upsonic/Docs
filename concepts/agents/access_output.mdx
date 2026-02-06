@@ -17,7 +17,7 @@ agent = Agent("openai/gpt-4o")
 
 # Run with return_output=True to get full AgentRunOutput
 task = Task("What is 2 + 2?")
-run_output = agent.do(task, return_output=True)
+run_output = agent.print_do(task, return_output=True)
 
 # Access the output
 print(run_output.output)  # "4"
@@ -35,7 +35,7 @@ async def main():
     task = Task("What is the capital of France?")
     
     # Get full output with return_output=True
-    run_output = await agent.do_async(task, return_output=True)
+    run_output = await agent.print_do_async(task, return_output=True)
     
     print(f"Output: {run_output.output}")
     print(f"Status: {run_output.status.value}")
@@ -53,7 +53,7 @@ from upsonic import Agent, Task
 agent = Agent("openai/gpt-4o")
 
 # Run normally (returns just the content)
-result = agent.do("What is 2 + 2?")
+result = agent.print_do("What is 2 + 2?")
 print(result)  # "4"
 
 # Access the full run output after execution
@@ -242,6 +242,13 @@ if run_output.has_pending_external_tools():
             print(f"  - Tool: {req.tool_execution.tool_name}")
             print(f"    Arguments: {req.tool_execution.tool_args}")
             print(f"    Tool Call ID: {req.tool_execution.tool_call_id}")
+
+            confirm = input(f"Execute the tool yourself? {req.tool_execution.tool_args} (yes/no): ")
+            if confirm == "yes":
+                result = send_email(**req.tool_execution.tool_args)
+                req.tool_execution.result = result
+            else:
+                req.tool_execution.result = "Operation cancelled by user"
         
 # Get tools awaiting external execution (from requirements)
 external_requirements = run_output.get_external_tool_requirements()

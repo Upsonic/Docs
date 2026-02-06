@@ -43,6 +43,11 @@ The Memory system offers flexible configuration to suit different requirements:
 
 In this example, we'll create an agent that remembers user preferences and maintains conversation context across multiple interactions.
 
+```bash
+uv pip install upsonic sqlalchemy aiosqlite
+# pip install upsonic sqlalchemy aiosqlite
+```
+
 ```python
 # Upsonic Docs: Using Memory in your Agent
 # https://docs.upsonic.ai/guides/using_memory_in_your_agent
@@ -97,15 +102,15 @@ task3 = Task(
 
 # Execute tasks to build memory
 print("=== Task 1: Building User Profile ===")
-result1 = personal_assistant.do(task1)
+result1 = personal_assistant.print_do(task1)
 print(f"Response: {result1}")
 
 print("\n=== Task 2: Testing Memory Recall ===")
-result2 = personal_assistant.do(task2)
+result2 = personal_assistant.print_do(task2)
 print(f"Response: {result2}")
 
 print("\n=== Task 3: Using Memory for Personalization ===")
-result3 = personal_assistant.do(task3)
+result3 = personal_assistant.print_do(task3)
 print(f"Response: {result3}")
 
 # Check memory statistics
@@ -150,9 +155,13 @@ json_storage = JSONStorage(
 
 ### Custom User Profile Schemas
 
+You can define custom user profile schemas to structure how your agent learns about users:
+
 ```python
 from pydantic import BaseModel, Field
+from upsonic import Agent, Task
 from upsonic.storage import Memory
+from upsonic.storage.json import JSONStorage
 
 class CustomUserProfile(BaseModel):
     expertise_level: str = Field(description="User's expertise level in the domain")
@@ -160,16 +169,43 @@ class CustomUserProfile(BaseModel):
     learning_goals: list[str] = Field(description="User's learning objectives")
     communication_style: str = Field(description="User's preferred communication style")
 
+# Initialize JSON storage for custom profile
+json_storage = JSONStorage("./memory_data")
+
 # Create Memory with custom profile schema
-memory_with_custom_schema = Memory(
-    storage=storage,
+custom_memory = Memory(
+    storage=json_storage,
     session_id="session_789",
     user_id="user_101",
     user_analysis_memory=True,
     user_profile_schema=CustomUserProfile,
-    dynamic_user_profile=False  # Use our custom schema
+    dynamic_user_profile=False,  # Use our custom schema instead of dynamic
+    model="openai/gpt-4o"
 )
+
+# Create agent with custom memory
+profile_agent = Agent(
+    model="openai/gpt-4o",
+    name="Profile Builder",
+    role="User Profile Specialist",
+    memory=custom_memory
+)
+
+# Build user profile with structured data
+profile_task = Task(
+    description="I'm an intermediate Python developer. I prefer Python and want to learn advanced async programming and system design. Please communicate in a technical but friendly way."
+)
+
+result = profile_agent.print_do(profile_task)
+
+# The agent now has a structured understanding of the user based on CustomUserProfile schema
 ```
+
+**Benefits of Custom Schemas:**
+- Structured data collection for specific use cases
+- Type-safe user profile management
+- Better control over what information is tracked
+- Easier integration with analytics and reporting systems
 
 ### Memory with Model Provider
 
@@ -232,11 +268,14 @@ print(f"- Feed Tool Results: {memory.feed_tool_call_results}")
 
 ## Memory in Multi-Agent Teams
 
-Memory can be shared across multiple agents in a team:
+Memory can be shared across multiple agents in a team, allowing all agents to access the same conversation history and context:
 
 ```python
-from upsonic import Team, Agent
-from upsonic.storage import Memory
+from upsonic import Team, Agent, Task
+from upsonic.storage import Memory, InMemoryStorage
+
+# Initialize storage
+storage = InMemoryStorage()
 
 # Create a shared memory instance
 shared_memory = Memory(
@@ -248,11 +287,21 @@ shared_memory = Memory(
     model="openai/gpt-4o"  # Required for summary generation
 )
 
+# Define tasks for the team
+research_task = Task(
+    description="Research the latest trends in AI and machine learning for 2024"
+)
+
+writing_task = Task(
+    description="Write a comprehensive article based on the research findings"
+)
+
 # Create agents with shared memory
 research_agent = Agent(
     model="openai/gpt-4o",
     name="Research Agent",
     role="Research Specialist",
+    goal="Conduct thorough research on AI trends",
     memory=shared_memory
 )
 
@@ -260,6 +309,7 @@ writing_agent = Agent(
     model="openai/gpt-4o",
     name="Writing Agent", 
     role="Content Writer",
+    goal="Create engaging content from research",
     memory=shared_memory
 )
 
@@ -267,9 +317,26 @@ writing_agent = Agent(
 research_team = Team(
     agents=[research_agent, writing_agent],
     memory=shared_memory,
-    tasks=[task1, task2]
+    tasks=[research_task, writing_task]
 )
+
+# Execute team tasks
+print("=== Executing Team Tasks with Shared Memory ===")
+result = research_team.print_do()
+
+# Both agents can now access the shared conversation history
+print(f"\n=== Memory Statistics ===")
+print(f"Session ID: {shared_memory.session_id}")
+print(f"User ID: {shared_memory.user_id}")
+print(f"Full Session Memory: {shared_memory.full_session_memory_enabled}")
+print(f"Summary Memory: {shared_memory.summary_memory_enabled}")
 ```
+
+**Key Benefits of Shared Memory in Teams:**
+- All agents have access to the complete conversation history
+- Context is preserved across different agent interactions
+- Team coordination is improved through shared understanding
+- User preferences and patterns are available to all team members
 
 ## Troubleshooting Memory Issues
 
