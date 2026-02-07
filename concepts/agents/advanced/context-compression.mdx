@@ -21,12 +21,16 @@ Context management applies three strategies in order when the context window is 
 from upsonic import Agent, Task
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="openai/gpt-4o-mini",
     context_management=True,           # Enabled by default
     context_management_keep_recent=5,   # Number of recent messages to always preserve
+    context_management_model="openai/gpt-4o"   # Model for context managing
 )
 
-task = Task("Analyze the quarterly revenue data and compare trends.")
+# Task with potentially long context
+long_text = "..." * 100000
+
+task = Task(f"Summarize this text: {long_text}")
 result = agent.do(task)
 print(result)
 ```
