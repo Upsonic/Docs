@@ -1,0 +1,179 @@
+---
+title: "Running an Autonomous Agent"
+description: "Execute autonomous agents with different methods"
+---
+
+AutonomousAgent inherits all execution methods from Agent, including synchronous, asynchronous, and streaming options.
+
+## Synchronous Execution
+
+The simplest way to run an autonomous agent:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# Execute and print result
+result = agent.print_do("Read README.md and summarize it")
+print(result)
+
+# Or execute without printing
+result = agent.do("Create a new file called hello.py with a hello world program")
+print(result)
+```
+
+## Asynchronous Execution
+
+For async applications:
+
+```python
+from upsonic import AutonomousAgent
+import asyncio
+
+async def main():
+    agent = AutonomousAgent(
+        model="openai/gpt-4o",
+        workspace="/path/to/project"
+    )
+    
+    # Execute asynchronously
+    result = await agent.do_async("Search for TODO comments in all Python files")
+    print(result)
+
+asyncio.run(main())
+```
+
+## Streaming Output
+
+Stream responses as they're generated:
+
+```python
+from upsonic import AutonomousAgent
+import asyncio
+
+async def main():
+    agent = AutonomousAgent(
+        model="openai/gpt-4o",
+        workspace="/path/to/project"
+    )
+    
+    # Stream the response
+    async for chunk in agent.astream("Analyze the project structure and suggest improvements"):
+        print(chunk, end='', flush=True)
+    print()
+
+asyncio.run(main())
+```
+
+## Multi-Step Tasks
+
+The agent handles complex multi-step tasks automatically:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# The agent will use multiple tools to complete this task
+result = agent.print_do("""
+1. Create a new directory called 'src'
+2. Create a Python file 'src/main.py' with a simple Flask app
+3. Create a requirements.txt with Flask as a dependency
+4. List all created files
+""")
+```
+
+## Working with Files
+
+Example of reading and modifying files:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# Read a file
+agent.print_do("Read the config.py file and explain its settings")
+
+# Edit a file (agent will read first, then edit)
+agent.print_do("Update the DEBUG setting to False in config.py")
+
+# Search files
+agent.print_do("Find all files that import the 'requests' library")
+```
+
+## Running Shell Commands
+
+Execute terminal commands safely:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    shell_timeout=60  # 60 second timeout
+)
+
+# Run commands
+agent.print_do("Check the Python version and list installed packages")
+
+# Run tests
+agent.print_do("Run pytest and report any failures")
+```
+
+## Accessing Results
+
+Get detailed information about the execution:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+result = agent.do("Count lines of code in all Python files")
+
+# Get the run output with metadata
+run_output = agent.get_run_output()
+if run_output:
+    print(f"Output: {run_output.output}")
+    print(f"Tool calls: {run_output.tool_call_count}")
+    print(f"Status: {run_output.status}")
+```
+
+## Session Persistence
+
+Session memory is enabled by default, so the agent remembers context between tasks:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+    # full_session_memory=True is the default
+)
+
+# First task
+agent.do("Read the user model in models/user.py")
+
+# Second task - agent remembers the previous context
+agent.print_do("Add an 'email' field to that user model")
+
+# Get session usage
+usage = agent.get_session_usage()
+print(f"Total tokens used: {usage.total_tokens}")
+```

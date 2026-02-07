@@ -1,0 +1,62 @@
+---
+title: Autonomous Agent
+sidebarTitle: Overview
+description: Pre-configured agent with filesystem and shell capabilities
+hideToc: true
+---
+
+![Autonomous Agent](/images/autonomous-agent.png)
+
+Build powerful autonomous agents that can read, write, and execute code in your workspace.
+
+The `AutonomousAgent` class extends the base `Agent` with built-in filesystem and shell tools, automatic storage setup, and workspace sandboxing. It's the ideal choice for coding assistants, DevOps automation, and any task requiring file or terminal access.
+
+## Overview
+
+`AutonomousAgent` inherits from `Agent` and comes pre-configured with:
+- **Default InMemoryStorage**: Automatic session storage without any configuration
+- **Full Session Memory Enabled**: Conversation history is preserved by default
+- **Filesystem Toolkit** for file operations (read, write, edit, search, etc.)
+- **Shell Toolkit** for terminal command execution
+- **Workspace Sandboxing** for security
+
+## Key Features
+
+- **Zero Configuration**: Works out of the box with sensible defaults
+- **Built-in System Prompt**: Automatically configured with tool usage guidelines
+- **Filesystem Tools**: Read, write, edit, search, list, move, copy, delete files
+- **Shell Commands**: Execute terminal commands with timeout and output capture
+- **Workspace Security**: All operations sandboxed to the workspace directory
+- **Read-Before-Edit**: Enforces reading files before editing for safety
+- **Inherits All Agent Features**: Memory, policies, streaming, caching, and more
+
+## Example
+
+### Basic Example
+
+```python
+from upsonic import AutonomousAgent
+
+# Create an autonomous agent with workspace
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# The agent can read, write, and execute in the workspace
+agent.print_do("Read the main.py file and explain what it does")
+```
+
+<Warning>
+All file and shell operations are restricted to the workspace directory. Attempting to access files outside the workspace will be blocked for security.
+</Warning>
+
+## Navigation
+
+- [Creating an Autonomous Agent](/autonomous-agent/creating-an-autonomous-agent) - Learn how to create and configure autonomous agents
+- [Attributes](/autonomous-agent/attributes) - Comprehensive guide to all configuration options
+- [Running an Autonomous Agent](/autonomous-agent/running-an-autonomous-agent) - Execute agents with different methods
+- [Filesystem Tools](/autonomous-agent/advanced/filesystem-tools) - Detailed guide to filesystem operations
+- [Shell Tools](/autonomous-agent/advanced/shell-tools) - Guide to shell command execution
+- [Workspace Security](/autonomous-agent/advanced/workspace-security) - Sandboxing and security features
+- [Memory Integration](/autonomous-agent/advanced/memory-integration) - Session persistence and storage
