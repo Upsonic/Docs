@@ -18,29 +18,44 @@ Required environment variables:
 
 * Optional (production): `WHATSAPP_APP_SECRET` (for webhook signature validation)
 
+## Operating Modes
+
+* **TASK** (default) – Each message is processed as an independent task; no conversation history. Best for one-off queries and stateless bots.
+* **CHAT** – Messages from the same sender share a conversation session. The agent remembers context. Best for conversational and support use cases.
+
+## Reset Command (CHAT mode only)
+
+In CHAT mode, senders can clear their conversation by sending the reset command (e.g. `/reset`) as a message. Configure it with `reset_command`; set to `None` to disable.
+
+If the agent has a `workspace` configured, the reset command will also trigger a dynamic greeting message based on the workspace configuration. See [Workspace](/agents/advanced/workspace) for details.
+
+## Access Control (Whitelist)
+
+Pass `allowed_numbers` (list of phone numbers in international format, e.g. `["905551234567"]`). Only those numbers are processed; others receive "This operation not allowed". Omit `allowed_numbers` (or set `None`) to allow all senders.
+
 ## Example Usage
 
-Create an agent, expose it with the `WhatsAppInterface` interface, and serve via `InterfaceManager`:
+Create an agent, expose it with the `WhatsAppInterface` interface, and serve via `InterfaceManager`. Example with **CHAT** mode, reset command, and optional whitelist:
 
 ```python
 import os
 from upsonic import Agent
-from upsonic.interfaces import InterfaceManager, WhatsAppInterface
+from upsonic.interfaces import InterfaceManager, WhatsAppInterface, InterfaceMode
 
-# Create an agent
 agent = Agent(
-    model="openai/gpt-4o-mini",  # Ensure OPENAI_API_KEY is set
-    name="WhatsAppBot"
+    model="openai/gpt-4o-mini",
+    name="WhatsAppBot",
 )
 
-# Create WhatsApp interface
 whatsapp = WhatsAppInterface(
     agent=agent,
     verify_token=os.getenv("WHATSAPP_VERIFY_TOKEN"),
-    app_secret=os.getenv("WHATSAPP_APP_SECRET"),  # Optional
+    app_secret=os.getenv("WHATSAPP_APP_SECRET"),
+    mode=InterfaceMode.CHAT,
+    reset_command="/reset",
+    allowed_numbers=["905551234567", "14155551234"],
 )
 
-# Create and start the interface manager
 manager = InterfaceManager(interfaces=[whatsapp])
 
 if __name__ == "__main__":
@@ -65,12 +80,17 @@ Main entry point for Upsonic WhatsApp applications.
 | `verify_token` | `Optional[str]` | `None`  | WhatsApp webhook verification token (or set `WHATSAPP_VERIFY_TOKEN`). |
 | `app_secret` | `Optional[str]` | `None`  | WhatsApp app secret for signature validation (or set `WHATSAPP_APP_SECRET`). |
 | `name` | `str` | `"WhatsApp"` | Interface name. |
+| `mode` | `Union[InterfaceMode, str]` | `InterfaceMode.TASK` | `TASK` or `CHAT`. |
+| `reset_command` | `Optional[str]` | `"/reset"` | Message text that resets chat session (CHAT mode). Set `None` to disable. |
+| `storage` | `Optional[Storage]` | `None`  | Storage backend for chat sessions (CHAT mode). |
+| `allowed_numbers` | `Optional[List[str]]` | `None`  | Whitelist of phone numbers (e.g. `"905551234567"`). `None` = allow all. |
 
-### Key Method
+### Key Methods
 
 | Method       | Parameters               | Return Type | Description                                        |
 | ------------ | ------------------------ | ----------- | -------------------------------------------------- |
 | `attach_routes` | None | `APIRouter` | Returns the FastAPI router and attaches endpoints. |
+| `is_user_allowed` | `sender: str` | `bool` | Whether the sender number is in the whitelist (or whitelist disabled). |
 
 ## Endpoints
 

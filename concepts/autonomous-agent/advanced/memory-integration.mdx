@@ -1,0 +1,94 @@
+---
+title: "Memory Integration"
+description: "Session persistence and memory in AutonomousAgent"
+---
+
+AutonomousAgent comes with automatic memory setup for session persistence, with sensible defaults enabled out of the box.
+
+## Default Configuration
+
+By default, `AutonomousAgent` uses:
+- **InMemoryStorage**: Automatic storage backend (no configuration needed)
+- **Full Session Memory**: Enabled by default to preserve conversation history
+
+```python
+from upsonic import AutonomousAgent, Task
+
+# InMemoryStorage + full_session_memory are enabled automatically
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# First interaction
+task = Task("Read the main.py file")
+agent.print_do(task)
+
+# Second interaction - agent remembers context (full_session_memory is True by default)
+task = Task("Now add error handling to that file")
+agent.print_do(task)
+```
+
+## Additional Memory Features
+
+Enable additional memory features beyond the default:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    # full_session_memory=True is already the default
+    summary_memory=True,       # Generate session summaries
+    user_analysis_memory=True  # Track user preferences
+)
+```
+
+## Persistent Storage
+
+Use database-backed storage for persistence across sessions:
+
+```python
+from upsonic import AutonomousAgent, Task
+from upsonic.storage import SqliteStorage, Memory
+
+# Create persistent storage
+storage = SqliteStorage(db_file="sessions.db")
+memory = Memory(
+    storage=storage,
+    session_id="project_session_001",
+    user_id="developer_001",
+    full_session_memory=True
+)
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    memory=memory
+)
+
+# Conversations persist across restarts
+task = Task("Continue where we left off")
+agent.print_do(task)
+```
+
+## Session and User IDs
+
+Track sessions and users:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    session_id="coding_session_123",
+    user_id="alice"
+    # full_session_memory=True is the default
+)
+
+# Access IDs
+print(f"Session: {agent.session_id}")
+print(f"User: {agent.user_id}")
+```

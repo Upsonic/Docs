@@ -1,0 +1,190 @@
+---
+title: "Running an Autonomous Agent"
+description: "Execute autonomous agents with different methods"
+---
+
+AutonomousAgent inherits all execution methods from Agent, including synchronous, asynchronous, and streaming options.
+
+## Synchronous Execution
+
+The simplest way to run an autonomous agent:
+
+```python
+from upsonic import AutonomousAgent, Task
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# Execute and print result
+task = Task("Read README.md and summarize it")
+result = agent.print_do(task)
+print(result)
+
+# Or execute without printing
+task = Task("Create a new file called hello.py with a hello world program")
+result = agent.print_do(task)
+print(result)
+```
+
+## Asynchronous Execution
+
+For async applications:
+
+```python
+from upsonic import AutonomousAgent, Task
+import asyncio
+
+async def main():
+    agent = AutonomousAgent(
+        model="openai/gpt-4o",
+        workspace="/path/to/project"
+    )
+    
+    # Execute asynchronously
+    task = Task("Search for TODO comments in all Python files")
+    result = await agent.do_async(task)
+    print(result)
+
+asyncio.run(main())
+```
+
+## Streaming Output
+
+Stream responses as they're generated:
+
+```python
+from upsonic import AutonomousAgent, Task
+import asyncio
+
+async def main():
+    agent = AutonomousAgent(
+        model="openai/gpt-4o",
+        workspace="/path/to/project"
+    )
+    
+    # Stream the response
+    task = Task("Analyze the project structure and suggest improvements")
+    async for chunk in agent.astream(task):
+        print(chunk, end='', flush=True)
+    print()
+
+asyncio.run(main())
+```
+
+## Long Tasks
+
+The agent handles complex long tasks automatically:
+
+```python
+from upsonic import AutonomousAgent, Task
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+task = Task("""
+1. Create a new directory called 'src'
+2. Create a Python file 'src/main.py' with a simple Flask app
+3. Create a requirements.txt with Flask as a dependency
+4. List all created files
+""")
+
+
+# The agent will use multiple tools to complete this task
+result = agent.print_do(task)
+```
+
+## Working with Files
+
+Example of reading and modifying files:
+
+```python
+from upsonic import AutonomousAgent, Task
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# Read a file
+task = Task("Read the config.py file and explain its settings")
+agent.print_do(task)
+
+# Edit a file (agent will read first, then edit)
+task = Task("Update the DEBUG setting to False in config.py")
+agent.print_do(task)
+
+# Search files
+task = Task("Find all files that import the 'requests' library")
+agent.print_do(task)
+```
+
+## Running Shell Commands
+
+Execute terminal commands safely:
+
+```python
+from upsonic import AutonomousAgent, Task
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    shell_timeout=10  # 60 second timeout
+)
+
+# Run commands
+task = Task("run a shell command that waits 120 seconds")
+agent.print_do(task)
+```
+
+## Accessing Results
+
+Get detailed information about the execution:
+
+```python
+from upsonic import AutonomousAgent, Task
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+task = Task("Count lines of code in all Python files")
+result = agent.print_do(task)
+
+# Get the run output with metadata
+run_output = agent.get_run_output()
+if run_output:
+    print(f"Output: {run_output.output}")
+    print(f"Tool calls: {run_output.tool_call_count}")
+    print(f"Status: {run_output.status}")
+```
+
+## Session Persistence
+
+Session memory is enabled by default, so the agent remembers context between tasks:
+
+```python
+from upsonic import AutonomousAgent, Task
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+    # full_session_memory=True is the default
+)
+
+# First task
+task = Task("Read the user model in models/user.py")
+agent.print_do(task)
+
+# Second task - agent remembers the previous context
+task = Task("Add an 'email' field to that user model")
+agent.print_do(task)
+
+# Get session usage
+usage = agent.get_session_usage()
+print(f"Total tokens used: {usage.total_tokens}")
+```

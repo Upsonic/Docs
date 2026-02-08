@@ -1,0 +1,106 @@
+---
+title: "Filesystem Tools"
+description: "File operations available in AutonomousAgent"
+---
+
+The `AutonomousFilesystemToolKit` provides comprehensive file operations, all sandboxed to the workspace directory.
+
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `read_file` | Read file contents with optional line offset/limit |
+| `write_file` | Create or overwrite files |
+| `edit_file` | Replace text in files (requires reading first) |
+| `list_files` | List directory contents (recursive or non-recursive) |
+| `search_files` | Search for files by name pattern |
+| `grep_files` | Search file contents using regex |
+| `file_info` | Get file metadata (size, dates, permissions) |
+| `create_directory` | Create directories recursively |
+| `move_file` | Move or rename files |
+| `copy_file` | Copy files or directories |
+| `delete_file` | Delete files or directories |
+
+## Example: Code Analysis
+
+```python
+from upsonic import AutonomousAgent, Task
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# Search and analyze code
+task = Task("Find all Python files that contain 'TODO' comments and list them with line numbers")
+agent.print_do(task)
+```
+
+## Example: Bulk File Operations
+
+```python
+from upsonic import AutonomousAgent, Task
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# Create project structure
+task = Task("""
+Create a basic Python package structure:
+- src/mypackage/__init__.py
+- src/mypackage/core.py with a sample function
+- tests/__init__.py
+- tests/test_core.py with a basic test
+""")
+agent.print_do(task)
+```
+
+## Read-Before-Edit Safety
+
+The filesystem toolkit enforces reading a file before editing it. This prevents accidental modifications to files the agent hasn't seen:
+
+```python
+from upsonic import AutonomousAgent, Task
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# The agent will automatically read first, then edit
+task = Task("Add type hints to all functions in utils.py")
+agent.print_do(task)
+```
+
+## Direct Toolkit Access
+
+Access the toolkit directly for programmatic use:
+
+```python
+from upsonic import AutonomousAgent
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# Read a file
+content = agent.filesystem_toolkit.read_file("README.md")
+print(content)
+
+# List files in a directory
+files = agent.filesystem_toolkit.list_files("src", recursive=True)
+print(files)
+
+# Search for files by pattern
+python_files = agent.filesystem_toolkit.search_files("*.py")
+print(python_files)
+
+# Check what files were read
+print(agent.filesystem_toolkit.get_read_files())
+
+# Reset tracking if needed
+agent.filesystem_toolkit.reset_read_tracking()
+```

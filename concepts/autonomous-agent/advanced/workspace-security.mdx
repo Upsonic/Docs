@@ -1,0 +1,86 @@
+---
+title: "Workspace Security"
+description: "Sandboxing and security features in AutonomousAgent"
+---
+
+AutonomousAgent implements strict security measures to prevent unintended access outside the workspace.
+
+## Workspace Sandboxing
+
+All file and shell operations are restricted to the workspace directory:
+
+```python
+from upsonic import AutonomousAgent, Task
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/home/user/my-project"
+)
+
+# These paths work (within workspace)
+task = Task("Read src/main.py")           # /home/user/my-project/src/main.py
+agent.print_do(task)
+task = Task("Read ./config.json")         # /home/user/my-project/config.json
+agent.print_do(task)
+
+# Path traversal is blocked
+task = Task("Read ../other-project/secret.txt")  # Blocked - outside workspace
+agent.print_do(task)
+task = Task("Read /etc/passwd")                   # Blocked - absolute path outside workspace
+agent.print_do(task)
+```
+
+## Default Blocked Commands
+
+The shell toolkit blocks dangerous commands by default:
+
+- `rm -rf /` and `rm -rf /*` (destructive patterns)
+- `:(){:|:&};:` (fork bomb)
+- `mkfs` (filesystem formatting)
+- `dd if=/dev/zero` (disk overwrite)
+
+You can add additional blocked commands like `sudo` via the `blocked_commands` parameter.
+
+## Custom Security Configuration
+
+```python
+from upsonic import AutonomousAgent
+
+# Disable shell entirely for maximum security
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    enable_shell=False  # Only filesystem access
+)
+
+# Or customize blocked commands
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    blocked_commands=["rm", "sudo", "chmod", "curl", "wget"]
+)
+```
+
+## Tracking File Access
+
+Monitor which files the agent has read:
+
+```python
+from upsonic import AutonomousAgent, Task
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+task = Task("Read config.py and utils.py, then update utils.py")
+agent.print_do(task)
+
+# Check accessed files
+print("Files read:", agent.filesystem_toolkit.get_read_files())
+
+# Reset tracking if needed
+agent.filesystem_toolkit.reset_read_tracking()
+# Or use the agent-level method:
+agent.reset_filesystem_tracking()
+```

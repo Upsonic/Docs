@@ -1,0 +1,84 @@
+---
+title: "AGENTS.md"
+sidebarTitle: "AGENTS.md"
+description: "Configure AutonomousAgent behavior using an AGENTS.md file in the workspace"
+hideToc: false
+---
+
+The AGENTS.md feature allows you to configure your AutonomousAgent using a markdown file stored in the workspace directory. When a workspace is set, the agent reads the `AGENTS.md` file and includes it in the system prompt, providing persistent configuration and behavioral guidelines.
+
+## Overview
+
+When you set a `workspace` path on an AutonomousAgent:
+
+1. **Configuration Loading**: The agent reads the `AGENTS.md` file from the workspace folder and includes it in the system prompt
+2. **Session Greeting**: You can call `execute_workspace_greeting()` to generate a personalized greeting based on the configuration
+
+## Example
+
+```python
+from upsonic import AutonomousAgent, Task
+
+# Create an autonomous agent with workspace
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    session_id="user_session_001"
+)
+
+# Execute the workspace greeting (optional, for new sessions)
+greeting = agent.execute_workspace_greeting()
+print(greeting)
+
+# Run tasks - the AGENTS.md content is included in the system prompt
+task = Task("What can you help me with?")
+agent.print_do(task)
+```
+
+## The AGENTS.md File
+
+Create an `AGENTS.md` file in your workspace folder to define agent configuration:
+
+```markdown
+# DevOps Assistant
+
+default_model: openai/gpt-4o
+name: DevOps Agent
+description: An autonomous agent for managing project infrastructure and code quality
+
+## Capabilities
+- Read and analyze project files
+- Run shell commands for testing and deployment
+- Create and modify configuration files
+- Search codebase for patterns and issues
+
+## Guidelines
+- Always read files before editing them
+- Run tests after making changes
+- Follow the project's existing code style
+- Never execute destructive commands without confirmation
+```
+
+The content of this file is automatically injected into the agent's system prompt wrapped in `<AgentConfiguration>` tags.
+
+## How It Works
+
+When the AutonomousAgent initializes with a workspace:
+
+1. It checks if an `AGENTS.md` file exists in the workspace directory
+2. If found, the file content is read and appended to the system prompt
+3. The agent uses these instructions alongside its built-in filesystem and shell tool guidelines
+4. The greeting method can introduce the agent based on its configuration
+
+## Integration with Interfaces
+
+When using Upsonic [interfaces](/concepts/interfaces/Overview) (Telegram, Slack, WhatsApp), the workspace greeting is automatically called when a user resets their session with the `/reset` command. The greeting response is sent to the user, providing a fresh start with a personalized introduction.
+
+## Best Practices
+
+1. **Be Specific**: Include clear descriptions of the agent's capabilities and limitations
+2. **Define Guidelines**: Set explicit rules for how the agent should behave in the workspace
+3. **Project Context**: Describe the project structure and conventions so the agent can follow them
+4. **Safety Rules**: Add any safety constraints specific to your project (e.g., "never delete the database")
+5. **Session Management**: Use unique `session_id` values for each user or conversation
+6. **Greeting Once**: The greeting only executes once per agent instance (tracked by `_workspace_greeting_executed`)

@@ -1,67 +1,47 @@
 ---
 title: Context Compression
 sidebarTitle: Context Compression
-description: Optimize context usage with intelligent compression strategies
+description: Automatic context window management for long-running agent conversations
 hideToc: false
 ---
 
-The `Agent` class supports context compression to handle large amounts of information efficiently. This is particularly useful when dealing with long conversation histories or large documents that might exceed the model's context window.
+The `Agent` class includes built-in context management that automatically handles context window overflow during long conversations. When enabled, the middleware monitors token usage and applies reduction strategies before the context exceeds the model's limit.
 
-## Compression Strategies
+## How It Works
 
-Upsonic offers different compression strategies configured via `compression_strategy`:
+Context management applies three strategies in order when the context window is exceeded:
 
-1.  **`none`** (Default): No compression.
-2.  **`simple`**: Basic whitespace removal and middle truncation if length exceeds limit.
-3.  **`llmlingua`**: Advanced compression using the LLMLingua library (requires `pip install llmlingua`).
+1. **Prune old tool calls** — Removes old tool call/return pairs, keeping only the most recent ones.
+2. **LLM summarization** — Summarizes older messages into condensed, structured messages via the LLM while keeping recent messages verbatim.
+3. **Context full response** — If the context is still full after all strategies, returns a fixed message indicating the context limit has been reached.
 
-## Simple Compression
-
-Use simple compression for basic optimization without additional dependencies.
+## Usage
 
 ```python
 from upsonic import Agent, Task
 
-# Configure simple compression
 agent = Agent(
-    model="openai/gpt-4o",
-    compression_strategy="simple",
-    compression_settings={
-        "max_length": 1000  # distinct characters
-    }
+    model="openai/gpt-4o-mini",
+    context_management=True,           # Enabled by default
+    context_management_keep_recent=5,   # Number of recent messages to always preserve
+    context_management_model="openai/gpt-4o"   # Model for context managing
 )
 
 # Task with potentially long context
-long_text = "..." * 10000
+long_text = "..." * 100000
+
 task = Task(f"Summarize this text: {long_text}")
-
 result = agent.do(task)
 print(result)
 ```
 
-## LLMLingua Compression
+## Parameters
 
-Use [LLMLingua](https://github.com/microsoft/LLMLingua) for smart, semantic compression that preserves key information.
-
-```python
-from upsonic import Agent, Task
-
-# Configure smart compression
-agent = Agent(
-    model="openai/gpt-4o",
-    compression_strategy="llmlingua",
-    compression_settings={
-        "ratio": 0.5,           # Keep 50% of the tokens
-        "instruction": "Keep the financial details",
-        "model_name": "microsoft/llmlingua-2-xlm-roberta-large-meetingbank"
-    }
-)
-
-task = Task("Analyze the provided meeting transcript.")
-result = agent.do(task)
-print(result)
-```
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `context_management` | `bool` | `True` | Enable or disable automatic context management. |
+| `context_management_keep_recent` | `int` | `5` | Number of recent messages (and tool call events) to preserve during pruning and summarization. |
 
 <Note>
-Using `llmlingua` requires installing the package: `pip install llmlingua`. The agent will perform the compression locally before sending the prompt to the LLM.
+Context management uses a 90% safety margin of the model's maximum context window. Token estimation relies on actual `usage` data from model responses when available, falling back to a character-based heuristic otherwise.
 </Note>

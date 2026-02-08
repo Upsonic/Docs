@@ -1,0 +1,112 @@
+---
+title: "Attributes"
+description: "Configuration options for the AutonomousAgent"
+---
+
+## Attributes
+
+`AutonomousAgent` inherits all attributes from `Agent` and adds the following autonomous-specific options:
+
+### Autonomous Agent Specific Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `workspace` | str \| None | Current directory | Workspace directory path. All file/shell operations are sandboxed here |
+| `storage` | Storage \| None | `InMemoryStorage()` | Custom storage backend. If None, InMemoryStorage is created automatically |
+| `enable_filesystem` | bool | `True` | Enable filesystem tools (read, write, edit, list, search, etc.) |
+| `enable_shell` | bool | `True` | Enable shell command execution tools |
+| `shell_timeout` | int | `120` | Default timeout for shell commands in seconds |
+| `shell_max_output` | int | `10000` | Maximum output length before truncation |
+| `blocked_commands` | List[str] \| None | Security defaults | List of command patterns to block for security |
+| `full_session_memory` | bool | `True` | Enable chat history persistence (enabled by default) |
+| `summary_memory` | bool | `False` | Enable session summary generation |
+| `user_analysis_memory` | bool | `False` | Enable user profile extraction |
+| `user_profile_schema` | BaseModel \| None | `None` | Pydantic model for user profile structure |
+| `dynamic_user_profile` | bool | `False` | Generate profile schema dynamically |
+| `num_last_messages` | int \| None | `None` | Limit on message turns to keep in history |
+| `feed_tool_call_results` | bool \| None | `None` | Include tool call results in history |
+
+### Inherited Agent Attributes
+
+All standard `Agent` attributes are also available:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `model` | str \| Model | `"openai/gpt-4o"` | Model identifier or Model instance |
+| `name` | str \| None | `None` | Agent name for identification |
+| `memory` | Memory \| None | Auto-created | Memory instance (auto-created with storage if not provided) |
+| `db` | DatabaseBase \| None | `None` | Database instance (overrides memory if provided) |
+| `session_id` | str \| None | Auto-generated | Session identifier for conversation tracking |
+| `user_id` | str \| None | Auto-generated | User identifier for multi-user scenarios |
+| `debug` | bool | `False` | Enable debug logging |
+| `debug_level` | int | `1` | Debug level (1 = standard, 2 = detailed) |
+| `print` | bool \| None | `None` (defaults to `True`) | Enable printing of output. If None, reads from UPSONIC_AGENT_PRINT env var, else defaults to True |
+| `role` | str \| None | `None` | Agent role |
+| `goal` | str \| None | `None` | Agent goal |
+| `instructions` | str \| None | `None` | Specific instructions |
+| `system_prompt` | str \| None | Auto-generated | Custom system prompt. If None, a built-in prompt with tool usage guidelines is generated |
+| `tools` | List[Any] \| None | `None` | Additional tools (merged with default filesystem/shell tools) |
+| `tool_call_limit` | int | `100` | Maximum tool calls per execution |
+| `show_tool_calls` | bool | `True` | Display tool calls in output |
+| `context_management` | bool | `False` | Enable context management |
+| `context_management_keep_recent` | int | `5` | Recent messages to keep when managing context |
+| `user_policy` | Policy \| List[Policy] \| None | `None` | User input safety policy |
+| `agent_policy` | Policy \| List[Policy] \| None | `None` | Agent output safety policy |
+| `tool_policy_pre` | Policy \| List[Policy] \| None | `None` | Tool safety policy for pre-execution |
+| `tool_policy_post` | Policy \| List[Policy] \| None | `None` | Tool safety policy for post-execution |
+| `retry` | int | `1` | Number of retry attempts |
+| `mode` | Literal["raise", "return_false"] | `"raise"` | Retry mode behavior |
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `autonomous_workspace` | Path | Resolved workspace path |
+| `autonomous_storage` | Storage \| None | Storage backend created by AutonomousAgent |
+| `autonomous_memory` | Memory \| None | Memory instance created by AutonomousAgent |
+| `filesystem_toolkit` | AutonomousFilesystemToolKit \| None | Filesystem toolkit (if enabled) |
+| `shell_toolkit` | AutonomousShellToolKit \| None | Shell toolkit (if enabled) |
+
+## Methods
+
+| Method | Description |
+|--------|-------------|
+| `reset_filesystem_tracking()` | Clear the record of read/edited files |
+
+## Configuration Example
+
+```python
+from upsonic import AutonomousAgent, Task
+
+# Full configuration example
+agent = AutonomousAgent(
+    # Model
+    model="openai/gpt-4o",
+    
+    # Workspace (all operations sandboxed here)
+    workspace="/path/to/project",
+    
+    # Agent identity
+    name="DevAssistant",
+    role="Senior Developer",
+    goal="Help developers write better code",
+    instructions="Follow best practices and include error handling.",
+    
+    # Toolkit configuration
+    enable_filesystem=True,
+    enable_shell=True,
+    shell_timeout=60,
+    
+    # Memory configuration
+    full_session_memory=True,
+    summary_memory=True,
+    
+    # Debug
+    debug=True
+)
+
+# Execute a task
+task = Task("Create a new Python module for data validation")
+result = agent.print_do(task)
+print(result)
+```
