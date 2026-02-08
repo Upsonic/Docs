@@ -35,7 +35,7 @@ The `AutonomousAgent` class extends the base `Agent` with built-in filesystem an
 ### Basic Example
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 # Create an autonomous agent with workspace
 agent = AutonomousAgent(
@@ -44,7 +44,8 @@ agent = AutonomousAgent(
 )
 
 # The agent can read, write, and execute in the workspace
-agent.print_do("Read the main.py file and explain what it does")
+task = Task("Read the main.py file and explain what it does")
+agent.print_do(task)
 ```
 
 <Warning>
@@ -53,10 +54,10 @@ All file and shell operations are restricted to the workspace directory. Attempt
 
 ## Navigation
 
-- [Creating an Autonomous Agent](/autonomous-agent/creating-an-autonomous-agent) - Learn how to create and configure autonomous agents
-- [Attributes](/autonomous-agent/attributes) - Comprehensive guide to all configuration options
-- [Running an Autonomous Agent](/autonomous-agent/running-an-autonomous-agent) - Execute agents with different methods
-- [Filesystem Tools](/autonomous-agent/advanced/filesystem-tools) - Detailed guide to filesystem operations
-- [Shell Tools](/autonomous-agent/advanced/shell-tools) - Guide to shell command execution
-- [Workspace Security](/autonomous-agent/advanced/workspace-security) - Sandboxing and security features
-- [Memory Integration](/autonomous-agent/advanced/memory-integration) - Session persistence and storage
+- [Creating an Autonomous Agent](/concepts/autonomous-agent/creating-an-autonomous-agent) - Learn how to create and configure autonomous agents
+- [Attributes](/concepts/autonomous-agent/attributes) - Comprehensive guide to all configuration options
+- [Running an Autonomous Agent](/concepts/autonomous-agent/running-an-autonomous-agent) - Execute agents with different methods
+- [Filesystem Tools](/concepts/autonomous-agent/advanced/filesystem-tools) - Detailed guide to filesystem operations
+- [Shell Tools](/concepts/autonomous-agent/advanced/shell-tools) - Guide to shell command execution
+- [Workspace Security](/concepts/autonomous-agent/advanced/workspace-security) - Sandboxing and security features
+- [Memory Integration](/concepts/autonomous-agent/advanced/memory-integration) - Session persistence and storage

@@ -76,7 +76,7 @@ All standard `Agent` attributes are also available:
 ## Configuration Example
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 # Full configuration example
 agent = AutonomousAgent(
@@ -106,6 +106,7 @@ agent = AutonomousAgent(
 )
 
 # Execute a task
-result = agent.do("Create a new Python module for data validation")
+task = Task("Create a new Python module for data validation")
+result = agent.print_do(task)
 print(result)
 ```

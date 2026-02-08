@@ -12,7 +12,7 @@ The Workspace feature allows you to configure your agent using an `Agents.md` fi
 When you set a `workspace` path on an Agent:
 
 1. **Configuration Loading**: The agent reads the `Agents.md` file from the workspace folder and includes it in the system prompt
-2. **Session Greeting**: You can call `_execute_workspace_greeting()` to generate a personalized greeting based on the configuration
+2. **Session Greeting**: You can call `execute_workspace_greeting()` to generate a personalized greeting based on the configuration
 
 ## Example
 
@@ -27,7 +27,7 @@ agent = Agent(
 )
 
 # Execute the workspace greeting (optional, for new sessions)
-greeting = agent._execute_workspace_greeting()
+greeting = agent.execute_workspace_greeting()
 print(greeting)
 
 # Run tasks - the Agents.md content is included in the system prompt

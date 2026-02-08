@@ -18,7 +18,7 @@ This means you can focus on your task without any configuration.
 The simplest way to create an autonomous agent:
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 # Create with just a model and workspace
 agent = AutonomousAgent(
@@ -27,7 +27,8 @@ agent = AutonomousAgent(
 )
 
 # The agent has filesystem and shell tools ready to use
-agent.print_do("List all Python files and count the total lines of code")
+task = Task("List all Python files and count the total lines of code")
+agent.print_do(task)
 ```
 
 ## Workspace Configuration
@@ -35,7 +36,7 @@ agent.print_do("List all Python files and count the total lines of code")
 The workspace is where all file and shell operations take place. It's sandboxed for security:
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 # Workspace defaults to current directory if not specified
 agent = AutonomousAgent(model="openai/gpt-4o")
@@ -47,7 +48,8 @@ agent = AutonomousAgent(
 )
 
 # All paths are relative to the workspace
-agent.print_do("Read src/main.py")  # Reads /home/user/projects/my-app/src/main.py
+task = Task("Read src/main.py")  # Reads /home/user/projects/my-app/src/main.py
+agent.print_do(task)
 ```
 
 ## Adding Agent Identity
@@ -55,7 +57,7 @@ agent.print_do("Read src/main.py")  # Reads /home/user/projects/my-app/src/main.
 Give your agent a role and personality:
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
     model="openai/gpt-4o",
@@ -66,7 +68,8 @@ agent = AutonomousAgent(
     instructions="Be thorough but constructive. Focus on security and performance."
 )
 
-agent.print_do("Review the authentication module for security issues")
+task = Task("Review the authentication module for security issues")
+agent.print_do(task)
 ```
 
 ## Custom Storage
@@ -121,7 +124,7 @@ agent = AutonomousAgent(
 Add your own tools alongside the default ones:
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 from upsonic.tools import tool
 
 @tool
@@ -135,11 +138,12 @@ agent = AutonomousAgent(
     tools=[deploy_to_staging]  # Added alongside filesystem and shell tools
 )
 
-agent.print_do("Run tests and if they pass, deploy to staging")
+task = Task("Run tests and if they pass, deploy to staging")
+agent.print_do(task)
 ```
 
 ## Next Steps
 
-- [Running an Autonomous Agent](/autonomous-agent/running-an-autonomous-agent) - Learn execution methods
-- [Filesystem Tools](/autonomous-agent/advanced/filesystem-tools) - Detailed filesystem operations
-- [Shell Tools](/autonomous-agent/advanced/shell-tools) - Shell command execution
+- [Running an Autonomous Agent](/concepts/autonomous-agent/running-an-autonomous-agent) - Learn execution methods
+- [Filesystem Tools](/concepts/autonomous-agent/advanced/filesystem-tools) - Detailed filesystem operations
+- [Shell Tools](/concepts/autonomous-agent/advanced/shell-tools) - Shell command execution
