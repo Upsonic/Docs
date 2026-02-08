@@ -50,10 +50,16 @@ task = Task(
     description="My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
 )
 
-# Execute - PII will be anonymized in input before sending to LLM
-# The policy detects and anonymizes PII, preventing it from reaching LLM providers
+# Execute with automatic anonymization and de-anonymization
+# What happens under the hood:
+# 1. Input: "My email is john.doe@example.com and phone is 555-1234..."
+# 2. Anonymized (sent to LLM): "My email is EMAIL_1 and phone is PHONE_1..."
+# 3. LLM Response: "Your email is EMAIL_1 and phone is PHONE_1"
+# 4. De-anonymized (returned to you): "Your email is john.doe@example.com and phone is 555-1234"
+# 
+# Result: Sensitive data never reaches the cloud, but you get fully functional results!
 result = agent.do(task)
-print(result)  # Input PII is anonymized before reaching LLM providers
+print(result)  # Returns: "Your email is john.doe@example.com and phone is 555-1234"
 ```
 
 ## Navigation
