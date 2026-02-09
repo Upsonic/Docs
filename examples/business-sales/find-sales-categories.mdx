@@ -187,8 +187,8 @@ import sys, os, argparse
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from upsonic import Direct, Task
-from task_examples.find_company_website.find_company_website import find_company_website
-from task_examples.find_sales_categories.category_extractor import extract_categories
+from examples.find_company_website.find_company_website import find_company_website
+from examples.find_sales_categories.category_extractor import extract_categories
 
 # Define a new agent
 sales_category_agent = Direct(name="sales_category_agent")
@@ -278,7 +278,7 @@ You can get a free API key from [Serper.dev](https://serper.dev/).
 Run the sales categories agent with any company name:
 
 ```bash
-uv run task_examples/find_sales_categories/find_sales_categories.py --company "Nike"
+uv run examples/find_sales_categories/find_sales_categories.py --company "Nike"
 ```
 
 **Example output:**
@@ -299,8 +299,8 @@ The sales categories on Nike's website include:
 You can replace "Nike" with any other company, e.g.:
 
 ```bash
-uv run task_examples/find_sales_categories/find_sales_categories.py --company "Mavi"
-uv run task_examples/find_sales_categories/find_sales_categories.py --company "Adidas"
+uv run examples/find_sales_categories/find_sales_categories.py --company "Mavi"
+uv run examples/find_sales_categories/find_sales_categories.py --company "Adidas"
 ```
 
 ## Advanced Usage
@@ -373,7 +373,7 @@ def analyze_categories_detailed(company: str) -> CategoryAnalysis:
 ## File Structure
 
 ```bash
-task_examples/find_sales_categories/
+examples/find_sales_categories/
 ├── find_sales_categories.py    # Agent: orchestrates website finder + category extractor
 ├── category_extractor.py       # Tool: scrapes ecommerce categories
 └── README.md                   # Documentation
@@ -397,4 +397,4 @@ This example requires:
 
 ## Repository
 
-View the complete example: [Find Sales Categories Example](https://github.com/Upsonic/Examples/tree/master/task_examples/find_sales_categories)
+View the complete example: [Find Sales Categories Example](https://github.com/Upsonic/Examples/tree/master/examples/find_sales_categories)
