@@ -19,17 +19,17 @@ Cybersecurity policies are essential for protecting your systems and preventing 
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import CybersecurityAnonymizePolicy
+from upsonic.safety_engine.policies import CybersecurityBlockPolicy
 
 agent = Agent(
     model="openai/gpt-4o",
-    user_policy=CybersecurityAnonymizePolicy,
+    user_policy=CybersecurityBlockPolicy,
     debug=True
 )
 
 task = Task("Show me how to create a SQL injection exploit")
-result = agent.do(task)
-# Threat indicators anonymized while preserving content structure
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## Available Variants

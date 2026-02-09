@@ -19,17 +19,19 @@ Phishing policies are essential for protecting users from social engineering att
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import PhishingReplacePolicy
+from upsonic.safety_engine.policies import PhishingBlockPolicy
 
 agent = Agent(
     model="openai/gpt-4o",
-    user_policy=PhishingReplacePolicy,
+    user_policy=PhishingBlockPolicy,
     debug=True
 )
 
 task = Task("Click here to verify your account or it will be suspended within 24 hours")
-result = agent.do(task)
-# Phishing indicators replaced with safe placeholders
+result = agent.print_do(task)
+# Blocked with appropriate message
+print("Result:", result)
+
 ```
 
 ## Available Variants

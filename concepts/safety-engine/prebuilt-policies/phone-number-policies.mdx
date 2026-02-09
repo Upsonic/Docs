@@ -19,20 +19,30 @@ Phone number policies are essential for protecting user privacy and preventing p
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import AnonymizePhoneNumbersPolicy
+from upsonic.safety_engine.policies.phone_policies import AnonymizePhoneNumbersPolicy
 
-# Anonymize just phone numbers in agent output
+# Create agent with phone number anonymization
 agent = Agent(
-    model="openai/gpt-4o",
-    user_policy=AnonymizePhoneNumbersPolicy,  # This policy anonymizes phone numbers in agent responses
-    debug=True,
-    print=True
+    "openai/gpt-4o",
+    user_policy=AnonymizePhoneNumbersPolicy,  # Prevents phone numbers from leaking to LLM Providers
+    debug=True  # Enable debug to see policy application
 )
 
-task = Task("My Number is: +1-555-123-4567. Tell me what is my number.")
+# User input with phone number
+task = Task(
+    description="My Number is: +1-555-123-4567. Tell me what is my number."
+)
+
+# Execute with automatic anonymization and de-anonymization
+# What happens under the hood:
+# 1. Input: "My Number is: +1-555-123-4567. Tell me what is my number."
+# 2. Anonymized (sent to LLM): "My Number is: PHONE_1. Tell me what is my number."
+# 3. LLM Response: "Your number is PHONE_1"
+# 4. De-anonymized (returned to you): "Your number is +1-555-123-4567"
+#
+# Result: Phone number never reaches the cloud, but you get fully functional results!
 result = agent.do(task)
-print(result)
-# Expected: Phone number before fed in agent should be anonymized (e.g., "+X-XXX-XXX-XXXX" format with random digits)
+print(result)  # Returns: "Your number is +1-555-123-4567"
 ```
 
 ## Available Variants

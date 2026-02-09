@@ -19,19 +19,17 @@ Medical information policies are crucial for ensuring HIPAA compliance and prote
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import MedicalInfoRaiseExceptionPolicy
+from upsonic.safety_engine.policies import MedicalInfoBlockPolicy
 
 # Zero tolerance for PHI
 agent = Agent(
     model="openai/gpt-4o",
-    user_policy=MedicalInfoRaiseExceptionPolicy,
+    user_policy=MedicalInfoBlockPolicy,
     debug=True
 )
 
-try:
-    result = agent.do(Task("Patient John Doe has diabetes. Explain the disease"))
-except Exception as e:
-    print(f"Protected: {e}")  # HIPAA violation prevented
+
+result = agent.print_do(Task("Patient John Doe has diabetes. Explain the disease"))
 ```
 
 ## Available Variants

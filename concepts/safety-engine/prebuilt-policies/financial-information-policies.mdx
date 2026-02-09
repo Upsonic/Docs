@@ -19,17 +19,18 @@ Financial information policies are essential for protecting sensitive financial 
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import FinancialInfoAnonymizePolicy
+from upsonic.safety_engine.policies import FinancialInfoBlockPolicy
 
 agent = Agent(
     model="openai/gpt-4o",
-    agent_policy=FinancialInfoAnonymizePolicy,
+    user_policy=FinancialInfoBlockPolicy,
     debug=True
 )
 
 task = Task("My credit card is 4532-1234-5678-9010")
-result = agent.do(task)
-# Credit card number is anonymized
+result = agent.print_do(task)
+
+print("Result:", result)
 ```
 
 ## Available Variants
