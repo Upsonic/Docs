@@ -202,15 +202,19 @@ telegram = TelegramInterface(
 
 Users not in the list are ignored. Omit `allowed_user_ids` (or set `None`) to allow everyone.
 
-## Supported Message Types
+## Supported File & Message Types
 
-The bot can receive and process:
+Users can send **any file type** through Telegram — images, PDFs, Excel spreadsheets, Word documents, CSVs, and more. The bot receives and forwards all of them to your agent.
 
-* **Text** – Processed as task or chat input
-* **Photo** – Downloaded and sent to the agent with caption
-* **Document** – Downloaded and processed; MIME type preserved
+* **Images** (PNG, JPG, etc.) – The agent can process these directly via its vision capabilities
+* **PDFs, Excel, Word, CSV, and other documents** – The agent receives the file. If you equip your agent with the right tools (e.g. a PDF reader tool or an Excel parser), it can read and analyze the contents
 * **Voice / Audio** – Downloaded and processed (e.g. transcription)
 * **Video / Video note** – Downloaded and processed with caption
+* **Text** – Processed as task or chat input
 * **Sticker** – Converted to text (e.g. "User sent a sticker: {emoji}")
 * **Location / Venue / Contact / Poll** – Converted to text and processed
 * **Callback query** – Inline keyboard button data processed as text
+
+<Tip>
+Your agent can already handle images natively. For other file types like PDF or Excel, add a custom tool to your agent so it can read and process them. See [Custom Tools](/concepts/tools/custom-tools/overview) for how to create one.
+</Tip>
