@@ -3,6 +3,11 @@ title: "Profanity Policies"
 description: "Detect profanity and toxic content using ML models"
 ---
 
+```bash
+# pip install "upsonic[safety-engine]"
+uv pip install "upsonic[safety-engine]"
+```
+
 ## What is Profanity Policy?
 
 Profanity policies detect profanity, toxic content, and inappropriate language using the Detoxify ML library. Supports multiple models including unbiased, original, multilingual, and lightweight variants.
@@ -19,11 +24,11 @@ Profanity policies are essential for maintaining a professional and respectful e
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import ProfanityBlockPolicy
+from upsonic.safety_engine.policies import ProfanityBlockPolicy_LLM
 
 agent = Agent(
-    model="openai/gpt-4o",
-    user_policy=ProfanityBlockPolicy,
+    "openai/gpt-4o",
+    user_policy=ProfanityBlockPolicy_LLM,
     debug=True
 )
 

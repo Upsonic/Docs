@@ -3,6 +3,11 @@ title: "Phishing Policies"
 description: "Detect suspicious links and social engineering"
 ---
 
+```bash
+# pip install "upsonic[safety-engine]"
+uv pip install "upsonic[safety-engine]"
+```
+
 ## What is Phishing Policy?
 
 Phishing policies detect suspicious links, credential harvesting attempts, spoofed domains, social engineering tactics, and email phishing patterns.
@@ -19,11 +24,13 @@ Phishing policies are essential for protecting users from social engineering att
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import PhishingBlockPolicy
+from upsonic.safety_engine.policies import PhishingBlockPolicy_LLM_Finder
+
+PhishingBlockPolicy_LLM_Finder.rule.text_finder_llm = "openai/gpt-4o"
 
 agent = Agent(
-    model="openai/gpt-4o",
-    user_policy=PhishingBlockPolicy,
+    "openai/gpt-4o",
+    user_policy=PhishingBlockPolicy_LLM_Finder,
     debug=True
 )
 

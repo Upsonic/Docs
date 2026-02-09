@@ -3,6 +3,11 @@ title: "Fraud Detection Policies"
 description: "Identify scams and fraudulent activities"
 ---
 
+```bash
+# pip install "upsonic[safety-engine]"
+uv pip install "upsonic[safety-engine]"
+```
+
 ## What is Fraud Detection Policy?
 
 Fraud detection policies identify phishing attempts, scam indicators, fraudulent schemes, identity theft, and suspicious financial activities.
@@ -19,11 +24,13 @@ Fraud detection policies are essential for protecting users and organizations fr
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import FraudDetectionBlockPolicy
+from upsonic.safety_engine.policies import FraudDetectionBlockPolicy_LLM_Finder
+
+FraudDetectionBlockPolicy_LLM_Finder.rule.text_finder_llm = "openai/gpt-4o"
 
 agent = Agent(
-    model="openai/gpt-4o",
-    user_policy=FraudDetectionBlockPolicy,
+    "openai/gpt-4o",
+    user_policy=FraudDetectionBlockPolicy_LLM_Finder,
     debug=True
 )
 

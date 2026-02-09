@@ -3,6 +3,11 @@ title: "Cybersecurity Policies"
 description: "Detect vulnerabilities, exploits, and cyber threats"
 ---
 
+```bash
+# pip install "upsonic[safety-engine]"
+uv pip install "upsonic[safety-engine]"
+```
+
 ## What is Cybersecurity Policy?
 
 Cybersecurity policies detect vulnerability disclosures, exploit code, attack vectors, malware signatures, hacking techniques, and other cybersecurity threats.
@@ -19,11 +24,13 @@ Cybersecurity policies are essential for protecting your systems and preventing 
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import CybersecurityBlockPolicy
+from upsonic.safety_engine.policies import CybersecurityBlockPolicy_LLM_Finder
+
+CybersecurityBlockPolicy_LLM_Finder.rule.text_finder_llm = "openai/gpt-4o"
 
 agent = Agent(
-    model="openai/gpt-4o",
-    user_policy=CybersecurityBlockPolicy,
+    "openai/gpt-4o",
+    user_policy=CybersecurityBlockPolicy_LLM_Finder,
     debug=True
 )
 
