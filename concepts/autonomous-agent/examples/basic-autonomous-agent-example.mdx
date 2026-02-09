@@ -1,0 +1,37 @@
+---
+title: "Basic Autonomous Agent Example"
+sidebarTitle: "Basic Example"
+description: "A quick example to get started with AutonomousAgent"
+---
+
+Build a working autonomous agent in just a few lines of code. The `AutonomousAgent` comes pre-configured with filesystem and shell tools, automatic storage, and workspace sandboxing.
+
+## Basic Example
+
+```python
+from upsonic import AutonomousAgent, Task
+
+# Create an autonomous agent with workspace
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project"
+)
+
+# The agent can read, write, and execute in the workspace
+task = Task("Read the main.py file and explain what it does")
+agent.print_do(task)
+```
+
+<Warning>
+All file and shell operations are restricted to the workspace directory. Attempting to access files outside the workspace will be blocked for security.
+</Warning>
+
+## What's Included by Default
+
+When you create an `AutonomousAgent`, you get:
+
+- **InMemoryStorage** as the default storage backend
+- **Full session memory** enabled for conversation history persistence
+- **Filesystem toolkit** for file operations (read, write, edit, search, etc.)
+- **Shell toolkit** for terminal command execution
+- **Workspace sandboxing** for security
