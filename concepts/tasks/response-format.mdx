@@ -22,8 +22,7 @@ task = Task(
 )
 
 # Execute and print result
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Pydantic Model Response
@@ -48,7 +47,7 @@ task = Task(
 )
 
 # Execute and access structured result
-result = agent.do(task)
+result = agent.print_do(task)
 print(f"Summary: {result.summary}")
 print(f"Confidence: {result.confidence}")
 print(f"Recommendations: {result.recommendations}")
@@ -90,7 +89,7 @@ task = Task(
 )
 
 # Execute and access nested structured result
-result = agent.do(task)
+result = agent.print_do(task)
 print(f"Summary: {result.summary}")
 print(f"Confidence: {result.confidence}")
 print(f"Metrics: {result.metrics}")
@@ -104,36 +103,6 @@ print(f"Recommendations: {result.recommendations}")
 | **str** | Simple text response | Basic questions, summaries |
 | **BaseModel** | Structured Pydantic model | Complex data, analysis results |
 | **None** | No format constraint | Flexible responses |
-
-## Dynamic Response Format
-
-```python
-from upsonic import Agent, Task
-from pydantic import BaseModel
-
-class AnalysisResult(BaseModel):
-    summary: str
-    confidence: float
-    recommendations: list[str]
-
-# Response format can be set dynamically
-def create_analysis_task(analysis_type: str):
-    if analysis_type == "simple":
-        return Task(description="Provide a brief summary of AI trends", response_format=str)
-    elif analysis_type == "detailed":
-        return Task(description="Provide detailed analysis of AI trends", response_format=AnalysisResult)
-    else:
-        return Task(description="Analyze AI trends", response_format=None)  # defaults to str
-
-# Create agent
-agent = Agent(model="openai/gpt-4o")
-
-# Use dynamic task creation
-task = create_analysis_task("detailed")
-result = agent.do(task)
-print(f"Summary: {result.summary}")
-print(f"Confidence: {result.confidence}")
-```
 
 ## Best Practices
 

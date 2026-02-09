@@ -18,8 +18,7 @@ task = Task(
     enable_cache=True
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Cache Methods
@@ -38,8 +37,7 @@ task = Task(
     cache_threshold=0.8  # Higher = stricter matching
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ### LLM Call
@@ -55,8 +53,7 @@ task = Task(
     cache_method="llm_call"
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Configuration Options
@@ -83,8 +80,7 @@ task = Task(
     cache_duration_minutes=120
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 
 # Check if response came from cache
 cache_stats = task.get_cache_stats()
@@ -95,29 +91,6 @@ else:
 ```
 
 ## Task Cache Methods
-
-### set_cache_manager(cache_manager)
-Set a custom cache manager for the task.
-
-```python
-task.set_cache_manager(my_cache_manager)
-```
-
-### get_cached_response(input_text, llm_provider=None)
-Retrieve cached response for given input (async).
-
-```python
-cached = await task.get_cached_response("Explain quantum computing")
-if cached:
-    print("Found cached response:", cached)
-```
-
-### store_cache_entry(input_text, output)
-Store a new cache entry (async).
-
-```python
-await task.store_cache_entry("Explain quantum computing", response)
-```
 
 ### get_cache_stats()
 Get cache statistics including hit rate and configuration.

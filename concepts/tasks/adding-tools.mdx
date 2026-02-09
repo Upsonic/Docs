@@ -24,8 +24,7 @@ task = Task(
 )
 
 agent = Agent("openai/gpt-4o")
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Multiple Tools
@@ -50,8 +49,7 @@ task = Task(
 )
 
 agent = Agent("openai/gpt-4o")
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Tool Collections
@@ -73,9 +71,7 @@ task = Task(
 )
 
 agent = Agent(model="openai/gpt-4o")
-
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Tool Configuration
@@ -95,9 +91,7 @@ task = Task(
 )
 
 agent = Agent(model="openai/gpt-4o")
-
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Available Tool Configurations
@@ -146,8 +140,7 @@ agent = Agent("openai/gpt-4o")
 task.add_tools([web_search, calculator])
 
 # Execute task with dynamically added tools
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 
 # Remove tools (for subsequent executions)
 task.remove_tools([web_search], agent=agent)
@@ -168,8 +161,7 @@ def calculator(a: float, b: float) -> float:
 
 task = Task(description="Calculate 5 + 3", tools=[calculator])
 agent = Agent("openai/gpt-4o")
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 
 # Access registered tools
 print(task.registered_task_tools)  # Dict mapping tool names to wrapped tools

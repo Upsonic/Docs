@@ -16,7 +16,7 @@ agent = Agent(model="openai/gpt-4o")
 
 # First task
 task1 = Task(description="What is 2 + 2?")
-result1 = agent.do(task1)
+result1 = agent.print_do(task1)
 print(f"Result 1: {result1}")
 
 # Second task using context from first task
@@ -24,7 +24,7 @@ task2 = Task(
     description="Based on the previous result, what is that number multiplied by 3?",
     context=[task1]
 )
-result2 = agent.do(task2)
+result2 = agent.print_do(task2)
 print(f"Result 2: {result2}")
 ```
 
@@ -37,17 +37,17 @@ agent = Agent(model="openai/gpt-4o")
 
 # First two tasks
 task1 = Task(description="What is 10 + 5?")
-result1 = agent.do(task1)
+result1 = agent.print_do(task1)
 
 task2 = Task(description="What is 20 - 8?", context=[task1])
-result2 = agent.do(task2)
+result2 = agent.print_do(task2)
 
 # Task with multiple context sources
 task3 = Task(
     description="Summarize all the previous mathematical results",
     context=[task1, task2, "Additional context: These were all math problems"]
 )
-result3 = agent.do(task3)
+result3 = agent.print_do(task3)
 print(result3)
 ```
 
@@ -82,7 +82,7 @@ task1 = Task(
     tools=[data_collector],
     enable_cache=True
 )
-result1 = agent.do(task1)
+result1 = agent.print_do(task1)
 
 # Task 2: Data analysis
 task2 = Task(
@@ -91,7 +91,7 @@ task2 = Task(
     context=[task1],
     enable_thinking_tool=True
 )
-result2 = agent.do(task2)
+result2 = agent.print_do(task2)
 
 # Task 3: Report generation
 task3 = Task(
@@ -99,7 +99,7 @@ task3 = Task(
     context=[task1, task2],
     response_format=ReportResult
 )
-result3 = agent.do(task3)
+result3 = agent.print_do(task3)
 print(f"Report: {result3.title}")
 print(f"Summary: {result3.summary}")
 ```
@@ -138,7 +138,7 @@ task = Task(
         knowledge_base  # Knowledge base context
     ]
 )
-result = agent.do(task)
+result = agent.print_do(task)
 print(result)
 ```
 

@@ -20,8 +20,7 @@ task = Task(
     context=["image.png"]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Multiple Image Attachments
@@ -37,8 +36,7 @@ task = Task(
     context=["image1.jpg", "image2.jpg"]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Images with Other Context
@@ -54,8 +52,7 @@ task = Task(
     context=["chart.png", market_data_task],
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Supported Image Formats
@@ -79,8 +76,7 @@ task = Task(
     context=["photo.jpg", "diagram.png", "chart.tiff"]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Image Processing with Tools
@@ -104,8 +100,7 @@ task = Task(
     tools=[image_analyzer]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Best Practices

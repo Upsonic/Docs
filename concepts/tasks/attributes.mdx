@@ -175,7 +175,7 @@ task = Task(
     tools=[get_market_data]  # Add the function tool to the task
 )
 
-result = agent.do(task)
+result = agent.print_do(task)
 print(result.summary)
 print(f"Confidence: {result.confidence}")
 print(f"Recommendations: {result.recommendations}")
@@ -201,15 +201,16 @@ task = Task(
     cache_embedding_provider=embedding_provider
 )
 
-result = agent.do(task)
+agent.print_do(task)
 
 # Check if response came from cache
 if task.cache_hit:
     print("Response retrieved from cache!")
-    
+
 # Get cache statistics
 stats = task.get_cache_stats()
 print(f"Cache hit rate: {stats['hit_rate']:.2%}")
+
 ```
 
 ### Task with Guardrail
@@ -230,7 +231,7 @@ task = Task(
     guardrail_retries=3
 )
 
-result = agent.do(task)
+agent.print_do(task)
 ```
 
 ### Task with Context and Attachments
@@ -246,7 +247,7 @@ task = Task(
     context=["/path/to/document1.pdf", "/path/to/document2.pdf", "/path/to/image.png"]
 )
 
-result = agent.do(task)
+agent.print_do(task)
 ```
 
 ### Task with Vector Search Configuration
@@ -265,7 +266,7 @@ task = Task(
     vector_search_filter={"category": "technology", "year": 2024}
 )
 
-result = agent.do(task)
+agent.print_do(task)
 ```
 
 ### Accessing Task Properties
@@ -279,7 +280,7 @@ task = Task(
     description="Perform a complex analysis"
 )
 
-result = agent.do(task)
+agent.print_do(task)
 
 # Access task properties
 print(f"Task ID: {task.id}")
