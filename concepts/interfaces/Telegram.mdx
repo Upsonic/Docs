@@ -6,6 +6,18 @@ description: "Host agents as Telegram bots with webhooks, multi-media, and chat 
 
 Use the Telegram interface to serve Agents as Telegram bots. It supports text, photos, documents, voice, video, stickers, location, polls, and inline keyboard callbacks.
 
+## Prerequisites
+
+Create a virtual environment and install the required dependencies:
+
+```bash
+uv venv
+source .venv/bin/activate
+
+uv pip install upsonic fastapi uvicorn
+# pip install upsonic fastapi uvicorn
+```
+
 ## Step 1: Create a Telegram Bot
 
 1. Open Telegram and search for [@BotFather](https://t.me/BotFather)
@@ -14,15 +26,63 @@ Use the Telegram interface to serve Agents as Telegram bots. It supports text, p
 
 ## Step 2: Set Up the Webhook with ngrok
 
-Telegram delivers messages to your bot via **webhooks** — it sends HTTPS requests to a public URL you provide. For local development, use [ngrok](https://ngrok.com/) to expose your local server.
+Telegram delivers messages to your bot via **webhooks** — it sends HTTPS requests to a **public URL** you provide. Your local `localhost:8000` is not accessible from the internet, so you need a tunnel. We'll use [ngrok](https://ngrok.com/) for this.
 
-Install ngrok and start a tunnel to port 8000:
+<Steps>
+
+<Step title="Create an ngrok account">
+Go to [ngrok.com/signup](https://dashboard.ngrok.com/signup) and create a free account.
+</Step>
+
+<Step title="Install ngrok">
+After signing up, follow the instructions on your [ngrok dashboard](https://dashboard.ngrok.com/get-started/setup) to install ngrok for your operating system.
+
+<CodeGroup>
+
+```bash macOS
+brew install ngrok
+```
+
+```bash Linux
+snap install ngrok
+```
+
+```bash Windows
+choco install ngrok
+```
+
+</CodeGroup>
+</Step>
+
+<Step title="Connect your account">
+Copy your authtoken from the [ngrok dashboard](https://dashboard.ngrok.com/get-started/your-authtoken) and run:
+
+```bash
+ngrok config add-authtoken YOUR_AUTH_TOKEN
+```
+</Step>
+
+<Step title="Start the tunnel">
+Open a terminal and run:
 
 ```bash
 ngrok http 8000
 ```
 
-Copy the HTTPS forwarding URL from the ngrok output (e.g. `https://abc123.ngrok-free.app`).
+You'll see output like this:
+
+```
+Forwarding  https://abc123.ngrok-free.app -> http://localhost:8000
+```
+
+Copy the `https://....ngrok-free.app` URL — this is your public webhook URL.
+</Step>
+
+</Steps>
+
+<Warning>
+Keep this terminal open — if you close ngrok, the tunnel stops and your bot won't receive messages. When you restart ngrok, the URL changes and you'll need to update your `.env` file.
+</Warning>
 
 ## Step 3: Configure Environment Variables
 
@@ -45,7 +105,36 @@ TELEGRAM_WEBHOOK_SECRET=my-secret-token
 
 ## Step 4: Write Your Bot
 
+There are two operating modes — pick the one that fits your use case:
+
+- **CHAT** — The agent remembers conversation context per user. Best for conversational assistants.
+- **TASK** — Each message is processed independently with no history. Best for one-off queries.
+
 <CodeGroup>
+
+```python CHAT Mode (Default)
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
+
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    name="TelegramChatBot",
+    system_prompt="You are a friendly AI assistant on Telegram. You remember conversation context.",
+)
+
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET"),
+    mode=InterfaceMode.CHAT,
+    reset_command="/reset",
+)
+
+manager = InterfaceManager(interfaces=[telegram])
+manager.serve(host="0.0.0.0", port=8000)
+```
 
 ```python TASK Mode
 import os
@@ -70,38 +159,15 @@ manager = InterfaceManager(interfaces=[telegram])
 manager.serve(host="0.0.0.0", port=8000)
 ```
 
-```python CHAT Mode
-import os
-from upsonic import Agent
-from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
-
-agent = Agent(
-    model="openai/gpt-4o-mini",
-    name="TelegramChatBot",
-    system_prompt="You are a friendly AI assistant on Telegram. You remember conversation context.",
-)
-
-telegram = TelegramInterface(
-    agent=agent,
-    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
-    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
-    webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET"),
-    mode=InterfaceMode.CHAT,
-    reset_command="/reset",
-)
-
-manager = InterfaceManager(interfaces=[telegram])
-manager.serve(host="0.0.0.0", port=8000)
-```
-
 </CodeGroup>
 
 ## Step 5: Run
 
-Make sure ngrok is running in one terminal, then start your bot:
+Make sure ngrok is running in one terminal, then start your bot in another:
 
 ```bash
-python your_bot.py
+uv run your_bot.py
+# python your_bot.py
 ```
 
 Your bot is now live. Open Telegram, find your bot by username, and send a message.
