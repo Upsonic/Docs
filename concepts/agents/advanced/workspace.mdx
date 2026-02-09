@@ -1,6 +1,6 @@
 ---
 title: Workspace Configuration
-sidebarTitle: Workspace
+sidebarTitle: "Workspace (AGENTS.md)"
 description: Configure agents with workspace folders containing agent configuration files
 hideToc: false
 ---
@@ -36,36 +36,16 @@ result = agent.do(task)
 print(result)
 ```
 
-## The Agents.md File
+## The AGENTS.md File
 
-Create an `Agents.md` file in your workspace folder to define agent configuration:
+Create an `AGENTS.md` file in your workspace folder to define your agent's behavior. We provide a ready-to-use template with memory management, safety rules, group chat guidelines, and more.
 
-```markdown
-# Customer Support Agent
-
-default_model: openai/gpt-4o
-name: Support Assistant
-description: A helpful customer support agent for Acme Corp
-
-## Capabilities
-- Answer product questions
-- Process refund requests
-- Provide shipping information
-
-## Guidelines
-- Always be polite and professional
-- Escalate complex issues to human support
-```
+<Card title="AGENTS.md Template" icon="file-lines" href="/ready-to-use-snippets/agents-md">
+  Get the full AGENTS.md template you can copy and customize for your workspace.
+</Card>
 
 The content of this file is automatically injected into the agent's system prompt wrapped in `<AgentConfiguration>` tags.
 
 ## Integration with Interfaces
 
 When using Upsonic [interfaces](/concepts/interfaces/Overview) (Telegram, Slack, WhatsApp), the workspace greeting is automatically called when a user resets their session with the `/reset` command. The greeting response is sent to the user, providing a fresh start with a personalized introduction.
-
-## Best Practices
-
-1. **Descriptive Agents.md**: Include clear descriptions of the agent's capabilities and guidelines
-2. **Model Configuration**: Specify the `default_model` in your Agents.md for reference
-3. **Session Management**: Use unique `session_id` values for each user or conversation
-4. **Greeting Once**: The greeting only executes once per agent instance (tracked by `_workspace_greeting_executed`)

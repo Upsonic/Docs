@@ -37,27 +37,11 @@ agent.print_do(task)
 
 ## The AGENTS.md File
 
-Create an `AGENTS.md` file in your workspace folder to define agent configuration:
+Create an `AGENTS.md` file in your workspace folder to define your agent's behavior. We provide a ready-to-use template with memory management, safety rules, group chat guidelines, and more.
 
-```markdown
-# DevOps Assistant
-
-default_model: openai/gpt-4o
-name: DevOps Agent
-description: An autonomous agent for managing project infrastructure and code quality
-
-## Capabilities
-- Read and analyze project files
-- Run shell commands for testing and deployment
-- Create and modify configuration files
-- Search codebase for patterns and issues
-
-## Guidelines
-- Always read files before editing them
-- Run tests after making changes
-- Follow the project's existing code style
-- Never execute destructive commands without confirmation
-```
+<Card title="AGENTS.md Template" icon="file-lines" href="/ready-to-use-snippets/agents-md">
+  Get the full AGENTS.md template you can copy and customize for your workspace.
+</Card>
 
 The content of this file is automatically injected into the agent's system prompt wrapped in `<AgentConfiguration>` tags.
 
@@ -73,12 +57,3 @@ When the AutonomousAgent initializes with a workspace:
 ## Integration with Interfaces
 
 When using Upsonic [interfaces](/concepts/interfaces/Overview) (Telegram, Slack, WhatsApp), the workspace greeting is automatically called when a user resets their session with the `/reset` command. The greeting response is sent to the user, providing a fresh start with a personalized introduction.
-
-## Best Practices
-
-1. **Be Specific**: Include clear descriptions of the agent's capabilities and limitations
-2. **Define Guidelines**: Set explicit rules for how the agent should behave in the workspace
-3. **Project Context**: Describe the project structure and conventions so the agent can follow them
-4. **Safety Rules**: Add any safety constraints specific to your project (e.g., "never delete the database")
-5. **Session Management**: Use unique `session_id` values for each user or conversation
-6. **Greeting Once**: The greeting only executes once per agent instance (tracked by `_workspace_greeting_executed`)
