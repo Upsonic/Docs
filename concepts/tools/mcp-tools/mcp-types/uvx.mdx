@@ -13,18 +13,14 @@ Python-based MCP servers using the uvx package runner.
 from upsonic import Task, Agent
 
 # UVX-based MCP server (Python-based, no installation needed)
-class FetchMCP:
+class DatabaseMCP:
     command = "uvx"
-    args = ["mcp-server-fetch"]
-
-class FileSystemMCP:
-    command = "uvx"
-    args = ["mcp-server-filesystem"]
+    args = ["mcp-server-sqlite", "--db-path", "/tmp/test_mcp_v7.db"]
 
 # Create task
 task = Task(
-    description="Fetch the documentation page from 'https://docs.python.org/3/' using FetchMCP, and then save the content to a local file named 'python_docs.html'.",
-    tools=[FetchMCP, FileSystemMCP]
+    description="Create a 'users' table with id, name, and email columns. Insert 3 sample users and then query all users.",
+    tools=[DatabaseMCP]
 )
 
 # Create agent
@@ -34,8 +30,8 @@ agent = Agent(
 )
 
 # Execute
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## Parameters
@@ -72,7 +68,8 @@ task = Task(
 )
 
 agent = Agent(name="Multi-DB Agent", model="openai/gpt-4o")
-result = agent.do(task)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## Characteristics

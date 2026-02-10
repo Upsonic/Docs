@@ -33,11 +33,11 @@ from upsonic import Agent, Task
 from upsonic.tools import tool, ToolHooks
 
 # Define hooks
-def before_search(query: str):
-    print(f"Searching for: {query}")
-    return {"logged_query": query}
+def before_search(**kwargs):
+    print(f"Searching for: {kwargs.get('query')}")
+    return {"logged_query": kwargs.get('query')}
 
-def after_search(result):
+def after_search(result, **kwargs):
     print(f"Found {len(result)} results")
     return {"result_count": len(result)}
 
@@ -73,6 +73,10 @@ task = Task(
 )
 
 # Execute
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
+
+<Info>
+`requires_confirmation=True` is designed for interactive environments where a user can respond to confirmation prompts. When running scripts non-interactively, remove this attribute or set it to `False` to avoid blocking.
+</Info>

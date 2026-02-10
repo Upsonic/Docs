@@ -60,8 +60,8 @@ task = Task(
     tools=[DatabaseMCP]
 )
 
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ### 2. MCPHandler Class
@@ -80,8 +80,8 @@ task = Task(
     description="Query the database to list all tables and their schema information to understand the database structure.",
     tools=[mcp_handler]
 )
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ### 3. MultiMCPHandler Class (Multiple Servers)
@@ -109,8 +109,8 @@ task = Task(
     """,
     tools=[multi_handler]
 )
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 <Tip>

@@ -61,8 +61,8 @@ task = Task(
 )
 
 # Execute
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## Parameters
@@ -175,11 +175,11 @@ task = Task(
 )
 
 # Execute
-result = agent.do(task)
-print(f"Databases Used: {result.databases_used}")
-print(f"Total Tables: {result.total_tables}")
-print(f"Total Records: {result.total_records}")
-print(f"Operations Summary: {result.operations_summary}")
+result = agent.print_do(task)
+print("Databases Used:", result.databases_used)
+print("Total Tables:", result.total_tables)
+print("Total Records:", result.total_records)
+print("Operations Summary:", result.operations_summary)
 ```
 
 ## Tool Name Prefixes
@@ -229,8 +229,8 @@ task = Task(
     tools=[multi_handler]
 )
 
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ### Using `tool_name_prefix` (Auto-indexed)

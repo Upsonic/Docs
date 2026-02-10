@@ -17,6 +17,7 @@ from upsonic.tools import tool
 
 @tool
 def add(a: int, b: int) -> int:
+    """Add two numbers."""
     return a + b
 
 agent = Agent("openai/gpt-4o", tools=[add])
@@ -49,8 +50,8 @@ agent.add_tools([divide, subtract])    # Multiple tools
 
 # Execute task with added tools
 task = Task(description="What is 10 multiplied by 5?")
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## Removing Tools
@@ -94,8 +95,8 @@ agent.add_tools(search)
 
 # Execute task with search tool
 task = Task(description="Search for Python tutorials")
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 
 # Remove tool when no longer needed
 agent.remove_tools("search")        # By name
@@ -120,8 +121,8 @@ agent.add_tools(toolkit)
 
 # Execute task
 task = Task(description="What is 5 + 3?")
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 
 # Remove method (keeps toolkit) or remove entire toolkit
 # agent.remove_tools("add")        # Remove method only
@@ -144,8 +145,8 @@ agent.add_tools(calc)
 
 # Execute task
 task = Task(description="What is 7 + 8?")
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 
 # Remove method (keeps class) or remove entire class
 # agent.remove_tools("add")        # Remove method only
@@ -166,8 +167,8 @@ agent.add_tools(math_agent)
 
 # Execute task - will delegate to math_agent when needed
 task = Task(description="Ask the Math Agent to solve 15 * 4")
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 
 # Remove agent tool
 # agent.remove_tools(math_agent)          # By object
@@ -189,6 +190,8 @@ agent.remove_tools("read_query")   # Remove specific tool provided by mcp (keeps
 ### Thinking Tool (plan_and_execute)
 
 ```python
+from upsonic import Agent
+
 # Auto-added with enable_thinking_tool=True
 agent = Agent("openai/gpt-4o", enable_thinking_tool=True)
 agent.remove_tools("plan_and_execute")
@@ -221,8 +224,8 @@ agent = Agent(model="openai/gpt-4o")
 task = Task(description="Calculate 5 + 3", tools=[add])
 task.add_tools(multiply)
 
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 
 # Remove tools (requires agent reference)
 # task.remove_tools("add", agent)         # By name

@@ -26,8 +26,8 @@ task = Task(
 agent = Agent(model="openai/gpt-4o", name="Search Agent")
 
 # Execute
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## Custom Configuration
@@ -52,8 +52,8 @@ task = Task(
 )
 
 agent = Agent(model="openai/gpt-4o", name="Custom Search Agent")
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## Parameters

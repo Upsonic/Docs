@@ -51,8 +51,8 @@ agent = Agent(
 )
 
 # Execute
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## Parameters
@@ -90,8 +90,8 @@ task = Task(
 )
 
 agent = Agent(name="Secure Agent", model="openai/gpt-4o")
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## SSE Server Authentication
@@ -111,8 +111,8 @@ task = Task(
 )
 
 agent = Agent(name="SSE Agent", model="openai/gpt-4o")
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## Troubleshooting Authentication
