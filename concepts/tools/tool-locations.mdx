@@ -1,0 +1,110 @@
+---
+title: "Tool Locations"
+description: "Understand where tools live — agent-level vs task-level"
+sidebarTitle: "Tool Locations (Agent/Task)"
+---
+
+## Overview
+
+Tools can be attached at two levels: **Agent** and **Task**. Where you place a tool determines its scope and availability.
+
+## Agent-Level Tools
+
+Tools added to an **agent** are available for **every task** that agent executes.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def search(query: str) -> str:
+    """Search for information."""
+    return f"Results for: {query}"
+
+agent = Agent("openai/gpt-4o")
+agent.add_tools(search)  # Agent-level tool
+
+# search is available in both tasks
+task1 = Task(description="Search for Python tutorials")
+result = agent.print_do(task1)
+print("Result:", result)
+
+task2 = Task(description="Search for JavaScript frameworks")
+result = agent.print_do(task2)
+print("Result:", result)
+```
+
+## Task-Level Tools
+
+Tools added to a **task** are **only available for that specific task**. Other tasks executed by the same agent cannot use them.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def calculate_tax(amount: float, rate: float) -> float:
+    """Calculate tax for given amount."""
+    return amount * rate
+
+agent = Agent("openai/gpt-4o")
+
+# calculate_tax is only available for this task
+task1 = Task(
+    description="Calculate 18% tax on 1000",
+    tools=[calculate_tax]
+)
+result = agent.print_do(task1)
+print("Result:", result)
+
+# This task does NOT have access to calculate_tax
+task2 = Task(description="What is the capital of France?")
+result = agent.print_do(task2)
+print("Result:", result)
+```
+
+## Combining Both Levels
+
+When an agent has tools and a task also has tools, the task gets access to **both**:
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def search(query: str) -> str:
+    """Search for information."""
+    return f"Results for: {query}"
+
+@tool
+def summarize(text: str) -> str:
+    """Summarize the given text."""
+    return f"Summary of: {text}"
+
+# search is available for ALL tasks
+agent = Agent("openai/gpt-4o", tools=[search])
+
+# This task has both: search (from agent) + summarize (task-only)
+task1 = Task(
+    description="Search for AI news and summarize the results",
+    tools=[summarize]
+)
+result = agent.print_do(task1)
+print("Result:", result)
+
+# This task only has search (from agent), NOT summarize
+task2 = Task(description="Search for Python tutorials")
+result = agent.print_do(task2)
+print("Result:", result)
+```
+
+## Summary
+
+| Level | Scope | Use When |
+|-------|-------|----------|
+| **Agent** | Available for all tasks the agent runs | The tool is generally useful across many tasks |
+| **Task** | Available only for that specific task | The tool is needed for one specific operation |
+
+<Tip>
+Use **agent-level tools** for general-purpose tools like search, database access, or utilities. Use **task-level tools** for specialized tools that are only relevant to a specific task — this keeps the LLM focused by not exposing unnecessary tools.
+</Tip>

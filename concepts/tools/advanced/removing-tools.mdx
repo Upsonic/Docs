@@ -1,0 +1,142 @@
+---
+title: "Removing Tools"
+description: "Remove tools from agents and tasks by name, object reference, or both"
+---
+
+## Removing Tools from Agent
+
+### By Name (String)
+
+```python
+agent.remove_tools("add")
+agent.remove_tools(["add", "multiply"])
+```
+
+### By Object Reference
+
+```python
+agent.remove_tools(multiply)
+agent.remove_tools([add, multiply])
+```
+
+### Mixed (Name + Object)
+
+```python
+agent.remove_tools([add, "multiply"])
+agent.remove_tools(["add", multiply])
+```
+
+### Complete Agent Example
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def add(a: int, b: int) -> int:
+    """Add two numbers."""
+    return a + b
+
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
+
+agent = Agent("openai/gpt-4o", tools=[add, multiply])
+
+# Use both tools
+task1 = Task(description="What is 5 + 3?")
+result = agent.print_do(task1)
+print("Result:", result)
+
+# Remove add, keep multiply
+agent.remove_tools("add")
+
+# Now only multiply is available
+task2 = Task(description="What is 6 * 7?")
+result = agent.print_do(task2)
+print("Result:", result)
+```
+
+## Removing Tools from Task
+
+Removing tools from tasks requires the **agent reference**:
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def add(a: int, b: int) -> int:
+    """Add two numbers."""
+    return a + b
+
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
+
+agent = Agent("openai/gpt-4o")
+task = Task(description="Calculate 5 + 3", tools=[add, multiply])
+
+# Remove from task (requires agent reference)
+task.remove_tools("multiply", agent)
+
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+### Task Removal Methods
+
+```python
+task.remove_tools("add", agent)                  # By name
+task.remove_tools(multiply, agent)               # By object
+task.remove_tools([add, "multiply"], agent)       # Mixed
+```
+
+## Removing Different Tool Types
+
+These patterns work for both agent and task:
+
+### Function Tools
+
+```python
+agent.remove_tools("search")        # By name
+agent.remove_tools(search)          # By object
+```
+
+### ToolKit
+
+```python
+agent.remove_tools("add")        # Remove method only (keeps toolkit)
+agent.remove_tools(toolkit)      # Remove entire toolkit
+```
+
+### Regular Class (Auto-tools)
+
+```python
+agent.remove_tools("add")        # Remove method only (keeps class)
+agent.remove_tools(calc)         # Remove entire class
+```
+
+### Agent as Tool
+
+```python
+agent.remove_tools(math_agent)          # By object
+agent.remove_tools("ask_math_agent")    # By name (auto-prefixed)
+```
+
+### MCP Handler
+
+```python
+agent.remove_tools(handler)        # Remove entire handler + all tools
+agent.remove_tools("read_query")   # Remove specific tool (keeps handler)
+```
+
+## Key Points
+
+- **Remove by name**: Works for all tool types
+- **Remove by object**: Removes entire container (ToolKit/Class/MCP/Agent) or single function
+- **Mixed removal**: Combine names and objects in one call
+- **Agent tools**: Removed from all future tasks
+- **Task tools**: Requires agent reference for removal

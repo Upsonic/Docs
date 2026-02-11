@@ -1,0 +1,80 @@
+---
+title: "Best Practices"
+description: "Guidelines for creating effective and well-structured tools"
+---
+
+## 1. Use Descriptive Names
+
+Tool names come from function/method names. Use clear, descriptive names:
+
+```python
+# Good
+@tool
+def search_customer_database(query: str) -> str:
+    """Search for customers by name or ID."""
+    ...
+
+# Avoid
+@tool
+def search(q: str) -> str:
+    """Search."""
+    ...
+```
+
+## 2. Provide Comprehensive Docstrings
+
+Docstrings become the tool description shown to the LLM:
+
+```python
+@tool
+def calculate_shipping(
+    weight_kg: float,
+    destination_country: str,
+    express: bool = False
+) -> dict:
+    """
+    Calculate shipping cost for a package.
+
+    Args:
+        weight_kg: Package weight in kilograms (must be > 0)
+        destination_country: ISO 3166-1 alpha-2 country code (e.g., "US", "DE")
+        express: Whether to use express shipping (2-3 days vs 7-10 days)
+
+    Returns:
+        Dictionary with 'cost', 'currency', and 'estimated_days'
+    """
+    ...
+```
+
+## 3. Group Related Tools
+
+Use ToolKit for related tools that share state:
+
+```python
+from upsonic.tools import ToolKit, tool
+
+class DatabaseToolKit(ToolKit):
+    def __init__(self, connection_string: str):
+        self.conn = connect(connection_string)
+
+    @tool
+    def query(self, sql: str) -> list:
+        """Execute a SQL query."""
+        return self.conn.execute(sql).fetchall()
+
+    @tool
+    def insert(self, table: str, data: dict) -> int:
+        """Insert a row into a table."""
+        ...
+```
+
+## 4. Remove Unused Tools
+
+Remove tools when no longer needed to keep the LLM focused:
+
+```python
+# After completing data import, remove import tools
+agent.remove_tools(["import_csv", "validate_schema"])
+
+# Keep only the tools needed for the next phase
+```
