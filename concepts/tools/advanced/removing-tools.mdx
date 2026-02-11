@@ -94,45 +94,6 @@ task.remove_tools(multiply, agent)               # By object
 task.remove_tools([add, "multiply"], agent)       # Mixed
 ```
 
-## Removing Different Tool Types
-
-These patterns work for both agent and task:
-
-### Function Tools
-
-```python
-agent.remove_tools("search")        # By name
-agent.remove_tools(search)          # By object
-```
-
-### ToolKit
-
-```python
-agent.remove_tools("add")        # Remove method only (keeps toolkit)
-agent.remove_tools(toolkit)      # Remove entire toolkit
-```
-
-### Regular Class (Auto-tools)
-
-```python
-agent.remove_tools("add")        # Remove method only (keeps class)
-agent.remove_tools(calc)         # Remove entire class
-```
-
-### Agent as Tool
-
-```python
-agent.remove_tools(math_agent)          # By object
-agent.remove_tools("ask_math_agent")    # By name (auto-prefixed)
-```
-
-### MCP Handler
-
-```python
-agent.remove_tools(handler)        # Remove entire handler + all tools
-agent.remove_tools("read_query")   # Remove specific tool (keeps handler)
-```
-
 ## Key Points
 
 - **Remove by name**: Works for all tool types
