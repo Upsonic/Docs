@@ -15,7 +15,7 @@ from upsonic.ocr.layer_1.engines import RapidOCREngine
 # Also available: from upsonic.ocr import RapidOCREngine
 
 # Create engine instance
-engine = RapidOCREngine(languages=['en', 'ch'], confidence_threshold=0.5)
+engine = RapidOCREngine(languages=['en'], confidence_threshold=0.5)
 
 # Create OCR orchestrator
 ocr = OCR(layer_1_ocr_engine=engine)
@@ -33,7 +33,7 @@ print(f"Extracted {len(result.text)} characters from {result.page_count} pages")
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `languages` | List[str] | `['en']` | List of language codes (primarily 'en' and 'ch') |
+| `languages` | List[str] | `['en']` | List of language codes |
 | `confidence_threshold` | float | `0.0` | Minimum confidence for text blocks |
 | `rotation_fix` | bool | `False` | Auto-detect and fix image rotation |
 | `enhance_contrast` | bool | `False` | Enhance image contrast |

@@ -68,9 +68,9 @@ asyncio.run(main())
 ```python
 import asyncio
 from upsonic.ocr import OCR
-from upsonic.ocr.layer_1.engines import RapidOCREngine
+from upsonic.ocr.layer_1.engines import EasyOCREngine
 
-engine = RapidOCREngine(languages=['en'])
+engine = EasyOCREngine(languages=['en'])
 ocr = OCR(layer_1_ocr_engine=engine)
 
 async def main():

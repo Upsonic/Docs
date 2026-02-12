@@ -18,7 +18,7 @@ Each engine is instantiated with its own parameters. Common parameters shared ac
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `languages` | List[str] | `['en']` | Languages to detect (e.g., ['en', 'zh', 'ja']) |
+| `languages` | List[str] | `['en']` | Languages to detect |
 | `confidence_threshold` | float | `0.0` | Minimum confidence threshold (0.0-1.0) for accepting OCR results |
 | `rotation_fix` | bool | `False` | Enable automatic rotation correction for skewed images |
 | `enhance_contrast` | bool | `False` | Enhance image contrast before OCR processing |
@@ -30,21 +30,21 @@ Each engine is instantiated with its own parameters. Common parameters shared ac
 Each engine may have additional provider-specific parameters. See the individual [provider pages](/concepts/ocr/providers/easyocr) for details.
 </Info>
 
-## Configuration Example 1
+## Configuration Example
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.layer_1.engines import TesseractOCREngine
+from upsonic.ocr.layer_1.engines import EasyOCREngine
 
 # Create engine with full configuration
-engine = TesseractOCREngine(
-    languages=['eng', 'fra'],
+engine = EasyOCREngine(
+    languages=['en'],
     confidence_threshold=0.6,
     rotation_fix=True,
     enhance_contrast=True,
     remove_noise=True,
     pdf_dpi=300,
-    preserve_formatting=True
+    gpu=True
 )
 
 # Create orchestrator with engine and timeout
@@ -52,27 +52,6 @@ ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=120)
 
 # Extract text from document
 text = ocr.get_text('document.pdf')
-print(text)
-```
-
-## Configuration Example 2
-
-```python
-from upsonic.ocr import OCR
-from upsonic.ocr.layer_1.engines import EasyOCREngine
-
-# Create engine with minimal configuration
-engine = EasyOCREngine(
-    languages=['en'],
-    gpu=True,
-    confidence_threshold=0.6
-)
-
-# Create orchestrator
-ocr = OCR(layer_1_ocr_engine=engine)
-
-# Extract text
-text = ocr.get_text('invoice.png')
 print(text)
 ```
 

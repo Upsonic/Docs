@@ -33,43 +33,6 @@ result = ocr.get_text("sample_image.png")
 print(result)
 ```
 
-## EasyOCR Multi-Language Document Processing
+## Multi-Language Support
 
-Process documents containing multiple languages using EasyOCR's multi-language support.
-
-```python
-from upsonic.ocr import OCR
-from upsonic.ocr.layer_1.engines import EasyOCREngine
-
-# Create multi-language engine
-engine = EasyOCREngine(
-    languages=['en', 'zh', 'ja', 'ko'],
-    gpu=True,
-    confidence_threshold=0.5
-)
-
-# Create OCR orchestrator
-ocr = OCR(layer_1_ocr_engine=engine)
-
-# Process mixed-language document
-result = ocr.process_file('multilingual_doc.pdf')
-
-# Analyze results
-print(f"Extracted text:\n{result.text}\n")
-print(f"Overall confidence: {result.confidence:.2%}")
-
-# Check per-block confidence
-low_confidence_blocks = [
-    block for block in result.blocks
-    if block.confidence < 0.6
-]
-print(f"Low confidence blocks: {len(low_confidence_blocks)}")
-
-# Show detailed block analysis
-for i, block in enumerate(result.blocks[:5], 1):
-    print(f"\nBlock {i}:")
-    print(f"  Text: {block.text[:50]}...")
-    print(f"  Confidence: {block.confidence:.2%}")
-    if block.bbox:
-        print(f"  Position: ({block.bbox.x:.0f}, {block.bbox.y:.0f})")
-```
+EasyOCR supports 80+ languages. You can find the full list of supported languages in the [EasyOCR repository](https://github.com/JaidedAI/EasyOCR).

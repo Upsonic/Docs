@@ -51,6 +51,17 @@ The OCR system follows a layered processing pipeline:
 2. **Layer 1 — OCR Engine**: Processes each prepared image through the configured engine (EasyOCR, RapidOCR, Tesseract, DeepSeek, PaddleOCR)
 3. **Orchestrator — Result Aggregation**: Combines results from multiple pages, calculates average confidence scores, tracks processing metrics
 
+## Supported Layer 1 Engines
+
+| Engine | Best for | Docs |
+|--------|----------|------|
+| `EasyOCREngine` | Multi-language support, 80+ languages | [EasyOCR](/concepts/ocr/providers/easyocr) |
+| `RapidOCREngine` | Speed and lightweight deployment | [RapidOCR](/concepts/ocr/providers/rapidocr) |
+| `TesseractOCREngine` | Traditional OCR, 100+ languages | [Tesseract](/concepts/ocr/providers/tesseract) |
+| `DeepSeekOCREngine` | Batch processing with vLLM | [DeepSeek OCR](/concepts/ocr/providers/deepseek-ocr) |
+| `DeepSeekOllamaOCREngine` | Local processing via Ollama | [DeepSeek Ollama](/concepts/ocr/providers/deepseek-ocr-ollama) |
+| `PaddleOCREngine` | General OCR (PP-OCRv5) | [PaddleOCR](/concepts/ocr/providers/paddleocr) |
+
 ## Async Usage
 
 All OCR methods support async execution:

@@ -31,7 +31,7 @@ When the timeout is exceeded, `OCRTimeoutError` is raised with error code `LAYER
 from upsonic.ocr import OCR, OCRTimeoutError
 from upsonic.ocr.layer_1.engines import EasyOCREngine
 
-engine = EasyOCREngine(languages=['tr', 'en'])
+engine = EasyOCREngine(languages=['en'])
 ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=30.0)
 
 try:
