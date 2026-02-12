@@ -5,7 +5,7 @@ description: "Advanced OCR capabilities and specialized features"
 
 ## Provider Selection Helper
 
-Use the `infer_provider` function to create OCR instances by provider name without importing provider classes.
+Use the `infer_provider` function to create OCR instances by provider name without importing engine classes.
 
 ```python
 from upsonic.ocr import infer_provider
@@ -19,21 +19,65 @@ text = ocr.get_text('document.pdf')
 # 'paddleocr', 'paddle', 'ppstructurev3', 'ppchatocrv4', 'paddleocrvl'
 ```
 
+## Async Processing
+
+All OCR methods support async execution. The framework is async-first — sync methods are convenience wrappers around the async core.
+
+```python
+import asyncio
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+async def process_documents():
+    engine = EasyOCREngine(languages=['en'], gpu=True)
+    ocr = OCR(layer_1_ocr_engine=engine)
+
+    # Async text extraction
+    text = await ocr.get_text_async('document.pdf')
+    print(text)
+
+    # Async file processing with full results
+    result = await ocr.process_file_async('report.pdf')
+    print(f"Confidence: {result.confidence:.2%}")
+
+asyncio.run(process_documents())
+```
+
+## Timeout Control
+
+Use `layer_1_timeout` to set a maximum processing time for the OCR engine. If the timeout is exceeded, an `OCRTimeoutError` is raised.
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+from upsonic.ocr.exceptions import OCRTimeoutError
+
+engine = EasyOCREngine(languages=['en'])
+ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=30)
+
+try:
+    text = ocr.get_text('large_document.pdf')
+except OCRTimeoutError:
+    print("OCR processing timed out")
+```
+
 ## Batch Processing with DeepSeek
 
 DeepSeek OCR provides optimized batch processing for multi-page PDFs, processing all pages in a single batch for better performance.
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.deepseek import DeepSeekOCR
+from upsonic.ocr.layer_1.engines import DeepSeekOCREngine
 
-# Create DeepSeek OCR
-ocr = OCR(
-    DeepSeekOCR,
+# Create DeepSeek engine
+engine = DeepSeekOCREngine(
     model_name="deepseek-ai/DeepSeek-OCR",
     temperature=0.0,
     max_tokens=8192
 )
+
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
 
 # Automatically uses batch processing for PDFs
 result = ocr.process_file('multi_page_document.pdf')
@@ -44,19 +88,21 @@ print(f"Processed {result.page_count} pages")
 
 PaddleOCR providers offer specialized features for complex document understanding.
 
-### Structure Recognition with PPStructureV3
+### Structure Recognition with PPStructureV3Engine
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.paddleocr import PPStructureV3
+from upsonic.ocr.layer_1.engines import PPStructureV3Engine
 
-# Create structure-aware OCR
-ocr = OCR(
-    PPStructureV3,
+# Create structure-aware engine
+engine = PPStructureV3Engine(
     use_table_recognition=True,
     use_formula_recognition=True,
     use_chart_recognition=True
 )
+
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
 
 # Extract structured content
 result = ocr.provider.predict('research_paper.pdf')
@@ -66,18 +112,20 @@ markdown_text = ocr.provider.concatenate_markdown_pages(result)
 print(markdown_text)
 ```
 
-### Information Extraction with PPChatOCRv4
+### Information Extraction with PPChatOCRv4Engine
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.paddleocr import PPChatOCRv4
+from upsonic.ocr.layer_1.engines import PPChatOCRv4Engine
 
-# Create chat-based OCR
-ocr = OCR(
-    PPChatOCRv4,
+# Create chat-based engine
+engine = PPChatOCRv4Engine(
     use_table_recognition=True,
     use_seal_recognition=True
 )
+
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
 
 # Extract visual information
 visual_result = ocr.provider.visual_predict('invoice.pdf')
@@ -108,11 +156,10 @@ Apply preprocessing to improve OCR accuracy for low-quality images.
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.tesseract import TesseractOCR
+from upsonic.ocr.layer_1.engines import TesseractOCREngine
 
-# Create OCR with all preprocessing enabled
-ocr = OCR(
-    TesseractOCR,
+# Create engine with all preprocessing enabled
+engine = TesseractOCREngine(
     languages=['eng'],
     rotation_fix=True,        # Fix skewed/rotated images
     enhance_contrast=True,    # Improve text clarity
@@ -120,6 +167,10 @@ ocr = OCR(
     pdf_dpi=300              # High quality PDF rendering
 )
 
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
+
 # Process low-quality image
 text = ocr.get_text('skewed_noisy_image.jpg')
 ```
+

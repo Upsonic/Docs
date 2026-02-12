@@ -3,11 +3,20 @@ title: "Attributes"
 description: "Configuration options for the OCR system"
 ---
 
-## Attributes
+## OCR Orchestrator Parameters
 
-The OCR system is configured through `OCRConfig`, which provides the following attributes:
+The `OCR` orchestrator accepts the following parameters:
 
-| Attribute | Type | Default | Description |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `layer_1_ocr_engine` | Engine instance | — | The configured Layer 1 engine instance |
+| `layer_1_timeout` | float \| None | `None` | Timeout in seconds for Layer 1 processing. Raises `OCRTimeoutError` on expiry |
+
+## Engine Configuration
+
+Each engine is instantiated with its own parameters. Common parameters shared across most engines:
+
+| Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `languages` | List[str] | `['en']` | Languages to detect (e.g., ['en', 'zh', 'ja']) |
 | `confidence_threshold` | float | `0.0` | Minimum confidence threshold (0.0-1.0) for accepting OCR results |
@@ -17,15 +26,18 @@ The OCR system is configured through `OCRConfig`, which provides the following a
 | `pdf_dpi` | int | `300` | DPI resolution for PDF rendering (higher = better quality, slower) |
 | `preserve_formatting` | bool | `True` | Try to preserve text formatting (line breaks, spacing) |
 
+<Info>
+Each engine may have additional provider-specific parameters. See the individual [provider pages](/concepts/ocr/providers/easyocr) for details.
+</Info>
+
 ## Configuration Example 1
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.base import OCRConfig
-from upsonic.ocr.tesseract import TesseractOCR
+from upsonic.ocr.layer_1.engines import TesseractOCREngine
 
-# Method 1: Using OCRConfig
-config = OCRConfig(
+# Create engine with full configuration
+engine = TesseractOCREngine(
     languages=['eng', 'fra'],
     confidence_threshold=0.6,
     rotation_fix=True,
@@ -34,29 +46,50 @@ config = OCRConfig(
     pdf_dpi=300,
     preserve_formatting=True
 )
-ocr = OCR(TesseractOCR, config=config)
+
+# Create orchestrator with engine and timeout
+ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=120)
 
 # Extract text from document
-    text = ocr.get_text('document.pdf')
-    print(text)
+text = ocr.get_text('document.pdf')
+print(text)
 ```
 
 ## Configuration Example 2
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.tesseract import TesseractOCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
 
-# Method 2: Direct parameters
-ocr = OCR(
-    TesseractOCR,
-    languages=['eng', 'fra'],
-    confidence_threshold=0.6,
-    rotation_fix=True,
-    enhance_contrast=True
+# Create engine with minimal configuration
+engine = EasyOCREngine(
+    languages=['en'],
+    gpu=True,
+    confidence_threshold=0.6
 )
 
+# Create orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
+
 # Extract text
-    text = ocr.get_text('invoice.png')
+text = ocr.get_text('invoice.png')
+print(text)
+```
+
+## Async Usage
+
+```python
+import asyncio
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+engine = EasyOCREngine(languages=['en'], gpu=True)
+ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=30.0)
+
+async def main():
+    text = await ocr.get_text_async('document.pdf')
+    result = await ocr.process_file_async('document.pdf')
     print(text)
+
+asyncio.run(main())
 ```

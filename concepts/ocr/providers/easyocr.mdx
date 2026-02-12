@@ -11,10 +11,14 @@ Ready-to-use OCR with 80+ supported languages using deep learning models. Best f
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.easyocr import EasyOCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+# Also available: from upsonic.ocr import EasyOCREngine
 
-# Create OCR with EasyOCR
-ocr = OCR(EasyOCR, languages=['en', 'zh'], gpu=True, rotation_fix=True)
+# Create engine instance
+engine = EasyOCREngine(languages=['en', 'zh'], gpu=True, rotation_fix=True)
+
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
 
 # Extract text
 text = ocr.get_text('document.pdf')

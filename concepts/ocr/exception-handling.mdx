@@ -1,0 +1,194 @@
+---
+title: "Exception Handling"
+description: "OCR exception classes, error codes, and catch patterns"
+---
+
+## Exception Hierarchy
+
+All OCR exceptions inherit from `OCRError`, allowing you to catch all OCR errors at once or handle specific exceptions individually.
+
+```
+OCRError (base)
+├── OCRProviderError          # Engine/provider level errors
+├── OCRFileNotFoundError      # File not found or not a file
+├── OCRUnsupportedFormatError # Unsupported file format
+├── OCRProcessingError        # Error during OCR processing
+└── OCRTimeoutError           # Layer 1 timeout exceeded
+```
+
+## Base: OCRError
+
+Parent of all OCR exceptions. Carries 3 attributes:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `message` | str | Error message |
+| `error_code` | str \| None | Machine-readable error code (e.g. `"LAYER1_TIMEOUT"`) |
+| `original_error` | Exception \| None | Wrapped original exception (if any) |
+
+`str()` output format: `[ERROR_CODE] message (Original: original error)`
+
+```python
+from upsonic.ocr import OCRError
+
+try:
+    text = ocr.get_text("document.pdf")
+except OCRError as e:
+    print(e.message)        # "Layer 1 OCR timed out after 30.0s on page 2"
+    print(e.error_code)     # "LAYER1_TIMEOUT"
+    print(e.original_error) # None or original exception
+```
+
+## OCRProviderError
+
+Raised during engine initialization and dependency errors.
+
+| error_code | When |
+|------------|------|
+| `UNSUPPORTED_LANGUAGE` | Language not supported by the engine |
+| `READER_INIT_FAILED` | EasyOCR reader creation failed |
+| `ENGINE_INIT_FAILED` | RapidOCR engine initialization failed |
+| `TESSERACT_NOT_INSTALLED` | Tesseract not installed on the system |
+| `VLLM_NOT_AVAILABLE` | vLLM package not installed (DeepSeek) |
+| `UNSUPPORTED_MODEL_ARCHITECTURE` | DeepSeek model architecture not supported by vLLM |
+| `MODEL_INIT_FAILED` | DeepSeek model loading failed |
+| `CLIENT_INIT_FAILED` | Ollama client connection failed |
+| `OLLAMA_NOT_AVAILABLE` | ollama package not installed |
+
+```python
+from upsonic.ocr import OCRProviderError
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+try:
+    engine = EasyOCREngine(languages=['xyz'])
+except OCRProviderError as e:
+    # e.error_code == "UNSUPPORTED_LANGUAGE"
+    print(e.message)
+```
+
+## OCRFileNotFoundError
+
+Raised when the file does not exist or the path is not a file. Thrown by Layer 0 (document_converter).
+
+| error_code | When |
+|------------|------|
+| `FILE_NOT_FOUND` | File does not exist |
+| `NOT_A_FILE` | Path points to a directory |
+
+```python
+from upsonic.ocr import OCRFileNotFoundError
+
+try:
+    text = ocr.get_text("nonexistent_file.pdf")
+except OCRFileNotFoundError as e:
+    # e.error_code == "FILE_NOT_FOUND"
+    print(e.message)
+```
+
+## OCRUnsupportedFormatError
+
+Raised when an unsupported file format is provided. Thrown by Layer 0.
+
+Supported formats: `.png`, `.jpg`, `.jpeg`, `.bmp`, `.tiff`, `.tif`, `.gif`, `.webp`, `.pdf`
+
+| error_code | When |
+|------------|------|
+| `UNSUPPORTED_FORMAT` | File has an unsupported extension |
+
+```python
+from upsonic.ocr import OCRUnsupportedFormatError
+
+try:
+    text = ocr.get_text("document.docx")
+except OCRUnsupportedFormatError as e:
+    # e.error_code == "UNSUPPORTED_FORMAT"
+    print(e.message)
+```
+
+## OCRProcessingError
+
+Raised when an error occurs at the engine level during OCR processing. Each engine uses its own error code.
+
+| error_code | Engine | When |
+|------------|--------|------|
+| `EASYOCR_PROCESSING_FAILED` | EasyOCR | readtext call failed |
+| `RAPIDOCR_PROCESSING_FAILED` | RapidOCR | OCR call failed |
+| `TESSERACT_PROCESSING_FAILED` | Tesseract | image_to_data call failed |
+| `DEEPSEEK_PROCESSING_FAILED` | DeepSeek | vLLM generate failed |
+| `DEEPSEEK_BATCH_PROCESSING_FAILED` | DeepSeek | Batch processing failed |
+| `DEEPSEEK_OLLAMA_PROCESSING_FAILED` | DeepSeek Ollama | Ollama streaming failed |
+| `PADDLE_PROCESSING_FAILED` | PaddleOCR | predict call failed |
+| `PDF_CONVERSION_FAILED` | Layer 0 | PDF to image conversion failed |
+| `IMAGE_LOAD_FAILED` | Layer 0 | Image could not be loaded |
+| `MISSING_DEPENDENCY` | Layer 0 | PyMuPDF (fitz) not installed |
+
+```python
+from upsonic.ocr import OCRProcessingError
+
+try:
+    text = ocr.get_text("corrupted_image.png")
+except OCRProcessingError as e:
+    print(e.error_code)     # "EASYOCR_PROCESSING_FAILED"
+    print(e.original_error) # Original exception
+```
+
+## OCRTimeoutError
+
+Raised when `layer_1_timeout` is exceeded in the OCR orchestrator. Applied per page — if page 3 of a 5-page PDF times out, only that page raises the error.
+
+| error_code | When |
+|------------|------|
+| `LAYER1_TIMEOUT` | layer_1_timeout seconds exceeded |
+
+```python
+from upsonic.ocr import OCR, OCRTimeoutError
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+engine = EasyOCREngine(languages=['tr', 'en'])
+ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=30.0)
+
+try:
+    text = ocr.get_text("large_file.pdf")
+except OCRTimeoutError as e:
+    # e.error_code == "LAYER1_TIMEOUT"
+    # e.message == "Layer 1 OCR timed out after 30.0s on page 3"
+    print(e.message)
+```
+
+## Import
+
+```python
+# All from one place
+from upsonic.ocr import (
+    OCRError,
+    OCRProviderError,
+    OCRFileNotFoundError,
+    OCRUnsupportedFormatError,
+    OCRProcessingError,
+    OCRTimeoutError,
+)
+
+# Or directly from exceptions module
+from upsonic.ocr.exceptions import OCRTimeoutError
+```
+
+## Catch Pattern
+
+Handle exceptions from most specific to most general:
+
+```python
+try:
+    text = ocr.get_text("document.pdf")
+except OCRTimeoutError:
+    print("Timeout - increase timeout or try a smaller file")
+except OCRFileNotFoundError:
+    print("File not found")
+except OCRUnsupportedFormatError:
+    print("This format is not supported")
+except OCRProviderError:
+    print("Engine issue - missing dependency or unsupported language")
+except OCRProcessingError:
+    print("OCR processing error")
+except OCRError:
+    print("Unknown OCR error")
+```

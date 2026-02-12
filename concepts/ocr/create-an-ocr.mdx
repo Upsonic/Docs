@@ -1,0 +1,76 @@
+---
+title: "Create an OCR"
+description: "How to create an OCR instance with engine configuration"
+---
+
+## Pick an Engine
+
+First, choose and configure a Layer 1 engine. Each engine has its own parameters — see the [Layer 1 Engines](/concepts/ocr/providers/easyocr) section for details on each one.
+
+```python
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+engine = EasyOCREngine(languages=['en'], gpu=True)
+```
+
+All available engines:
+
+| Engine | Best for |
+|--------|----------|
+| `EasyOCREngine` | Multi-language support, 80+ languages |
+| `RapidOCREngine` | Speed and lightweight deployment |
+| `TesseractOCREngine` | Traditional OCR, 100+ languages |
+| `DeepSeekOCREngine` | Batch processing with vLLM |
+| `DeepSeekOllamaOCREngine` | Local processing via Ollama |
+| `PaddleOCREngine` | General OCR (PP-OCRv5) |
+| `PPStructureV3Engine` | Document structure recognition |
+| `PPChatOCRv4Engine` | Chat-based document understanding |
+| `PaddleOCRVLEngine` | Vision-Language document understanding |
+
+## Create the Orchestrator
+
+Pass the engine instance to the `OCR` orchestrator:
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+engine = EasyOCREngine(languages=['en'], gpu=True)
+ocr = OCR(layer_1_ocr_engine=engine)
+```
+
+## With Timeout
+
+You can set a per-page timeout to prevent long-running operations:
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import RapidOCREngine
+
+engine = RapidOCREngine(languages=['en'])
+ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=30.0)
+```
+
+See [Timeout](/concepts/ocr/timeout) for details on timeout handling.
+
+## Full Example
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import TesseractOCREngine
+
+# 1. Configure engine
+engine = TesseractOCREngine(
+    languages=['eng', 'fra'],
+    rotation_fix=True,
+    enhance_contrast=True,
+    pdf_dpi=300
+)
+
+# 2. Create orchestrator
+ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=60.0)
+
+# Ready to use
+text = ocr.get_text('document.pdf')
+print(text)
+```

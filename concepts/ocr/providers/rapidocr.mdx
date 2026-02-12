@@ -11,10 +11,14 @@ Lightweight OCR based on ONNX Runtime for fast inference. Best for speed and lig
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.rapidocr import RapidOCR
+from upsonic.ocr.layer_1.engines import RapidOCREngine
+# Also available: from upsonic.ocr import RapidOCREngine
 
-# Create OCR with RapidOCR
-ocr = OCR(RapidOCR, languages=['en', 'ch'], confidence_threshold=0.5)
+# Create engine instance
+engine = RapidOCREngine(languages=['en', 'ch'], confidence_threshold=0.5)
+
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
 
 # Extract text from image
 text = ocr.get_text('invoice.png')

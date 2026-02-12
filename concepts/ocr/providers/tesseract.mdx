@@ -11,17 +11,23 @@ Google's open-source OCR engine with 100+ language support. Best for traditional
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.tesseract import TesseractOCR
+from upsonic.ocr.layer_1.engines import TesseractOCREngine
+# Also available: from upsonic.ocr import TesseractOCREngine
 
-# Create OCR with Tesseract
-ocr = OCR(TesseractOCR, languages=['eng', 'fra'], enhance_contrast=True)
+# Create engine instance
+engine = TesseractOCREngine(languages=['eng', 'fra'], enhance_contrast=True)
+
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
 
 # Extract text
 text = ocr.get_text('receipt.jpg')
 print(text)
 
 # Custom Tesseract configuration
-result = ocr.process_file('document.pdf', psm=3, oem=3)
+engine_custom = TesseractOCREngine(languages=['eng'], psm=3, oem=3)
+ocr_custom = OCR(layer_1_ocr_engine=engine_custom)
+result = ocr_custom.process_file('document.pdf')
 print(f"Text: {result.text}")
 ```
 

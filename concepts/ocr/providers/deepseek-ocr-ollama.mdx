@@ -11,15 +11,18 @@ DeepSeek OCR with Ollama backend provides a simple, easy-to-use OCR solution tha
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.deepseek_ollama import DeepSeekOllamaOCR
+from upsonic.ocr.layer_1.engines import DeepSeekOllamaOCREngine
+# Also available: from upsonic.ocr import DeepSeekOllamaOCREngine
 
-# Create DeepSeek OCR with Ollama
-ocr = OCR(
-    DeepSeekOllamaOCR,
+# Create DeepSeek Ollama engine
+engine = DeepSeekOllamaOCREngine(
     host="http://localhost:11434",
     model="deepseek-ocr:3b",
     rotation_fix=True
 )
+
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
 
 # Extract text from image or PDF
 text = ocr.get_text('document.pdf')

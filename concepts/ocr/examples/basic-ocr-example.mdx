@@ -3,24 +3,19 @@ title: "Basic OCR Example"
 description: "Complete document processing pipeline with OCR"
 ---
 
-## About the Example
-
-This example demonstrates a complete document processing pipeline using the Unified OCR system. It processes all PDF documents in a directory, extracts text with preprocessing, saves results and metadata, and generates a processing summary with metrics.
-
-## Unified OCR Configuration
+## EasyOCR Basic Example
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.easyocr import EasyOCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
 import urllib.request
 
 # Download a sample image for testing
 url = "https://raw.githubusercontent.com/JaidedAI/EasyOCR/master/examples/english.png"
 urllib.request.urlretrieve(url, "sample_image.png")
 
-# Configure OCR with preprocessing for best results
-ocr = OCR(
-    EasyOCR,
+# Configure engine with preprocessing for best results
+engine = EasyOCREngine(
     languages=['en'],
     confidence_threshold=0.6,
     rotation_fix=True,
@@ -30,95 +25,31 @@ ocr = OCR(
     gpu=True
 )
 
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
+
 # Run OCR on the sample image
 result = ocr.get_text("sample_image.png")
 print(result)
 ```
 
-## Full Code
-
-```python
-from upsonic.ocr import OCR
-from upsonic.ocr.easyocr import EasyOCR
-from upsonic.ocr.exceptions import OCRError
-from pathlib import Path
-import json
-
-def process_documents(directory: str, output_dir: str):
-    """Process all PDF documents in a directory."""
-
-    # Create OCR instance with optimal configuration
-    ocr = OCR(
-        EasyOCR,
-        languages=['en'],
-        confidence_threshold=0.6,
-        rotation_fix=True,
-        enhance_contrast=True,
-        remove_noise=True,
-        pdf_dpi=250,
-        gpu=True
-    )
-
-    # Create output directory
-    output_path = Path(output_dir)
-    output_path.mkdir(exist_ok=True)
-
-    # Process each PDF
-    input_path = Path(directory)
-    for pdf_file in input_path.glob('*.pdf'):
-        try:
-            print(f"Processing {pdf_file.name}...")
-
-            # Extract text with detailed results
-            result = ocr.process_file(pdf_file)
-
-            # Save extracted text
-            text_file = output_path / f"{pdf_file.stem}.txt"
-            text_file.write_text(result.text)
-
-            # Save metadata
-            metadata_file = output_path / f"{pdf_file.stem}_metadata.json"
-            metadata_file.write_text(json.dumps(result.to_dict(), indent=2))
-
-            # Log results
-            print(f"  ✓ Extracted {len(result.text)} characters")
-            print(f"  ✓ Confidence: {result.confidence:.2%}")
-            print(f"  ✓ Pages: {result.page_count}")
-            print(f"  ✓ Time: {result.processing_time_ms:.0f}ms")
-            print(f"  ✓ Blocks: {len(result.blocks)}")
-
-        except OCRError as e:
-            print(f"  ✗ Error: {e}")
-            continue
-
-    # Print summary
-    metrics = ocr.get_metrics()
-    print(f"\n=== Summary ===")
-    print(f"Files processed: {metrics.files_processed}")
-    print(f"Total pages: {metrics.total_pages}")
-    print(f"Total characters: {metrics.total_characters}")
-    print(f"Average confidence: {metrics.average_confidence:.2%}")
-    print(f"Total time: {metrics.processing_time_ms / 1000:.2f}s")
-
-if __name__ == "__main__":
-    process_documents('input_pdfs', 'output_text')
-```
-
-## Multi-Language Document Processing
+## EasyOCR Multi-Language Document Processing
 
 Process documents containing multiple languages using EasyOCR's multi-language support.
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.easyocr import EasyOCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
 
-# Create multi-language OCR
-ocr = OCR(
-    EasyOCR,
+# Create multi-language engine
+engine = EasyOCREngine(
     languages=['en', 'zh', 'ja', 'ko'],
     gpu=True,
     confidence_threshold=0.5
 )
+
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
 
 # Process mixed-language document
 result = ocr.process_file('multilingual_doc.pdf')
@@ -141,54 +72,4 @@ for i, block in enumerate(result.blocks[:5], 1):
     print(f"  Confidence: {block.confidence:.2%}")
     if block.bbox:
         print(f"  Position: ({block.bbox.x:.0f}, {block.bbox.y:.0f})")
-```
-
-## Invoice Data Extraction with PaddleOCR
-
-Extract structured information from invoices using PPChatOCRv4's advanced features.
-
-```python
-from upsonic.ocr import OCR
-from upsonic.ocr.paddleocr import PPChatOCRv4
-
-# Create OCR with table and seal recognition
-ocr = OCR(
-    PPChatOCRv4,
-    use_table_recognition=True,
-    use_seal_recognition=True,
-    lang='en'
-)
-
-# Extract visual information
-visual_result = ocr.provider.visual_predict('invoice.pdf')
-
-# Build vector index for retrieval
-vector_info = ocr.provider.build_vector(
-    visual_result,
-    min_characters=3500,
-    block_size=300
-)
-
-# Extract specific fields
-invoice_data = ocr.provider.chat(
-    key_list=[
-        'invoice_number',
-        'invoice_date',
-        'vendor_name',
-        'total_amount',
-        'tax_amount',
-        'line_items'
-    ],
-    visual_info=visual_result,
-    use_vector_retrieval=True,
-    vector_info=vector_info
-)
-
-# Display extracted information
-print(f"Invoice Number: {invoice_data.get('invoice_number')}")
-print(f"Date: {invoice_data.get('invoice_date')}")
-print(f"Vendor: {invoice_data.get('vendor_name')}")
-print(f"Total: {invoice_data.get('total_amount')}")
-print(f"Tax: {invoice_data.get('tax_amount')}")
-print(f"\nLine Items: {invoice_data.get('line_items')}")
 ```

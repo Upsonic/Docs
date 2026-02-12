@@ -1,0 +1,63 @@
+---
+title: "Timeout"
+description: "Configure and handle Layer 1 timeout for OCR processing"
+---
+
+## Layer 1 Timeout
+
+Use `layer_1_timeout` to set a maximum processing time (in seconds) for the OCR engine per page. If the timeout is exceeded, an `OCRTimeoutError` is raised. This is useful for preventing long-running OCR operations on large or complex documents.
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+engine = EasyOCREngine(languages=['en'])
+ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=30.0)
+
+text = ocr.get_text('document.pdf')
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `layer_1_timeout` | float \| None | `None` | Timeout in seconds. `None` means no timeout |
+
+## Handling Timeout Errors
+
+When the timeout is exceeded, `OCRTimeoutError` is raised with error code `LAYER1_TIMEOUT`. The timeout is applied per page — if page 3 of a 5-page PDF times out, only that page raises the error.
+
+```python
+from upsonic.ocr import OCR, OCRTimeoutError
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+engine = EasyOCREngine(languages=['tr', 'en'])
+ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=30.0)
+
+try:
+    text = ocr.get_text("large_file.pdf")
+except OCRTimeoutError as e:
+    # e.error_code == "LAYER1_TIMEOUT"
+    # e.message == "Layer 1 OCR timed out after 30.0s on page 3"
+    print(e.message)
+```
+
+## Async Usage
+
+```python
+import asyncio
+from upsonic.ocr import OCR, OCRTimeoutError
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+engine = EasyOCREngine(languages=['en'])
+ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=15.0)
+
+async def main():
+    try:
+        text = await ocr.get_text_async('document.pdf')
+        print(text)
+    except OCRTimeoutError as e:
+        print(f"Timed out: {e.message}")
+
+asyncio.run(main())
+```

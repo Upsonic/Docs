@@ -1,0 +1,92 @@
+---
+title: "Running an OCR"
+description: "Extract text from documents using sync and async methods"
+---
+
+## Sync Usage
+
+The simplest way to run OCR — call `get_text` for plain text or `process_file` for detailed results.
+
+### get_text
+
+Returns the extracted text as a string.
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+engine = EasyOCREngine(languages=['en'])
+ocr = OCR(layer_1_ocr_engine=engine)
+
+text = ocr.get_text('document.pdf')
+print(text)
+```
+
+### process_file
+
+Returns an `OCRResult` object with text, confidence, page count, blocks, and processing time.
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+engine = EasyOCREngine(languages=['en'], gpu=True)
+ocr = OCR(layer_1_ocr_engine=engine)
+
+result = ocr.process_file('document.pdf')
+
+print(f"Text: {result.text}")
+print(f"Confidence: {result.confidence:.2%}")
+print(f"Pages: {result.page_count}")
+print(f"Processing time: {result.processing_time_ms:.0f}ms")
+print(f"Blocks: {len(result.blocks)}")
+```
+
+## Async Usage
+
+Every sync method has an async counterpart with the `_async` suffix. The framework is async-first — sync methods are convenience wrappers.
+
+### get_text_async
+
+```python
+import asyncio
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+engine = EasyOCREngine(languages=['en'])
+ocr = OCR(layer_1_ocr_engine=engine)
+
+async def main():
+    text = await ocr.get_text_async('document.pdf')
+    print(text)
+
+asyncio.run(main())
+```
+
+### process_file_async
+
+```python
+import asyncio
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import RapidOCREngine
+
+engine = RapidOCREngine(languages=['en'])
+ocr = OCR(layer_1_ocr_engine=engine)
+
+async def main():
+    result = await ocr.process_file_async('document.pdf')
+    print(f"Text: {result.text}")
+    print(f"Confidence: {result.confidence:.2%}")
+
+asyncio.run(main())
+```
+
+## Supported Formats
+
+Both sync and async methods accept the following file formats:
+
+`.png`, `.jpg`, `.jpeg`, `.bmp`, `.tiff`, `.tif`, `.gif`, `.webp`, `.pdf`
+
+## Timeout
+
+If you set `layer_1_timeout` when creating the orchestrator, the engine will raise `OCRTimeoutError` when the per-page processing time is exceeded. See [Timeout](/concepts/ocr/timeout) for configuration and error handling details.

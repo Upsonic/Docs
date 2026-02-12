@@ -7,15 +7,16 @@ hideToc: true
 
 ## What is Unified OCR?
 
-The Unified OCR system in Upsonic provides a consistent interface for optical character recognition across multiple OCR engines. Instead of learning different APIs for each OCR provider, you use a single `OCR` class that works seamlessly with EasyOCR, RapidOCR, Tesseract, DeepSeek, and PaddleOCR.
+The Unified OCR system in Upsonic provides a consistent interface for optical character recognition across multiple OCR engines. It uses a **layered architecture** — Layer 0 handles document preparation, Layer 1 provides pluggable OCR engines, and the `OCR` orchestrator ties everything together.
 
 The OCR class serves as a high-level orchestrator that:
-- Manages multiple OCR provider backends with a unified API
+- Manages multiple OCR engine backends with a unified API
 - Handles image preprocessing (rotation correction, contrast enhancement, noise reduction)
 - Converts PDFs to images with configurable DPI
 - Tracks confidence scores and bounding box detection
 - Collects performance metrics and processing statistics
-- Provides provider-specific features and optimizations
+- Supports async-first processing with sync convenience wrappers
+- Provides configurable timeout via `layer_1_timeout`
 
 <Note>
   **OCR Installation**
@@ -29,10 +30,13 @@ The OCR class serves as a high-level orchestrator that:
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.easyocr import EasyOCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
 
-# Create OCR instance
-ocr = OCR(EasyOCR, languages=['en'], rotation_fix=True)
+# Create engine instance with its own config
+engine = EasyOCREngine(languages=['en'], rotation_fix=True)
+
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
 
 # Extract text
 text = ocr.get_text('document.pdf')
@@ -41,42 +45,37 @@ print(text)
 
 ## How Unified OCR Works
 
-The OCR system follows a clear processing pipeline:
+The OCR system follows a layered processing pipeline:
 
-1. **File Preparation**: Validates file existence and format (supports .png, .jpg, .jpeg, .bmp, .tiff, .tif, .webp, .pdf)
-2. **PDF Conversion**: If the file is a PDF, converts each page to images at the specified DPI
-3. **Image Preprocessing**: Optionally applies rotation correction, contrast enhancement, and noise reduction
-4. **OCR Processing**: Processes each image through the selected provider's engine
-5. **Result Aggregation**: Combines results from multiple pages, calculates average confidence scores
-6. **Metrics Tracking**: Updates processing statistics for performance analysis
+1. **Layer 0 — Document Preparation**: Validates file existence and format, converts PDFs to images at specified DPI, applies optional preprocessing (rotation fix, contrast enhancement, noise reduction)
+2. **Layer 1 — OCR Engine**: Processes each prepared image through the configured engine (EasyOCR, RapidOCR, Tesseract, DeepSeek, PaddleOCR)
+3. **Orchestrator — Result Aggregation**: Combines results from multiple pages, calculates average confidence scores, tracks processing metrics
+
+## Async Usage
+
+All OCR methods support async execution:
 
 ```python
+import asyncio
 from upsonic.ocr import OCR
-from upsonic.ocr.rapidocr import RapidOCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
 
-# Create OCR with preprocessing
-ocr = OCR(
-    RapidOCR,
-    languages=['en'],
-    rotation_fix=True,
-    enhance_contrast=True,
-    pdf_dpi=300
-)
+async def process():
+    engine = EasyOCREngine(languages=['en'])
+    ocr = OCR(layer_1_ocr_engine=engine)
 
-# Process file - returns detailed results
-result = ocr.process_file('document.pdf')
+    text = await ocr.get_text_async('document.pdf')
+    print(text)
 
-print(f"Text: {result.text}")
-print(f"Confidence: {result.confidence:.2%}")
-print(f"Pages: {result.page_count}")
-print(f"Processing time: {result.processing_time_ms:.2f}ms")
+asyncio.run(process())
 ```
 
 ## Navigation
 
+- [Architecture](/concepts/ocr/architecture) - Understanding the layered OCR pipeline
 - [OCR Attributes](/concepts/ocr/attributes) - Comprehensive guide to all OCR configuration options
 - [OCR Providers](/concepts/ocr/providers/easyocr) - Configure EasyOCR, RapidOCR, Tesseract, PaddleOCR, and DeepSeek OCR
-- [Advanced Features](/concepts/ocr/advanced-features) - Advanced preprocessing and optimization options
+- [Advanced Features](/concepts/ocr/advanced-features) - Advanced preprocessing, async, and timeout options
 - [Metrics and Performance](/concepts/ocr/metrics-and-performance) - Monitor and optimize OCR performance
 - [Basic OCR Example](/concepts/ocr/examples/basic-ocr-example) - Get started with OCR integration
 

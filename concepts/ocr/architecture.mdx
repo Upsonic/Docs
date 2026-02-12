@@ -1,0 +1,85 @@
+---
+title: "Architecture"
+description: "Understanding the layered OCR pipeline architecture"
+---
+
+## Layered Architecture
+
+The Unified OCR system is built on a layered architecture that separates concerns and enables flexible engine composition.
+
+### Layer 0 — Document Preparation
+
+Handles file validation, PDF-to-image conversion, and image preprocessing before OCR processing begins.
+
+- **File validation**: Checks file existence and supported formats (.png, .jpg, .jpeg, .bmp, .tiff, .tif, .webp, .pdf)
+- **PDF conversion**: Converts PDF pages to images at configurable DPI using `convert_document`
+- **Image preprocessing**: Optional rotation correction, contrast enhancement, and noise reduction
+
+### Layer 1 — OCR Engines
+
+Each OCR engine runs independently on prepared images and returns structured `OCRResult` objects.
+
+Available engines:
+- `EasyOCREngine` — Deep learning-based, 80+ languages
+- `RapidOCREngine` — ONNX Runtime-based, lightweight and fast
+- `TesseractOCREngine` — Google's open-source engine, 100+ languages
+- `DeepSeekOCREngine` — VLLM-based batch processing
+- `DeepSeekOllamaOCREngine` — Ollama-based local processing
+- `PaddleOCREngine`, `PPStructureV3Engine`, `PPChatOCRv4Engine`, `PaddleOCRVLEngine` — PaddlePaddle family
+
+### Orchestrator — `OCR` Class
+
+The top-level `OCR` class orchestrates the full pipeline:
+
+1. Receives a file path
+2. Delegates to Layer 0 for document preparation
+3. Passes prepared images to the configured Layer 1 engine
+4. Aggregates results, calculates confidence scores, and tracks metrics
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+
+# Engine handles its own configuration
+engine = EasyOCREngine(languages=['en'], gpu=True)
+
+# Orchestrator ties the pipeline together
+ocr = OCR(layer_1_ocr_engine=engine)
+result = ocr.process_file('document.pdf')
+```
+
+## Pipeline Flow
+
+```
+File (PDF/Image)
+    │
+    ▼
+Layer 0: convert_document → preprocessed images
+    │
+    ▼
+Layer 1: Engine.process(images) → OCRResult
+    │
+    ▼
+Orchestrator: aggregate results, metrics, confidence
+    │
+    ▼
+Final OCRResult
+```
+
+## Instance-Based API
+
+Engines are instantiated with their own configuration, then passed to the `OCR` orchestrator. This enables engine reuse and cleaner separation of concerns.
+
+```python
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import TesseractOCREngine
+
+# Create and configure the engine
+engine = TesseractOCREngine(languages=['eng', 'fra'], psm=3)
+
+# Pass engine instance to orchestrator
+ocr = OCR(layer_1_ocr_engine=engine, layer_1_timeout=60)
+
+# Use the orchestrator
+text = ocr.get_text('document.pdf')
+```
