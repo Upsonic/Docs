@@ -3,6 +3,7 @@ title: "Telegram"
 sidebarTitle: "Telegram"
 description: "Host agents as Telegram bots with webhooks, multi-media, and chat or task modes"
 tag: "NEW"
+tag: "NEW"
 ---
 
 Use the Telegram interface to serve Agents as Telegram bots. It supports text, photos, documents, voice, video, stickers, location, polls, and inline keyboard callbacks.
@@ -39,6 +40,149 @@ Go to [ngrok.com/signup](https://dashboard.ngrok.com/signup) and create a free a
 After signing up, follow the instructions on your [ngrok dashboard](https://dashboard.ngrok.com/get-started/setup) to install ngrok for your operating system.
 
 <CodeGroup>
+
+```bash macOS
+brew install ngrok
+```
+
+```bash Linux
+snap install ngrok
+```
+
+```bash Windows
+choco install ngrok
+```
+
+</CodeGroup>
+</Step>
+
+<Step title="Connect your account">
+Copy your authtoken from the [ngrok dashboard](https://dashboard.ngrok.com/get-started/your-authtoken) and run:
+
+```bash
+ngrok config add-authtoken YOUR_AUTH_TOKEN
+```
+</Step>
+
+<Step title="Start the tunnel">
+Open a terminal and run:
+
+```bash
+ngrok http 8000
+```
+
+You'll see output like this:
+
+```
+Forwarding  https://abc123.ngrok-free.app -> http://localhost:8000
+```
+
+Copy the `https://....ngrok-free.app` URL — this is your public webhook URL.
+</Step>
+
+</Steps>
+
+<Warning>
+Keep this terminal open — if you close ngrok, the tunnel stops and your bot won't receive messages. When you restart ngrok, the URL changes and you'll need to update your `.env` file.
+</Warning>
+
+## Step 3: Configure Environment Variables
+
+Create a `.env` file with your credentials:
+
+```bash
+TELEGRAM_BOT_TOKEN=your-bot-token-from-botfather
+TELEGRAM_WEBHOOK_URL=https://abc123.ngrok-free.app
+```
+
+<Tip>
+`TELEGRAM_WEBHOOK_URL` is the ngrok URL you copied. When you restart ngrok, this URL changes — update it accordingly.
+</Tip>
+
+You can also set an optional secret for webhook validation:
+
+```bash
+TELEGRAM_WEBHOOK_SECRET=my-secret-token
+```
+
+## Step 4: Write Your Bot
+
+There are two operating modes — pick the one that fits your use case:
+
+- **CHAT** — The agent remembers conversation context per user. Best for conversational assistants.
+- **TASK** — Each message is processed independently with no history. Best for one-off queries.
+
+<CodeGroup>
+
+```python CHAT Mode (Default)
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
+
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    name="TelegramChatBot",
+    system_prompt="You are a friendly AI assistant on Telegram. You remember conversation context.",
+)
+
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET"),
+    mode=InterfaceMode.CHAT,
+    reset_command="/reset",
+)
+
+manager = InterfaceManager(interfaces=[telegram])
+manager.serve(host="0.0.0.0", port=8000)
+```
+
+```python TASK Mode
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
+
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    name="TelegramBot",
+    system_prompt="You are a helpful AI assistant on Telegram. Be concise.",
+)
+
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET"),
+    mode=InterfaceMode.TASK,
+)
+
+manager = InterfaceManager(interfaces=[telegram])
+manager.serve(host="0.0.0.0", port=8000)
+```
+
+</CodeGroup>
+
+## Step 5: Run
+
+Make sure ngrok is running in one terminal, then start your bot in another:
+
+```bash
+uv run your_bot.py
+# python your_bot.py
+```
+
+Your bot is now live. Open Telegram, find your bot by username, and send a message.
+
+## Operating Modes
+
+* **TASK** (default) – Each message is processed as an independent task; no conversation history. Best for one-off queries and stateless bots.
+* **CHAT** – Messages from the same user belong to a conversation session. The agent remembers context. Best for conversational assistants and support.
+
+| Mode | Description | Best For |
+| ---- | ----------- | -------- |
+| **TASK** (default) | Each message is processed independently. No conversation history. | One-off queries, stateless bots |
+| **CHAT** | Messages from the same user share a session. The agent remembers context. | Conversational assistants, support bots |
 
 ## Streaming
 
@@ -102,31 +246,30 @@ if __name__ == "__main__":
 ```
 
 ## Reset Command (CHAT mode only)
-```bash macOS
-brew install ngrok
+
+In CHAT mode, users can clear their conversation by sending the reset command (e.g. `/reset`) as a message. Configure it with `reset_command`; set to `None` to disable.
+
+If the agent has a `workspace` configured, the reset command will also trigger a dynamic greeting message based on the workspace configuration. See [Workspace](/agents/advanced/workspace) for details.
+
+## Access Control
+
+Restrict your bot to specific users by passing a list of Telegram user IDs:
+
+```python
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    mode=InterfaceMode.CHAT,
+    allowed_user_ids=[1279809673],
+)
 ```
 
-```bash Linux
-snap install ngrok
-```
+Users not in the list are ignored. Omit `allowed_user_ids` (or set `None`) to allow everyone.
 
-```bash Windows
-choco install ngrok
-```
+## Example Usage
 
-</CodeGroup>
-</Step>
-
-<Step title="Connect your account">
-Copy your authtoken from the [ngrok dashboard](https://dashboard.ngrok.com/get-started/your-authtoken) and run:
-
-```bash
-ngrok config add-authtoken YOUR_AUTH_TOKEN
-```
-</Step>
-
-<Step title="Start the tunnel">
-Open a terminal and run:
+Create an agent, expose it with `TelegramInterface`, and serve via `InterfaceManager`. Example in **CHAT** mode with conversation history and reset:
 
 ```bash
 ngrok http 8000
@@ -282,47 +425,44 @@ manager.serve(host="0.0.0.0", port=8000)
 | `max_message_length` | `int` | `4096` | Max message length before splitting. |
 | `stream` | `bool` | `False` | Stream agent responses by progressively editing the message. |
 | `heartbeat_chat_id` | `Optional[int]` | `None` | Explicit Telegram chat ID for heartbeat delivery. Auto-detected from first incoming message if omitted. |
-</CodeGroup>
 
-## Step 5: Run
+### Key Methods
 
-Make sure ngrok is running in one terminal, then start your bot in another:
+| Method | Parameters | Return Type | Description |
+| ------ | ---------- | ----------- | ----------- |
+| `attach_routes` | None | `APIRouter` | Returns the FastAPI router with Telegram endpoints. |
+| `health_check` | None | `Dict[str, Any]` | Returns health and configuration (bot, webhook, mode, whitelist). |
+| `is_user_allowed` | `user_id: int` | `bool` | Returns whether the user is allowed (whitelist check). |
 
-```bash
-uv run your_bot.py
-# python your_bot.py
-```
+## Endpoints
 
-Your bot is now live. Open Telegram, find your bot by username, and send a message.
+Mounted under the `/telegram` prefix:
 
-## Operating Modes
+### `POST /telegram/webhook`
 
-| Mode | Description | Best For |
-| ---- | ----------- | -------- |
-| **TASK** (default) | Each message is processed independently. No conversation history. | One-off queries, stateless bots |
-| **CHAT** | Messages from the same user share a session. The agent remembers context. | Conversational assistants, support bots |
+* Receives Telegram updates (messages, edited messages, channel posts, callback queries).
+* Validates `X-Telegram-Bot-Api-Secret-Token` if `webhook_secret` is set.
+* Processes updates in the background; responds with `200 {"ok": true}` so Telegram does not retry.
 
-### Reset Command (CHAT mode only)
+### `POST /telegram/set-webhook`
 
-In CHAT mode, users can clear their conversation by sending `/reset`. Configure it with `reset_command`; set to `None` to disable.
+* Sets the bot webhook URL.
+* Query/body: `url` (required), `secret_token` (optional), `drop_pending_updates` (optional, default `False`).
+* Returns `{"success": bool}`.
 
-If the agent has a `workspace` configured, the reset command will also trigger a dynamic greeting message based on the workspace configuration.
+### `POST /telegram/delete-webhook`
 
-## Access Control
+* Removes the current webhook.
+* Query: `drop_pending_updates` (optional).
+* Returns `{"success": bool}`.
 
-Restrict your bot to specific users by passing a list of Telegram user IDs:
+### `GET /telegram/webhook-info`
 
-```python
-telegram = TelegramInterface(
-    agent=agent,
-    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
-    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
-    mode=InterfaceMode.CHAT,
-    allowed_user_ids=[1279809673],
-)
-```
+* Returns current webhook status from Telegram (e.g. URL, pending update count).
 
-Users not in the list are ignored. Omit `allowed_user_ids` (or set `None`) to allow everyone.
+### `GET /telegram/health`
+
+* Health and status of the interface: bot connectivity, configuration (mode, whitelist, parse_mode, behavior flags), and optional bot info from Telegram.
 
 ## Supported File & Message Types
 
