@@ -8,7 +8,7 @@ Use the Slack interface to serve Agents via Slack. It mounts webhook routes on a
 
 ## Installation
 
-Install the Gmail interface dependencies:
+Install the Slack interface dependencies:
 
 ```bash
 uv pip install upsonic[slack-interface]
@@ -28,6 +28,61 @@ Required environment variables:
 
 * **TASK** (default) – Each message is processed as an independent task; no conversation history. Best for simple Q&A and one-off queries.
 * **CHAT** – Messages from the same user share a conversation session. The agent remembers context. Best for multi-turn assistants and support bots.
+
+## Streaming
+
+Set `stream=True` to progressively update the Slack message as tokens arrive from the agent. The initial message is posted immediately and then edited in-place as new chunks are generated. Works in both TASK and CHAT modes.
+
+```python
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, SlackInterface
+
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    name="SlackBot",
+)
+
+slack = SlackInterface(
+    agent=agent,
+    mode="chat",
+    stream=True,
+)
+
+manager = InterfaceManager(interfaces=[slack])
+
+if __name__ == "__main__":
+    manager.serve(host="0.0.0.0", port=8000)
+```
+
+## Heartbeat
+
+When used with an `AutonomousAgent` that has `heartbeat=True`, the interface periodically sends the agent's `heartbeat_message` to the agent, then posts the response to Slack.
+
+The target channel is resolved automatically from the first incoming message. You can also set it explicitly via `heartbeat_channel`.
+
+```python
+from upsonic import AutonomousAgent
+from upsonic.interfaces import InterfaceManager, SlackInterface
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o-mini",
+    name="SlackBot",
+    heartbeat=True,
+    heartbeat_period=30,
+    heartbeat_message="Summarize any new updates.",
+)
+
+slack = SlackInterface(
+    agent=agent,
+    mode="chat",
+    # heartbeat_channel="C01ABC123",  # optional explicit override
+)
+
+manager = InterfaceManager(interfaces=[slack])
+
+if __name__ == "__main__":
+    manager.serve(host="0.0.0.0", port=8000)
+```
 
 ## Reset Command (CHAT mode only)
 
@@ -91,6 +146,8 @@ Main entry point for Upsonic Slack applications.
 | `reset_command` | `Optional[str]` | `"/reset"` | Message text that resets chat session (CHAT mode). Set `None` to disable. |
 | `storage` | `Optional[Storage]` | `None`  | Storage backend for chat sessions (CHAT mode). |
 | `allowed_user_ids` | `Optional[List[str]]` | `None`  | Whitelist of Slack user IDs (e.g. `"U01ABC123"`). `None` = allow all. |
+| `stream` | `bool` | `False` | Stream agent responses by progressively updating the message. |
+| `heartbeat_channel` | `Optional[str]` | `None` | Explicit Slack channel ID for heartbeat delivery. Auto-detected from first incoming message if omitted. |
 
 ### Key Methods
 
@@ -120,4 +177,3 @@ Mounted under the `/slack` prefix:
 ### `GET /slack/health`
 
 * Health/status of the interface.
-

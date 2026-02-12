@@ -23,6 +23,39 @@ Required environment variables:
 * **TASK** (default) – Each message is processed as an independent task; no conversation history. Best for one-off queries and stateless bots.
 * **CHAT** – Messages from the same sender share a conversation session. The agent remembers context. Best for conversational and support use cases.
 
+## Heartbeat
+
+When used with an `AutonomousAgent` that has `heartbeat=True`, the interface periodically sends the agent's `heartbeat_message` to the agent, then delivers the response to the WhatsApp recipient.
+
+The target recipient is resolved automatically from the first incoming message. You can also set it explicitly via `heartbeat_recipient`.
+
+```python
+import os
+from upsonic import AutonomousAgent
+from upsonic.interfaces import InterfaceManager, WhatsAppInterface
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o-mini",
+    name="WhatsAppBot",
+    heartbeat=True,
+    heartbeat_period=30,
+    heartbeat_message="Summarize any new updates.",
+)
+
+whatsapp = WhatsAppInterface(
+    agent=agent,
+    verify_token=os.getenv("WHATSAPP_VERIFY_TOKEN"),
+    app_secret=os.getenv("WHATSAPP_APP_SECRET"),
+    mode="chat",
+    # heartbeat_recipient="905551234567",  # optional explicit override
+)
+
+manager = InterfaceManager(interfaces=[whatsapp])
+
+if __name__ == "__main__":
+    manager.serve(host="0.0.0.0", port=8000)
+```
+
 ## Reset Command (CHAT mode only)
 
 In CHAT mode, senders can clear their conversation by sending the reset command (e.g. `/reset`) as a message. Configure it with `reset_command`; set to `None` to disable.
@@ -84,6 +117,7 @@ Main entry point for Upsonic WhatsApp applications.
 | `reset_command` | `Optional[str]` | `"/reset"` | Message text that resets chat session (CHAT mode). Set `None` to disable. |
 | `storage` | `Optional[Storage]` | `None`  | Storage backend for chat sessions (CHAT mode). |
 | `allowed_numbers` | `Optional[List[str]]` | `None`  | Whitelist of phone numbers (e.g. `"905551234567"`). `None` = allow all. |
+| `heartbeat_recipient` | `Optional[str]` | `None` | Explicit WhatsApp phone number for heartbeat delivery. Auto-detected from first incoming message if omitted. |
 
 ### Key Methods
 
@@ -117,4 +151,3 @@ Mounted under the `/whatsapp` prefix:
 ### `GET /whatsapp/health`
 
 * Health/status of the interface.
-
