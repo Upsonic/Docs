@@ -6,6 +6,35 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 > Product updates, improvements, and bug fixes for Upsonic
 
 
+<Update label="Feb 12, 2026">
+	## v0.72.1
+
+	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.72.1)
+	
+	## New Features:
+	- **Asynchronous OCR processing**: Added async-first OCR pipeline with `get_text_async` and `process_file_async` entry points so document processing can run without blocking.
+	- **Document conversion layer (Layer 0)**: New document-to-image conversion layer using PyMuPDF for PDF rendering, EXIF-based orientation correction, and optional downscaling for large images before OCR.
+	- **OCR engine API and timeouts**: OCR providers refactored into instantiated engine classes (e.g. `EasyOCREngine`, `RapidOCREngine`, `TesseractOCREngine`, `DeepSeekOCREngine`, Paddle engines); added `OCRTimeoutError` and optional per-page timeouts for long-running jobs.
+	
+	## Improvements:
+	- **OCR PDF backend**: PDF conversion switched from pdf2image/poppler to PyMuPDF (fitz) for rendering; `ocr` extra dependency updated accordingly.
+	- **OCR image preprocessing**: `load_image` now applies EXIF-based orientation correction so rotated images are normalized before OCR.
+	- **Dependency and tooling**: Updated vulnerable packages and pinned/specified uv version for reproducible installs.
+	
+	## Bug Fixes:
+	- **LLM usage tracking**: Fixed usage (input/output/reasoning tokens and details) not being accumulated when agent runs used `do_async` without returning output, or when `RunUsage.incr` received usage objects with non-dict or missing `details`; usage is now correctly aggregated across agent, safety engine LLM, reflection, reliability layer, cache, culture, tools, and storage.
+	
+	
+	**Full Changelog:** https://github.com/Upsonic/Upsonic/compare/v0.72.0...v0.72.1
+	
+	### Pull Requests:
+	- fix: fix LLM usage tracking – [DoganK01](https://github.com/DoganK01) in [#525](https://github.com/Upsonic/Upsonic/pull/525)
+	- chore: update vulnerable packages and specify uv version – [angryfoxx](https://github.com/angryfoxx) in [#523](https://github.com/Upsonic/Upsonic/pull/523)
+	- feat: implement asynchronous OCR processing and add new document conversion layer – [onuratakan](https://github.com/onuratakan) in [#527](https://github.com/Upsonic/Upsonic/pull/527)
+	- chore: version 0.72.1 – [DoganK01](https://github.com/DoganK01) in [#528](https://github.com/Upsonic/Upsonic/pull/528)
+</Update>
+
+
 <Update label="Feb 9, 2026">
 	## v0.72.0
 
