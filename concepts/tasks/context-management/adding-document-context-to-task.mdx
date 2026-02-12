@@ -20,8 +20,7 @@ task = Task(
     context=["report.pdf"]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Multiple Document Attachments
@@ -37,8 +36,7 @@ task = Task(
     context=["document1.pdf", "document2.pdf"]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Supported Document Formats
@@ -68,8 +66,7 @@ task = Task(
     context=["report.pdf", "data.csv", "notes.md"]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Folder Context
@@ -87,8 +84,7 @@ task = Task(
     context=["/path/to/documents/folder"]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Best Practices

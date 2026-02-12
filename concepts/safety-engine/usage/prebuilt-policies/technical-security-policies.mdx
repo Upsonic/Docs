@@ -3,6 +3,11 @@ title: "Technical Security Policies"
 description: "Protect API keys, passwords, and security credentials"
 ---
 
+```bash
+# pip install "upsonic[safety-engine]"
+uv pip install "upsonic[safety-engine]"
+```
+
 ## What is Technical Security Policy?
 
 Technical security policies detect and protect API keys, access tokens, passwords, private keys, database credentials, encryption keys, and other technical security credentials.
@@ -28,8 +33,9 @@ agent = Agent(
 )
 
 task = Task("My API key is sk-1234567890abcdefghijklmnopqrstuvwxyz")
-result = agent.do(task)
-# Credentials anonymized while preserving content structure
+result = agent.print_do(task)
+
+print("Result:", result)
 ```
 
 ## Available Variants

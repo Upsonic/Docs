@@ -96,7 +96,7 @@ def extract_text_signals(html: str) -> dict:
 ### find_company_website.py
 
 ```python
-# task_examples/find_company_website/find_company_website.py
+# examples/find_company_website/find_company_website.py
 
 import sys
 import os
@@ -112,8 +112,8 @@ from typing import Optional
 try:
     from serper_client import find_company_candidates
 except ImportError:
-    from task_examples.find_company_website.serper_client import find_company_candidates
-from task_examples.find_company_website.validate_company_website import validate_candidate, ValidationResult
+    from examples.find_company_website.serper_client import find_company_candidates
+from examples.find_company_website.validate_company_website import validate_candidate, ValidationResult
 
 
 class WebsiteResponse(BaseModel):
@@ -178,7 +178,7 @@ if __name__ == "__main__":
 ### serper_client.py
 
 ```python
-# task_examples/find_company_website/serper_client.py
+# examples/find_company_website/serper_client.py
 
 import os
 import requests
@@ -233,7 +233,7 @@ def find_company_candidates(company_name: str, top_k: int = 5) -> list[str]:
 ### html_utils.py
 
 ```python
-# task_examples/find_company_website/html_utils.py
+# examples/find_company_website/html_utils.py
 
 import requests
 from bs4 import BeautifulSoup
@@ -262,7 +262,7 @@ def extract_text_signals(html: str) -> dict:
 ### validate_company_website.py
 
 ```python
-# task_examples/find_company_website/validate_company_website.py
+# examples/find_company_website/validate_company_website.py
 
 import argparse
 from upsonic import Agent, Task
@@ -273,7 +273,7 @@ from urllib.parse import urlparse
 try:
     from html_utils import fetch, extract_text_signals
 except ImportError:
-    from task_examples.find_company_website.html_utils import fetch, extract_text_signals
+    from examples.find_company_website.html_utils import fetch, extract_text_signals
 from bs4 import BeautifulSoup
 
 
@@ -401,7 +401,7 @@ You can get a free API key at https://serper.dev.
 ### Find a Company Website
 
 ```bash
-uv run python task_examples/find_company_website/find_company_website.py --company "Amazon Inc"
+uv run python examples/find_company_website/find_company_website.py --company "Amazon Inc"
 ```
 
 **Example output:**
@@ -419,7 +419,7 @@ uv run python task_examples/find_company_website/find_company_website.py --compa
 ### Validate a Company Website
 
 ```bash
-uv run python task_examples/find_company_website/validate_company_website.py --company "Amazon Inc" --url "https://www.amazon.com/"
+uv run python examples/find_company_website/validate_company_website.py --company "Amazon Inc" --url "https://www.amazon.com/"
 ```
 
 **Example output:**
@@ -445,7 +445,7 @@ uv run python task_examples/find_company_website/validate_company_website.py --c
 ## File Structure
 
 ```bash
-task_examples/find_company_website/
+examples/find_company_website/
 ├── find_company_website.py      # Agent: find websites
 ├── validate_company_website.py  # Agent: validate websites
 ├── serper_client.py             # Serper API client
@@ -466,4 +466,4 @@ task_examples/find_company_website/
 
 ## Repository
 
-View the complete example: [Find Company Website Example](https://github.com/Upsonic/Examples/tree/master/task_examples/find_company_website)
+View the complete example: [Find Company Website Example](https://github.com/Upsonic/Examples/tree/master/examples/find_company_website)

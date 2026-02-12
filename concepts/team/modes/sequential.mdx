@@ -5,9 +5,16 @@ description: "Linear workflow where tasks flow from one agent to the next"
 
 ## What is Sequential Team mode
 
-Sequential mode is the default and most straightforward team operation mode. Tasks flow from one agent to the next automatically, with the team intelligently selecting the best agent for each task based on their roles and capabilities.
+Sequential mode is the default and most straightforward team operation mode. Tasks flow from one agent to the next in a linear pipeline.
 
-## Usage
+There are two ways to assign agents to tasks in sequential mode:
+
+- **Automatic Selection** — The team intelligently analyzes each task and selects the best-suited agent based on their roles and capabilities. This is the default behavior.
+- **Manual Assignment** — You explicitly assign a specific agent to a task using the `agent` parameter. This gives you full control over which agent handles which task.
+
+## Automatic Selection
+
+By default, the team automatically picks the best agent for each task. You simply define your tasks and let the team decide.
 
 ```python
 from upsonic import Agent, Task, Team
@@ -33,15 +40,47 @@ team = Team(
     mode="sequential"
 )
 
-# Define tasks
+# Define tasks — the team will automatically select the best agent for each
 tasks = [
     Task(description="Research the latest developments in quantum computing"),
     Task(description="Write a blog post about quantum computing for general audience")
 ]
 
 # Execute team workflow
-result = team.do(tasks)
-print(result)
+result = team.print_do(tasks)
+```
+
+## Manual Assignment
+
+You can explicitly assign a specific agent to a task by passing the `agent` parameter. This overrides the automatic selection and ensures the designated agent handles that task.
+
+```python
+from upsonic import Agent, Task, Team
+
+# Create specialized agents
+writer = Agent(
+    model="openai/gpt-4o",
+    name="Writer",
+    role="Content Writer",
+    goal="Create engaging content"
+)
+
+editor = Agent(
+    model="openai/gpt-4o",
+    name="Editor",
+    role="Content Editor",
+    goal="Polish and improve content"
+)
+
+# Create sequential team
+team = Team(agents=[writer, editor], mode="sequential")
+
+# Explicitly assign agents to tasks
+task1 = Task(description="Write a product description", agent=writer)
+task2 = Task(description="Edit and polish the description", agent=editor)
+
+# Execute with manual assignments
+result = team.print_do([task1, task2])
 ```
 
 ## Streaming with mixed Agent and Team entities

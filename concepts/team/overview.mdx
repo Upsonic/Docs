@@ -25,33 +25,36 @@ Team enables multiple specialized agents to work together on complex tasks. Team
 from upsonic import Agent, Task, Team
 
 # Create specialized agents
-researcher = Agent(
-    "openai/gpt-4o",
-    name="Researcher",
-    role="Research specialist"
+data_analyst = Agent(
+    model="openai/gpt-4o",
+    name="Data Analyst",
+    role="Data Analysis Expert",
+    goal="Analyze data and extract insights"
 )
 
-writer = Agent(
-    "openai/gpt-4o",
-    name="Writer",
-    role="Content writer"
+report_writer = Agent(
+    model="openai/gpt-4o",
+    name="Report Writer",
+    role="Business Report Specialist",
+    goal="Create professional business reports"
 )
 
-# Create team
+# Create team with coordination
 team = Team(
-    agents=[researcher, writer],
-    mode="sequential"
+    agents=[data_analyst, report_writer],
+    mode="coordinate",
+    model="openai/gpt-4o"  # Required for leader agent
 )
 
-# Create tasks
+# Define tasks
 tasks = [
-    Task("Research latest AI trends"),
-    Task("Write a blog post about the research")
+    Task(description="Analyze Q4 sales data and identify trends"),
+    Task(description="Create executive summary of findings")
 ]
 
-# Execute team
-team.print_do(tasks)
-# team.do(tasks)
+# Leader agent coordinates the team
+result = team.print_do(tasks)
+print(result)
 ```
 
 ## Navigation

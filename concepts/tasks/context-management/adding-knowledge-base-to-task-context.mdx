@@ -42,8 +42,7 @@ task = Task(
 
 agent = Agent(model="openai/gpt-4o")
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Multiple Knowledge Bases
@@ -84,8 +83,7 @@ task = Task(
     context=[kb1, kb2]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Knowledge Base with Direct Content
@@ -112,8 +110,7 @@ task = Task(
     context=[knowledge_base]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Knowledge Base Configuration
@@ -141,8 +138,7 @@ knowledge_base = KnowledgeBase(
 
 agent = Agent(model="openai/gpt-4o")
 task = Task(description="Search the knowledge base for relevant information", context=[knowledge_base])
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Vector Search Filters
@@ -173,8 +169,7 @@ task = Task(
     vector_search_filter={"department": "sales", "year": 2024}
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Supported Sources
@@ -208,8 +203,7 @@ knowledge_base = KnowledgeBase(
 
 agent = Agent(model="openai/gpt-4o")
 task = Task(description="What insights can you find in the knowledge base?", context=[knowledge_base])
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Best Practices

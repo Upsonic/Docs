@@ -2,36 +2,43 @@
 title: "Telegram"
 sidebarTitle: "Telegram"
 description: "Host agents as Telegram bots with webhooks, multi-media, and chat or task modes"
+tag: "NEW"
 ---
 
-Use the Telegram interface to serve Agents as Telegram bots. It mounts webhook and management routes on a FastAPI app and supports text, photos, documents, voice, video, stickers, location, polls, and inline keyboard callbacks.
+Use the Telegram interface to serve Agents as Telegram bots. It supports text, photos, documents, voice, video, stickers, location, polls, and inline keyboard callbacks.
 
-## Installation
+## Prerequisites
 
-Install the Telegram interface dependencies (included in the main package; optional extras if any):
+Create a virtual environment and install the required dependencies:
 
 ```bash
-uv sync
+uv venv
+source .venv/bin/activate
+
+uv pip install upsonic fastapi uvicorn
+# pip install upsonic fastapi uvicorn
 ```
 
-## Setup
+## Step 1: Create a Telegram Bot
 
-Required environment variables:
+1. Open Telegram and search for [@BotFather](https://t.me/BotFather)
+2. Send `/newbot` and follow the prompts to choose a name and username
+3. Copy the **Bot API Token** you receive — you'll need it in the next step
 
-* `TELEGRAM_BOT_TOKEN` – Telegram Bot API token (from [@BotFather](https://t.me/BotFather))
-* `TELEGRAM_WEBHOOK_SECRET` (optional) – Secret token for webhook validation (`X-Telegram-Bot-Api-Secret-Token`)
-* `TELEGRAM_WEBHOOK_URL` (optional) – Base URL for automatic webhook registration (e.g. `https://your-domain.ngrok-free.app`)
+## Step 2: Set Up the Webhook with ngrok
 
-<Note>
+Telegram delivers messages to your bot via **webhooks** — it sends HTTPS requests to a **public URL** you provide. Your local `localhost:8000` is not accessible from the internet, so you need a tunnel. We'll use [ngrok](https://ngrok.com/) for this.
 
-  The interface uses a **webhook** model: Telegram sends updates to your `POST /telegram/webhook` endpoint. Ensure your server is reachable via HTTPS. For local development, use a tunnel (e.g. ngrok) and set `TELEGRAM_WEBHOOK_URL` or call `POST /telegram/set-webhook` after starting.
+<Steps>
 
-</Note>
+<Step title="Create an ngrok account">
+Go to [ngrok.com/signup](https://dashboard.ngrok.com/signup) and create a free account.
+</Step>
 
-## Operating Modes
+<Step title="Install ngrok">
+After signing up, follow the instructions on your [ngrok dashboard](https://dashboard.ngrok.com/get-started/setup) to install ngrok for your operating system.
 
-* **TASK** (default) – Each message is processed as an independent task; no conversation history. Best for one-off queries and stateless bots.
-* **CHAT** – Messages from the same user belong to a conversation session. The agent remembers context. Best for conversational assistants and support.
+<CodeGroup>
 
 ## Streaming
 
@@ -95,23 +102,37 @@ if __name__ == "__main__":
 ```
 
 ## Reset Command (CHAT mode only)
+```bash macOS
+brew install ngrok
+```
 
-In CHAT mode, users can clear their conversation by sending the reset command (e.g. `/reset`) as a message. Configure it with `reset_command`; set to `None` to disable.
+```bash Linux
+snap install ngrok
+```
 
-If the agent has a `workspace` configured, the reset command will also trigger a dynamic greeting message based on the workspace configuration. See [Workspace](/agents/advanced/workspace) for details.
+```bash Windows
+choco install ngrok
+```
 
-## Access Control (Whitelist)
+</CodeGroup>
+</Step>
 
-Pass `allowed_user_ids` (list of Telegram user IDs, e.g. `[1279809673]`). Only those users are processed; others are ignored (and optionally logged). Omit `allowed_user_ids` (or set `None`) to allow all users.
+<Step title="Connect your account">
+Copy your authtoken from the [ngrok dashboard](https://dashboard.ngrok.com/get-started/your-authtoken) and run:
 
-## Example Usage
+```bash
+ngrok config add-authtoken YOUR_AUTH_TOKEN
+```
+</Step>
 
-Create an agent, expose it with `TelegramInterface`, and serve via `InterfaceManager`. Example in **CHAT** mode with conversation history and reset:
+<Step title="Start the tunnel">
+Open a terminal and run:
 
-```python
-import os
-from upsonic import Agent
-from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
+```bash
+ngrok http 8000
+```
+
+You'll see output like this:
 
 def create_telegram_chat_bot():
     agent = Agent(
@@ -151,30 +172,92 @@ if __name__ == "__main__":
     manager = create_telegram_chat_bot()
     manager.serve(host="0.0.0.0", port=8000, reload=False)
 ```
-
-After starting, set the webhook (if not using `TELEGRAM_WEBHOOK_URL`):
-
-```bash
-curl -X POST 'http://localhost:8000/telegram/set-webhook?url=https://YOUR_DOMAIN/telegram/webhook'
+Forwarding  https://abc123.ngrok-free.app -> http://localhost:8000
 ```
 
-Check health:
+Copy the `https://....ngrok-free.app` URL — this is your public webhook URL.
+</Step>
+
+</Steps>
+
+<Warning>
+Keep this terminal open — if you close ngrok, the tunnel stops and your bot won't receive messages. When you restart ngrok, the URL changes and you'll need to update your `.env` file.
+</Warning>
+
+## Step 3: Configure Environment Variables
+
+Create a `.env` file with your credentials:
 
 ```bash
-curl http://localhost:8000/telegram/health
+TELEGRAM_BOT_TOKEN=your-bot-token-from-botfather
+TELEGRAM_WEBHOOK_URL=https://abc123.ngrok-free.app
 ```
 
-## Core Components
+<Tip>
+`TELEGRAM_WEBHOOK_URL` is the ngrok URL you copied. When you restart ngrok, this URL changes — update it accordingly.
+</Tip>
 
-* **`TelegramInterface`** – Wraps an Upsonic `Agent` for Telegram via FastAPI and Telegram Bot API.
-* **`TelegramTools`** – Used internally for sending messages, files, chat actions, and webhook management.
-* **`InterfaceManager.serve`** – Serves the FastAPI app (e.g. Uvicorn).
+You can also set an optional secret for webhook validation:
 
-## `TelegramInterface` Interface
+```bash
+TELEGRAM_WEBHOOK_SECRET=my-secret-token
+```
 
-Main entry point for Upsonic Telegram bots.
+## Step 4: Write Your Bot
 
-### Initialization Parameters
+There are two operating modes — pick the one that fits your use case:
+
+- **CHAT** — The agent remembers conversation context per user. Best for conversational assistants.
+- **TASK** — Each message is processed independently with no history. Best for one-off queries.
+
+<CodeGroup>
+
+```python CHAT Mode (Default)
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
+
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    name="TelegramChatBot",
+    system_prompt="You are a friendly AI assistant on Telegram. You remember conversation context.",
+)
+
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET"),
+    mode=InterfaceMode.CHAT,
+    reset_command="/reset",
+)
+
+manager = InterfaceManager(interfaces=[telegram])
+manager.serve(host="0.0.0.0", port=8000)
+```
+
+```python TASK Mode
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
+
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    name="TelegramBot",
+    system_prompt="You are a helpful AI assistant on Telegram. Be concise.",
+)
+
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET"),
+    mode=InterfaceMode.TASK,
+)
+
+manager = InterfaceManager(interfaces=[telegram])
+manager.serve(host="0.0.0.0", port=8000)
+```
 
 | Parameter | Type | Default | Description |
 | --------- | ---- | ------- | ----------- |
@@ -199,54 +282,61 @@ Main entry point for Upsonic Telegram bots.
 | `max_message_length` | `int` | `4096` | Max message length before splitting. |
 | `stream` | `bool` | `False` | Stream agent responses by progressively editing the message. |
 | `heartbeat_chat_id` | `Optional[int]` | `None` | Explicit Telegram chat ID for heartbeat delivery. Auto-detected from first incoming message if omitted. |
+</CodeGroup>
 
-### Key Methods
+## Step 5: Run
 
-| Method | Parameters | Return Type | Description |
-| ------ | ---------- | ----------- | ----------- |
-| `attach_routes` | None | `APIRouter` | Returns the FastAPI router with Telegram endpoints. |
-| `health_check` | None | `Dict[str, Any]` | Returns health and configuration (bot, webhook, mode, whitelist). |
-| `is_user_allowed` | `user_id: int` | `bool` | Returns whether the user is allowed (whitelist check). |
+Make sure ngrok is running in one terminal, then start your bot in another:
 
-## Endpoints
+```bash
+uv run your_bot.py
+# python your_bot.py
+```
 
-Mounted under the `/telegram` prefix:
+Your bot is now live. Open Telegram, find your bot by username, and send a message.
 
-### `POST /telegram/webhook`
+## Operating Modes
 
-* Receives Telegram updates (messages, edited messages, channel posts, callback queries).
-* Validates `X-Telegram-Bot-Api-Secret-Token` if `webhook_secret` is set.
-* Processes updates in the background; responds with `200 {"ok": true}` so Telegram does not retry.
+| Mode | Description | Best For |
+| ---- | ----------- | -------- |
+| **TASK** (default) | Each message is processed independently. No conversation history. | One-off queries, stateless bots |
+| **CHAT** | Messages from the same user share a session. The agent remembers context. | Conversational assistants, support bots |
 
-### `POST /telegram/set-webhook`
+### Reset Command (CHAT mode only)
 
-* Sets the bot webhook URL.
-* Query/body: `url` (required), `secret_token` (optional), `drop_pending_updates` (optional, default `False`).
-* Returns `{"success": bool}`.
+In CHAT mode, users can clear their conversation by sending `/reset`. Configure it with `reset_command`; set to `None` to disable.
 
-### `POST /telegram/delete-webhook`
+If the agent has a `workspace` configured, the reset command will also trigger a dynamic greeting message based on the workspace configuration.
 
-* Removes the current webhook.
-* Query: `drop_pending_updates` (optional).
-* Returns `{"success": bool}`.
+## Access Control
 
-### `GET /telegram/webhook-info`
+Restrict your bot to specific users by passing a list of Telegram user IDs:
 
-* Returns current webhook status from Telegram (e.g. URL, pending update count).
+```python
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    mode=InterfaceMode.CHAT,
+    allowed_user_ids=[1279809673],
+)
+```
 
-### `GET /telegram/health`
+Users not in the list are ignored. Omit `allowed_user_ids` (or set `None`) to allow everyone.
 
-* Health and status of the interface: bot connectivity, configuration (mode, whitelist, parse_mode, behavior flags), and optional bot info from Telegram.
+## Supported File & Message Types
 
-## Supported Message Types
+Users can send **any file type** through Telegram — images, PDFs, Excel spreadsheets, Word documents, CSVs, and more. The bot receives and forwards all of them to your agent.
 
-* **Text** – Processed as task or chat input.
-* **Photo** – Downloaded and sent to the agent with caption (or default).
-* **Document** – Downloaded and processed with caption; MIME type preserved.
-* **Voice / Audio** – Downloaded and processed (e.g. transcription); OGG/MP3 and common audio types.
-* **Video / Video note** – Downloaded and processed with caption where applicable.
-* **Sticker** – Converted to text (e.g. "User sent a sticker: {emoji}") and processed.
-* **Location / Venue / Contact / Poll** – Converted to text and processed.
-* **Callback query** – Inline keyboard button data processed as text; callback is answered to remove loading state.
+* **Images** (PNG, JPG, etc.) – The agent can process these directly via its vision capabilities
+* **PDFs, Excel, Word, CSV, and other documents** – The agent receives the file. If you equip your agent with the right tools (e.g. a PDF reader tool or an Excel parser), it can read and analyze the contents
+* **Voice / Audio** – Downloaded and processed (e.g. transcription)
+* **Video / Video note** – Downloaded and processed with caption
+* **Text** – Processed as task or chat input
+* **Sticker** – Converted to text (e.g. "User sent a sticker: {emoji}")
+* **Location / Venue / Contact / Poll** – Converted to text and processed
+* **Callback query** – Inline keyboard button data processed as text
 
-Media that the model cannot handle (e.g. unsupported audio/video format) receives a user-friendly error message back in the chat.
+<Tip>
+Your agent can already handle images natively. For other file types like PDF or Excel, add a custom tool to your agent so it can read and process them. See [Custom Tools](/concepts/tools/custom-tools/overview) for how to create one.
+</Tip>

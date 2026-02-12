@@ -1,6 +1,6 @@
 ---
 title: Task Metrics & Cost Tracking
-sidebarTitle: Metrics
+sidebarTitle: Task Metrics & Cost Tracking
 description: Track token usage and costs for your AI agent operations
 ---
 
@@ -32,7 +32,7 @@ agent = Agent(model="openai/gpt-4o")
 task = Task("Summarize the key benefits of AI agents in production systems")
 
 # Execute task
-result = agent.do(task)
+result = agent.print_do(task)
 
 # Access metrics
 print(f"Cost: ${task.total_cost:.6f}")
@@ -88,7 +88,7 @@ total_cost = 0
 total_tokens = 0
 
 for task in tasks:
-    result = agent.do(task)
+    result = agent.print_do(task)
     
     cost = task.total_cost
     tokens = task.total_input_token + task.total_output_token
@@ -111,7 +111,7 @@ from upsonic import Agent, Task
 
 def execute_with_budget(agent, task, max_cost=0.01):
     """Execute task with cost limit"""
-    result = agent.do(task)
+    result = agent.print_do(task)
     
     if task.total_cost > max_cost:
         print(f"⚠️  Warning: Task exceeded budget!")
@@ -145,7 +145,7 @@ for model in models:
     agent = Agent(model=model)
     task = Task(task_description)
     
-    result = agent.do(task)
+    result = agent.print_do(task)
     
     print(f"{model}")
     print(f"  Cost: ${task.total_cost:.6f}")
@@ -180,7 +180,7 @@ agent = Agent(model="openai/gpt-4o")
 
 for i in range(10):
     task = Task(f"Process item {i}")
-    agent.do(task)
+    agent.print_do(task)
     tracker.track(task)
 
 stats = tracker.summary()
@@ -212,7 +212,7 @@ def log_task_metrics(task, filename="task_metrics.jsonl"):
 # Usage
 agent = Agent(model="openai/gpt-4o")
 task = Task("Analyze customer sentiment")
-agent.do(task)
+agent.print_do(task)
 log_task_metrics(task)
 ```
 
@@ -230,7 +230,7 @@ from upsonic import Agent, Task
 
 agent = Agent(model="openai/gpt-4o")
 task = Task("Sample query")
-agent.do(task)
+agent.print_do(task)
 
 print(f"Model: {agent.model}")
 print(f"Price ID: {task.price_id}")
@@ -255,7 +255,7 @@ If metrics are not populated, ensure:
 
 ```python
 task = Task("Test query")
-result = agent.do(task)
+result = agent.print_do(task)
 
 if task.total_cost is None:
     print("Metrics not available - check task execution")

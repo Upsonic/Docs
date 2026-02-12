@@ -12,7 +12,7 @@ By default, `AutonomousAgent` uses:
 - **Full Session Memory**: Enabled by default to preserve conversation history
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 # InMemoryStorage + full_session_memory are enabled automatically
 agent = AutonomousAgent(
@@ -21,10 +21,12 @@ agent = AutonomousAgent(
 )
 
 # First interaction
-agent.do("Read the main.py file")
+task = Task("Read the main.py file")
+agent.print_do(task)
 
 # Second interaction - agent remembers context (full_session_memory is True by default)
-agent.print_do("Now add error handling to that file")
+task = Task("Now add error handling to that file")
+agent.print_do(task)
 ```
 
 ## Additional Memory Features
@@ -48,7 +50,7 @@ agent = AutonomousAgent(
 Use database-backed storage for persistence across sessions:
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 from upsonic.storage import SqliteStorage, Memory
 
 # Create persistent storage
@@ -67,7 +69,8 @@ agent = AutonomousAgent(
 )
 
 # Conversations persist across restarts
-agent.print_do("Continue where we left off")
+task = Task("Continue where we left off")
+agent.print_do(task)
 ```
 
 ## Session and User IDs

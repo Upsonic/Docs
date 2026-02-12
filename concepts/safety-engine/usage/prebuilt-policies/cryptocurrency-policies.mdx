@@ -3,6 +3,11 @@ title: "Cryptocurrency Policies"
 description: "Detect and handle crypto-related content"
 ---
 
+```bash
+# pip install "upsonic[safety-engine]"
+uv pip install "upsonic[safety-engine]"
+```
+
 ## What is Crypto Policy?
 
 Cryptocurrency policies detect and handle crypto-related content. Designed for financial institutions that need to block or control cryptocurrency discussions, trading advice, or wallet addresses.
@@ -19,18 +24,20 @@ Cryptocurrency policies are critical for financial institutions and organization
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import CryptoBlockPolicy
+from upsonic.safety_engine.policies import CryptoBlockPolicy_LLM_Finder
+
+CryptoBlockPolicy_LLM_Finder.rule.text_finder_llm = "openai/gpt-4o"
 
 # Block any crypto-related questions
 agent = Agent(
-    model="openai/gpt-4o",
-    user_policy=CryptoBlockPolicy,
+    "openai/gpt-4o",
+    user_policy=CryptoBlockPolicy_LLM_Finder,
     debug=True
 )
 
 task = Task("Tell me about Bitcoin investments")
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 # Blocked before processing
 ```
 

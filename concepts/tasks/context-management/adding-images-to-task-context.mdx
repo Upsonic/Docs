@@ -20,8 +20,7 @@ task = Task(
     context=["image.png"]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Multiple Image Attachments
@@ -37,8 +36,7 @@ task = Task(
     context=["image1.jpg", "image2.jpg"]
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Images with Other Context
@@ -54,8 +52,7 @@ task = Task(
     context=["chart.png", market_data_task],
 )
 
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Supported Image Formats
@@ -79,33 +76,7 @@ task = Task(
     context=["photo.jpg", "diagram.png", "chart.tiff"]
 )
 
-result = agent.do(task)
-print(result)
-```
-
-## Image Processing with Tools
-
-```python
-from upsonic import Agent, Task
-from upsonic.tools import tool
-
-@tool
-def image_analyzer(image_path: str) -> str:
-    """Analyze image content and return description."""
-    # Your image analysis logic here
-    return f"Analysis of {image_path}"
-
-agent = Agent(model="openai/gpt-4o")
-
-# Task combining image attachments with image analysis tools
-task = Task(
-    description="Analyze the attached images using the image analyzer tool",
-    context=["image1.jpg", "image2.png"],
-    tools=[image_analyzer]
-)
-
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Best Practices
@@ -115,4 +86,4 @@ print(result)
 - **Format Selection**: Choose appropriate formats based on your analysis needs
 - **Error Handling**: Handle cases where image files might not be accessible
 - **Context Integration**: Combine images with relevant text context for better analysis
-- **Tool Integration**: Use specialized image analysis tools when available
+

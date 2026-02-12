@@ -17,8 +17,7 @@ agent = Agent(model="openai/gpt-4o")
 task = Task(description="What is the capital of France?")
 
 # Execute task
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Task with Tools
@@ -45,8 +44,7 @@ task = Task(
 )
 
 # Execute task
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Task with Response Format
@@ -68,39 +66,7 @@ task = Task(
 )
 
 # Execute task
-result = agent.do(task)
-print(f"Summary: {result.summary}")
-print(f"Confidence: {result.confidence}")
-print(f"Recommendations: {result.recommendations}")
-```
-
-## Task with Advanced Configuration
-
-```python
-from upsonic import Agent, Task
-
-def validate_output(result):
-    """Custom guardrail function."""
-    if isinstance(result, str) and len(result) > 10:
-        return True
-    return False
-
-# Create agent and task with advanced features
-agent = Agent(model="openai/gpt-4o")
-task = Task(
-    description="Generate a comprehensive report on AI trends",
-    enable_cache=True,
-    cache_method="vector_search",
-    cache_threshold=0.8,
-    cache_duration_minutes=120,
-    guardrail=validate_output,
-    guardrail_retries=3,
-    enable_thinking_tool=True
-)
-
-# Execute task
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 ```
 
 ## Best Practices

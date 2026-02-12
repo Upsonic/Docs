@@ -30,12 +30,10 @@ The `AutonomousAgent` class extends the base `Agent` with built-in filesystem an
 - **Read-Before-Edit**: Enforces reading files before editing for safety
 - **Inherits All Agent Features**: Memory, policies, streaming, caching, and more
 
-## Example
-
-### Basic Example
+## Quick Example
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 # Create an autonomous agent with workspace
 agent = AutonomousAgent(
@@ -44,19 +42,10 @@ agent = AutonomousAgent(
 )
 
 # The agent can read, write, and execute in the workspace
-agent.print_do("Read the main.py file and explain what it does")
+task = Task("Read the main.py file and explain what it does")
+agent.print_do(task)
 ```
 
 <Warning>
 All file and shell operations are restricted to the workspace directory. Attempting to access files outside the workspace will be blocked for security.
 </Warning>
-
-## Navigation
-
-- [Creating an Autonomous Agent](/autonomous-agent/creating-an-autonomous-agent) - Learn how to create and configure autonomous agents
-- [Attributes](/autonomous-agent/attributes) - Comprehensive guide to all configuration options
-- [Running an Autonomous Agent](/autonomous-agent/running-an-autonomous-agent) - Execute agents with different methods
-- [Filesystem Tools](/autonomous-agent/advanced/filesystem-tools) - Detailed guide to filesystem operations
-- [Shell Tools](/autonomous-agent/advanced/shell-tools) - Guide to shell command execution
-- [Workspace Security](/autonomous-agent/advanced/workspace-security) - Sandboxing and security features
-- [Memory Integration](/autonomous-agent/advanced/memory-integration) - Session persistence and storage

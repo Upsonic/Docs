@@ -5,11 +5,7 @@ description: "LLM-driven feedback for policy violations with retry capabilities"
 
 ## Overview
 
-The **Policy Feedback Loop** enables LLM-generated feedback when policy violations occur, allowing users to understand restrictions and agents to self-correct their outputs through retry loops.
-
-**Two Approaches:**
-- **User Policy Feedback**: Provides helpful guidance when user input violates policies
-- **Agent Policy Feedback**: Allows agents to retry and fix policy violations in their outputs
+The **Policy Feedback Loop** enables LLM-generated feedback when policy violations occur, allowing agents to self-correct their outputs through retry loops.
 
 ## User Policy Feedback
 
@@ -20,235 +16,46 @@ from upsonic import Agent, Task
 from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
 
 agent = Agent(
-    model="openai/gpt-4o-mini",
+    "openai/gpt-4o-mini",
     user_policy=CryptoBlockPolicy,
     user_policy_feedback=True,
-    user_policy_feedback_loop=1
 )
 
 task = Task(
     description="How can I buy Bitcoin and invest in cryptocurrency?"
 )
 
-result = agent.do(task)
-print(result)
-# Returns helpful feedback explaining the restriction and how to rephrase
+result = agent.print_do(task)
+print("Result:", result)
+# Instead of a hard block, user receives helpful feedback explaining the restriction
 ```
-
-**Key Behavior:**
-- No re-execution occurs
-- User receives guidance on how to rephrase
-- Task stops after returning feedback
 
 ## Agent Policy Feedback
 
-Enable agents to self-correct when their output violates policies:
-
-```python
-from upsonic import Agent, Task
-from upsonic.safety_engine.policies.pii_policies import PIIBlockPolicy
-
-agent = Agent(
-    model="openai/gpt-4o-mini",
-    agent_policy=PIIBlockPolicy,
-    agent_policy_feedback=True,
-    agent_policy_feedback_loop=3  # Allow up to 3 retries
-)
-
-task = Task(
-    description="Create a realistic customer profile with name Alice, email alice@example.com, phone number 1234567890, and address 123 Main St, Anytown, USA"
-)
-
-result = agent.do(task)
-print(result)
-# Agent retries up to 3 times until output is compliant
-# Feedback mechanism forces LLM to replace the PII with [REDACTED]: "Name: [REDACTED], Email: [REDACTED], Phone: [REDACTED]"
-# Final output example by Agent: "This content has been blocked as it contains personal identifiable information (PII) such as names, addresses, phone numbers, emails, or other sensitive personal data. Please remove or anonymize any personal information before resubmitting."
-```
-
-**Key Behavior:**
-- Agent receives feedback and retries
-- Model re-executes with feedback injected
-- Loop continues until policy passes or max retries reached
-- Falls back to block/modify action if still failing
-
-## Combined User and Agent Policies
-
-Protect both input and output with feedback enabled:
+Enable agents to self-correct when their output violates policies. The agent retries until its output is compliant:
 
 ```python
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
-from upsonic.safety_engine.policies.pii_policies import PIIBlockPolicy
 
 agent = Agent(
-    model="openai/gpt-4o-mini",
-    # User input protection
-    user_policy=CryptoBlockPolicy,
-    user_policy_feedback=True,
-    user_policy_feedback_loop=1,
-    # Agent output protection
-    agent_policy=PIIBlockPolicy,
+    "openai/gpt-4o-mini",
+    agent_policy=CryptoBlockPolicy,
     agent_policy_feedback=True,
-    agent_policy_feedback_loop=2,
-    debug=True  # See feedback generation in action
+    agent_policy_feedback_loop=3,  # Allow up to 3 retries
+    debug=True
 )
 
 task = Task(
-    description="Create a customer profile for someone interested in investment strategies"
+    description="Write a comprehensive guide about all investment types: stocks, bonds, real estate, cryptocurrency, and commodities"
 )
 
-result = agent.do(task)
-# Flow: User input checked → Agent generates → Output checked → Retry if needed
-```
-
-## Real-World Example: Customer Support Agent
-
-```python
-from upsonic import Agent, Task
-from upsonic.safety_engine.policies.pii_policies import PIIBlockPolicy
-from upsonic.safety_engine.base import RuleBase, ActionBase, Policy
-from upsonic.safety_engine.models import PolicyInput, RuleOutput, PolicyOutput
-from typing import Optional, Dict, Any
-import re
-
-# 1. Define custom rule for company secrets
-class CompanySecretRule(RuleBase):
-    """Detects sensitive company information"""
-    
-    name = "Company Secret Rule"
-    description = "Detects confidential company terms"
-    language = "en"
-    
-    def __init__(self, options: Optional[Dict[str, Any]] = None):
-        super().__init__(options)
-        self.keywords = [
-            "confidential", "internal strategy", "trade secret",
-            "proprietary", "classified", "restricted"
-        ]
-    
-    def process(self, policy_input: PolicyInput) -> RuleOutput:
-        combined_text = " ".join(policy_input.input_texts or []).lower()
-        triggered = []
-        
-        for keyword in self.keywords:
-            pattern = r'\b' + re.escape(keyword.lower()) + r'\b'
-            if re.search(pattern, combined_text):
-                triggered.append(keyword)
-        
-        if not triggered:
-            return RuleOutput(
-                confidence=0.0,
-                content_type="SAFE",
-                details="No confidential content detected"
-            )
-        
-        return RuleOutput(
-            confidence=1.0,
-            content_type="COMPANY_SECRET",
-            details=f"Found {len(triggered)} confidential terms",
-            triggered_keywords=triggered
-        )
-
-# 2. Define custom action
-class CompanySecretAction(ActionBase):
-    """Blocks company confidential content"""
-    
-    name = "Company Secret Action"
-    description = "Blocks confidential company information"
-    language = "en"
-    
-    def action(self, rule_result: RuleOutput) -> PolicyOutput:
-        if rule_result.confidence >= 0.8:
-            return self.raise_block_error(
-                "Company confidential information detected and blocked."
-            )
-        return self.allow_content()
-
-# 3. Create the policy
-company_secrets_policy = Policy(
-    name="Company Secrets Policy",
-    description="Protects confidential company information",
-    rule=CompanySecretRule(),
-    action=CompanySecretAction()
-)
-
-agent = Agent(
-    model="openai/gpt-4o-mini",
-    name="Customer Support Agent",
-    # Block sensitive user queries
-    user_policy=company_secrets_policy,
-    user_policy_feedback=True,
-    user_policy_feedback_loop=1,
-    # Ensure agent doesn't leak PII in responses
-    agent_policy=PIIBlockPolicy,
-    agent_policy_feedback=True,
-    agent_policy_feedback_loop=2,
-    debut=True
-)
-
-# Scenario 1: User asks about sensitive info
-task1 = Task(
-    description="What is our internal strategy for Q4 product launches?"
-)
-result1 = agent.do(task1)
-# Returns: Helpful feedback explaining why the question can't be answered
-
-# Scenario 2: Agent needs to generate customer data
-task2 = Task(
-    description="Generate a sample customer support ticket with customer contact information"
-)
-result2 = agent.do(task2)
-# Agent retries until output is compliant (no real PII)
-```
-
-## Configuration Parameters in Agent class
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `user_policy_feedback` | bool | False | Enable feedback for user policy violations |
-| `agent_policy_feedback` | bool | False | Enable feedback loop for agent policy violations |
-| `user_policy_feedback_loop` | int | 1 | Max attempts to generate user feedback |
-| `agent_policy_feedback_loop` | int | 1 | Max retry attempts for agent feedback loop |
-
-## Best Practices
-
-1. **Start with 1-2 retries**: More retries = more LLM calls = higher cost
-2. **Use `debug=True` during development**: See feedback generation in action
-3. **Monitor costs**: Each feedback generation and retry involves LLM calls
-4. **Set appropriate fallback actions**: Ensure policies have proper actions (BLOCK, REPLACE, ANONYMIZE) for when loops are exhausted
-
-## How It Works
-
-**User Policy Flow:**
-```
-User Input → Policy Check → Violation Detected
-                ↓
-        Feedback Enabled?
-        ↓ Yes         ↓ No
-Generate LLM     Block/Modify
- Feedback          Content
-    ↓
-Return Helpful
- Message to User
-```
-
-**Agent Policy Flow:**
-```
-Agent Output → Policy Check → Violation Detected
-                    ↓
-        Feedback Enabled & Can Retry?
-        ↓ Yes                ↓ No
-Generate LLM          Apply Block/
-  Feedback           Modify Action
-    ↓
-Inject Feedback as
-  User Message
-    ↓
-Re-execute Model
-    ↓
-Check Policy Again
-    ↓
-Continue Loop Until
-Pass or Retries Exhausted
+# Since only agent_policy is set (not user_policy), the input is NOT checked.
+# What happens under the hood:
+# 1. Agent generates a guide including "Cryptocurrency: Bitcoin, Ethereum..."
+# 2. Crypto policy detects violation on OUTPUT → feedback sent back to agent
+# 3. Agent retries without crypto section → only stocks, bonds, real estate, commodities
+# 4. Crypto policy passes → compliant output returned
+result = agent.print_do(task)
+print("Result:", result)
 ```

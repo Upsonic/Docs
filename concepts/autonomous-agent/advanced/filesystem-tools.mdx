@@ -24,7 +24,7 @@ The `AutonomousFilesystemToolKit` provides comprehensive file operations, all sa
 ## Example: Code Analysis
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
     model="openai/gpt-4o",
@@ -32,13 +32,14 @@ agent = AutonomousAgent(
 )
 
 # Search and analyze code
-agent.print_do("Find all Python files that contain 'TODO' comments and list them with line numbers")
+task = Task("Find all Python files that contain 'TODO' comments and list them with line numbers")
+agent.print_do(task)
 ```
 
 ## Example: Bulk File Operations
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
     model="openai/gpt-4o",
@@ -46,13 +47,14 @@ agent = AutonomousAgent(
 )
 
 # Create project structure
-agent.print_do("""
+task = Task("""
 Create a basic Python package structure:
 - src/mypackage/__init__.py
 - src/mypackage/core.py with a sample function
 - tests/__init__.py
 - tests/test_core.py with a basic test
 """)
+agent.print_do(task)
 ```
 
 ## Read-Before-Edit Safety
@@ -60,7 +62,7 @@ Create a basic Python package structure:
 The filesystem toolkit enforces reading a file before editing it. This prevents accidental modifications to files the agent hasn't seen:
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
     model="openai/gpt-4o",
@@ -68,7 +70,8 @@ agent = AutonomousAgent(
 )
 
 # The agent will automatically read first, then edit
-agent.print_do("Add type hints to all functions in utils.py")
+task = Task("Add type hints to all functions in utils.py")
+agent.print_do(task)
 ```
 
 ## Direct Toolkit Access

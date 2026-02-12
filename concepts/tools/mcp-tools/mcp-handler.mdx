@@ -46,8 +46,8 @@ task = Task(
 )
 
 # Execute
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ### Server Parameters
@@ -93,8 +93,8 @@ task = Task(
 )
 
 # Execute
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## Parameters
@@ -163,11 +163,11 @@ task = Task(
 )
 
 # Execute
-result = agent.do(task)
-print(f"Tables Created: {result.tables_created}")
-print(f"Records Inserted: {result.records_inserted}")
-print(f"Sample Data: {result.sample_data}")
-print(f"Summary: {result.summary}")
+result = agent.print_do(task)
+print("Tables Created:", result.tables_created)
+print("Records Inserted:", result.records_inserted)
+print("Sample Data:", result.sample_data)
+print("Summary:", result.summary)
 ```
 
 ## Tool Name Prefix
@@ -215,8 +215,8 @@ task = Task(
     """
 )
 
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 The `tool_name_prefix` is especially useful when:

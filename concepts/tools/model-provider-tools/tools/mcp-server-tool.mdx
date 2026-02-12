@@ -34,8 +34,8 @@ agent = Agent(model=model, tools=[mcp_tool])
 
 # Run task
 task = Task('Tell me about the Upsonic/Upsonic repo.')
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ### 2. Using Public MCP Server (OpenAI)
@@ -63,8 +63,8 @@ agent = Agent(model=model, tools=[mcp_tool])
 
 # Run task
 task = Task('Tell me about the Upsonic/Upsonic repo.')
-result = agent.do(task)
-print(result)
+result = agent.print_do(task)
+print("Result:", result)
 ```
 
 ## Parameters

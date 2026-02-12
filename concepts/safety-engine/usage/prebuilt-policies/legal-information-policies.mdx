@@ -3,6 +3,11 @@ title: "Legal Information Policies"
 description: "Protect case numbers and attorney-client privileged information"
 ---
 
+```bash
+# pip install "upsonic[safety-engine]"
+uv pip install "upsonic[safety-engine]"
+```
+
 ## What is Legal Info Policy?
 
 Legal information policies detect and protect case numbers, legal IDs, court documents, attorney-client privileged information, and other sensitive legal data.
@@ -19,17 +24,16 @@ Legal information policies are essential for protecting attorney-client privileg
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import LegalInfoRaiseExceptionPolicy
+from upsonic.safety_engine.policies import LegalInfoBlockPolicy
 
 agent = Agent(
     model="openai/gpt-4o",
-    user_policy=LegalInfoRaiseExceptionPolicy,
+    user_policy=LegalInfoBlockPolicy,
     debug=True
 )
 
 task = Task("Case number 2024-CV-12345 involves attorney-client privileged information")
-result = agent.do(task)
-# Raises DisallowedOperation exception
+result = agent.print_do(task)
 ```
 
 ## Available Variants

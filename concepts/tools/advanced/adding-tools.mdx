@@ -1,0 +1,153 @@
+---
+title: "Adding Tools"
+description: "Add tools to agents and tasks at initialization or dynamically at runtime"
+---
+
+## Adding Tools to Agent
+
+Agent-level tools are available for **every task** that agent executes.
+
+### On Initialization
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def add(a: int, b: int) -> int:
+    """Add two numbers."""
+    return a + b
+
+agent = Agent("openai/gpt-4o", tools=[add])
+
+task = Task(description="What is 5 + 3?")
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+### Dynamically with `add_tools`
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
+
+@tool
+def divide(a: int, b: int) -> float:
+    """Divide two numbers."""
+    return a / b
+
+agent = Agent(model="openai/gpt-4o")
+agent.add_tools(multiply)              # Single tool
+agent.add_tools([divide])              # Multiple tools
+
+task = Task(description="What is 10 multiplied by 5?")
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+## Adding Tools to Task
+
+Task-level tools are **only available for that specific task**. Other tasks run by the same agent cannot use them.
+
+### On Initialization
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def calculate_tax(amount: float, rate: float) -> float:
+    """Calculate tax for given amount."""
+    return amount * rate
+
+agent = Agent(model="openai/gpt-4o")
+
+# calculate_tax is only available for this task
+task = Task(
+    description="Calculate 18% tax on 1000",
+    tools=[calculate_tax]
+)
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+### Dynamically with `add_tools`
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool
+def add(a: int, b: int) -> int:
+    """Add two numbers."""
+    return a + b
+
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
+
+agent = Agent(model="openai/gpt-4o")
+task = Task(description="Calculate 5 + 3 and then multiply by 2", tools=[add])
+task.add_tools(multiply)
+
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+## Deduplication
+
+Upsonic automatically prevents duplicate tool registration:
+
+```python
+from upsonic import Agent
+from upsonic.tools import tool
+
+@tool
+def add(a: int, b: int) -> int:
+    """Add two numbers."""
+    return a + b
+
+agent = Agent("openai/gpt-4o")
+
+agent.add_tools(add)
+
+# Subsequent registrations are ignored
+agent.add_tools(add)       # Ignored - same object
+agent.add_tools([add])     # Ignored - same object
+agent.add_tools([add, add])  # Only registered once
+
+print(len(agent.registered_agent_tools))  # Output: 1
+```
+
+## Re-adding After Removal
+
+After removing a tool, you can re-add it:
+
+```python
+from upsonic import Agent
+from upsonic.tools import tool, ToolKit
+
+class MathKit(ToolKit):
+    @tool
+    def add(self, a: int, b: int) -> int:
+        """Add two numbers."""
+        return a + b
+
+kit = MathKit()
+agent = Agent("openai/gpt-4o")
+
+agent.add_tools(kit)
+print("add" in agent.registered_agent_tools)  # True
+
+agent.remove_tools(kit)
+print("add" in agent.registered_agent_tools)  # False
+
+agent.add_tools(kit)
+print("add" in agent.registered_agent_tools)  # True
+```

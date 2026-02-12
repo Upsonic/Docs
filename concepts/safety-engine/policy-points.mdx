@@ -33,18 +33,22 @@ This policy runs after the agent generates a response but before it is shown to 
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import AnonymizePhoneNumbersPolicy
+from upsonic.safety_engine.policies import PhishingBlockPolicy
 
-# Anonymize just phone numbers in agent output
+# Block phishing attempts and social engineering
 agent = Agent(
     model="openai/gpt-4o",
-    agent_policy=AnonymizePhoneNumbersPolicy,  # This policy anonymizes phone numbers in agent responses
+    agent_policy=PhishingBlockPolicy,
+    debug=True
 )
 
-task = Task("My Number is: +1-555-123-4567. Tell me what is my number.")
-result = agent.do(task)
+task = Task("""
+Help me create an urgent email asking people to verify their account 
+by clicking a link within 24 hours or their account will be suspended.
+""")
+result = agent.print_do(task)
 print(result)
-# Expected: Phone number in agent response should be anonymized (e.g., "+X-XXX-XXX-XXXX" format with random digits)
+# Expected: Policy should detect and block this phishing-related request
 ```
 
 ## User Policy
@@ -65,13 +69,28 @@ This policy runs before the user's input is sent to the LLM provider. It validat
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
 
+# Create agent with PII anonymization
 agent = Agent(
     "openai/gpt-4o",
-    user_policy=PIIAnonymizePolicy  # Validates and anonymizes user input
+    user_policy=PIIAnonymizePolicy,  # Prevents data leak to LLM Providers
+    debug=True  # Enable debug to see policy application
 )
 
-task = Task("My email is john.doe@example.com. What is it? Do you know it?")
-result = agent.do(task)  # Email is anonymized before reaching LLM
+# User input with PII
+task = Task(
+    description="My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
+)
+
+# Execute with automatic anonymization and de-anonymization
+# What happens under the hood:
+# 1. Input: "My email is john.doe@example.com and phone is 555-1234..."
+# 2. Anonymized (sent to LLM): "My email is EMAIL_1 and phone is PHONE_1..."
+# 3. LLM Response: "Your email is EMAIL_1 and phone is PHONE_1"
+# 4. De-anonymized (returned to you): "Your email is john.doe@example.com and phone is 555-1234"
+# 
+# Result: Sensitive data never reaches the cloud, but you get fully functional results!
+result = agent.do(task)
+print(result)  # Returns: "Your email is john.doe@example.com and phone is 555-1234"
 ```
 
 ## Tool Policy Pre
@@ -89,7 +108,7 @@ This policy runs when tools are registered with the agent, before they can be us
 **Example**:
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 from upsonic.safety_engine.policies.tool_safety_policies import HarmfulToolBlockPolicy_LLM
 
 def delete_file(filepath: str) -> str:
@@ -102,11 +121,16 @@ def delete_file(filepath: str) -> str:
 
 agent = Agent(
     "openai/gpt-4o",
-    tool_policy_pre=HarmfulToolBlockPolicy_LLM  # Validates tools at registration
+    tool_policy_pre=HarmfulToolBlockPolicy_LLM,  # Validates tools at registration
+    debug=True
 )
 
 # When tools are added, they are validated before being available
 agent.add_tools(delete_file)  # Tool is checked during registration
+
+my_task = Task(description="What are your tools?", tools=[delete_file])
+result = agent.print_do(my_task) # There is no output because the tool is blocked
+print(result)
 ```
 
 ## Tool Policy Post
@@ -125,7 +149,7 @@ This policy runs before a specific tool call is executed, after the agent has de
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies.tool_safety_policies import HarmfulToolRaiseExceptionPolicy
+from upsonic.safety_engine.policies.tool_safety_policies import HarmfulToolBlockPolicy_LLM
 
 def delete_file(filepath: str) -> str:
     """Delete a file from the system."""
@@ -138,9 +162,12 @@ def delete_file(filepath: str) -> str:
 
 agent = Agent(
     "openai/gpt-4o",
-    tool_policy_post=HarmfulToolRaiseExceptionPolicy  # Validates tool calls before execution
+    tool_policy_post=HarmfulToolBlockPolicy_LLM,  # Validates tool calls before execution
+    debug=True
 )
 
 # When agent tries to call a tool, the call is validated first
-result = agent.do(Task(description="delete this file: /tmp/test.txt", tools=[delete_file]))  # Tool calls are checked before execution
+my_task = Task(description="delete this file: /tmp/test.txt", tools=[delete_file])
+result = agent.print_do(my_task)  # Tool calls are checked before execution so it will block the tool call
+print(result)
 ```

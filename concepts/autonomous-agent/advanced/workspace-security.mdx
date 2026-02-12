@@ -10,7 +10,7 @@ AutonomousAgent implements strict security measures to prevent unintended access
 All file and shell operations are restricted to the workspace directory:
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
     model="openai/gpt-4o",
@@ -18,12 +18,16 @@ agent = AutonomousAgent(
 )
 
 # These paths work (within workspace)
-agent.do("Read src/main.py")           # /home/user/my-project/src/main.py
-agent.do("Read ./config.json")         # /home/user/my-project/config.json
+task = Task("Read src/main.py")           # /home/user/my-project/src/main.py
+agent.print_do(task)
+task = Task("Read ./config.json")         # /home/user/my-project/config.json
+agent.print_do(task)
 
 # Path traversal is blocked
-agent.do("Read ../other-project/secret.txt")  # Blocked - outside workspace
-agent.do("Read /etc/passwd")                   # Blocked - absolute path outside workspace
+task = Task("Read ../other-project/secret.txt")  # Blocked - outside workspace
+agent.print_do(task)
+task = Task("Read /etc/passwd")                   # Blocked - absolute path outside workspace
+agent.print_do(task)
 ```
 
 ## Default Blocked Commands
@@ -62,14 +66,15 @@ agent = AutonomousAgent(
 Monitor which files the agent has read:
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
     model="openai/gpt-4o",
     workspace="/path/to/project"
 )
 
-agent.do("Read config.py and utils.py, then update utils.py")
+task = Task("Read config.py and utils.py, then update utils.py")
+agent.print_do(task)
 
 # Check accessed files
 print("Files read:", agent.filesystem_toolkit.get_read_files())

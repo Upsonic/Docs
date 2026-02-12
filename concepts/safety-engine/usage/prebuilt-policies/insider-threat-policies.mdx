@@ -3,6 +3,11 @@ title: "Insider Threat Policies"
 description: "Detect data exfiltration and unauthorized access"
 ---
 
+```bash
+# pip install "upsonic[safety-engine]"
+uv pip install "upsonic[safety-engine]"
+```
+
 ## What is Insider Threat Policy?
 
 Insider threat policies detect data exfiltration, unauthorized access, policy violations, suspicious behavior, and insider risk indicators.
@@ -19,17 +24,20 @@ Insider threat policies are critical for protecting organizations from internal 
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import InsiderThreatBlockPolicy
+from upsonic.safety_engine.policies import InsiderThreatBlockPolicy_LLM_Finder
+
+InsiderThreatBlockPolicy_LLM_Finder.rule.text_finder_llm = "openai/gpt-4o"
 
 agent = Agent(
-    model="openai/gpt-4o",
-    user_policy=InsiderThreatBlockPolicy,
+    "openai/gpt-4o",
+    user_policy=InsiderThreatBlockPolicy_LLM_Finder,
     debug=True,
 )
 
 task = Task("I need to download all company databases before I leave")
-result = agent.do(task)
+result = agent.print_do(task)
 # Blocked with appropriate message
+print("Result:", result)
 ```
 
 ## Available Variants

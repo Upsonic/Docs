@@ -3,6 +3,11 @@ title: "Sensitive Social Policies"
 description: "Detect racism, hate speech, and discriminatory language"
 ---
 
+```bash
+# pip install "upsonic[safety-engine]"
+uv pip install "upsonic[safety-engine]"
+```
+
 ## What is Sensitive Social Policy?
 
 Sensitive social policies detect racism, hate speech, discriminatory language, and other sensitive social issues to maintain respectful and inclusive communication.
@@ -19,17 +24,21 @@ Sensitive social policies are crucial for maintaining an inclusive and respectfu
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import SensitiveSocialBlockPolicy
+from upsonic.safety_engine.policies import SensitiveSocialBlockPolicy_LLM_Finder
+
+SensitiveSocialBlockPolicy_LLM_Finder.rule.text_finder_llm = "openai/gpt-4o"
 
 agent = Agent(
-    model="openai/gpt-4o",
-    user_policy=SensitiveSocialBlockPolicy,
+    "openai/gpt-4o",
+    user_policy=SensitiveSocialBlockPolicy_LLM_Finder,
     debug=True
 )
 
 task = Task("Inappropriate hate speech content")
-result = agent.do(task)
-# Blocked with educational message
+result = agent.print_do(task),
+# Blocked with appropriate message
+print("Result:", result)
+
 ```
 
 ## Available Variants

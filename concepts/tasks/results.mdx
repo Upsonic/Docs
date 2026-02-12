@@ -1,6 +1,6 @@
 ---
-title: Results
-sidebarTitle: Results
+title: Task Result
+sidebarTitle: Task Result
 description: Accessing and managing task execution results and metadata
 hideToc: false
 ---
@@ -15,11 +15,10 @@ from upsonic import Agent, Task
 # Create agent and execute task
 agent = Agent(model="openai/gpt-4o")
 task = Task(description="What is the capital of France?")
-result = agent.do(task)
+agent.print_do(task)
 
 # Access the response
-print(f"Task result: {result}")
-print(f"Task response: {task.response}")
+print("Result:", task.response)
 ```
 
 ## Task Metadata
@@ -30,7 +29,7 @@ from upsonic import Agent, Task
 # Create agent and execute task
 agent = Agent(model="openai/gpt-4o")
 task = Task(description="Explain quantum computing in simple terms")
-result = agent.do(task)
+agent.print_do(task)
 
 # Access task metadata
 print(f"Task ID: {task.task_id}")
@@ -48,7 +47,7 @@ from upsonic import Agent, Task
 # Create agent and execute task
 agent = Agent(model="openai/gpt-4o")
 task = Task(description="Write a short poem about technology")
-result = agent.do(task)
+agent.print_do(task)
 
 # Access cost information
 total_cost = task.total_cost
@@ -74,8 +73,7 @@ def get_weather(city: str) -> str:
 # Create agent and execute task with tools
 agent = Agent(model="openai/gpt-4o")
 task = Task(description="What's the weather in Paris?", tools=[get_weather])
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 
 # Access tool call history
 tool_calls = task.tool_calls
@@ -99,8 +97,7 @@ task = Task(
     cache_method="vector_search",
     cache_threshold=0.8
 )
-result = agent.do(task)
-print(result)
+agent.print_do(task)
 
 # Access cache statistics
 cache_stats = task.get_cache_stats()
@@ -129,7 +126,7 @@ task = Task(
     enable_cache=True
 )
 
-result = agent.do(task)
+result = agent.print_do(task)
 
 # Access all available information
 print("=== TASK EXECUTION SUMMARY ===")

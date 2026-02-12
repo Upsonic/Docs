@@ -24,7 +24,7 @@ The `AutonomousShellToolKit` enables secure terminal command execution within th
 ## Example: Running Commands
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
     model="openai/gpt-4o",
@@ -33,13 +33,14 @@ agent = AutonomousAgent(
 )
 
 # Run development tasks
-agent.print_do("Run the test suite and report any failures")
+task = Task("Run the test suite and report any failures")
+agent.print_do(task)
 ```
 
 ## Example: Python Execution
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
     model="openai/gpt-4o",
@@ -47,7 +48,8 @@ agent = AutonomousAgent(
 )
 
 # Execute Python code
-agent.print_do("Write and run a Python script that calculates the Fibonacci sequence up to 100")
+task = Task("Write and run a Python script that calculates the Fibonacci sequence up to 100")
+agent.print_do(task)
 ```
 
 ## Command Blocking
@@ -69,7 +71,7 @@ agent = AutonomousAgent(
 Pass custom environment variables to commands:
 
 ```python
-from upsonic import AutonomousAgent
+from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
     model="openai/gpt-4o",
@@ -78,7 +80,8 @@ agent = AutonomousAgent(
 
 # The shell toolkit supports environment variables
 # Commands run in the workspace directory
-agent.print_do("Set DEBUG=true and run the application")
+task = Task("Set DEBUG=true and run the application")
+agent.print_do(task)
 ```
 
 ## Direct Toolkit Access

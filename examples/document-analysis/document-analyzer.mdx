@@ -49,7 +49,7 @@ task = Task(
         "Do not invent, shorten, or replace words. "
         "Return only the full legal company name, nothing else."
     ),
-    attachements=["task_examples/document_analyzer/assets/vergi_levhasi.png"],
+    attachements=["examples/document_analyzer/assets/vergi_levhasi.png"],
     response_format=CompanyResponse
 )
 ```
@@ -57,7 +57,7 @@ task = Task(
 ## Complete Implementation
 
 ```python
-# task_examples/document_analyzer/extract_company_name.py
+# examples/document_analyzer/extract_company_name.py
 
 from upsonic import Task, Agent
 from pydantic import BaseModel
@@ -77,7 +77,7 @@ task = Task(
         "Do not invent, shorten, or replace words. "
         "Return only the full legal company name, nothing else."
     ),
-    attachements=["task_examples/document_analyzer/assets/vergi_levhasi.png"],
+    attachements=["examples/document_analyzer/assets/vergi_levhasi.png"],
     response_format=CompanyResponse
 )
 
@@ -107,7 +107,7 @@ uv sync
 ### Run the example
 
 ```bash
-python task_examples/document_analyzer/extract_company_name.py
+python examples/document_analyzer/extract_company_name.py
 ```
 
 ### Expected Output
@@ -121,7 +121,7 @@ Extracted Company Name: UPSONIC TEKNOLOJİ ANONİM ŞİRKETİ
 ## File Structure
 
 ```bash
-task_examples/document_analyzer/
+examples/document_analyzer/
 ├── extract_company_name.py      # Main document analysis script
 ├── assets/
 │   └── vergi_levhasi.png       # Sample tax certificate
@@ -185,4 +185,4 @@ task = Task(
 
 ## Repository
 
-View the complete example: [Document Analyzer Example](https://github.com/Upsonic/Examples/tree/master/task_examples/document_analyzer)
+View the complete example: [Document Analyzer Example](https://github.com/Upsonic/Examples/tree/master/examples/document_analyzer)

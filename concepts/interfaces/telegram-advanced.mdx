@@ -1,0 +1,123 @@
+---
+title: "Telegram Advanced"
+sidebarTitle: "Telegram Advanced"
+description: "TelegramInterface parameters, endpoints, and API reference"
+---
+
+## Core Components
+
+* **`TelegramInterface`** – Wraps an Upsonic `Agent` for Telegram via FastAPI and Telegram Bot API.
+* **`TelegramTools`** – Used internally for sending messages, files, chat actions, and webhook management.
+* **`InterfaceManager.serve`** – Serves the FastAPI app (e.g. Uvicorn).
+
+## Initialization Parameters
+
+| Parameter | Type | Default | Description |
+| --------- | ---- | ------- | ----------- |
+| `agent` | `Agent` | Required | Upsonic `Agent` instance. |
+| `bot_token` | `Optional[str]` | `None` | Telegram Bot API token (or `TELEGRAM_BOT_TOKEN`). |
+| `name` | `str` | `"Telegram"` | Interface name. |
+| `mode` | `Union[InterfaceMode, str]` | `InterfaceMode.TASK` | `TASK` or `CHAT`. |
+| `reset_command` | `Optional[str]` | `"/reset"` | Command to reset chat session (CHAT mode). Set `None` to disable. |
+| `storage` | `Optional[Storage]` | `None` | Storage backend for chat sessions (CHAT mode). |
+| `allowed_user_ids` | `Optional[List[int]]` | `None` | Whitelist of Telegram user IDs; `None` = allow all. |
+| `webhook_secret` | `Optional[str]` | `None` | Secret for webhook validation (`X-Telegram-Bot-Api-Secret-Token`). |
+| `webhook_url` | `Optional[str]` | `None` | Base URL for auto-setting webhook on startup. |
+| `parse_mode` | `Optional[str]` | `"HTML"` | Default parse mode: `"HTML"`, `"Markdown"`, `"MarkdownV2"`, or `None`. |
+| `disable_web_page_preview` | `bool` | `False` | Disable link previews in messages. |
+| `disable_notification` | `bool` | `False` | Send messages silently. |
+| `protect_content` | `bool` | `False` | Protect from forwarding/saving. |
+| `reply_in_groups` | `bool` | `True` | Process messages in groups/supergroups. |
+| `reply_in_channels` | `bool` | `False` | Process channel posts. |
+| `process_edited_messages` | `bool` | `False` | Process edited messages. |
+| `process_callback_queries` | `bool` | `True` | Handle inline keyboard callbacks. |
+| `typing_indicator` | `bool` | `True` | Send "typing" chat action before replying. |
+| `max_message_length` | `int` | `4096` | Max message length before splitting. |
+
+## Key Methods
+
+| Method | Parameters | Return Type | Description |
+| ------ | ---------- | ----------- | ----------- |
+| `attach_routes` | None | `APIRouter` | Returns the FastAPI router with Telegram endpoints. |
+| `health_check` | None | `Dict[str, Any]` | Returns health and configuration (bot, webhook, mode, whitelist). |
+| `is_user_allowed` | `user_id: int` | `bool` | Returns whether the user is allowed (whitelist check). |
+
+## Full Configuration Example
+
+```python
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
+
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    name="TelegramChatBot",
+    system_prompt="You are a helpful AI assistant on Telegram.",
+    print=True,
+    workspace="/my_agent_folder",
+)
+
+telegram = TelegramInterface(
+    agent=agent,
+    name="TelegramChat",
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    mode=InterfaceMode.CHAT,
+    reset_command="/reset",
+    allowed_user_ids=[1279809673],
+    parse_mode="HTML",
+    disable_web_page_preview=False,
+    disable_notification=False,
+    protect_content=False,
+    max_message_length=4096,
+    reply_in_groups=True,
+    reply_in_channels=False,
+    process_edited_messages=False,
+    process_callback_queries=True,
+    typing_indicator=True,
+)
+
+manager = InterfaceManager(interfaces=[telegram])
+manager.serve(host="0.0.0.0", port=8000, reload=False)
+```
+
+## Endpoints
+
+All endpoints are mounted under the `/telegram` prefix.
+
+### `POST /telegram/webhook`
+
+* Receives Telegram updates (messages, edited messages, channel posts, callback queries).
+* Validates `X-Telegram-Bot-Api-Secret-Token` if `webhook_secret` is set.
+* Processes updates in the background; responds with `200 {"ok": true}` so Telegram does not retry.
+
+### `POST /telegram/set-webhook`
+
+* Sets the bot webhook URL.
+* Query/body: `url` (required), `secret_token` (optional), `drop_pending_updates` (optional, default `False`).
+* Returns `{"success": bool}`.
+
+If you didn't set `TELEGRAM_WEBHOOK_URL`, you can register the webhook manually after starting the server:
+
+```bash
+curl -X POST 'http://localhost:8000/telegram/set-webhook?url=https://YOUR_NGROK_URL/telegram/webhook'
+```
+
+### `POST /telegram/delete-webhook`
+
+* Removes the current webhook.
+* Query: `drop_pending_updates` (optional).
+* Returns `{"success": bool}`.
+
+### `GET /telegram/webhook-info`
+
+* Returns current webhook status from Telegram (e.g. URL, pending update count).
+
+### `GET /telegram/health`
+
+* Health and status of the interface: bot connectivity, configuration (mode, whitelist, parse_mode, behavior flags), and optional bot info from Telegram.
+
+```bash
+curl http://localhost:8000/telegram/health
+```

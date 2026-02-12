@@ -3,6 +3,11 @@ title: "PII Policies"
 description: "Detect and protect personal identifiable information"
 ---
 
+```bash
+# pip install "upsonic[safety-engine]"
+uv pip install "upsonic[safety-engine]"
+```
+
 ## What is PII Policy?
 
 PII policies detect and protect personal identifiable information including emails, phone numbers, SSN, addresses, credit cards, driver's licenses, passports, IP addresses, and other sensitive personal data.
@@ -19,23 +24,30 @@ PII policies are critical for protecting personal identifiable information and e
 
 ```python
 from upsonic import Agent, Task
-from upsonic.safety_engine.policies import PIIAnonymizePolicy
+from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
 
-# Automatically hide sensitive info in output only
+# Create agent with PII anonymization
 agent = Agent(
-    model="openai/gpt-4o",
-    user_policy=PIIAnonymizePolicy,
-    debug=True
+    "openai/gpt-4o",
+    user_policy=PIIAnonymizePolicy,  # Prevents data leak to LLM Providers
+    debug=True  # Enable debug to see policy application
 )
 
-task = Task("My email is john@example.com and phone is 555-0123. Tell me what is my e mail and phone number.")
-result = agent.do(task)
-print(result)
-# Policy will anonymize the email and phone number
+# User input with PII
+task = Task(
+    description="My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
+)
 
-# Example output: I'm sorry, but I can't store or recall personal information like emails 
-# or phone numbers. If you need them, you might want to check your personal records 
-# or devices where they are stored.  
+# Execute with automatic anonymization and de-anonymization
+# What happens under the hood:
+# 1. Input: "My email is john.doe@example.com and phone is 555-1234..."
+# 2. Anonymized (sent to LLM): "My email is EMAIL_1 and phone is PHONE_1..."
+# 3. LLM Response: "Your email is EMAIL_1 and phone is PHONE_1"
+# 4. De-anonymized (returned to you): "Your email is john.doe@example.com and phone is 555-1234"
+#
+# Result: Sensitive data never reaches the cloud, but you get fully functional results!
+result = agent.do(task)
+print(result)  # Returns: "Your email is john.doe@example.com and phone is 555-1234"
 ```
 
 ## Available Variants
