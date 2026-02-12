@@ -44,6 +44,55 @@ result = team.do(tasks)
 print(result)
 ```
 
+## Streaming with mixed Agent and Team entities
+
+You can stream output with a mix of Agent and nested Team entities. Each entity's output is preceded by a header (e.g. `--- [Agent] Researcher ---`).
+
+```python
+from upsonic import Agent, Task, Team
+
+researcher = Agent(
+    model="openai/gpt-4o",
+    name="Researcher",
+    role="Research Specialist",
+    goal="Find accurate information and data",
+)
+
+editor = Agent(
+    model="openai/gpt-4o",
+    name="Editor",
+    role="Editor",
+    goal="Polish and refine content",
+)
+
+writer_team = Team(
+    entities=[
+        Agent(
+            model="openai/gpt-4o",
+            name="Writer",
+            role="Content Writer",
+            goal="Create clear and engaging content",
+        ),
+        editor,
+    ],
+    mode="sequential",
+    name="WriterTeam",
+)
+
+team = Team(
+    entities=[researcher, writer_team],
+    mode="sequential",
+)
+
+tasks = [
+    Task(description="Research the latest developments in quantum computing"),
+    Task(description="Write a blog post about quantum computing for general audience"),
+]
+
+for chunk in team.stream(tasks):
+    print(chunk, end="", flush=True)
+```
+
 ## Params
 
 - `agents`: List of Agent instances
