@@ -5,7 +5,7 @@ description: "Host agents as Telegram bots with webhooks, multi-media, and chat 
 tag: "NEW"
 ---
 
-Use the Telegram interface to serve Agents as Telegram bots. It mounts webhook and management routes on a FastAPI app and supports text, photos, documents, voice, video, stickers, location, polls, and inline keyboard callbacks.
+Use the Telegram interface to serve Agents as Telegram bots. It supports text, photos, documents, voice, video, stickers, location, polls, and inline keyboard callbacks.
 
 ## Prerequisites
 
@@ -175,80 +175,16 @@ Your bot is now live. Open Telegram, find your bot by username, and send a messa
 
 ## Operating Modes
 
-* **TASK** (default) – Each message is processed as an independent task; no conversation history. Best for one-off queries and stateless bots.
-* **CHAT** – Messages from the same user belong to a conversation session. The agent remembers context. Best for conversational assistants and support.
-
 | Mode | Description | Best For |
 | ---- | ----------- | -------- |
 | **TASK** (default) | Each message is processed independently. No conversation history. | One-off queries, stateless bots |
 | **CHAT** | Messages from the same user share a session. The agent remembers context. | Conversational assistants, support bots |
 
-## Streaming
+### Reset Command (CHAT mode only)
 
-Set `stream=True` to progressively edit the Telegram message as tokens arrive from the agent. An initial message is sent immediately and then updated in-place as new chunks are generated. Updates are throttled to ~1 second intervals to respect Telegram rate limits. Works in both TASK and CHAT modes.
+In CHAT mode, users can clear their conversation by sending `/reset`. Configure it with `reset_command`; set to `None` to disable.
 
-```python
-import os
-from upsonic import Agent
-from upsonic.interfaces import InterfaceManager, TelegramInterface
-
-agent = Agent(
-    model="openai/gpt-4o-mini",
-    name="TelegramBot",
-)
-
-telegram = TelegramInterface(
-    agent=agent,
-    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
-    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
-    mode="chat",
-    stream=True,
-)
-
-manager = InterfaceManager(interfaces=[telegram])
-
-if __name__ == "__main__":
-    manager.serve(host="0.0.0.0", port=8000)
-```
-
-## Heartbeat
-
-When used with an `AutonomousAgent` that has `heartbeat=True`, the interface periodically sends the agent's `heartbeat_message` to the agent, then delivers the response to the Telegram chat.
-
-The target chat ID is resolved automatically from the first incoming message. You can also set it explicitly via `heartbeat_chat_id`.
-
-```python
-import os
-from upsonic import AutonomousAgent
-from upsonic.interfaces import InterfaceManager, TelegramInterface
-
-agent = AutonomousAgent(
-    model="openai/gpt-4o-mini",
-    name="TelegramBot",
-    heartbeat=True,
-    heartbeat_period=30,
-    heartbeat_message="Summarize any new updates.",
-)
-
-telegram = TelegramInterface(
-    agent=agent,
-    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
-    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
-    mode="chat",
-    # heartbeat_chat_id=1279809673,  # optional explicit override
-)
-
-manager = InterfaceManager(interfaces=[telegram])
-
-if __name__ == "__main__":
-    manager.serve(host="0.0.0.0", port=8000)
-```
-
-## Reset Command (CHAT mode only)
-
-In CHAT mode, users can clear their conversation by sending the reset command (e.g. `/reset`) as a message. Configure it with `reset_command`; set to `None` to disable.
-
-If the agent has a `workspace` configured, the reset command will also trigger a dynamic greeting message based on the workspace configuration. See [Workspace](/agents/advanced/workspace) for details.
+If the agent has a `workspace` configured, the reset command will also trigger a dynamic greeting message based on the workspace configuration.
 
 ## Access Control
 
@@ -265,140 +201,6 @@ telegram = TelegramInterface(
 ```
 
 Users not in the list are ignored. Omit `allowed_user_ids` (or set `None`) to allow everyone.
-
-## Example Usage
-
-Create an agent, expose it with `TelegramInterface`, and serve via `InterfaceManager`. Example in **CHAT** mode with conversation history and reset:
-
-```python
-import os
-from upsonic import Agent
-from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
-
-def create_telegram_chat_bot():
-    agent = Agent(
-        model="openai/gpt-4o-mini",
-        name="TelegramChatBot",
-        system_prompt="""You are a friendly and helpful AI assistant on Telegram.
-You can answer questions, help with coding, and have natural conversations.
-When users send /reset, their conversation history will be cleared.
-Be concise but helpful. Use emojis where appropriate.""",
-        print=True,
-    )
-
-    telegram = TelegramInterface(
-        agent=agent,
-        name="TelegramChat",
-        bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
-        webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET"),
-        webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
-        mode=InterfaceMode.CHAT,
-        reset_command="/reset",
-        allowed_user_ids=[1279809673],
-        parse_mode="HTML",
-        disable_web_page_preview=False,
-        disable_notification=False,
-        protect_content=False,
-        max_message_length=4096,
-        reply_in_groups=True,
-        reply_in_channels=False,
-        process_edited_messages=False,
-        process_callback_queries=True,
-        typing_indicator=True,
-    )
-
-    return InterfaceManager(interfaces=[telegram])
-
-if __name__ == "__main__":
-    manager = create_telegram_chat_bot()
-    manager.serve(host="0.0.0.0", port=8000, reload=False)
-```
-
-After starting, set the webhook (if not using `TELEGRAM_WEBHOOK_URL`):
-
-```bash
-curl -X POST 'http://localhost:8000/telegram/set-webhook?url=https://YOUR_DOMAIN/telegram/webhook'
-```
-
-Check health:
-
-```bash
-curl http://localhost:8000/telegram/health
-```
-
-## Core Components
-
-* **`TelegramInterface`** – Wraps an Upsonic `Agent` for Telegram via FastAPI and Telegram Bot API.
-* **`TelegramTools`** – Used internally for sending messages, files, chat actions, and webhook management.
-* **`InterfaceManager.serve`** – Serves the FastAPI app (e.g. Uvicorn).
-
-## `TelegramInterface` Interface
-
-Main entry point for Upsonic Telegram bots.
-
-### Initialization Parameters
-
-| Parameter | Type | Default | Description |
-| --------- | ---- | ------- | ----------- |
-| `agent` | `Agent` | Required | Upsonic `Agent` instance. |
-| `bot_token` | `Optional[str]` | `None` | Telegram Bot API token (or `TELEGRAM_BOT_TOKEN`). |
-| `name` | `str` | `"Telegram"` | Interface name. |
-| `mode` | `Union[InterfaceMode, str]` | `InterfaceMode.TASK` | `TASK` or `CHAT`. |
-| `reset_command` | `Optional[str]` | `"/reset"` | Command to reset chat session (CHAT mode). Set `None` to disable. |
-| `storage` | `Optional[Storage]` | `None` | Storage backend for chat sessions (CHAT mode). |
-| `allowed_user_ids` | `Optional[List[int]]` | `None` | Whitelist of Telegram user IDs; `None` = allow all. |
-| `webhook_secret` | `Optional[str]` | `None` | Secret for webhook validation (`X-Telegram-Bot-Api-Secret-Token`). |
-| `webhook_url` | `Optional[str]` | `None` | Base URL for auto-setting webhook on startup. |
-| `parse_mode` | `Optional[str]` | `"HTML"` | Default parse mode: `"HTML"`, `"Markdown"`, or `None`. |
-| `disable_web_page_preview` | `bool` | `False` | Disable link previews in messages. |
-| `disable_notification` | `bool` | `False` | Send messages silently. |
-| `protect_content` | `bool` | `False` | Protect from forwarding/saving. |
-| `reply_in_groups` | `bool` | `True` | Process messages in groups/supergroups. |
-| `reply_in_channels` | `bool` | `False` | Process channel posts. |
-| `process_edited_messages` | `bool` | `False` | Process edited messages. |
-| `process_callback_queries` | `bool` | `True` | Handle inline keyboard callbacks. |
-| `typing_indicator` | `bool` | `True` | Send "typing" chat action before replying. |
-| `max_message_length` | `int` | `4096` | Max message length before splitting. |
-| `stream` | `bool` | `False` | Stream agent responses by progressively editing the message. |
-| `heartbeat_chat_id` | `Optional[int]` | `None` | Explicit Telegram chat ID for heartbeat delivery. Auto-detected from first incoming message if omitted. |
-
-### Key Methods
-
-| Method | Parameters | Return Type | Description |
-| ------ | ---------- | ----------- | ----------- |
-| `attach_routes` | None | `APIRouter` | Returns the FastAPI router with Telegram endpoints. |
-| `health_check` | None | `Dict[str, Any]` | Returns health and configuration (bot, webhook, mode, whitelist). |
-| `is_user_allowed` | `user_id: int` | `bool` | Returns whether the user is allowed (whitelist check). |
-
-## Endpoints
-
-Mounted under the `/telegram` prefix:
-
-### `POST /telegram/webhook`
-
-* Receives Telegram updates (messages, edited messages, channel posts, callback queries).
-* Validates `X-Telegram-Bot-Api-Secret-Token` if `webhook_secret` is set.
-* Processes updates in the background; responds with `200 {"ok": true}` so Telegram does not retry.
-
-### `POST /telegram/set-webhook`
-
-* Sets the bot webhook URL.
-* Query/body: `url` (required), `secret_token` (optional), `drop_pending_updates` (optional, default `False`).
-* Returns `{"success": bool}`.
-
-### `POST /telegram/delete-webhook`
-
-* Removes the current webhook.
-* Query: `drop_pending_updates` (optional).
-* Returns `{"success": bool}`.
-
-### `GET /telegram/webhook-info`
-
-* Returns current webhook status from Telegram (e.g. URL, pending update count).
-
-### `GET /telegram/health`
-
-* Health and status of the interface: bot connectivity, configuration (mode, whitelist, parse_mode, behavior flags), and optional bot info from Telegram.
 
 ## Supported File & Message Types
 
