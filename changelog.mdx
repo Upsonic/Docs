@@ -43,10 +43,14 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 	## New Features:
 	- Telegram interface: Adds a full Telegram bot interface and tooling so agents can be used over Telegram (webhook, messages, media).
 	- Chat and Task modes for interfaces: All interfaces (Slack, WhatsApp, Gmail, Telegram) support Chat mode (single Chat instance) and Task mode (single Agent instance) for consistent behavior.
+	- Autonomous Agent: New AutonomousAgent class — a pre-configured agent with built-in filesystem and shell toolkits, workspace sandboxing, and default in-memory storage for coding assistants, DevOps automation, and system administration tasks.
+	- Context management middleware: Automatic context window management that prunes tool call history and summarizes old messages when the conversation approaches the model's context limit, replacing the previous compression strategy.
+	- Workspace support: Agents can be configured with a workspace folder containing an Agents.md file whose content is included in the system prompt and used to generate a greeting message before the first task or chat.
 
 	## Improvements:
 	- Benchmarks documentation: benchmarks/QUICKSTART.md was translated from Turkish to English for consistent English docs.
 	- CLI and interface compatibility: Interfaces can now be started via the upsonic run CLI command instead of only programmatically.
+	- Optional context compression model: Context management middleware accepts an optional context_compression_model parameter, allowing a separate (typically larger-context-window) model for the summarization step while keeping the primary model for regular operations.
 
 	## Bug Fixes:
 	- Gmail encoding: Fixed encoding for non-ASCII characters in the Gmail interface so messages with non-ASCII letters are handled correctly.
