@@ -3,10 +3,9 @@ title: "Telegram"
 sidebarTitle: "Telegram"
 description: "Host agents as Telegram bots with webhooks, multi-media, and chat or task modes"
 tag: "NEW"
-tag: "NEW"
 ---
 
-Use the Telegram interface to serve Agents as Telegram bots. It supports text, photos, documents, voice, video, stickers, location, polls, and inline keyboard callbacks.
+Use the Telegram interface to serve Agents as Telegram bots. It mounts webhook and management routes on a FastAPI app and supports text, photos, documents, voice, video, stickers, location, polls, and inline keyboard callbacks.
 
 ## Prerequisites
 
@@ -271,11 +270,10 @@ Users not in the list are ignored. Omit `allowed_user_ids` (or set `None`) to al
 
 Create an agent, expose it with `TelegramInterface`, and serve via `InterfaceManager`. Example in **CHAT** mode with conversation history and reset:
 
-```bash
-ngrok http 8000
-```
-
-You'll see output like this:
+```python
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
 
 def create_telegram_chat_bot():
     agent = Agent(
@@ -315,92 +313,30 @@ if __name__ == "__main__":
     manager = create_telegram_chat_bot()
     manager.serve(host="0.0.0.0", port=8000, reload=False)
 ```
-Forwarding  https://abc123.ngrok-free.app -> http://localhost:8000
-```
 
-Copy the `https://....ngrok-free.app` URL — this is your public webhook URL.
-</Step>
-
-</Steps>
-
-<Warning>
-Keep this terminal open — if you close ngrok, the tunnel stops and your bot won't receive messages. When you restart ngrok, the URL changes and you'll need to update your `.env` file.
-</Warning>
-
-## Step 3: Configure Environment Variables
-
-Create a `.env` file with your credentials:
+After starting, set the webhook (if not using `TELEGRAM_WEBHOOK_URL`):
 
 ```bash
-TELEGRAM_BOT_TOKEN=your-bot-token-from-botfather
-TELEGRAM_WEBHOOK_URL=https://abc123.ngrok-free.app
+curl -X POST 'http://localhost:8000/telegram/set-webhook?url=https://YOUR_DOMAIN/telegram/webhook'
 ```
 
-<Tip>
-`TELEGRAM_WEBHOOK_URL` is the ngrok URL you copied. When you restart ngrok, this URL changes — update it accordingly.
-</Tip>
-
-You can also set an optional secret for webhook validation:
+Check health:
 
 ```bash
-TELEGRAM_WEBHOOK_SECRET=my-secret-token
+curl http://localhost:8000/telegram/health
 ```
 
-## Step 4: Write Your Bot
+## Core Components
 
-There are two operating modes — pick the one that fits your use case:
+* **`TelegramInterface`** – Wraps an Upsonic `Agent` for Telegram via FastAPI and Telegram Bot API.
+* **`TelegramTools`** – Used internally for sending messages, files, chat actions, and webhook management.
+* **`InterfaceManager.serve`** – Serves the FastAPI app (e.g. Uvicorn).
 
-- **CHAT** — The agent remembers conversation context per user. Best for conversational assistants.
-- **TASK** — Each message is processed independently with no history. Best for one-off queries.
+## `TelegramInterface` Interface
 
-<CodeGroup>
+Main entry point for Upsonic Telegram bots.
 
-```python CHAT Mode (Default)
-import os
-from upsonic import Agent
-from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
-
-agent = Agent(
-    model="openai/gpt-4o-mini",
-    name="TelegramChatBot",
-    system_prompt="You are a friendly AI assistant on Telegram. You remember conversation context.",
-)
-
-telegram = TelegramInterface(
-    agent=agent,
-    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
-    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
-    webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET"),
-    mode=InterfaceMode.CHAT,
-    reset_command="/reset",
-)
-
-manager = InterfaceManager(interfaces=[telegram])
-manager.serve(host="0.0.0.0", port=8000)
-```
-
-```python TASK Mode
-import os
-from upsonic import Agent
-from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
-
-agent = Agent(
-    model="openai/gpt-4o-mini",
-    name="TelegramBot",
-    system_prompt="You are a helpful AI assistant on Telegram. Be concise.",
-)
-
-telegram = TelegramInterface(
-    agent=agent,
-    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
-    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
-    webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET"),
-    mode=InterfaceMode.TASK,
-)
-
-manager = InterfaceManager(interfaces=[telegram])
-manager.serve(host="0.0.0.0", port=8000)
-```
+### Initialization Parameters
 
 | Parameter | Type | Default | Description |
 | --------- | ---- | ------- | ----------- |
