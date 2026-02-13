@@ -1,0 +1,56 @@
+---
+title: "Performance Evaluation"
+sidebarTitle: "Overview"
+description: "Profile latency and memory usage of agents, teams, and graphs"
+---
+
+The `PerformanceEvaluator` measures execution latency and memory footprint across multiple iterations. It provides statistical analysis (average, median, min, max, standard deviation) to help you understand the performance characteristics of your AI workflows.
+
+## How It Works
+
+1. **Warmup** — Runs the entity a configurable number of times to reach steady state.
+2. **Measurement** — Executes the entity for `num_iterations` runs, capturing high-precision latency and memory metrics per run.
+3. **Aggregation** — Calculates statistics across all measurement runs.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `agent_under_test` | `Agent \| Graph \| Team` | Yes | Entity to profile |
+| `task` | `Task \| List[Task]` | Yes | Task(s) to execute each iteration |
+| `num_iterations` | `int` | No | Number of measurement runs (default: 10) |
+| `warmup_runs` | `int` | No | Warmup runs before measurement (default: 2) |
+
+## Result Structure
+
+`PerformanceEvaluationResult` contains:
+
+- **`all_runs`** — List of `PerformanceRunResult` objects (one per iteration)
+- **`num_iterations`** / **`warmup_runs`** — Configuration values
+- **`latency_stats`** — `{ average, median, min, max, std_dev }` in seconds
+- **`memory_increase_stats`** — Net memory increase statistics in bytes
+- **`memory_peak_stats`** — Peak memory usage statistics in bytes
+
+Each `PerformanceRunResult` includes:
+
+- **`latency_seconds`** — Wall-clock time for the run
+- **`memory_increase_bytes`** — Net memory increase during the run
+- **`memory_peak_bytes`** — Peak memory relative to run start
+
+## Usage Examples
+
+<CardGroup cols={3}>
+
+  <Card title="Agent" icon="robot" href="/evals/performance/usages/agent">
+    Profile a single agent
+  </Card>
+
+  <Card title="Team" icon="users" href="/evals/performance/usages/team">
+    Profile a multi-agent team
+  </Card>
+
+  <Card title="Graph" icon="diagram-project" href="/evals/performance/usages/graph">
+    Profile a graph workflow
+  </Card>
+
+</CardGroup>

@@ -1,0 +1,78 @@
+---
+title: "Performance Evaluation with Graph"
+sidebarTitle: "Graph"
+description: "Profile a graph workflow's latency and memory usage"
+---
+
+## Single-Node Graph
+
+```python
+import asyncio
+from upsonic import Agent, Task, Graph
+from upsonic.eval import PerformanceEvaluator
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="GraphAgent",
+)
+
+graph = Graph(
+    default_agent=agent,
+    show_progress=False,
+)
+
+graph_task = Task(description="What is 7 + 3?")
+graph.add(graph_task)
+
+evaluator = PerformanceEvaluator(
+    agent_under_test=graph,
+    task=Task(description="placeholder"),
+    num_iterations=3,
+    warmup_runs=1,
+)
+
+result = asyncio.run(evaluator.run(print_results=True))
+
+print(f"Avg latency: {result.latency_stats['average'] * 1000:.0f} ms")
+print(f"Peak memory avg: {result.memory_peak_stats['average'] / 1024:.1f} KB")
+```
+
+<Note>
+  When profiling a Graph, the `task` parameter is not used directly — the graph
+  executes its own internal nodes.  Pass any placeholder `Task`.
+</Note>
+
+## Multi-Node Chain
+
+```python
+import asyncio
+from upsonic import Agent, Task, Graph
+from upsonic.eval import PerformanceEvaluator
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="ChainAgent",
+)
+
+graph = Graph(
+    default_agent=agent,
+    show_progress=False,
+)
+
+t1 = Task(description="What is the capital of Spain?")
+t2 = Task(description="What is a famous landmark in that city?")
+graph.add(t1 >> t2)
+
+evaluator = PerformanceEvaluator(
+    agent_under_test=graph,
+    task=Task(description="placeholder"),
+    num_iterations=3,
+    warmup_runs=1,
+)
+
+result = asyncio.run(evaluator.run(print_results=True))
+
+print(f"Avg latency: {result.latency_stats['average'] * 1000:.0f} ms")
+for i, run in enumerate(result.all_runs):
+    print(f"  Run {i+1}: {run.latency_seconds:.2f}s")
+```

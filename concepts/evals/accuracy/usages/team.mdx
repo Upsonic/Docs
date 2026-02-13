@@ -1,0 +1,136 @@
+---
+title: "Accuracy Evaluation with Team"
+sidebarTitle: "Team"
+description: "Evaluate a multi-agent team's output accuracy using LLM-as-a-judge"
+---
+
+## Sequential Mode
+
+```python
+import asyncio
+from upsonic import Agent, Team
+from upsonic.eval import AccuracyEvaluator
+
+researcher = Agent(
+    model="openai/gpt-4o",
+    name="Researcher",
+    role="Research Specialist",
+    goal="Find accurate information",
+)
+
+writer = Agent(
+    model="openai/gpt-4o",
+    name="Writer",
+    role="Content Writer",
+    goal="Create concise summaries",
+)
+
+team = Team(
+    entities=[researcher, writer],
+    mode="sequential",
+)
+
+judge = Agent(model="openai/gpt-4o", name="Judge")
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=team,
+    query="What is the capital of France?",
+    expected_output="Paris is the capital of France.",
+    additional_guidelines="Check if the answer correctly identifies Paris.",
+    num_iterations=1,
+)
+
+result = asyncio.run(evaluator.run(print_results=True))
+
+print(f"Score: {result.average_score}/10")
+print(f"Passed: {result.evaluation_scores[0].is_met}")
+```
+
+## Coordinate Mode
+
+In coordinate mode a leader agent delegates sub-tasks to team members.
+
+```python
+import asyncio
+from upsonic import Agent, Team
+from upsonic.eval import AccuracyEvaluator
+
+analyst = Agent(
+    model="openai/gpt-4o",
+    name="Analyst",
+    role="Data Analyst",
+    goal="Analyze questions",
+)
+
+reporter = Agent(
+    model="openai/gpt-4o",
+    name="Reporter",
+    role="Report Writer",
+    goal="Write clear reports",
+)
+
+team = Team(
+    entities=[analyst, reporter],
+    mode="coordinate",
+    model="openai/gpt-4o",
+)
+
+judge = Agent(model="openai/gpt-4o", name="Judge")
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=team,
+    query="What is the largest ocean on Earth?",
+    expected_output="The Pacific Ocean is the largest ocean on Earth.",
+    num_iterations=1,
+)
+
+result = asyncio.run(evaluator.run(print_results=True))
+
+print(f"Score: {result.average_score}/10")
+```
+
+## Route Mode
+
+In route mode a router selects the best team member to handle the entire task.
+
+```python
+import asyncio
+from upsonic import Agent, Team
+from upsonic.eval import AccuracyEvaluator
+
+science_expert = Agent(
+    model="openai/gpt-4o",
+    name="ScienceExpert",
+    role="Science Expert",
+    goal="Answer science questions",
+)
+
+history_expert = Agent(
+    model="openai/gpt-4o",
+    name="HistoryExpert",
+    role="History Expert",
+    goal="Answer history questions",
+)
+
+team = Team(
+    entities=[science_expert, history_expert],
+    mode="route",
+    model="openai/gpt-4o",
+)
+
+judge = Agent(model="openai/gpt-4o", name="Judge")
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=team,
+    query="What is the boiling point of water?",
+    expected_output="100 degrees Celsius at standard atmospheric pressure.",
+    num_iterations=1,
+)
+
+result = asyncio.run(evaluator.run(print_results=True))
+
+print(f"Score: {result.average_score}/10")
+```

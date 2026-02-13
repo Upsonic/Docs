@@ -1,0 +1,81 @@
+---
+title: "Accuracy Evaluation with Graph"
+sidebarTitle: "Graph"
+description: "Evaluate a graph workflow's output accuracy using LLM-as-a-judge"
+---
+
+## Single-Node Graph
+
+```python
+import asyncio
+from upsonic import Agent, Task, Graph
+from upsonic.eval import AccuracyEvaluator
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="GraphAgent",
+)
+
+graph = Graph(
+    default_agent=agent,
+    show_progress=False,
+)
+
+task = Task(description="What is the capital of Italy?")
+graph.add(task)
+
+judge = Agent(model="openai/gpt-4o", name="Judge")
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=graph,
+    query="What is the capital of Italy?",
+    expected_output="Rome is the capital of Italy.",
+    additional_guidelines="Check if the answer correctly identifies Rome.",
+    num_iterations=1,
+)
+
+result = asyncio.run(evaluator.run(print_results=True))
+
+print(f"Score: {result.average_score}/10")
+print(f"Output: {result.generated_output}")
+```
+
+## Multi-Node Chain
+
+The evaluator uses the final output of the graph (the last node's response) for scoring.
+
+```python
+import asyncio
+from upsonic import Agent, Task, Graph
+from upsonic.eval import AccuracyEvaluator
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="ChainAgent",
+)
+
+graph = Graph(
+    default_agent=agent,
+    show_progress=False,
+)
+
+task1 = Task(description="Name a popular programming language.")
+task2 = Task(description="Describe one key feature of that programming language.")
+graph.add(task1 >> task2)
+
+judge = Agent(model="openai/gpt-4o", name="Judge")
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=graph,
+    query="Name a popular programming language and describe one key feature.",
+    expected_output="Python is a popular language known for its readable syntax.",
+    additional_guidelines="Accept any valid programming language with a correct key feature.",
+    num_iterations=1,
+)
+
+result = asyncio.run(evaluator.run(print_results=True))
+
+print(f"Score: {result.average_score}/10")
+```

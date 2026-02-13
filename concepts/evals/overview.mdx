@@ -1,0 +1,69 @@
+---
+title: "Evals"
+sidebarTitle: "Overview"
+description: "Measure accuracy, performance, and reliability of your AI agents, teams, and graphs"
+---
+
+Upsonic provides a built-in evaluation framework to systematically test and benchmark your AI agents, teams, and graphs. Evaluations help you ensure that your AI workflows meet quality, performance, and reliability standards before deploying to production.
+
+## Evaluation Types
+
+<CardGroup cols={3}>
+
+  <Card title="Accuracy" icon="bullseye" href="/evals/accuracy/overview">
+    LLM-as-a-judge evaluation that scores agent output quality against expected answers on a 1–10 scale.
+  </Card>
+
+  <Card title="Performance" icon="gauge-high" href="/evals/performance/overview">
+    Latency and memory profiling with statistical analysis across multiple iterations.
+  </Card>
+
+  <Card title="Reliability" icon="shield-check" href="/evals/reliability/overview">
+    Tool-call verification that asserts expected tools were invoked during execution.
+  </Card>
+
+</CardGroup>
+
+## Quick Start
+
+Install the required dependencies and run your first evaluation in minutes.
+
+```python
+import asyncio
+from upsonic import Agent
+from upsonic.eval import AccuracyEvaluator
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Assistant",
+)
+
+judge = Agent(
+    model="openai/gpt-4o",
+    name="Judge",
+)
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=agent,
+    query="What is the capital of France?",
+    expected_output="Paris is the capital of France.",
+    additional_guidelines="Check if the answer correctly identifies Paris.",
+    num_iterations=1,
+)
+
+result = asyncio.run(evaluator.run())
+
+print(f"Score: {result.average_score}/10")
+print(f"Passed: {result.evaluation_scores[0].is_met}")
+```
+
+## Supported Entities
+
+Every evaluator works with all three core entities:
+
+| Entity | Description |
+|--------|-------------|
+| **Agent** | Single agent executing a task |
+| **Team** | Multi-agent team in sequential, coordinate, or route mode |
+| **Graph** | DAG-based workflow with chained task nodes |
