@@ -1,0 +1,111 @@
+---
+title: "Accuracy Evaluation with Agent"
+sidebarTitle: "Agent"
+description: "Evaluate a single agent's output accuracy using LLM-as-a-judge"
+---
+
+## Basic Usage
+
+```python
+import asyncio
+from upsonic import Agent
+from upsonic.eval import AccuracyEvaluator
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Assistant",
+    role="Knowledge Assistant",
+    goal="Answer questions accurately",
+)
+
+judge = Agent(
+    model="openai/gpt-4o",
+    name="Judge",
+)
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=agent,
+    query="What is the capital of Japan?",
+    expected_output="Tokyo is the capital of Japan.",
+    additional_guidelines="Check if the answer correctly identifies Tokyo.",
+    num_iterations=1,
+)
+
+result = asyncio.run(evaluator.run(print_results=True))
+
+print(f"Score: {result.average_score}/10")
+print(f"Passed: {result.evaluation_scores[0].is_met}")
+print(f"Output: {result.generated_output}")
+```
+
+## Multiple Iterations
+
+Run the evaluation multiple times and average the scores for a more robust measurement.
+
+```python
+import asyncio
+from upsonic import Agent
+from upsonic.eval import AccuracyEvaluator
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Assistant",
+)
+
+judge = Agent(
+    model="openai/gpt-4o",
+    name="Judge",
+)
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=agent,
+    query="Explain photosynthesis in one sentence.",
+    expected_output="Photosynthesis converts sunlight, water, and CO2 into glucose and oxygen.",
+    num_iterations=3,
+)
+
+result = asyncio.run(evaluator.run(print_results=True))
+
+print(f"Average score: {result.average_score}/10")
+for i, score in enumerate(result.evaluation_scores):
+    print(f"  Iteration {i+1}: {score.score}/10 — {score.reasoning[:80]}...")
+```
+
+## Evaluate Pre-existing Output
+
+Skip execution and score a string you already have.
+
+```python
+import asyncio
+from upsonic import Agent
+from upsonic.eval import AccuracyEvaluator
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Assistant",
+)
+
+judge = Agent(
+    model="openai/gpt-4o",
+    name="Judge",
+)
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=agent,
+    query="What is the speed of light?",
+    expected_output="Approximately 299,792 km/s.",
+    num_iterations=1,
+)
+
+result = asyncio.run(
+    evaluator.run_with_output(
+        output="The speed of light is roughly 300,000 km per second.",
+        print_results=True,
+    )
+)
+
+print(f"Score: {result.average_score}/10")
+```

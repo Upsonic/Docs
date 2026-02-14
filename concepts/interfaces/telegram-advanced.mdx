@@ -33,6 +33,8 @@ description: "TelegramInterface parameters, endpoints, and API reference"
 | `process_callback_queries` | `bool` | `True` | Handle inline keyboard callbacks. |
 | `typing_indicator` | `bool` | `True` | Send "typing" chat action before replying. |
 | `max_message_length` | `int` | `4096` | Max message length before splitting. |
+| `stream` | `bool` | `False` | Stream agent responses by progressively editing the message. |
+| `heartbeat_chat_id` | `Optional[int]` | `None` | Explicit Telegram chat ID for heartbeat delivery. Auto-detected from first incoming message if omitted. |
 
 ## Key Methods
 
@@ -80,6 +82,67 @@ telegram = TelegramInterface(
 
 manager = InterfaceManager(interfaces=[telegram])
 manager.serve(host="0.0.0.0", port=8000, reload=False)
+```
+
+## Streaming
+
+Set `stream=True` to progressively edit the Telegram message as tokens arrive from the agent. An initial message is sent immediately and then updated in-place as new chunks are generated. Updates are throttled to ~1 second intervals to respect Telegram rate limits. Works in both TASK and CHAT modes.
+
+```python
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, TelegramInterface
+
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    name="TelegramBot",
+)
+
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    mode="chat",
+    stream=True,
+)
+
+manager = InterfaceManager(interfaces=[telegram])
+
+if __name__ == "__main__":
+    manager.serve(host="0.0.0.0", port=8000)
+```
+
+## Heartbeat
+
+When used with an `AutonomousAgent` that has `heartbeat=True`, the interface periodically sends the agent's `heartbeat_message` to the agent, then delivers the response to the Telegram chat.
+
+The target chat ID is resolved automatically from the first incoming message. You can also set it explicitly via `heartbeat_chat_id`.
+
+```python
+import os
+from upsonic import AutonomousAgent
+from upsonic.interfaces import InterfaceManager, TelegramInterface
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o-mini",
+    name="TelegramBot",
+    heartbeat=True,
+    heartbeat_period=30,
+    heartbeat_message="Summarize any new updates.",
+)
+
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    mode="chat",
+    # heartbeat_chat_id=1279809673,  # optional explicit override
+)
+
+manager = InterfaceManager(interfaces=[telegram])
+
+if __name__ == "__main__":
+    manager.serve(host="0.0.0.0", port=8000)
 ```
 
 ## Endpoints

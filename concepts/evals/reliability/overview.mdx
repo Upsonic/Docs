@@ -1,0 +1,69 @@
+---
+title: "Reliability Evaluation"
+sidebarTitle: "Overview"
+description: "Verify that expected tools were called during agent execution"
+---
+
+The `ReliabilityEvaluator` is a post-execution assertion engine that verifies an agent's tool-calling behavior. It checks whether the expected tools were invoked, in the correct order if required, and flags any unexpected tool calls.
+
+## How It Works
+
+1. Run your agent, team, or graph to completion.
+2. Pass the completed result (a `Task`, `List[Task]`, or `Graph`) to the evaluator.
+3. The evaluator extracts tool call history and compares it against the expected list.
+4. Returns a structured result with pass/fail status, per-tool checks, and missing/unexpected lists.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `expected_tool_calls` | `List[str]` | Yes | Tool names that should have been called |
+| `order_matters` | `bool` | No | Whether call order must match (default: `False`) |
+| `exact_match` | `bool` | No | Whether only expected tools may be called (default: `False`) |
+
+## Input Types
+
+The `run()` method accepts:
+
+| Input | Source |
+|-------|--------|
+| `Task` | Result of `Agent.do()` / `Agent.do_async()` |
+| `List[Task]` | Result of `Team.multi_agent_async()` |
+| `Graph` | A Graph instance after `graph.run()` / `graph.run_async()` |
+
+## Result Structure
+
+`ReliabilityEvaluationResult` contains:
+
+- **`passed`** — Overall pass/fail boolean
+- **`summary`** — Human-readable explanation
+- **`expected_tool_calls`** — The original expected list
+- **`actual_tool_calls`** — Ordered list of tools actually called
+- **`checks`** — List of `ToolCallCheck` objects (one per expected tool)
+- **`missing_tool_calls`** — Expected tools that were not invoked
+- **`unexpected_tool_calls`** — Tools called but not expected (only when `exact_match=True`)
+
+Each `ToolCallCheck` includes:
+
+- **`tool_name`** — Name of the tool
+- **`was_called`** — Whether the tool was found in history
+- **`times_called`** — How many times it was invoked
+
+
+## Usage Examples
+
+<CardGroup cols={3}>
+
+  <Card title="Agent" icon="robot" href="/evals/reliability/usages/agent">
+    Verify agent tool calls
+  </Card>
+
+  <Card title="Team" icon="users" href="/evals/reliability/usages/team">
+    Verify team tool calls
+  </Card>
+
+  <Card title="Graph" icon="diagram-project" href="/evals/reliability/usages/graph">
+    Verify graph tool calls
+  </Card>
+
+</CardGroup>

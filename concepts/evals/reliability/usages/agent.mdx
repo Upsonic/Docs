@@ -1,0 +1,160 @@
+---
+title: "Reliability Evaluation with Agent"
+sidebarTitle: "Agent"
+description: "Verify that an agent called the expected tools during execution"
+---
+
+## Basic Usage
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.eval import ReliabilityEvaluator
+from upsonic.tools import tool
+
+@tool
+def calculate_sum(a: int, b: int) -> int:
+    """Add two numbers together."""
+    return a + b
+
+@tool
+def calculate_product(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
+
+agent = Agent(
+    model="openai/gpt-4o",
+    tools=[calculate_sum, calculate_product],
+)
+
+task = Task(
+    description="First calculate 5 + 3 using calculate_sum, then multiply the result by 2 using calculate_product"
+)
+
+asyncio.run(agent.do_async(task))
+
+evaluator = ReliabilityEvaluator(
+    expected_tool_calls=["calculate_sum", "calculate_product"],
+)
+
+result = evaluator.run(task, print_results=True)
+result.assert_passed()
+```
+
+## Order Matters
+
+Verify that tools were called in a specific sequence.
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.eval import ReliabilityEvaluator
+from upsonic.tools import tool
+
+@tool
+def calculate_sum(a: int, b: int) -> int:
+    """Add two numbers together."""
+    return a + b
+
+@tool
+def calculate_product(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
+
+agent = Agent(
+    model="openai/gpt-4o",
+    tools=[calculate_sum, calculate_product],
+)
+
+task = Task(
+    description="First use calculate_sum to add 2 + 3, then use calculate_product to multiply 4 * 5"
+)
+
+asyncio.run(agent.do_async(task))
+
+evaluator = ReliabilityEvaluator(
+    expected_tool_calls=["calculate_sum", "calculate_product"],
+    order_matters=True,
+)
+
+result = evaluator.run(task, print_results=True)
+
+if result.passed:
+    print("Tools were called in the correct order")
+```
+
+## Exact Match
+
+Fail if any unexpected tools were also called.
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.eval import ReliabilityEvaluator
+from upsonic.tools import tool
+
+@tool
+def calculate_sum(a: int, b: int) -> int:
+    """Add two numbers together."""
+    return a + b
+
+@tool
+def get_weather(city: str) -> str:
+    """Get weather for a city."""
+    return f"Weather in {city}: Sunny, 72°F"
+
+agent = Agent(
+    model="openai/gpt-4o",
+    tools=[calculate_sum, get_weather],
+)
+
+task = Task(description="Use calculate_sum to add 10 + 20")
+
+asyncio.run(agent.do_async(task))
+
+evaluator = ReliabilityEvaluator(
+    expected_tool_calls=["calculate_sum"],
+    exact_match=True,
+)
+
+result = evaluator.run(task, print_results=True)
+
+if not result.passed:
+    print(f"Unexpected tools: {result.unexpected_tool_calls}")
+```
+
+## Inspecting Results
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.eval import ReliabilityEvaluator
+from upsonic.tools import tool
+
+@tool
+def calculate_sum(a: int, b: int) -> int:
+    """Add two numbers together."""
+    return a + b
+
+agent = Agent(
+    model="openai/gpt-4o",
+    tools=[calculate_sum],
+)
+
+task = Task(description="Calculate 7 + 8 using calculate_sum")
+
+asyncio.run(agent.do_async(task))
+
+evaluator = ReliabilityEvaluator(
+    expected_tool_calls=["calculate_sum"],
+)
+
+result = evaluator.run(task, print_results=False)
+
+for check in result.checks:
+    status = "called" if check.was_called else "MISSING"
+    print(f"  {check.tool_name}: {status} ({check.times_called}x)")
+
+if result.missing_tool_calls:
+    print(f"Missing: {result.missing_tool_calls}")
+```

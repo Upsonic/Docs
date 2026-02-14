@@ -1,0 +1,160 @@
+---
+title: "Reliability Evaluation with Team"
+sidebarTitle: "Team"
+description: "Verify tool calls across a multi-agent team execution"
+---
+
+The `ReliabilityEvaluator` accepts a `List[Task]` to verify tool calls aggregated across all tasks executed by team members.
+
+## Sequential Mode
+
+```python
+import asyncio
+from upsonic import Agent, Task, Team
+from upsonic.eval import ReliabilityEvaluator
+from upsonic.tools import tool
+
+@tool
+def calculate_sum(a: int, b: int) -> int:
+    """Add two numbers together."""
+    return a + b
+
+@tool
+def get_weather(city: str) -> str:
+    """Get weather for a city."""
+    return f"Weather in {city}: Sunny, 72°F"
+
+calculator = Agent(
+    model="openai/gpt-4o",
+    name="Calculator",
+    role="Math Calculator",
+    tools=[calculate_sum],
+)
+
+weather_agent = Agent(
+    model="openai/gpt-4o",
+    name="WeatherAgent",
+    role="Weather Provider",
+    tools=[get_weather],
+)
+
+team = Team(
+    entities=[calculator, weather_agent],
+    mode="sequential",
+)
+
+tasks = [
+    Task(description="Calculate 5 + 7 using calculate_sum"),
+    Task(description="Get weather for San Francisco using get_weather"),
+]
+
+asyncio.run(
+    team.multi_agent_async(team.entities, tasks)
+)
+
+evaluator = ReliabilityEvaluator(
+    expected_tool_calls=["calculate_sum", "get_weather"],
+)
+
+result = evaluator.run(tasks, print_results=True)
+result.assert_passed()
+```
+
+## Coordinate Mode
+
+```python
+import asyncio
+from upsonic import Agent, Task, Team
+from upsonic.eval import ReliabilityEvaluator
+from upsonic.tools import tool
+
+@tool
+def calculate_sum(a: int, b: int) -> int:
+    """Add two numbers together."""
+    return a + b
+
+math_agent = Agent(
+    model="openai/gpt-4o",
+    name="MathWorker",
+    role="Math Calculator",
+    goal="Perform calculations",
+    tools=[calculate_sum],
+)
+
+team = Team(
+    entities=[math_agent],
+    mode="coordinate",
+    model="openai/gpt-4o",
+)
+
+tasks = [
+    Task(description="Calculate 4 + 6 using calculate_sum"),
+]
+
+asyncio.run(
+    team.multi_agent_async(team.entities, tasks)
+)
+
+evaluator = ReliabilityEvaluator(
+    expected_tool_calls=["calculate_sum"],
+)
+
+result = evaluator.run(tasks, print_results=True)
+result.assert_passed()
+```
+
+## Route Mode
+
+```python
+import asyncio
+from upsonic import Agent, Task, Team
+from upsonic.eval import ReliabilityEvaluator
+from upsonic.tools import tool
+
+@tool
+def calculate_sum(a: int, b: int) -> int:
+    """Add two numbers together."""
+    return a + b
+
+@tool
+def get_weather(city: str) -> str:
+    """Get weather for a city."""
+    return f"Weather in {city}: Sunny, 72°F"
+
+calculator = Agent(
+    model="openai/gpt-4o",
+    name="Calculator",
+    role="Math Calculator",
+    goal="Perform math calculations",
+    tools=[calculate_sum],
+)
+
+weather_provider = Agent(
+    model="openai/gpt-4o",
+    name="WeatherProvider",
+    role="Weather Provider",
+    goal="Provide weather information",
+    tools=[get_weather],
+)
+
+team = Team(
+    entities=[calculator, weather_provider],
+    mode="route",
+    model="openai/gpt-4o",
+)
+
+tasks = [
+    Task(description="Calculate 8 + 9 using calculate_sum"),
+]
+
+asyncio.run(
+    team.multi_agent_async(team.entities, tasks)
+)
+
+evaluator = ReliabilityEvaluator(
+    expected_tool_calls=["calculate_sum"],
+)
+
+result = evaluator.run(tasks, print_results=True)
+result.assert_passed()
+```

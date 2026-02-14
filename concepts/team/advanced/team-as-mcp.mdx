@@ -1,0 +1,105 @@
+---
+title: "Expose Team as MCP Server"
+sidebarTitle: "Team as MCP"
+description: "Turn any Team into an MCP server so other agents or MCP clients can use it as a tool"
+---
+
+## Overview
+
+Any Upsonic Team can be exposed as an MCP server using `as_mcp()`. The entire multi-agent workflow becomes a single `do` tool that MCP clients can call.
+
+## Creating an MCP Server from a Team
+
+```python
+from upsonic import Agent, Team
+
+researcher = Agent(
+    model="openai/gpt-4o",
+    name="Researcher",
+    role="Research specialist",
+    goal="Find accurate information",
+)
+
+writer = Agent(
+    model="openai/gpt-4o",
+    name="Writer",
+    role="Technical writer",
+    goal="Write clear and concise text",
+)
+
+team = Team(
+    entities=[researcher, writer],
+    name="Research Team",
+    role="Research and writing",
+    goal="Produce well-written summaries",
+    mode="sequential",
+)
+
+team.as_mcp().run()
+```
+
+This starts an MCP server that exposes a `do` tool. When called, it runs the full team workflow — task assignment, context sharing, and result combining — and returns the final output.
+
+## Using a Team MCP Server from Another Agent
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+
+research_team = MCPHandler(command="python research_team_server.py")
+
+manager = Agent(
+    model="openai/gpt-4o",
+    name="Manager",
+)
+
+task = Task(
+    description="Use the do tool to ask: Write a summary about quantum computing breakthroughs.",
+    tools=[research_team],
+)
+
+result = manager.do(task)
+print(result)
+```
+
+## Combining Multiple Teams
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+
+research = MCPHandler(command="python research_team.py", tool_name_prefix="research")
+engineering = MCPHandler(command="python eng_team.py", tool_name_prefix="eng")
+
+director = Agent(
+    model="openai/gpt-4o",
+    name="Director",
+    tools=[research, engineering],
+)
+
+result = director.do("Research cloud cost optimization and write an implementation plan.")
+```
+
+The director sees `research_do` and `eng_do` and delegates to the appropriate team.
+
+## Transport Options
+
+```python
+# stdio (default)
+team.as_mcp().run()
+
+# SSE
+team.as_mcp().run(transport="sse", port=8000)
+
+# Streamable HTTP
+team.as_mcp().run(transport="streamable-http", port=8000)
+```
+
+## How It Works
+
+1. `as_mcp()` creates a `FastMCP` server named after the team.
+2. It registers a `do` tool whose description includes the team's `role`, `goal`, member names, and `mode`.
+3. When a client calls `do(task="...")`, the team runs its full multi-agent workflow internally and returns the combined result as text.
+4. `.run()` starts the server and blocks, waiting for client connections.
+
+For more information on MCP tools, see [MCP Tools Overview](/concepts/tools/mcp-tools/overview).

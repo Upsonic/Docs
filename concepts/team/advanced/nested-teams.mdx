@@ -1,0 +1,152 @@
+---
+title: "Nested Teams"
+description: "Use Team instances as entities inside other Teams for hierarchical workflows"
+---
+
+## What are Nested Teams
+
+Nested teams let you use a `Team` as an entity inside another `Team`. The parent team treats the child team like any other agent — selecting, delegating, or routing to it based on the mode. When called, the child team runs its own full workflow internally.
+
+This enables hierarchical multi-agent architectures where specialized departments handle sub-workflows autonomously.
+
+## How It Works
+
+- The `entities` parameter accepts both `Agent` and `Team` instances.
+- Each `Team` entity exposes `name`, `role`, and `goal` so the parent can reason about it.
+- When the parent calls a child `Team`, it invokes `do_async()` on the entire child team — not on individual agents inside it.
+
+## Sequential Mode
+
+The parent team selects the best entity for each task. A nested team is selected when its role and goal match the task.
+
+```python
+from upsonic import Agent, Task, Team
+
+researcher = Agent(
+    model="openai/gpt-4o",
+    name="Researcher",
+    role="Research Specialist",
+    goal="Find accurate information",
+)
+writer = Agent(
+    model="openai/gpt-4o",
+    name="Writer",
+    role="Content Writer",
+    goal="Create clear content",
+)
+
+writing_team = Team(
+    entities=[writer],
+    name="Writing Team",
+    role="Writing Department",
+    goal="Produce written content from research",
+    mode="sequential",
+)
+
+team = Team(
+    entities=[researcher, writing_team],
+    mode="sequential",
+)
+
+tasks = [
+    Task(description="List three facts about the Eiffel Tower."),
+    Task(description="Write a short paragraph using the facts above."),
+]
+
+result = team.print_do(tasks)
+```
+
+## Coordinate Mode
+
+The leader agent delegates tasks to entities including nested teams. The leader holds memory; member entities do not receive it.
+
+```python
+from upsonic import Agent, Task, Team
+
+analyst = Agent(
+    model="openai/gpt-4o",
+    name="Analyst",
+    role="Data Analyst",
+    goal="Analyze data and extract insights",
+)
+summarizer = Agent(
+    model="openai/gpt-4o",
+    name="Summarizer",
+    role="Summary Writer",
+    goal="Summarize findings concisely",
+)
+
+analysis_team = Team(
+    entities=[analyst],
+    name="Analysis Team",
+    role="Data Analysis Department",
+    goal="Perform data analysis tasks",
+    mode="sequential",
+)
+
+team = Team(
+    entities=[analysis_team, summarizer],
+    mode="coordinate",
+    model="openai/gpt-4o",
+)
+
+tasks = [
+    Task(description="Identify three advantages of renewable energy."),
+    Task(description="Write a one-sentence executive summary of the advantages."),
+]
+
+result = team.print_do(tasks)
+```
+
+## Route Mode
+
+The router selects the single best entity — which can be a nested team — to handle the request.
+
+```python
+from upsonic import Agent, Task, Team
+
+legal_expert = Agent(
+    model="openai/gpt-4o",
+    name="Legal Expert",
+    role="Legal Advisor",
+    goal="Provide legal guidance",
+)
+tech_writer = Agent(
+    model="openai/gpt-4o",
+    name="Tech Writer",
+    role="Technical Writer",
+    goal="Write technical documentation",
+)
+
+tech_team = Team(
+    entities=[tech_writer],
+    name="Tech Team",
+    role="Technical Documentation Department",
+    goal="Produce technical content and documentation",
+    mode="sequential",
+)
+
+team = Team(
+    entities=[legal_expert, tech_team],
+    mode="route",
+    model="openai/gpt-4o",
+)
+
+task = Task(description="Write a brief explanation of how API rate limiting works.")
+
+result = team.print_do(task)
+```
+
+## Debugging
+
+Set `debug=True` on the parent team to see which entity is called in each mode:
+
+```python
+team = Team(
+    entities=[researcher, writing_team],
+    mode="sequential",
+    debug=True,
+)
+```
+
+This emits `[INFO] [Team]` log lines showing the entity type, name, task description, tools, and attachments for every call or delegation.

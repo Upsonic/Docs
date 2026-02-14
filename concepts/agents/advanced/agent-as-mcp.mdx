@@ -1,0 +1,99 @@
+---
+title: "Expose Agent as MCP Server"
+sidebarTitle: "Agent as MCP"
+description: "Turn any Agent into an MCP server so other agents or MCP clients can use it as a tool"
+---
+
+## Overview
+
+Any Upsonic Agent can be exposed as an MCP (Model Context Protocol) server using `as_mcp()`. This lets other agents, tools, or MCP-compatible clients consume your agent over stdio, SSE, or Streamable HTTP.
+
+## Creating an MCP Server from an Agent
+
+```python
+from upsonic import Agent
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Math Expert",
+    role="Mathematics specialist",
+    goal="Solve math problems accurately",
+)
+
+agent.as_mcp().run()
+```
+
+Run this script and it starts an MCP server over stdio, exposing a `do` tool that accepts a task string and returns the agent's response.
+
+## Using an Agent MCP Server from Another Agent
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+
+math_agent = MCPHandler(command="python math_agent_server.py")
+
+orchestrator = Agent(
+    model="openai/gpt-4o",
+    name="Orchestrator",
+)
+
+task = Task(
+    description="Use the do tool to ask: What is 12 * 15?",
+    tools=[math_agent],
+)
+
+result = orchestrator.do(task)
+print(result)
+```
+
+The `MCPHandler` spawns the server as a subprocess, discovers the `do` tool, and makes it available to the orchestrator agent.
+
+## Multiple Agent Servers as Tools
+
+Use `tool_name_prefix` to avoid name collisions when combining multiple agent servers:
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+
+math = MCPHandler(command="python math_server.py", tool_name_prefix="math")
+writer = MCPHandler(command="python writer_server.py", tool_name_prefix="writer")
+
+orchestrator = Agent(
+    model="openai/gpt-4o",
+    name="Orchestrator",
+    tools=[math, writer],
+)
+
+result = orchestrator.do("Calculate 2^10 and write a sentence about the result.")
+```
+
+
+## Customizing the Server
+
+`as_mcp()` returns a standard `FastMCP` server object. You can add extra tools before running:
+
+```python
+from upsonic import Agent
+
+agent = Agent(name="Assistant", model="openai/gpt-4o")
+mcp = agent.as_mcp()
+
+@mcp.tool
+def get_current_date() -> str:
+    """Get today's date."""
+    from datetime import date
+    return str(date.today())
+
+mcp.run()
+```
+
+## How It Works
+
+1. `as_mcp()` creates a `FastMCP` server named after the agent.
+2. It registers a `do` tool whose description includes the agent's `role`, `goal`, and `instructions`.
+3. When a client calls `do(task="...")`, the agent runs its full workflow internally (reasoning, tool use, memory) and returns the result as text.
+4. `.run()` starts the server and blocks, waiting for client connections.
+
+For more information on MCP tools, see [MCP Tools Overview](/concepts/tools/mcp-tools/overview).

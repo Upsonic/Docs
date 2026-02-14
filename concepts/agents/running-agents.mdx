@@ -26,6 +26,38 @@ result = agent.print_do("What is the capital of France?")
 print(result)  # Output: Paris
 ```
 
+## List Input (Multiple Tasks)
+
+`do()`, `do_async()`, `print_do()`, and `print_do_async()` accept a **list of strings** or a **list of `Task` objects**. They run each item in sequence and return a list of string results. A single-element list returns a single string (scalar); an empty list returns an empty list. Mixed lists of `str` and `Task` are supported.
+
+### List of strings
+
+```python
+from upsonic import Agent
+
+agent = Agent("openai/gpt-4o")
+results = agent.do(["What is 2+2?", "What is 3+3?"])
+# results is a list of strings, one per input
+for r in results:
+    print(r)
+```
+
+### List of Task objects
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("openai/gpt-4o")
+tasks = [
+    Task("What is the capital of France?"),
+    Task("What is the capital of Germany?"),
+]
+results = agent.do(tasks)
+# results is a list of strings, one per task
+for r in results:
+    print(r)
+```
+
 ## Asynchronous Execution
 
 For concurrent operations or async applications, use `do_async()` which returns a coroutine.

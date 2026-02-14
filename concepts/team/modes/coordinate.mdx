@@ -45,6 +45,48 @@ result = team.print_do(tasks)
 print(result)
 ```
 
+## Streaming with mixed Agent and Team entities
+
+Stream the leader's output. Only the leader is streamed; delegated member outputs are not streamed. A header (e.g. `--- [Leader] Leader ---`) appears before the stream.
+
+```python
+from upsonic import Agent, Task, Team
+
+data_analyst = Agent(
+    model="openai/gpt-4o",
+    name="Data Analyst",
+    role="Data Analysis Expert",
+    goal="Analyze data and extract insights",
+)
+
+report_writer = Agent(
+    model="openai/gpt-4o",
+    name="Report Writer",
+    role="Business Report Specialist",
+    goal="Create professional business reports",
+)
+
+report_team = Team(
+    entities=[report_writer],
+    mode="sequential",
+    name="ReportTeam",
+)
+
+team = Team(
+    entities=[data_analyst, report_team],
+    mode="coordinate",
+    model="openai/gpt-4o",
+)
+
+tasks = [
+    Task(description="Analyze Q4 sales data and identify trends"),
+    Task(description="Create executive summary of findings"),
+]
+
+for chunk in team.stream(tasks):
+    print(chunk, end="", flush=True)
+```
+
 ## Params
 
 - `agents`: List of Agent instances

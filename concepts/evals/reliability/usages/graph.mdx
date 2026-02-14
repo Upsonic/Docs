@@ -1,0 +1,138 @@
+---
+title: "Reliability Evaluation with Graph"
+sidebarTitle: "Graph"
+description: "Verify tool calls across a graph workflow execution"
+---
+
+The `ReliabilityEvaluator` accepts a `Graph` instance (after execution) and extracts tool calls from all executed `TaskNode` objects.
+
+## Single-Node Graph
+
+```python
+import asyncio
+from upsonic import Agent, Task, Graph
+from upsonic.eval import ReliabilityEvaluator
+from upsonic.tools import tool
+
+@tool
+def calculate_sum(a: int, b: int) -> int:
+    """Add two numbers together."""
+    return a + b
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="GraphAgent",
+    tools=[calculate_sum],
+)
+
+graph = Graph(
+    default_agent=agent,
+    show_progress=False,
+)
+
+graph_task = Task(description="Calculate 12 + 15 using calculate_sum")
+graph.add(graph_task)
+
+asyncio.run(graph.run_async(verbose=False))
+
+evaluator = ReliabilityEvaluator(
+    expected_tool_calls=["calculate_sum"],
+)
+
+result = evaluator.run(graph, print_results=True)
+result.assert_passed()
+```
+
+## Multi-Node Chain
+
+Tool calls are collected from every executed node in the graph.
+
+```python
+import asyncio
+from upsonic import Agent, Task, Graph
+from upsonic.eval import ReliabilityEvaluator
+from upsonic.tools import tool
+
+@tool
+def calculate_sum(a: int, b: int) -> int:
+    """Add two numbers together."""
+    return a + b
+
+@tool
+def calculate_product(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="ChainAgent",
+    tools=[calculate_sum, calculate_product],
+)
+
+graph = Graph(
+    default_agent=agent,
+    show_progress=False,
+)
+
+t1 = Task(description="Calculate 3 + 4 using calculate_sum")
+t2 = Task(description="Now multiply the result by 5 using calculate_product")
+graph.add(t1 >> t2)
+
+asyncio.run(graph.run_async(verbose=False))
+
+evaluator = ReliabilityEvaluator(
+    expected_tool_calls=["calculate_sum", "calculate_product"],
+)
+
+result = evaluator.run(graph, print_results=True)
+result.assert_passed()
+
+for check in result.checks:
+    print(f"  {check.tool_name}: called {check.times_called}x")
+```
+
+## Exact Match with Graph
+
+Ensure no unexpected tools were invoked across the entire graph execution.
+
+```python
+import asyncio
+from upsonic import Agent, Task, Graph
+from upsonic.eval import ReliabilityEvaluator
+from upsonic.tools import tool
+
+@tool
+def calculate_sum(a: int, b: int) -> int:
+    """Add two numbers together."""
+    return a + b
+
+@tool
+def get_weather(city: str) -> str:
+    """Get weather for a city."""
+    return f"Weather in {city}: Sunny, 72°F"
+
+agent = Agent(
+    model="openai/gpt-4o",
+    tools=[calculate_sum, get_weather],
+)
+
+graph = Graph(
+    default_agent=agent,
+    show_progress=False,
+)
+
+graph_task = Task(description="Use calculate_sum to add 100 + 200")
+graph.add(graph_task)
+
+asyncio.run(graph.run_async(verbose=False))
+
+evaluator = ReliabilityEvaluator(
+    expected_tool_calls=["calculate_sum"],
+    exact_match=True,
+)
+
+result = evaluator.run(graph, print_results=True)
+
+if not result.passed:
+    print(f"Unexpected tools: {result.unexpected_tool_calls}")
+```

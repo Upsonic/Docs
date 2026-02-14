@@ -1,0 +1,66 @@
+---
+title: "Accuracy Evaluation"
+sidebarTitle: "Overview"
+description: "Score agent output quality using the LLM-as-a-judge pattern"
+---
+
+The `AccuracyEvaluator` uses an LLM judge to compare an agent's generated output against an expected answer. Each evaluation produces a score from 1 to 10 along with detailed reasoning and constructive critique.
+
+## How It Works
+
+1. The **agent under test** receives a query and produces output.
+2. A separate **judge agent** evaluates the output against the expected answer and guidelines.
+3. The judge returns a structured `EvaluationScore` containing a numeric score, reasoning, pass/fail flag, and critique.
+4. If `num_iterations > 1`, the process repeats and scores are averaged.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `judge_agent` | `Agent` | Yes | Agent used to evaluate outputs |
+| `agent_under_test` | `Agent \| Graph \| Team` | Yes | Entity to evaluate |
+| `query` | `str` | Yes | Input query sent to the entity |
+| `expected_output` | `str` | Yes | Ground-truth answer for comparison |
+| `additional_guidelines` | `str` | No | Extra criteria for the judge |
+| `num_iterations` | `int` | No | Number of evaluation rounds (default: 1) |
+
+## Result Structure
+
+`AccuracyEvaluationResult` contains:
+
+- **`average_score`** — Mean score across all iterations (1–10)
+- **`evaluation_scores`** — List of `EvaluationScore` objects, one per iteration
+- **`generated_output`** — The output produced by the entity
+- **`user_query`** / **`expected_output`** — The original inputs
+
+Each `EvaluationScore` includes:
+
+- **`score`** — Numeric score (1–10)
+- **`reasoning`** — Step-by-step explanation from the judge
+- **`is_met`** — Boolean indicating whether core requirements are met
+- **`critique`** — Actionable feedback on how to improve
+
+## Methods
+
+| Method | Description |
+|--------|-------------|
+| `await run(print_results=True)` | Execute the entity, then evaluate output |
+| `await run_with_output(output, print_results=True)` | Evaluate a pre-existing output string |
+
+## Usage Examples
+
+<CardGroup cols={3}>
+
+  <Card title="Agent" icon="robot" href="/evals/accuracy/usages/agent">
+    Evaluate a single agent
+  </Card>
+
+  <Card title="Team" icon="users" href="/evals/accuracy/usages/team">
+    Evaluate a multi-agent team
+  </Card>
+
+  <Card title="Graph" icon="diagram-project" href="/evals/accuracy/usages/graph">
+    Evaluate a graph workflow
+  </Card>
+
+</CardGroup>

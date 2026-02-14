@@ -1,0 +1,65 @@
+---
+title: "Performance Evaluation with Agent"
+sidebarTitle: "Agent"
+description: "Profile a single agent's latency and memory usage"
+---
+
+## Basic Usage
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.eval import PerformanceEvaluator
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Assistant",
+)
+
+task = Task(description="What is 5 + 5?")
+
+evaluator = PerformanceEvaluator(
+    agent_under_test=agent,
+    task=task,
+    num_iterations=5,
+    warmup_runs=2,
+)
+
+result = asyncio.run(evaluator.run(print_results=True))
+
+print(f"Avg latency: {result.latency_stats['average'] * 1000:.0f} ms")
+print(f"Median latency: {result.latency_stats['median'] * 1000:.0f} ms")
+print(f"Min/Max: {result.latency_stats['min'] * 1000:.0f} ms / {result.latency_stats['max'] * 1000:.0f} ms")
+```
+
+## With a Task List
+
+When a list of tasks is provided, the Agent executes the first task in the list for each iteration.
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.eval import PerformanceEvaluator
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="Assistant",
+)
+
+tasks = [
+    Task(description="What is 3 * 3?"),
+    Task(description="What is 7 + 2?"),
+]
+
+evaluator = PerformanceEvaluator(
+    agent_under_test=agent,
+    task=tasks,
+    num_iterations=3,
+    warmup_runs=1,
+)
+
+result = asyncio.run(evaluator.run(print_results=True))
+
+for run in result.all_runs:
+    print(f"  Latency: {run.latency_seconds:.2f}s | Memory increase: {run.memory_increase_bytes} bytes")
+```
