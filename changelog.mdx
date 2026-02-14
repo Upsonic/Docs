@@ -6,6 +6,44 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 > Product updates, improvements, and bug fixes for Upsonic
 
 
+<Update label="Feb 14, 2026">
+	## v0.72.2
+
+	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.72.2)
+
+	## New Features:
+	- Agent/Team as MCP tool: Agent and Team can be exposed as MCP via `as_mcp()` and consumed as MCP tools by other agents.
+	- Nested Teams: Teams can contain both Agents and other Teams for hierarchical multi-agent workflows.
+	- Team leader and router: Optional `leader` and `router` Agent arguments when creating a Team for coordinate and route modes.
+	- Team async and streaming: Team supports `do_async`/`ado` and `astream`/`stream` for use as an entity inside another Team or in async pipelines.
+	- Task list execution: Agent and Team accept a list of tasks for `do`, `do_async`, `print_do`, and `print_do_async`, returning a list of results.
+	- Eval and MCP smoke tests: New smoke tests for Accuracy/Performance/Reliability evals and for Agent/Team as MCP; nested team and task metrics tests added.
+	- Makefile deps_smoke: New target to install optional deps (storage, faiss) for smoke tests.
+
+	## Improvements:
+	- Printing and cost tracking: Price tracking runs even when `print_output` is False; new `show_tool_calls` allows showing tool-calls tables independently.
+	- Jupyter compatibility: Team and Autonomous Agent sync methods run async work in a separate thread when a loop is already running, fixing `print_do`/`do` in notebooks.
+	- MCP environment: MCP server subprocesses inherit the full process environment (API keys, PYTHONPATH, .env) with user overrides.
+	- Workspace: References use `AGENTS.md`; greeting prompt and behavior refined.
+	- Storage: Optional backends use safe lazy loading so missing deps do not break other storage imports.
+	- Team internals: Coordinator, task assignment, context sharing, delegation, and result combiner support both Agent and Team entities; delegation tool simplified and debug option added.
+	- Agent: Added `get_entity_id()` for unified entity interface with Team.
+
+	## Bug Fixes:
+	- print_do in Jupyter: Fixed sync `do`/`print_do` hanging or failing when a reactor (e.g. Jupyter) already has a running event loop by using a dedicated thread for async execution.
+	- Smoke tests: Updated to new printing behavior, print capture, and optional deps so the smoke suite passes with current Agent/Team and eval usage.
+	- Fixed retry and Task error status conflict.
+
+	Full Changelog: https://github.com/Upsonic/Upsonic/compare/v0.72.1...v0.72.2
+
+	### Pull Requests:
+	- feat: Agent/Team as mcp tool, Team can be put inside Team [@DoganK01](https://github.com/DoganK01) in [#526](https://github.com/Upsonic/Upsonic/pull/526)
+	- fix: fix smoke tests by using new printing usage [@DoganK01](https://github.com/DoganK01) in [#529](https://github.com/Upsonic/Upsonic/pull/529)
+	- chor: version 0.72.2 [@DoganK01](https://github.com/DoganK01) in [#530](https://github.com/Upsonic/Upsonic/pull/530)
+	- fix: fix retry and task error status collision [@DoganK01](https://github.com/DoganK01) in [#531](https://github.com/Upsonic/Upsonic/pull/531)
+</Update>
+
+
 <Update label="Feb 12, 2026">
 	## v0.72.1
 
