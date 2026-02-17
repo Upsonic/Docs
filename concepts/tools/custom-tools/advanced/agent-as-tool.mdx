@@ -15,7 +15,7 @@ from upsonic import Agent, Task
 # Create a specialized agent
 research_agent = Agent(
     name="Research Specialist",
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     system_prompt="You are a research specialist focused on gathering information."
 )
 
@@ -28,7 +28,7 @@ task = Task(
 # Main agent delegates to specialized agent
 main_agent = Agent(
     name="Main Coordinator",
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
 
 result = main_agent.print_do(task)

@@ -21,7 +21,7 @@ def search(query: str) -> str:
     """Search for information."""
     return f"Results for: {query}"
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 agent.add_tools(search)  # Agent-level tool
 
 # search is available in both tasks
@@ -47,7 +47,7 @@ def calculate_tax(amount: float, rate: float) -> float:
     """Calculate tax for given amount."""
     return amount * rate
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 
 # calculate_tax is only available for this task
 task1 = Task(
@@ -82,7 +82,7 @@ def summarize(text: str) -> str:
     return f"Summary of: {text}"
 
 # search is available for ALL tasks
-agent = Agent("openai/gpt-4o", tools=[search])
+agent = Agent("anthropic/claude-sonnet-4-5", tools=[search])
 
 # This task has both: search (from agent) + summarize (task-only)
 task1 = Task(

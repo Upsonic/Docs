@@ -17,7 +17,7 @@ from upsonic.models import infer_model
 async def main():
     chain = (
         ChatPromptTemplate.from_template("Tell me about {topic}")
-        | infer_model("openai/gpt-4o")
+        | infer_model("anthropic/claude-sonnet-4-5")
         | StrOutputParser()
     )
     
@@ -38,7 +38,7 @@ from upsonic.models import infer_model
 async def main():
     chain = (
         ChatPromptTemplate.from_template("Explain {topic}")
-        | infer_model("openai/gpt-4o")
+        | infer_model("anthropic/claude-sonnet-4-5")
         | StrOutputParser()
     )
     
@@ -65,7 +65,7 @@ from upsonic.uel import ChatPromptTemplate, RunnableParallel, StrOutputParser
 from upsonic.models import infer_model
 
 async def main():
-    model = infer_model("openai/gpt-4o")
+    model = infer_model("anthropic/claude-sonnet-4-5")
     parser = StrOutputParser()
     
     parallel = RunnableParallel(
@@ -94,7 +94,7 @@ from upsonic.models import infer_model
 @chain
 async def async_multi_step(input_dict):
     """Async multi-step processing"""
-    model = infer_model("openai/gpt-4o")
+    model = infer_model("anthropic/claude-sonnet-4-5")
     parser = StrOutputParser()
     
     # Step 1
@@ -132,7 +132,7 @@ async def safe_async_chain(topic):
     try:
         chain = (
             ChatPromptTemplate.from_template("Tell me about {topic}")
-            | infer_model("openai/gpt-4o")
+            | infer_model("anthropic/claude-sonnet-4-5")
             | StrOutputParser()
         )
         
@@ -169,7 +169,7 @@ async def process_batch(topics):
     """Process multiple items asynchronously"""
     chain = (
         ChatPromptTemplate.from_template("Explain {topic} in one sentence")
-        | infer_model("openai/gpt-4o")
+        | infer_model("anthropic/claude-sonnet-4-5")
         | StrOutputParser()
     )
     

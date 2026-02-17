@@ -23,7 +23,7 @@ task = Task(
 )
 
 # Create agent
-agent = Agent(model="openai/gpt-4o", name="Search Agent")
+agent = Agent(model="anthropic/claude-sonnet-4-5", name="Search Agent")
 
 # Execute
 result = agent.print_do(task)
@@ -51,7 +51,7 @@ task = Task(
     tools=[ddg_search]
 )
 
-agent = Agent(model="openai/gpt-4o", name="Custom Search Agent")
+agent = Agent(model="anthropic/claude-sonnet-4-5", name="Custom Search Agent")
 result = agent.print_do(task)
 print("Result:", result)
 ```

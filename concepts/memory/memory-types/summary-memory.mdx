@@ -24,7 +24,7 @@ memory = Memory(
     model="openai/gpt-4o-mini"  # Required for summary generation
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result1 = agent.do(Task("Let's discuss Python web frameworks"))
 result2 = agent.do(Task("How does Django compare to Flask?"))
@@ -52,7 +52,7 @@ memory = Memory(
     model="openai/gpt-4o-mini"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("Continue our database optimization discussion"))
 print(result)

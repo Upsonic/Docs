@@ -10,15 +10,15 @@ Upsonic provides a built-in evaluation framework to systematically test and benc
 
 <CardGroup cols={3}>
 
-  <Card title="Accuracy" icon="bullseye" href="/evals/accuracy/overview">
+  <Card title="Accuracy" icon="bullseye" href="/concepts/evals/usage/accuracy/overview">
     LLM-as-a-judge evaluation that scores agent output quality against expected answers on a 1–10 scale.
   </Card>
 
-  <Card title="Performance" icon="gauge-high" href="/evals/performance/overview">
+  <Card title="Performance" icon="gauge-high" href="/concepts/evals/usage/performance/overview">
     Latency and memory profiling with statistical analysis across multiple iterations.
   </Card>
 
-  <Card title="Reliability" icon="shield-check" href="/evals/reliability/overview">
+  <Card title="Reliability" icon="shield-check" href="/concepts/evals/usage/reliability/overview">
     Tool-call verification that asserts expected tools were invoked during execution.
   </Card>
 
@@ -34,12 +34,12 @@ from upsonic import Agent
 from upsonic.eval import AccuracyEvaluator
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Assistant",
 )
 
 judge = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Judge",
 )
 

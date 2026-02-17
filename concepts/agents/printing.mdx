@@ -10,7 +10,7 @@ By default, `do()` runs silently while `print_do()` shows output. You can change
 ```python
 from upsonic import Agent, Task
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 task = Task("Say hello")
 
 # Silent execution
@@ -26,11 +26,11 @@ Set the `print` parameter when creating your agent:
 
 ```python
 # Always print, even with do()
-agent = Agent("openai/gpt-4o", print=True)
+agent = Agent("anthropic/claude-sonnet-4-5", print=True)
 agent.do(task)  # Shows output
 
 # Never print, even with print_do()
-agent = Agent("openai/gpt-4o", print=False)
+agent = Agent("anthropic/claude-sonnet-4-5", print=False)
 agent.print_do(task)  # Silent
 ```
 

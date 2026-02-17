@@ -14,7 +14,7 @@ from upsonic import Agent, Task, Team
 
 # Create domain specialists
 legal_expert = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Legal Expert",
     role="Legal Advisor",
     goal="Provide legal guidance and compliance information",
@@ -22,7 +22,7 @@ legal_expert = Agent(
 )
 
 tech_expert = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Tech Expert",
     role="Technology Specialist",
     goal="Provide technical solutions and architecture advice",
@@ -33,7 +33,7 @@ tech_expert = Agent(
 team = Team(
     agents=[legal_expert, tech_expert],
     mode="route",
-    model="openai/gpt-4o"  # Required for router agent
+    model="anthropic/claude-sonnet-4-5"  # Required for router agent
 )
 
 # Router selects best expert
@@ -50,7 +50,7 @@ Stream the chosen entity's output after routing. A header (e.g. `--- [Agent] Tec
 from upsonic import Agent, Task, Team
 
 legal_expert = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Legal Expert",
     role="Legal Advisor",
     goal="Provide legal guidance and compliance information",
@@ -58,7 +58,7 @@ legal_expert = Agent(
 )
 
 tech_expert = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Tech Expert",
     role="Technology Specialist",
     goal="Provide technical solutions and architecture advice",
@@ -74,7 +74,7 @@ tech_team = Team(
 team = Team(
     entities=[legal_expert, tech_team],
     mode="route",
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
 )
 
 tasks = [

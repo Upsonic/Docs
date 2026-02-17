@@ -36,7 +36,7 @@ from upsonic.models import infer_model
 # Create a simple chain with output parser
 chain = (
     ChatPromptTemplate.from_template("Tell me about {topic}") 
-    | infer_model("openai/gpt-4o")
+    | infer_model("anthropic/claude-sonnet-4-5")
     | StrOutputParser()
 )
 
@@ -56,7 +56,7 @@ from upsonic.uel import ChatPromptTemplate, StrOutputParser
 from upsonic.models import infer_model
 
 # Create model with memory
-model = infer_model("openai/gpt-4o").add_memory(history=True)
+model = infer_model("anthropic/claude-sonnet-4-5").add_memory(history=True)
 
 # Create chain with conversation history and output parser
 chain = (

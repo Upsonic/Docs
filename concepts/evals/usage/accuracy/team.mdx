@@ -12,14 +12,14 @@ from upsonic import Agent, Team
 from upsonic.eval import AccuracyEvaluator
 
 researcher = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Researcher",
     role="Research Specialist",
     goal="Find accurate information",
 )
 
 writer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Writer",
     role="Content Writer",
     goal="Create concise summaries",
@@ -30,7 +30,7 @@ team = Team(
     mode="sequential",
 )
 
-judge = Agent(model="openai/gpt-4o", name="Judge")
+judge = Agent(model="anthropic/claude-sonnet-4-5", name="Judge")
 
 evaluator = AccuracyEvaluator(
     judge_agent=judge,
@@ -57,14 +57,14 @@ from upsonic import Agent, Team
 from upsonic.eval import AccuracyEvaluator
 
 analyst = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Analyst",
     role="Data Analyst",
     goal="Analyze questions",
 )
 
 reporter = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Reporter",
     role="Report Writer",
     goal="Write clear reports",
@@ -73,10 +73,10 @@ reporter = Agent(
 team = Team(
     entities=[analyst, reporter],
     mode="coordinate",
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
 )
 
-judge = Agent(model="openai/gpt-4o", name="Judge")
+judge = Agent(model="anthropic/claude-sonnet-4-5", name="Judge")
 
 evaluator = AccuracyEvaluator(
     judge_agent=judge,
@@ -101,14 +101,14 @@ from upsonic import Agent, Team
 from upsonic.eval import AccuracyEvaluator
 
 science_expert = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="ScienceExpert",
     role="Science Expert",
     goal="Answer science questions",
 )
 
 history_expert = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="HistoryExpert",
     role="History Expert",
     goal="Answer history questions",
@@ -117,10 +117,10 @@ history_expert = Agent(
 team = Team(
     entities=[science_expert, history_expert],
     mode="route",
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
 )
 
-judge = Agent(model="openai/gpt-4o", name="Judge")
+judge = Agent(model="anthropic/claude-sonnet-4-5", name="Judge")
 
 evaluator = AccuracyEvaluator(
     judge_agent=judge,

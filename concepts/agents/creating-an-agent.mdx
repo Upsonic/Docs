@@ -22,7 +22,7 @@ def search_web(query: str) -> str:
     return f"Search results for '{query}': Found relevant information about the topic."
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     instructions="Write a report on the topic. Output only the report.",
     tools=[search_web]  # Tools can be added during initialization
 )
@@ -43,7 +43,7 @@ The `instructions` parameter is the simplest way to guide your agent's behavior:
 from upsonic import Agent
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     instructions="You are a helpful assistant that specializes in Python programming. Be concise and provide code examples when relevant."
 )
 ```
@@ -56,7 +56,7 @@ For complete control over the system message, use `system_prompt`:
 from upsonic import Agent
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     system_prompt="""You are an expert financial analyst. 
 Your responses should:
 - Be data-driven and analytical
@@ -74,7 +74,7 @@ You can also define your agent's identity using `role`, `goal`, and other attrib
 from upsonic import Agent
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="DataBot",
     role="Data Analyst",
     goal="Help users understand and visualize their data",
@@ -103,7 +103,7 @@ def search_web(query: str) -> str:
 async def main():
 
     agent = Agent(
-        model="openai/gpt-4o",
+        model="anthropic/claude-sonnet-4-5",
         instructions="Write a report on the topic. Output only the report.",
         tools=[search_web]  # Tools can be added during initialization
     )

@@ -42,7 +42,7 @@ def multiply(a: int, b: int) -> int:
     """Multiply two numbers."""
     return a * b
 
-agent = Agent("openai/gpt-4o", tools=[add, multiply])
+agent = Agent("anthropic/claude-sonnet-4-5", tools=[add, multiply])
 
 # Use both tools
 task1 = Task(description="What is 5 + 3?")
@@ -76,7 +76,7 @@ def multiply(a: int, b: int) -> int:
     """Multiply two numbers."""
     return a * b
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 task = Task(description="Calculate 5 + 3", tools=[add, multiply])
 
 # Remove from task (requires agent reference)

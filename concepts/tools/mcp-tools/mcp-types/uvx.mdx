@@ -26,7 +26,7 @@ task = Task(
 # Create agent
 agent = Agent(
     name="Data Fetcher",
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
 
 # Execute
@@ -67,7 +67,7 @@ task = Task(
     tools=[UsersDB, OrdersDB]
 )
 
-agent = Agent(name="Multi-DB Agent", model="openai/gpt-4o")
+agent = Agent(name="Multi-DB Agent", model="anthropic/claude-sonnet-4-5")
 result = agent.print_do(task)
 print("Result:", result)
 ```

@@ -29,12 +29,12 @@ memory = Memory(
     summary_memory=True,           # Generate summaries
     user_analysis_memory=True,     # Learn about customer
     num_last_messages=10,          # Keep last 10 turns
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
 
 # 3. Create support agent
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Support Agent",
     memory=memory
 )
@@ -71,10 +71,10 @@ memory = Memory(
     user_id="customer_123",          # SAME customer
     full_session_memory=True,
     user_analysis_memory=True,
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 # Agent knows customer from previous sessions
 result = agent.do(Task("Hello, I'm back. What did we discuss before?"))
@@ -98,10 +98,10 @@ async def main():
         user_id="user_456",
         full_session_memory=True,
         summary_memory=True,
-        model="openai/gpt-4o"
+        model="anthropic/claude-sonnet-4-5"
     )
     
-    agent = Agent("openai/gpt-4o", memory=memory)
+    agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
     
     # Async execution
     result1 = await agent.do_async(Task("My order hasn't arrived"))

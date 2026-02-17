@@ -27,7 +27,7 @@ The `AutonomousShellToolKit` enables secure terminal command execution within th
 from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     shell_timeout=60
 )
@@ -43,7 +43,7 @@ agent.print_do(task)
 from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project"
 )
 
@@ -60,7 +60,7 @@ By default, dangerous commands are blocked. You can customize the blocklist:
 from upsonic import AutonomousAgent
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     blocked_commands=["rm -rf", "sudo", "chmod 777"]
 )
@@ -74,7 +74,7 @@ Pass custom environment variables to commands:
 from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project"
 )
 
@@ -92,7 +92,7 @@ Access the shell toolkit directly:
 from upsonic import AutonomousAgent
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project"
 )
 

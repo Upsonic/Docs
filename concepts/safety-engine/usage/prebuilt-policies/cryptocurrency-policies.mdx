@@ -26,11 +26,11 @@ Cryptocurrency policies are critical for financial institutions and organization
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import CryptoBlockPolicy_LLM_Finder
 
-CryptoBlockPolicy_LLM_Finder.rule.text_finder_llm = "openai/gpt-4o"
+CryptoBlockPolicy_LLM_Finder.rule.text_finder_llm = "anthropic/claude-sonnet-4-5"
 
 # Block any crypto-related questions
 agent = Agent(
-    "openai/gpt-4o",
+    "anthropic/claude-sonnet-4-5",
     user_policy=CryptoBlockPolicy_LLM_Finder,
     debug=True
 )

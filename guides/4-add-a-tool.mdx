@@ -170,7 +170,7 @@ task = Task(
     tools=[delete_file]
 )
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 result = agent.print_do(task)
 # User will be prompted: "Proceed? (y/n): "
 ```
@@ -196,7 +196,7 @@ task = Task(
     tools=[get_balance]
 )
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 result = agent.print_do(task)
 # User will be prompted for each field:
 # Enter value for 'api_key': 
@@ -240,7 +240,7 @@ task = Task(
     tools=[execute_shell_command]
 )
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 
 # Initial execution - agent pauses when tool is needed
 output = agent.print_do(task, return_output=True)
@@ -393,7 +393,7 @@ async def analyze_seo_metrics(html_content: str) -> Dict[str, Any]:
 
 # Agent Creation with Custom Tools
 website_analyzer_agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Website Analysis Expert",
     role="Website Performance and SEO Specialist",
     goal="Provide comprehensive website analysis with actionable insights for optimization"

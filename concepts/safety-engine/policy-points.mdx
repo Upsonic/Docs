@@ -37,7 +37,7 @@ from upsonic.safety_engine.policies import PhishingBlockPolicy
 
 # Block phishing attempts and social engineering
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     agent_policy=PhishingBlockPolicy,
     debug=True
 )
@@ -71,7 +71,7 @@ from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
 
 # Create agent with PII anonymization
 agent = Agent(
-    "openai/gpt-4o",
+    "anthropic/claude-sonnet-4-5",
     user_policy=PIIAnonymizePolicy,  # Prevents data leak to LLM Providers
     debug=True  # Enable debug to see policy application
 )
@@ -120,7 +120,7 @@ def delete_file(filepath: str) -> str:
     return f"File {filepath} not found"
 
 agent = Agent(
-    "openai/gpt-4o",
+    "anthropic/claude-sonnet-4-5",
     tool_policy_pre=HarmfulToolBlockPolicy_LLM,  # Validates tools at registration
     debug=True
 )
@@ -161,7 +161,7 @@ def delete_file(filepath: str) -> str:
 
 
 agent = Agent(
-    "openai/gpt-4o",
+    "anthropic/claude-sonnet-4-5",
     tool_policy_post=HarmfulToolBlockPolicy_LLM,  # Validates tool calls before execution
     debug=True
 )

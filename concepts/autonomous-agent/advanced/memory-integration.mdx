@@ -16,7 +16,7 @@ from upsonic import AutonomousAgent, Task
 
 # InMemoryStorage + full_session_memory are enabled automatically
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project"
 )
 
@@ -37,7 +37,7 @@ Enable additional memory features beyond the default:
 from upsonic import AutonomousAgent
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     # full_session_memory=True is already the default
     summary_memory=True,       # Generate session summaries
@@ -63,7 +63,7 @@ memory = Memory(
 )
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     memory=memory
 )
@@ -81,7 +81,7 @@ Track sessions and users:
 from upsonic import AutonomousAgent
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     session_id="coding_session_123",
     user_id="alice"

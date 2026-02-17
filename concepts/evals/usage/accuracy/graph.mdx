@@ -12,7 +12,7 @@ from upsonic import Agent, Task, Graph
 from upsonic.eval import AccuracyEvaluator
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="GraphAgent",
 )
 
@@ -24,7 +24,7 @@ graph = Graph(
 task = Task(description="What is the capital of Italy?")
 graph.add(task)
 
-judge = Agent(model="openai/gpt-4o", name="Judge")
+judge = Agent(model="anthropic/claude-sonnet-4-5", name="Judge")
 
 evaluator = AccuracyEvaluator(
     judge_agent=judge,
@@ -51,7 +51,7 @@ from upsonic import Agent, Task, Graph
 from upsonic.eval import AccuracyEvaluator
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="ChainAgent",
 )
 
@@ -64,7 +64,7 @@ task1 = Task(description="Name a popular programming language.")
 task2 = Task(description="Describe one key feature of that programming language.")
 graph.add(task1 >> task2)
 
-judge = Agent(model="openai/gpt-4o", name="Judge")
+judge = Agent(model="anthropic/claude-sonnet-4-5", name="Judge")
 
 evaluator = AccuracyEvaluator(
     judge_agent=judge,

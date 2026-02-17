@@ -44,7 +44,7 @@ def calculate_discount(price: float, discount_percent: float) -> float:
     return price * (1 - discount_percent / 100)
 
 # Create agent and task
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 task = Task(
     description="Calculate 20% discount on $100",
     tools=[calculate_discount]

@@ -45,7 +45,7 @@ from upsonic.safety_engine.policies import CryptoBlockPolicy
 
 # Block any crypto-related questions
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     user_policy=CryptoBlockPolicy
 )
 
@@ -99,7 +99,7 @@ from upsonic.safety_engine.policies import PIIAnonymizePolicy
 
 # Automatically hide sensitive info in responses
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     agent_policy=PIIAnonymizePolicy
 )
 
@@ -156,7 +156,7 @@ from upsonic.safety_engine.policies import AnonymizePhoneNumbersPolicy
 
 # Anonymize just phone numbers
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     agent_policy=AnonymizePhoneNumbersPolicy
 )
 
@@ -189,7 +189,7 @@ from upsonic import Agent, Task
 from upsonic.safety_engine.policies import AdultContentBlockPolicy
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     user_policy=AdultContentBlockPolicy
 )
 
@@ -241,7 +241,7 @@ from upsonic import Agent, Task
 from upsonic.safety_engine.policies import SensitiveSocialBlockPolicy
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     user_policy=SensitiveSocialBlockPolicy
 )
 
@@ -292,7 +292,7 @@ from upsonic import Agent, Task
 from upsonic.safety_engine.policies import FinancialInfoBlockPolicy
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     agent_policy=FinancialInfoAnonymizePolicy
 )
 
@@ -349,7 +349,7 @@ from upsonic.safety_engine.policies import MedicalInfoRaiseExceptionPolicy
 
 # Zero tolerance for PHI
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     user_policy=MedicalInfoRaiseExceptionPolicy,
     agent_policy=MedicalInfoRaiseExceptionPolicy
 )
@@ -792,7 +792,7 @@ company_security_policy = Policy(
 from upsonic import Agent, Task
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Company Assistant",
     user_policy=company_security_policy
 )
@@ -846,7 +846,7 @@ from upsonic import Agent, Task
 
 # Apply policy to both input and output
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Secure Assistant",
     user_policy=company_security_policy,    # Filter input
     agent_policy=company_security_policy    # Filter output
@@ -870,7 +870,7 @@ import asyncio
 from upsonic import Agent, Task
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     user_policy=company_security_policy
 )
 
@@ -940,7 +940,7 @@ project_policy = Policy(
 
 # 4. Use with agent
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     agent_policy=project_policy
 )
 

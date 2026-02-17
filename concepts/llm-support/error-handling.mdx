@@ -11,11 +11,11 @@ HTTP errors during model requests:
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.anthropic import AnthropicModel
 from upsonic.utils.package.exception import ModelHTTPError
 
 try:
-    model = OpenAIChatModel(model_name="gpt-4o")
+    model = AnthropicModel(model_name="claude-sonnet-4-5")
     agent = Agent(model=model)
     task = Task("Hello")
     result = agent.do(task)
@@ -30,11 +30,11 @@ except ModelHTTPError as e:
 Configuration or usage errors:
 
 ```python
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.anthropic import AnthropicModel
 from upsonic.utils.package.exception import UserError
 
 try:
-    model = OpenAIChatModel(model_name="invalid-model-name")
+    model = AnthropicModel(model_name="claude-sonnet-4-5")
 except UserError as e:
     print(f"Error: {e}")
 ```
@@ -44,7 +44,7 @@ except UserError as e:
 Unexpected model responses:
 
 ```python
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.anthropic import AnthropicModel
 from upsonic.models.settings import ModelSettings
 from upsonic.models import ModelRequestParameters
 from upsonic.utils.package.exception import UnexpectedModelBehavior
@@ -87,13 +87,13 @@ Context length exceeded handling:
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.anthropic import AnthropicModel
 from upsonic.models.settings import ModelSettings
 from upsonic.utils.package.exception import ModelHTTPError
 
 try:
     settings = ModelSettings(max_tokens=4096)
-    model = OpenAIChatModel(model_name="gpt-4o")
+    model = AnthropicModel(model_name="claude-sonnet-4-5")
     agent = Agent(model=model, settings=settings)
     result = agent.do(very_long_task)
 except ModelHTTPError as e:
@@ -107,14 +107,14 @@ Structured output validation:
 
 ```python
 from pydantic import BaseModel, ValidationError
-from upsonic.models.openai import OpenAIChatModel
+from upsonic.models.anthropic import AnthropicModel
 
 class ResponseFormat(BaseModel):
     answer: str
     confidence: float
 
 try:
-    model = OpenAIChatModel(model_name="gpt-4o")
+    model = AnthropicModel(model_name="claude-sonnet-4-5")
     model = model.with_structured_output(ResponseFormat)
     result = await model.ainvoke("What is AI?")
 except ValidationError as e:

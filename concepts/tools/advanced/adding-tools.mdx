@@ -18,7 +18,7 @@ def add(a: int, b: int) -> int:
     """Add two numbers."""
     return a + b
 
-agent = Agent("openai/gpt-4o", tools=[add])
+agent = Agent("anthropic/claude-sonnet-4-5", tools=[add])
 
 task = Task(description="What is 5 + 3?")
 result = agent.print_do(task)
@@ -41,7 +41,7 @@ def divide(a: int, b: int) -> float:
     """Divide two numbers."""
     return a / b
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 agent.add_tools(multiply)              # Single tool
 agent.add_tools([divide])              # Multiple tools
 
@@ -65,7 +65,7 @@ def calculate_tax(amount: float, rate: float) -> float:
     """Calculate tax for given amount."""
     return amount * rate
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 
 # calculate_tax is only available for this task
 task = Task(
@@ -92,7 +92,7 @@ def multiply(a: int, b: int) -> int:
     """Multiply two numbers."""
     return a * b
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task(description="Calculate 5 + 3 and then multiply by 2", tools=[add])
 task.add_tools(multiply)
 
@@ -113,7 +113,7 @@ def add(a: int, b: int) -> int:
     """Add two numbers."""
     return a + b
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 
 agent.add_tools(add)
 
@@ -140,7 +140,7 @@ class MathKit(ToolKit):
         return a + b
 
 kit = MathKit()
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 
 agent.add_tools(kit)
 print("add" in agent.registered_agent_tools)  # True

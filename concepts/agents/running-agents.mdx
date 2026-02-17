@@ -14,7 +14,7 @@ The simplest way to run an agent is using the `do()` method, which executes sync
 from upsonic import Agent, Task
 
 # Create agent
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 
 # Execute with Task object
 task = Task("What is the capital of France?")
@@ -35,7 +35,7 @@ print(result)  # Output: Paris
 ```python
 from upsonic import Agent
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 results = agent.do(["What is 2+2?", "What is 3+3?"])
 # results is a list of strings, one per input
 for r in results:
@@ -47,7 +47,7 @@ for r in results:
 ```python
 from upsonic import Agent, Task
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 tasks = [
     Task("What is the capital of France?"),
     Task("What is the capital of Germany?"),
@@ -68,7 +68,7 @@ import asyncio
 
 async def main():
     # Create agent
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
     
     # Execute asynchronously (accepts Task or string)
     result = await agent.do_async("Explain quantum computing in simple terms")
@@ -89,7 +89,7 @@ from upsonic import Agent, Task
 
 async def main():
     # Create agent and task
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
     task = Task("Write a short poem about coding")
     
     # Stream the output
@@ -124,7 +124,7 @@ def calculate(x: int, y: int) -> int:
     return x + y
 
 async def main():
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
     task = Task("Calculate 5 + 3", tools=[calculate])
     
     async for event in agent.astream(task, events=True):
@@ -255,7 +255,7 @@ For synchronous code, use `stream()` with `events=True`:
 from upsonic import Agent, Task
 from upsonic.run.events.events import TextDeltaEvent, PipelineStartEvent, PipelineEndEvent
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 task = Task("Explain AI briefly")
 
 # Stream events synchronously
@@ -308,7 +308,7 @@ def another_tool() -> str:
     return "Another tool"
 
 # Add tools during initialization
-agent = Agent("openai/gpt-4o", tools=[calculate])
+agent = Agent("anthropic/claude-sonnet-4-5", tools=[calculate])
 
 # Or add tools after initialization
 agent.add_tools([another_tool])

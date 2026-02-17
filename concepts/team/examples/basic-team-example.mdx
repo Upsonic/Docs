@@ -21,14 +21,14 @@ from upsonic import Agent, Task, Team
 
 # Create specialized agents
 data_analyst = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Data Analyst",
     role="Data Analysis Expert",
     goal="Analyze data and extract insights"
 )
 
 report_writer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Report Writer",
     role="Business Report Specialist",
     goal="Create professional business reports"
@@ -38,7 +38,7 @@ report_writer = Agent(
 team = Team(
     agents=[data_analyst, report_writer],
     mode="coordinate",
-    model="openai/gpt-4o"  # Required for leader agent
+    model="anthropic/claude-sonnet-4-5"  # Required for leader agent
 )
 
 # Define tasks

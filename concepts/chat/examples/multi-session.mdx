@@ -15,7 +15,7 @@ from upsonic.storage import SqliteStorage
 
 async def main():
     storage = SqliteStorage(db_file="chat.db")
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
 
     chat1 = Chat(
         session_id="session1",
@@ -55,7 +55,7 @@ from upsonic.storage import SqliteStorage
 
 async def main():
     storage = SqliteStorage(db_file="chat.db")
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
 
     chat_alice = Chat(
         session_id="support",

@@ -21,10 +21,10 @@ memory = Memory(
     session_id="session_001",
     user_id="user_abc",
     user_analysis_memory=True,
-    model="openai/gpt-4o"  # Required for trait extraction
+    model="anthropic/claude-sonnet-4-5"  # Required for trait extraction
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result1 = agent.do(Task("I'm a data scientist with 5 years of ML experience"))
 result2 = agent.do(Task("What do you know about me?"))
@@ -56,10 +56,10 @@ memory = Memory(
     user_id="dev_123",
     user_analysis_memory=True,
     user_profile_schema=DeveloperProfile,
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("I'm Alice, I use Python and Go, been coding for 8 years, love VS Code"))
 print(result)
@@ -82,10 +82,10 @@ memory = Memory(
     user_id="user_456",
     user_analysis_memory=True,
     dynamic_user_profile=True,  # Agent creates custom fields
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("I prefer concise answers, work night shifts, and love hiking"))
 print(result)  # Agent adapts to learned preferences
@@ -108,9 +108,9 @@ memory1 = Memory(
     session_id="session_001",
     user_id="customer_789",
     user_analysis_memory=True,
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
-agent1 = Agent("openai/gpt-4o", memory=memory1)
+agent1 = Agent("anthropic/claude-sonnet-4-5", memory=memory1)
 agent1.do(Task("I'm John, I run a small bakery in Seattle"))
 
 # Session 2: New session, same user - profile is loaded
@@ -119,9 +119,9 @@ memory2 = Memory(
     session_id="session_002",  # Different session
     user_id="customer_789",     # Same user
     user_analysis_memory=True,
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
-agent2 = Agent("openai/gpt-4o", memory=memory2)
+agent2 = Agent("anthropic/claude-sonnet-4-5", memory=memory2)
 result = agent2.do(Task("Remind me what you know about me"))
 print(result)  # "You're John, you run a bakery in Seattle"
 ```
@@ -147,10 +147,10 @@ memory = Memory(
     user_id="user_123",
     user_analysis_memory=True,
     user_memory_mode='update',
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 result = agent.do(Task("I also speak Spanish and French"))
 print(result)
 ```

@@ -43,7 +43,7 @@ def delete_all_files(directory: str) -> str:
     return f"Would delete all files in {directory}"
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     tool_policy_pre=HarmfulToolBlockPolicy,
     debug=True,
 )
@@ -72,7 +72,7 @@ def run_command(command: str) -> str:
     return f"Executed: {command}"
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     tool_policy_post=MaliciousToolCallBlockPolicy,
     debug=True,
 )
@@ -102,7 +102,7 @@ def safe_calculator(a: int, b: int) -> int:
     return a + b
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     tools=[safe_calculator],
     tool_policy_pre=HarmfulToolBlockPolicy,      # Blocks harmful tools at registration
     tool_policy_post=MaliciousToolCallBlockPolicy  # Blocks malicious calls at execution

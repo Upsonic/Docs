@@ -14,7 +14,7 @@ Any Upsonic Agent can be exposed as an MCP (Model Context Protocol) server using
 from upsonic import Agent
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Math Expert",
     role="Mathematics specialist",
     goal="Solve math problems accurately",
@@ -34,7 +34,7 @@ from upsonic.tools.mcp import MCPHandler
 math_agent = MCPHandler(command="python math_agent_server.py")
 
 orchestrator = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Orchestrator",
 )
 
@@ -61,7 +61,7 @@ math = MCPHandler(command="python math_server.py", tool_name_prefix="math")
 writer = MCPHandler(command="python writer_server.py", tool_name_prefix="writer")
 
 orchestrator = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Orchestrator",
     tools=[math, writer],
 )
@@ -77,7 +77,7 @@ result = orchestrator.do("Calculate 2^10 and write a sentence about the result."
 ```python
 from upsonic import Agent
 
-agent = Agent(name="Assistant", model="openai/gpt-4o")
+agent = Agent(name="Assistant", model="anthropic/claude-sonnet-4-5")
 mcp = agent.as_mcp()
 
 @mcp.tool

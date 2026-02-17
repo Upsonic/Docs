@@ -23,7 +23,7 @@ task = Task(
     tools=[web_search]
 )
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 agent.print_do(task)
 ```
 
@@ -48,7 +48,7 @@ task = Task(
     tools=[web_search, data_processor]
 )
 
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 agent.print_do(task)
 ```
 
@@ -70,7 +70,7 @@ task = Task(
     tools=finance_tools.functions()
 )
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 agent.print_do(task)
 ```
 
@@ -90,7 +90,7 @@ task = Task(
     tools=[sensitive_operation]
 )
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 agent.print_do(task)
 ```
 
@@ -134,7 +134,7 @@ def calculator(a: float, b: float) -> float:
     return a + b
 
 task = Task(description="Search for AI news and calculate 10 + 20")
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 
 # Add tools dynamically
 task.add_tools([web_search, calculator])
@@ -160,7 +160,7 @@ def calculator(a: float, b: float) -> float:
     return a + b
 
 task = Task(description="Calculate 5 + 3", tools=[calculator])
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 agent.print_do(task)
 
 # Access registered tools

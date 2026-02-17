@@ -25,14 +25,14 @@ def get_weather(city: str) -> str:
     return f"Weather in {city}: Sunny, 72°F"
 
 calculator = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Calculator",
     role="Math Calculator",
     tools=[calculate_sum],
 )
 
 weather_agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="WeatherAgent",
     role="Weather Provider",
     tools=[get_weather],
@@ -74,7 +74,7 @@ def calculate_sum(a: int, b: int) -> int:
     return a + b
 
 math_agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="MathWorker",
     role="Math Calculator",
     goal="Perform calculations",
@@ -84,7 +84,7 @@ math_agent = Agent(
 team = Team(
     entities=[math_agent],
     mode="coordinate",
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
 )
 
 tasks = [
@@ -122,7 +122,7 @@ def get_weather(city: str) -> str:
     return f"Weather in {city}: Sunny, 72°F"
 
 calculator = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Calculator",
     role="Math Calculator",
     goal="Perform math calculations",
@@ -130,7 +130,7 @@ calculator = Agent(
 )
 
 weather_provider = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="WeatherProvider",
     role="Weather Provider",
     goal="Provide weather information",
@@ -140,7 +140,7 @@ weather_provider = Agent(
 team = Team(
     entities=[calculator, weather_provider],
     mode="route",
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
 )
 
 tasks = [
