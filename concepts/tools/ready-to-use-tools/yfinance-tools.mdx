@@ -15,7 +15,7 @@ from upsonic.tools.common_tools.financial_tools import YFinanceTools
 
 # Create finance tools instance
 finance_tools = YFinanceTools()
-finance_tools.enable_all_tools()
+finance_tools._enable_all_tools()
 tools = finance_tools.functions()
 # Create task
 task = Task(
@@ -59,7 +59,7 @@ print("Result:", result)
 
 ## Available Tools
 
-When using `enable_all_tools()`, the following methods are available:
+When using `_enable_all_tools()`, the following methods are available:
 
 1. **get_current_stock_price(symbol: str)**: Get current stock price
 2. **get_company_info(symbol: str)**: Get comprehensive company information
@@ -92,7 +92,7 @@ from upsonic.tools.common_tools.financial_tools import YFinanceTools
 
 # Enable all financial tools
 finance_tools = YFinanceTools()
-finance_tools.enable_all_tools()
+finance_tools._enable_all_tools()
 
 # Comprehensive analysis task
 task = Task(
