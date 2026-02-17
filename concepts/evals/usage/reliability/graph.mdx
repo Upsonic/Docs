@@ -20,7 +20,7 @@ def calculate_sum(a: int, b: int) -> int:
     return a + b
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="GraphAgent",
     tools=[calculate_sum],
 )
@@ -64,7 +64,7 @@ def calculate_product(a: int, b: int) -> int:
     return a * b
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="ChainAgent",
     tools=[calculate_sum, calculate_product],
 )
@@ -112,7 +112,7 @@ def get_weather(city: str) -> str:
     return f"Weather in {city}: Sunny, 72°F"
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     tools=[calculate_sum, get_weather],
 )
 

@@ -21,14 +21,14 @@ from upsonic import Agent, Task, Team
 
 # Create specialized agents
 researcher = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Researcher",
     role="Research Specialist",
     goal="Find accurate information and data"
 )
 
 writer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Writer",
     role="Content Writer",
     goal="Create clear and engaging content"
@@ -59,14 +59,14 @@ from upsonic import Agent, Task, Team
 
 # Create specialized agents
 writer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Writer",
     role="Content Writer",
     goal="Create engaging content"
 )
 
 editor = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Editor",
     role="Content Editor",
     goal="Polish and improve content"
@@ -91,14 +91,14 @@ You can stream output with a mix of Agent and nested Team entities. Each entity'
 from upsonic import Agent, Task, Team
 
 researcher = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Researcher",
     role="Research Specialist",
     goal="Find accurate information and data",
 )
 
 editor = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Editor",
     role="Editor",
     goal="Polish and refine content",
@@ -107,7 +107,7 @@ editor = Agent(
 writer_team = Team(
     entities=[
         Agent(
-            model="openai/gpt-4o",
+            model="anthropic/claude-sonnet-4-5",
             name="Writer",
             role="Content Writer",
             goal="Create clear and engaging content",

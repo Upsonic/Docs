@@ -41,7 +41,7 @@ memory = Memory(
     model="openai/gpt-4o-mini"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("Hello! I'm learning Python"))
 print(result)
@@ -65,7 +65,7 @@ memory = Memory(
     num_last_messages=10  # Keep only last 10 turns
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("What topics have we discussed?"))
 print(result)
@@ -96,10 +96,10 @@ memory = Memory(
     user_id="customer_456",
     user_analysis_memory=True,
     user_profile_schema=CustomerProfile,
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("I'm John from Acme Corp, working as a data engineer"))
 print(result)
@@ -128,10 +128,10 @@ memory = Memory(
     user_id="user_789",
     user_analysis_memory=True,
     user_memory_mode='update',  # Default: merge new with existing
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("I prefer dark mode and use vim"))
 print(result)

@@ -13,7 +13,7 @@ from upsonic import Agent, Chat
 
 
 async def main():
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
 
     async with Chat(
         session_id="session1",
@@ -38,7 +38,7 @@ from upsonic.storage import SqliteStorage
 
 async def main():
     storage = SqliteStorage(db_file="chat.db")
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
 
     async with Chat(
         session_id="session1",

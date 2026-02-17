@@ -34,7 +34,7 @@ class DataProcessor(ToolKit):
 # Specialized agent
 analyzer_agent = Agent(
     name="Data Analyzer",
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     system_prompt="Analyze data patterns"
 )
 
@@ -48,7 +48,7 @@ task = Task(
     ]
 )
 
-agent = Agent(model="openai/gpt-4o", name="Main Agent")
+agent = Agent(model="anthropic/claude-sonnet-4-5", name="Main Agent")
 result = agent.print_do(task)
 print("Result:", result)
 ```

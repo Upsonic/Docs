@@ -12,7 +12,7 @@ from upsonic import Agent, Task, Team
 from upsonic.eval import PerformanceEvaluator
 
 analyst = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Analyst",
     role="Data Analyst",
     goal="Analyze data",
@@ -46,14 +46,14 @@ from upsonic import Agent, Task, Team
 from upsonic.eval import PerformanceEvaluator
 
 worker_a = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="WorkerA",
     role="Worker",
     goal="Do assigned work",
 )
 
 worker_b = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="WorkerB",
     role="Worker",
     goal="Do assigned work",
@@ -62,7 +62,7 @@ worker_b = Agent(
 team = Team(
     entities=[worker_a, worker_b],
     mode="coordinate",
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
 )
 
 task = Task(description="What is the tallest mountain in the world?")
@@ -87,14 +87,14 @@ from upsonic import Agent, Task, Team
 from upsonic.eval import PerformanceEvaluator
 
 math_agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="MathAgent",
     role="Math Solver",
     goal="Solve math problems",
 )
 
 trivia_agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="TriviaAgent",
     role="Trivia Expert",
     goal="Answer trivia questions",
@@ -103,7 +103,7 @@ trivia_agent = Agent(
 team = Team(
     entities=[math_agent, trivia_agent],
     mode="route",
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
 )
 
 task = Task(description="What is 10 + 20?")

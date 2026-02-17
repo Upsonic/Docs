@@ -75,7 +75,7 @@ mcp_handler = MCPHandler(
     timeout_seconds=60
 )
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task(
     description="Query the database to list all tables and their schema information to understand the database structure.",
     tools=[mcp_handler]
@@ -99,7 +99,7 @@ multi_handler = MultiMCPHandler(
     timeout_seconds=60
 )
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task(
     description="""
     Connect to both databases using prefixed tools:

@@ -24,7 +24,7 @@ task = Task(
 )
 
 # Create agent
-agent = Agent(model="openai/gpt-4o", name="Finance Agent")
+agent = Agent(model="anthropic/claude-sonnet-4-5", name="Finance Agent")
 
 # Execute
 result = agent.print_do(task)
@@ -52,7 +52,7 @@ task = Task(
     tools=finance_tools.functions()
 )
 
-agent = Agent(model="openai/gpt-4o", name="Selective Finance Agent")
+agent = Agent(model="anthropic/claude-sonnet-4-5", name="Selective Finance Agent")
 result = agent.print_do(task)
 print("Result:", result)
 ```
@@ -107,7 +107,7 @@ task = Task(
 )
 
 # Create agent
-agent = Agent(model="openai/gpt-4o", name="Financial Analyst")
+agent = Agent(model="anthropic/claude-sonnet-4-5", name="Financial Analyst")
 
 # Execute
 result = agent.print_do(task)

@@ -12,7 +12,7 @@ In Upsonic, you can use the output of one task as context for another task throu
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 
 # First task
 task1 = Task(description="What is 2 + 2?")
@@ -33,7 +33,7 @@ print(f"Result 2: {result2}")
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 
 # First two tasks
 task1 = Task(description="What is 10 + 5?")
@@ -74,7 +74,7 @@ class ReportResult(BaseModel):
     summary: str
     insights: List[str]
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 
 # Task 1: Data collection
 task1 = Task(
@@ -123,7 +123,7 @@ embedding_provider = OpenAIEmbedding()
 vectordb = ChromaProvider(config=ChromaConfig(collection_name="kb", vector_size=1536, connection=ConnectionConfig(mode=Mode.IN_MEMORY)))
 knowledge_base = KnowledgeBase(sources=["company_data.txt"], embedding_provider=embedding_provider, vectordb=vectordb)
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 
 # Previous data collection task
 data_collection_task = Task(description="Collect Q4 sales data")

@@ -13,7 +13,7 @@ from upsonic import Agent, Task, Chat
 
 
 async def main():
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
     chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
     response = await chat.invoke("What is 2+2?")
@@ -38,7 +38,7 @@ from upsonic import Agent, Chat
 
 
 async def main():
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
     chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
     async for chunk in chat.stream("Tell me a story"):
@@ -68,7 +68,7 @@ def calculate(x: int, y: int) -> int:
 
 
 async def main():
-    agent = Agent("openai/gpt-4o", tools=[calculate])
+    agent = Agent("anthropic/claude-sonnet-4-5", tools=[calculate])
     chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
     print("Assistant: ", end="", flush=True)
@@ -115,7 +115,7 @@ def calculate(x: int, y: int) -> int:
 
 
 async def main():
-    agent = Agent("openai/gpt-4o", tools=[calculate])
+    agent = Agent("anthropic/claude-sonnet-4-5", tools=[calculate])
     chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
     print("Assistant: ", end="", flush=True)
@@ -154,7 +154,7 @@ from upsonic import Agent, Chat
 
 
 async def main():
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
     chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
     response = await chat.invoke(
@@ -178,7 +178,7 @@ from upsonic import Agent, Chat
 
 
 async def main():
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
     chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
     await chat.invoke("Hello")
@@ -205,7 +205,7 @@ from upsonic import Agent, Chat
 
 
 async def main():
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
     chat = Chat(session_id="session1", user_id="user1", agent=agent)
 
     await chat.invoke("Hello")

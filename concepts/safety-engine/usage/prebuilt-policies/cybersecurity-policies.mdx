@@ -26,10 +26,10 @@ Cybersecurity policies are essential for protecting your systems and preventing 
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import CybersecurityBlockPolicy_LLM_Finder
 
-CybersecurityBlockPolicy_LLM_Finder.rule.text_finder_llm = "openai/gpt-4o"
+CybersecurityBlockPolicy_LLM_Finder.rule.text_finder_llm = "anthropic/claude-sonnet-4-5"
 
 agent = Agent(
-    "openai/gpt-4o",
+    "anthropic/claude-sonnet-4-5",
     user_policy=CybersecurityBlockPolicy_LLM_Finder,
     debug=True
 )

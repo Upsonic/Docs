@@ -34,7 +34,7 @@ from upsonic.agent.deepagent import DeepAgent
 from upsonic import Task
 
 async def main():
-    agent = DeepAgent(model="openai/gpt-4o")
+    agent = DeepAgent(model="anthropic/claude-sonnet-4-5")
     
     task = Task(description="""
     Research Python web frameworks and return a summary.
@@ -73,7 +73,7 @@ async def main():
     
     # Create DeepAgent with subagents
     agent = DeepAgent(
-        model="openai/gpt-4o",
+        model="anthropic/claude-sonnet-4-5",
         subagents=[researcher, writer]
     )
     
@@ -111,7 +111,7 @@ async def main():
     )
     
     agent = DeepAgent(
-        model="openai/gpt-4o",
+        model="anthropic/claude-sonnet-4-5",
         subagents=[python_expert, js_expert]
     )
     
@@ -135,7 +135,7 @@ from upsonic.agent.deepagent import DeepAgent
 from upsonic import Agent, Task
 
 async def main():
-    agent = DeepAgent(model="openai/gpt-4o")
+    agent = DeepAgent(model="anthropic/claude-sonnet-4-5")
     
     # Add subagent after creation
     analyst = Agent(

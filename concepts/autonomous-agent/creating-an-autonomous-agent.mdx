@@ -22,7 +22,7 @@ from upsonic import AutonomousAgent, Task
 
 # Create with just a model and workspace
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project"
 )
 
@@ -39,11 +39,11 @@ The workspace is where all file and shell operations take place. It's sandboxed 
 from upsonic import AutonomousAgent, Task
 
 # Workspace defaults to current directory if not specified
-agent = AutonomousAgent(model="openai/gpt-4o")
+agent = AutonomousAgent(model="anthropic/claude-sonnet-4-5")
 
 # Or specify a workspace explicitly
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/home/user/projects/my-app"
 )
 
@@ -60,7 +60,7 @@ Give your agent a role and personality:
 from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     name="CodeReviewer",
     role="Senior Software Engineer",
@@ -89,7 +89,7 @@ memory = Memory(
 )
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     memory=memory
 )
@@ -104,7 +104,7 @@ from upsonic import AutonomousAgent
 
 # Filesystem only (no shell access)
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     enable_filesystem=True,
     enable_shell=False
@@ -112,7 +112,7 @@ agent = AutonomousAgent(
 
 # Shell only (no filesystem access)
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     enable_filesystem=False,
     enable_shell=True
@@ -133,7 +133,7 @@ def deploy_to_staging() -> str:
     return "Deployed successfully to staging!"
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     tools=[deploy_to_staging]  # Added alongside filesystem and shell tools
 )

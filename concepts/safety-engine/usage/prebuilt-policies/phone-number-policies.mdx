@@ -28,7 +28,7 @@ from upsonic.safety_engine.policies.phone_policies import AnonymizePhoneNumbersP
 
 # Create agent with phone number anonymization
 agent = Agent(
-    "openai/gpt-4o",
+    "anthropic/claude-sonnet-4-5",
     user_policy=AnonymizePhoneNumbersPolicy,  # Prevents phone numbers from leaking to LLM Providers
     debug=True  # Enable debug to see policy application
 )

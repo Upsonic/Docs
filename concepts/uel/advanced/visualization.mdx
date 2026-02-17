@@ -22,7 +22,7 @@ from upsonic.models import infer_model
 # Create a chain
 chain = (
     ChatPromptTemplate.from_template("Tell me about {topic}")
-    | infer_model("openai/gpt-4o")
+    | infer_model("anthropic/claude-sonnet-4-5")
     | StrOutputParser()
 )
 
@@ -36,7 +36,7 @@ Output:
 ChatPromptTemplate(messages=1 items)
   |
   v
-OpenAIChatModel()
+AnthropicModel()
   |
   v
 StrOutputParser()
@@ -48,7 +48,7 @@ StrOutputParser()
 from upsonic.uel import ChatPromptTemplate, RunnableParallel, RunnableLambda, StrOutputParser
 from upsonic.models import infer_model
 
-model = infer_model("openai/gpt-4o")
+model = infer_model("anthropic/claude-sonnet-4-5")
 parser = StrOutputParser()
 
 # Create a complex chain
@@ -73,14 +73,14 @@ RunnableParallel(joke, fact)
   ├─> [joke] ChatPromptTemplate(messages=1 items)
     |
     v
-    [joke] OpenAIChatModel()
+    [joke] AnthropicModel()
     |
     v
     [joke] StrOutputParser()
   └─> [fact] ChatPromptTemplate(messages=1 items)
     |
     v
-    [fact] OpenAIChatModel()
+    [fact] AnthropicModel()
     |
     v
     [fact] StrOutputParser()
@@ -89,7 +89,7 @@ RunnableParallel(joke, fact)
 ChatPromptTemplate(messages=1 items)
   |
   v
-OpenAIChatModel()
+AnthropicModel()
   |
   v
 StrOutputParser()
@@ -103,7 +103,7 @@ StrOutputParser()
 from upsonic.uel import ChatPromptTemplate, RunnableParallel, StrOutputParser
 from upsonic.models import infer_model
 
-model = infer_model("openai/gpt-4o")
+model = infer_model("anthropic/claude-sonnet-4-5")
 parser = StrOutputParser()
 
 # Create a complex chain
@@ -127,13 +127,13 @@ Output:
 graph TD
     0["RunnableParallel(joke, fact)"]
     1["ChatPromptTemplate(messages=1 items)"]
-    2["OpenAIChatModel()"]
+    2["AnthropicModel()"]
     3["StrOutputParser()"]
     4["ChatPromptTemplate(messages=1 items)"]
-    5["OpenAIChatModel()"]
+    5["AnthropicModel()"]
     6["StrOutputParser()"]
     7["ChatPromptTemplate(messages=1 items)"]
-    8["OpenAIChatModel()"]
+    8["AnthropicModel()"]
     9["StrOutputParser()"]
     0 -.->|joke| 1
     0 -.->|fact| 4
@@ -155,7 +155,7 @@ from upsonic.models import infer_model
 
 # Note: @chain decorated functions don't have get_graph() method
 # To visualize, build the chain explicitly instead
-model = infer_model("openai/gpt-4o")
+model = infer_model("anthropic/claude-sonnet-4-5")
 parser = StrOutputParser()
 
 # Build chain explicitly for visualization
@@ -175,7 +175,7 @@ graph.print_ascii()
 # Or use @chain for custom logic, but visualize the returned chain
 @chain_decorator
 def custom_chain(input_dict):
-    model = infer_model("openai/gpt-4o")
+    model = infer_model("anthropic/claude-sonnet-4-5")
     parser = StrOutputParser()
     prompt1 = ChatPromptTemplate.from_template("Step 1: {input}")
     prompt2 = ChatPromptTemplate.from_template("Step 2: {input}")
@@ -199,7 +199,7 @@ from upsonic.models import infer_model
 # Create a chain
 chain = (
     ChatPromptTemplate.from_template("Tell me about {topic}")
-    | infer_model("openai/gpt-4o")
+    | infer_model("anthropic/claude-sonnet-4-5")
     | StrOutputParser()
 )
 
@@ -221,7 +221,7 @@ from upsonic.models import infer_model
 # Visualize before execution to understand flow
 chain = (
     ChatPromptTemplate.from_template("Process: {input}")
-    | infer_model("openai/gpt-4o")
+    | infer_model("anthropic/claude-sonnet-4-5")
     | StrOutputParser()
 )
 

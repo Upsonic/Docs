@@ -26,10 +26,10 @@ Fraud detection policies are essential for protecting users and organizations fr
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import FraudDetectionBlockPolicy_LLM_Finder
 
-FraudDetectionBlockPolicy_LLM_Finder.rule.text_finder_llm = "openai/gpt-4o"
+FraudDetectionBlockPolicy_LLM_Finder.rule.text_finder_llm = "anthropic/claude-sonnet-4-5"
 
 agent = Agent(
-    "openai/gpt-4o",
+    "anthropic/claude-sonnet-4-5",
     user_policy=FraudDetectionBlockPolicy_LLM_Finder,
     debug=True
 )

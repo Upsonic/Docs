@@ -14,14 +14,14 @@ Any Upsonic Team can be exposed as an MCP server using `as_mcp()`. The entire mu
 from upsonic import Agent, Team
 
 researcher = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Researcher",
     role="Research specialist",
     goal="Find accurate information",
 )
 
 writer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Writer",
     role="Technical writer",
     goal="Write clear and concise text",
@@ -49,7 +49,7 @@ from upsonic.tools.mcp import MCPHandler
 research_team = MCPHandler(command="python research_team_server.py")
 
 manager = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Manager",
 )
 
@@ -72,7 +72,7 @@ research = MCPHandler(command="python research_team.py", tool_name_prefix="resea
 engineering = MCPHandler(command="python eng_team.py", tool_name_prefix="eng")
 
 director = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Director",
     tools=[research, engineering],
 )

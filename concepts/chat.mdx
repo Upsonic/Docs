@@ -63,7 +63,7 @@ from upsonic import Chat, Agent
 
 async def main():
     # Create agent
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
 
     # Create basic chat session
     chat = Chat(
@@ -402,7 +402,7 @@ support_storage = SqliteStorage(
 support_chat = Chat(
     session_id="support_ticket_12345",
     user_id="customer_456",
-    agent=Agent("openai/gpt-4o"),
+    agent=Agent("anthropic/claude-sonnet-4-5"),
     storage=support_storage,
     full_session_memory=True,
     summary_memory=True,
@@ -435,7 +435,7 @@ edu_storage = SqliteStorage(
 edu_chat = Chat(
     session_id="student_learning_session",
     user_id="student_789",
-    agent=Agent("openai/gpt-4o"),
+    agent=Agent("anthropic/claude-sonnet-4-5"),
     storage=edu_storage,
     full_session_memory=True,
     user_analysis_memory=True,
@@ -541,7 +541,7 @@ from upsonic.storage.providers import SqliteStorage
 
 async def main():
     # Create agent
-    agent = Agent("openai/gpt-4o")
+    agent = Agent("anthropic/claude-sonnet-4-5")
     
     # Create storage
     storage = SqliteStorage(

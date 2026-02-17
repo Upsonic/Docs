@@ -51,7 +51,7 @@ kb = KnowledgeBase(
 )
 
 # Query with Agent
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-5")
 task = Task("What are the key sections?", context=[kb])
 result = agent.do(task)
 print(result)

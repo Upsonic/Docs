@@ -36,7 +36,7 @@ The string format follows this pattern:
 from upsonic import Agent, Task
 
 # Simply use a string instead of a model class
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 
 task = Task("Hello, how are you?")
 result = agent.do(task)
@@ -69,7 +69,7 @@ import os
 from upsonic import Agent, Task
 
 # Configure via environment variable
-model_string = os.getenv("LLM_MODEL_KEY", "openai/gpt-4o")
+model_string = os.getenv("LLM_MODEL_KEY", "anthropic/claude-sonnet-4-5")
 
 agent = Agent(model=model_string)
 task = Task("Analyze this data")

@@ -23,10 +23,10 @@ memory = Memory(
     full_session_memory=True,
     summary_memory=True,
     user_analysis_memory=True,
-    model="openai/gpt-4o"
+    model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("openai/gpt-4o", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result1 = agent.do(Task("My name is Bob"))
 result2 = agent.do(Task("What's my name?"))

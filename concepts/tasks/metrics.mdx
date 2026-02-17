@@ -28,7 +28,7 @@ After executing a task, you can access the following metrics:
 from upsonic import Agent, Task
 
 # Create agent and task
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task("Summarize the key benefits of AI agents in production systems")
 
 # Execute task
@@ -56,7 +56,7 @@ from upsonic import Task
 from upsonic.client import LLMClient
 
 # Create LLM client
-client = LLMClient(model="openai/gpt-4o")
+client = LLMClient(model="anthropic/claude-sonnet-4-5")
 
 # Create task
 task = Task("What are the benefits of RAG systems?")
@@ -76,7 +76,7 @@ print(f"Tokens used: {task.total_input_token + task.total_output_token}")
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 
 tasks = [
     Task("Analyze sentiment of customer feedback"),
@@ -120,7 +120,7 @@ def execute_with_budget(agent, task, max_cost=0.01):
     
     return result
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task("Generate a detailed analysis report")
 
 result = execute_with_budget(agent, task, max_cost=0.001)
@@ -176,7 +176,7 @@ class CostTracker:
 
 # Usage
 tracker = CostTracker()
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 
 for i in range(10):
     task = Task(f"Process item {i}")
@@ -210,7 +210,7 @@ def log_task_metrics(task, filename="task_metrics.jsonl"):
         f.write(json.dumps(metrics) + "\n")
 
 # Usage
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task("Analyze customer sentiment")
 agent.print_do(task)
 log_task_metrics(task)
@@ -228,7 +228,7 @@ Each model and pricing tier has a unique `price_id`. This identifier:
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task("Sample query")
 agent.print_do(task)
 

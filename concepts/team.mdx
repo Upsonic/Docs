@@ -92,14 +92,14 @@ from upsonic import Agent, Task, Team
 
 # Create specialized agents
 researcher = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Researcher",
     role="Research Specialist",
     goal="Find accurate information and data"
 )
 
 writer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Writer",
     role="Content Writer",
     goal="Create clear and engaging content"
@@ -142,14 +142,14 @@ from upsonic import Agent, Task, Team
 
 # Create specialized agents
 data_analyst = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Data Analyst",
     role="Data Analysis Expert",
     goal="Analyze data and extract insights"
 )
 
 report_writer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Report Writer",
     role="Business Report Specialist",
     goal="Create professional business reports"
@@ -159,7 +159,7 @@ report_writer = Agent(
 team = Team(
     agents=[data_analyst, report_writer],
     mode="coordinate",
-    model="openai/gpt-4o"  # Required for leader agent
+    model="anthropic/claude-sonnet-4-5"  # Required for leader agent
 )
 
 # Define tasks
@@ -194,7 +194,7 @@ from upsonic import Agent, Task, Team
 
 # Create domain specialists
 legal_expert = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Legal Expert",
     role="Legal Advisor",
     goal="Provide legal guidance and compliance information",
@@ -202,7 +202,7 @@ legal_expert = Agent(
 )
 
 tech_expert = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Tech Expert",
     role="Technology Specialist",
     goal="Provide technical solutions and architecture advice",
@@ -213,7 +213,7 @@ tech_expert = Agent(
 team = Team(
     agents=[legal_expert, tech_expert],
     mode="route",
-    model="openai/gpt-4o"  # Required for router agent
+    model="anthropic/claude-sonnet-4-5"  # Required for router agent
 )
 
 # Router selects best expert
@@ -242,14 +242,14 @@ from upsonic import Agent, Task, Team
 
 # Create specialized agents
 writer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Writer",
     role="Content Writer",
     goal="Create engaging content"
 )
 
 editor = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Editor",
     role="Content Editor",
     goal="Polish and improve content"
@@ -292,14 +292,14 @@ from upsonic import Agent, Task, Team
 
 # Create specialized agents
 researcher = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Researcher",
     role="Research Specialist",
     goal="Find accurate information and data"
 )
 
 writer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Writer",
     role="Content Writer",
     goal="Create clear and engaging content"

@@ -22,16 +22,16 @@ The UEL Model supports four memory modes that control how conversation history i
 from upsonic.models import infer_model
 
 # Default - recommended for most cases
-model = infer_model("openai/gpt-4o").add_memory(history=True)
+model = infer_model("anthropic/claude-sonnet-4-5").add_memory(history=True)
 
 # Explicit mode selection
-model = infer_model("openai/gpt-4o").add_memory(history=True, mode="auto")
-model = infer_model("openai/gpt-4o").add_memory(history=True, mode="always")
-model = infer_model("openai/gpt-4o").add_memory(history=True, mode="never")
-model = infer_model("openai/gpt-4o").add_memory(history=True, mode="record_all")
+model = infer_model("anthropic/claude-sonnet-4-5").add_memory(history=True, mode="auto")
+model = infer_model("anthropic/claude-sonnet-4-5").add_memory(history=True, mode="always")
+model = infer_model("anthropic/claude-sonnet-4-5").add_memory(history=True, mode="never")
+model = infer_model("anthropic/claude-sonnet-4-5").add_memory(history=True, mode="record_all")
 
 # Enable debug logging
-model = infer_model("openai/gpt-4o").add_memory(history=True, debug=True)
+model = infer_model("anthropic/claude-sonnet-4-5").add_memory(history=True, debug=True)
 ```
 
 ## Mode Details

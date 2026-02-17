@@ -12,7 +12,7 @@ Enable caching to store and reuse task responses for similar inputs, reducing AP
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task(
     description="Summarize this article about AI advancements",
     enable_cache=True
@@ -29,7 +29,7 @@ Uses semantic similarity to find cached responses for similar inputs.
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task(
     description="Analyze this text about climate change",
     enable_cache=True,
@@ -46,7 +46,7 @@ Uses an LLM to determine if cached responses are applicable.
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task(
     description="Analyze this text about renewable energy",
     enable_cache=True,
@@ -71,7 +71,7 @@ agent.print_do(task)
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="openai/gpt-4o")
+agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task(
     description="Explain quantum computing",
     enable_cache=True,

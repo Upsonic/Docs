@@ -42,7 +42,7 @@ def get_company_news(symbol: str) -> str:
 
 # Enable reasoning for advanced analysis
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="InvestmentAnalyst",
     tools=[get_stock_price, get_analyst_ratings, get_company_news],
     enable_thinking_tool=True,      # Required for reasoning
@@ -103,7 +103,7 @@ def get_financial_metrics(symbol: str) -> str:
 
 # Enable reasoning for all tasks
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="StrategicAnalyst",
     tools=[search_market_data, analyze_competitors, get_financial_metrics],
     enable_thinking_tool=True,
@@ -134,7 +134,7 @@ def analyze_competitors(company: str) -> str:
 
 # Create agent without reasoning enabled at agent level
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="MarketAnalyst",
     tools=[search_market_data, analyze_competitors]
 )
@@ -173,7 +173,7 @@ def get_financial_metrics(symbol: str) -> str:
 
 # Agent with reasoning enabled
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="AnalysisAgent",
     tools=[search_market_data, analyze_competitors, get_financial_metrics],
     enable_thinking_tool=True,
@@ -219,7 +219,7 @@ finance_tools = YFinanceTools(enable_all=True)
 
 # Create agent with reasoning for thorough analysis
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="InvestmentResearcher",
     tools=finance_tools.functions(),
     enable_thinking_tool=True,
@@ -273,7 +273,7 @@ def check_regulatory_status(topic: str) -> str:
     return f"Regulatory status for {topic}: Favorable, no pending actions"
 
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="ResearchAnalyst",
     tools=[search_news, get_expert_opinions, analyze_social_sentiment, check_regulatory_status],
     enable_thinking_tool=True,
@@ -326,7 +326,7 @@ def get_expert_opinions(topic: str) -> str:
 
 # Monitor performance with debug mode
 agent = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Analyst",
     tools=[search_news, get_expert_opinions],
     enable_thinking_tool=True,

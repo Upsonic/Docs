@@ -13,7 +13,7 @@ All file and shell operations are restricted to the workspace directory:
 from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/home/user/my-project"
 )
 
@@ -48,14 +48,14 @@ from upsonic import AutonomousAgent
 
 # Disable shell entirely for maximum security
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     enable_shell=False  # Only filesystem access
 )
 
 # Or customize blocked commands
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project",
     blocked_commands=["rm", "sudo", "chmod", "curl", "wget"]
 )
@@ -69,7 +69,7 @@ Monitor which files the agent has read:
 from upsonic import AutonomousAgent, Task
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     workspace="/path/to/project"
 )
 

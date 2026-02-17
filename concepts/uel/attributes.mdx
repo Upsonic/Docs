@@ -66,7 +66,7 @@ from upsonic.models import infer_model
 from operator import itemgetter
 
 # Create model with features
-model = infer_model("openai/gpt-4o").add_memory(history=True)
+model = infer_model("anthropic/claude-sonnet-4-5").add_memory(history=True)
 
 # Create parallel execution that generates joke and fact
 # RunnableParallel with explicit passthrough of input variables

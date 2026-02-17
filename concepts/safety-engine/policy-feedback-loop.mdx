@@ -16,7 +16,7 @@ from upsonic import Agent, Task
 from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
 
 agent = Agent(
-    "openai/gpt-4o-mini",
+    "anthropic/claude-sonnet-4-5",
     user_policy=CryptoBlockPolicy,
     user_policy_feedback=True,
 )
@@ -39,7 +39,7 @@ from upsonic import Agent, Task
 from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
 
 agent = Agent(
-    "openai/gpt-4o-mini",
+    "anthropic/claude-sonnet-4-5",
     agent_policy=CryptoBlockPolicy,
     agent_policy_feedback=True,
     agent_policy_feedback_loop=3,  # Allow up to 3 retries

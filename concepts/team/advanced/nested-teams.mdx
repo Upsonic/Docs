@@ -23,13 +23,13 @@ The parent team selects the best entity for each task. A nested team is selected
 from upsonic import Agent, Task, Team
 
 researcher = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Researcher",
     role="Research Specialist",
     goal="Find accurate information",
 )
 writer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Writer",
     role="Content Writer",
     goal="Create clear content",
@@ -64,13 +64,13 @@ The leader agent delegates tasks to entities including nested teams. The leader 
 from upsonic import Agent, Task, Team
 
 analyst = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Analyst",
     role="Data Analyst",
     goal="Analyze data and extract insights",
 )
 summarizer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Summarizer",
     role="Summary Writer",
     goal="Summarize findings concisely",
@@ -87,7 +87,7 @@ analysis_team = Team(
 team = Team(
     entities=[analysis_team, summarizer],
     mode="coordinate",
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
 )
 
 tasks = [
@@ -106,13 +106,13 @@ The router selects the single best entity — which can be a nested team — to 
 from upsonic import Agent, Task, Team
 
 legal_expert = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Legal Expert",
     role="Legal Advisor",
     goal="Provide legal guidance",
 )
 tech_writer = Agent(
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
     name="Tech Writer",
     role="Technical Writer",
     goal="Write technical documentation",
@@ -129,7 +129,7 @@ tech_team = Team(
 team = Team(
     entities=[legal_expert, tech_team],
     mode="route",
-    model="openai/gpt-4o",
+    model="anthropic/claude-sonnet-4-5",
 )
 
 task = Task(description="Write a brief explanation of how API rate limiting works.")
