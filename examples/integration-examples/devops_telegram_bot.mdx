@@ -1,0 +1,226 @@
+---
+title: "DevOps Telegram Bot — Autonomous Agent"
+description: "Use Upsonic's AutonomousAgent with Telegram to monitor servers, analyze logs, create backups, and run shell commands from your phone — a sandboxed DevOps sysadmin in chat."
+---
+
+This example demonstrates how to build a **Telegram-controlled DevOps agent** using Upsonic's **AutonomousAgent**. The agent treats a workspace as its home: it reads AGENTS.md for behavior, SOUL.md for identity, USER.md for context, and uses daily plus long-term memory. It can check disk usage, analyze logs, create backups, and run read-only or controlled shell commands — all from Telegram, with optional locking to your user ID.
+
+## Overview
+
+Upsonic's AutonomousAgent is wired to Telegram via **TelegramInterface** in **CHAT** mode so it keeps conversation context. The stack is minimal:
+
+1. **AutonomousAgent** — LLM-driven agent with filesystem and shell tools, sandboxed to a workspace directory
+2. **Workspace** — Agent's home: AGENTS.md (playbook), SOUL.md (identity), USER.md (who you are), MEMORY.md (long-term), `memory/YYYY-MM-DD.md` (daily logs)
+3. **Telegram** — Chat UI; webhook receives updates, FastAPI serves the webhook
+4. **ngrok** — Exposes localhost so Telegram can reach your bot
+
+The agent follows a **DevOps playbook** defined in AGENTS.md: log analysis (tail, grep, summarize), system checks (df, free, ps), backups (tar to `backups/` with a fixed naming pattern), incident response (severity, evidence, log to memory). It prefers `trash` over `rm`, never pipes unknown input to bash, and asks before editing app code or restarting services.
+
+## Project Structure
+
+```
+devops_telegram_bot/
+├── bot.py                    # Entry point: AutonomousAgent + TelegramInterface + InterfaceManager
+├── setup.sh                  # One-command setup (venv, deps, .env template)
+├── requirements.txt          # Python dependencies
+├── .env                      # Your secrets (create from .env.example)
+├── README.md
+│
+└── workspace/                # Agent's sandboxed home
+    ├── AGENTS.md             # Agent behavior: playbook, safety, memory, group-chat rules
+    ├── SOUL.md               # Agent identity ("DevOps Agent — senior systems engineer")
+    ├── USER.md               # Who the user is (developer/DevOps, cares about uptime/backups)
+    ├── MEMORY.md             # Long-term memory: baseline, known issues, useful commands
+    ├── memory/               # Daily logs
+    │   └── YYYY-MM-DD.md
+    ├── logs/                 # Application logs the agent can analyze
+    │   ├── error.log
+    │   ├── access.log
+    │   └── app-debug.log
+    ├── app/                  # Demo app (for backup and config inspection)
+    │   ├── main.py
+    │   ├── config.yaml
+    │   └── utils/
+    │       └── helpers.py
+    └── backups/              # Where backups are stored (tar.gz, named by playbook)
+```
+
+### Environment Variables
+
+Configure the bot and LLM via environment variables (e.g. in `.env`):
+
+```bash
+# Required: Telegram bot token from @BotFather
+TELEGRAM_BOT_TOKEN=your-bot-token
+
+# Required: Public URL for webhook (e.g. ngrok https URL)
+TELEGRAM_WEBHOOK_URL=https://xxxx.ngrok-free.app
+
+# Required: LLM provider (AutonomousAgent uses Anthropic in the example)
+OPENAI_API_KEY=your-openai-api-key
+
+# Optional: Restrict bot to a single user (your Telegram user ID from @userinfobot)
+# TELEGRAM_USER_ID=123456789
+```
+
+## Installation
+
+**Option A: Setup script**
+
+```bash
+./setup.sh
+# Then edit .env with your keys, start ngrok, and run the bot
+```
+
+**Option B: Manual**
+
+```bash
+# With uv (recommended)
+uv venv && source .venv/bin/activate
+uv pip install -r requirements.txt
+
+# With pip
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Create `.env` from `.env.example` and set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_URL`, and `OPENAI_API_KEY`.
+
+## Usage
+
+### 1. Create the Telegram bot and get your user ID
+
+1. In Telegram, open **@BotFather** → `/newbot` → choose name (e.g. "DevOps Agent") and username.
+2. Copy the **bot token**.
+3. Open **@userinfobot** → send any message → copy your **user ID** (optional, for `TELEGRAM_USER_ID`).
+
+### 2. Expose localhost with ngrok
+
+```bash
+ngrok config add-authtoken YOUR_NGROK_TOKEN
+ngrok http 8000
+```
+
+Copy the `https://xxxx.ngrok-free.app` URL into `.env` as `TELEGRAM_WEBHOOK_URL`.
+
+### 3. Run the bot
+
+```bash
+uv run bot.py
+# or: python bot.py
+```
+
+The server listens on `0.0.0.0:8000`. Telegram will send updates to your webhook URL.
+
+### Demo commands (send in Telegram)
+
+| Message | What the agent does |
+|--------|----------------------|
+| `Check disk usage` | Runs `df -h` in workspace context, returns formatted result |
+| `Find all log files larger than 50KB` | Searches workspace, lists matching files |
+| `Create a backup of the app directory` | Tars `app/` into `backups/` with playbook naming, confirms |
+| `Read the last 20 lines of error.log and tell me what's wrong` | Reads log, analyzes, summarizes |
+| `List all running processes using port 8000` | Runs shell command, returns results |
+| `Show me the app config` | Reads `config.yaml`, explains it |
+
+## How It Works
+
+| Component | Description |
+|-----------|-------------|
+| AutonomousAgent | Upsonic agent with filesystem + shell; loads workspace (AGENTS.md, SOUL.md, USER.md, memory) and runs in CHAT mode |
+| TelegramInterface | Webhook-based Telegram bot; CHAT mode keeps conversation context; optional `TELEGRAM_USER_ID` lock |
+| InterfaceManager | Serves FastAPI app that receives Telegram webhook and dispatches to the agent |
+| Workspace | Sandbox root: all file/shell operations stay under this directory |
+| AGENTS.md | Playbook: session startup, memory rules, safety, DevOps procedures (logs, system checks, backups, incidents), group-chat behavior |
+| SOUL.md / USER.md | Identity and user context loaded every session |
+| MEMORY.md / memory/ | Long-term and daily memory for continuity across sessions |
+
+### Example flow
+
+1. User sends "Check disk usage" in Telegram.
+2. Telegram hits your webhook → FastAPI → TelegramInterface.
+3. Interface passes the message to AutonomousAgent.
+4. Agent (with workspace context) uses its tools to run the appropriate command (e.g. shell or read), then replies.
+5. Reply is sent back to Telegram.
+
+## Complete Implementation
+
+### bot.py
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent
+from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
+
+load_dotenv()
+
+# Create an autonomous agent with DevOps workspace
+# It auto-loads AGENTS.md, SOUL.md, and memory from the workspace
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-5",
+    workspace=os.path.join(os.path.dirname(__file__), "workspace"),
+)
+
+
+# Wire it up to Telegram in CHAT mode (remembers conversation context)
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    mode=InterfaceMode.CHAT,
+    reset_command="/reset",
+    parse_mode="Markdown"
+)
+
+# Serve it
+manager = InterfaceManager(interfaces=[telegram])
+manager.serve(host="0.0.0.0", port=8000)
+```
+
+Only the entry point is in the repo root; all agent behavior and memory live inside `workspace/` (AGENTS.md, SOUL.md, USER.md, MEMORY.md, `memory/`, `logs/`, `app/`, `backups/`).
+
+## Workspace and Agent Behavior
+
+- **SOUL.md** — Defines the agent as "DevOps Agent", a senior systems engineer: fast, direct, technical; treats the workspace as the server.
+- **USER.md** — Describes the human as a developer/DevOps who wants quick answers from Telegram without SSH.
+- **AGENTS.md** — Full playbook: read SOUL, USER, and memory each session; use `memory/YYYY-MM-DD.md` and MEMORY.md for continuity; safety rules (no exfiltration, no destructive commands without asking, `trash` over `rm`); DevOps procedures for logs, system checks, backups, incidents; when to speak in group chats and how to react.
+- **MEMORY.md** — Long-term: server baseline, known issues (e.g. Redis instability, DB performance), patterns to watch, useful commands, app structure. Loaded in main session only (not in shared/group contexts).
+- **memory/YYYY-MM-DD.md** — Daily log: session start, health checks, issues found, actions taken. Agent creates/updates these.
+
+The demo `workspace/app/` and `workspace/logs/` provide sample app code and logs so the agent can demonstrate backups, config reading, and log analysis without touching real production.
+
+## Key Features
+
+### Sandboxing
+
+- The agent is restricted to the **workspace** directory. File and shell operations outside it are blocked.
+- Use **TELEGRAM_USER_ID** so only your account can talk to the bot.
+
+### CHAT mode and memory
+
+- **InterfaceMode.CHAT** keeps conversation context so the agent can do multi-turn tasks.
+- **/reset** (configurable) clears conversation state.
+- Memory is file-based: daily logs in `memory/` and long-term in MEMORY.md, so behavior is reproducible and auditable.
+
+### DevOps playbook (AGENTS.md)
+
+- **Log analysis:** Check size first, use tail/grep/wc, count by type, summarize and recommend.
+- **System checks:** Run df/free/ps, flag anomalies (e.g. disk >80%, low memory).
+- **Backups:** `tar -czf` to `backups/`, name like `{what}-backup-{YYYY-MM-DD-HHMM}.tar.gz`, log to daily memory.
+- **Incident response:** One-line summary, severity (🔴/🟡/🟢), evidence, suggested fix, log to daily memory.
+
+### Platform-aware output
+
+- Telegram: short messages, monospace for commands/output.
+- Group chats: respond when relevant (e.g. mentioned or troubleshooting); avoid dominating or over-reacting.
+
+## Security Notes
+
+- Agent is **sandboxed** to `workspace/`; no access to the rest of the host by default.
+- Set **TELEGRAM_USER_ID** to restrict the bot to your Telegram account.
+- AGENTS.md instructs the agent not to exfiltrate private data, not to run destructive commands without asking, and to avoid piping unknown input to bash or eval.
+
+## Repository
+
+View the full example: [DevOps Telegram Bot](https://github.com/Upsonic/Examples/tree/master/examples/autonomous_agents/devops_telegram_bot)
