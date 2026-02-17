@@ -1,0 +1,271 @@
+---
+title: "Git Changelog Writer"
+description: "Use Upsonic's Sequential Team with two agents to turn raw git log output into a ready-to-post Twitter/X update — Tech Lead summarizes commits, Growth Hacker writes the tweet. No glue code; context flows automatically."
+---
+
+This example demonstrates how to use an **Upsonic Team** in **sequential mode** to turn raw `git log --oneline` output into a developer-native Twitter/X post. Two agents run in a pipeline: Agent A distills commits into a technical summary; Agent B turns that summary into a single, post-ready tweet. Context passes from A → B automatically via `mode="sequential"` — no variable passing or glue code.
+
+## Overview
+
+Upsonic framework provides a **Team** abstraction for multi-agent workflows. This example showcases:
+
+1. **Sequential Team** — `mode="sequential"` runs agents in order and injects each agent's output into the next agent's context.
+2. **Tech Lead Agent** — Reads raw commit messages, filters out `chore`/`docs`, and produces a concise technical summary of user-facing changes.
+3. **Growth Hacker Agent** — Takes the summary and writes a single Twitter/X post with strict tone and format rules (no hashtags, no corporate language, minimal emoji).
+4. **No Glue Code** — You don't pass strings or parse outputs between agents; the framework handles context handover.
+
+The pipeline:
+- **Input**: A string of `git log --oneline` (mock in script; replace with real `git log` later).
+- **Output**: The final tweet from `tasks[-1].response`.
+
+## Project Structure
+
+```
+git_changelog_writer/
+├── main.py                    # Sequential Team pipeline (agents + tasks)
+├── README.md                  # Quick start and notes
+```
+
+### Environment Variables
+
+Configure the OpenAI models used by both agents:
+
+```bash
+# Required: OpenAI API key (Tech Lead uses gpt-5-mini, Growth Hacker uses gpt-4o)
+export OPENAI_API_KEY="your_openai_api_key_here"
+```
+
+Or use a `.env` file in the project root.
+
+## Installation
+
+```bash
+# From repo root
+uv sync
+
+# Or from this example directory
+cd examples/multi_agent/git_changelog_writer
+uv sync
+```
+
+## Usage
+
+### Run the pipeline
+
+```bash
+uv run main.py
+```
+
+Or from repo root:
+
+```bash
+uv run examples/multi_agent/git_changelog_writer/main.py
+```
+
+The script uses mock commit data (`RAW_COMMITS`). To use real git output, replace `RAW_COMMITS` with the result of `git log --oneline -n 5` (or pipe it in).
+
+## How It Works
+
+| Component | Description |
+|-----------|-------------|
+| Tech Lead | Summarizes raw commits; ignores chore/docs; explains what changed and why users care |
+| Growth Hacker | Writes a single Twitter/X post from the summary; dev tone, no hashtags, minimal emoji |
+| Sequential Team | Runs tasks in order; each task's response becomes context for the next |
+| Output | Final tweet from `tasks[-1].response` |
+
+### Example Output
+
+**Agent A (Tech Lead)** produces a technical summary:
+
+```
+Summary of User-Facing Changes:
+
+1. New Feature: Dark Mode Support
+   - What Changed: The user interface now offers dark mode support.
+   - Why Users Care: More comfortable for extended usage and low-light environments.
+
+2. New Feature: Smart Caching Layer
+   - What Changed: A smart caching layer was introduced to optimize performance.
+   - Why Users Care: Dashboard load times are 3x faster.
+
+3. Bug Fix: Database Connection Timeout
+   - What Changed: Resolved a timeout issue under heavy load.
+   - Why Users Care: Improved reliability during peak usage.
+
+4. Bug Fix: Real-Time Notifications
+   - What Changed: Fixed a race condition affecting notifications.
+   - Why Users Care: Notifications are now delivered accurately and timely.
+```
+
+**Agent B (Growth Hacker)** turns it into a tweet:
+
+```
+Dark mode now available across our UI. 🌙
+
+UI enhancements + performance upgrades with these latest updates.
+
+- 🌙 Dark Mode support
+- 🚀 Dashboard 3x speed boost with smart caching
+- 🔧 Database timeout fix for heavy loads
+- 🛠️ Real-time notifications now more reliable
+
+Changelog: [link]
+```
+
+Programmatic access to the final result:
+
+```python
+team.print_do(tasks)
+print(tasks[-1].response)  # The final tweet
+```
+
+## Complete Implementation
+
+### main.py
+
+```python
+"""
+I Stopped Writing Changelogs. Here's What Writes Them Now.
+
+Two agents, one pipeline: feed in `git log --oneline`, get back
+a ready-to-post tweet. Agent A reads the commits and pulls out
+what matters. Agent B turns that into something you'd actually post.
+
+The context flows from A → B automatically.
+No variable passing. No glue code. Just `mode="sequential"`.
+"""
+
+from upsonic import Agent, Task, Team
+
+# ── Mock Input ───────────────────────────────────────────────────────────
+# Simulate `git log --oneline -n 5` — swap this for real git log later.
+RAW_COMMITS = """
+a1b2c3d feat: added dark mode support across the entire UI
+b2c3d4e feat: introduced smart caching layer — 3x faster dashboard loads
+c3d4e5f Merge pull request #42 from team/perf-improvements
+d4e5f6a fix: database connection timeout on heavy load
+e5f6a7b fix: resolved race condition in real-time notifications
+"""
+
+# ── Agent A — The Tech Lead ──────────────────────────────────────────────
+tech_lead = Agent(
+    model="openai/gpt-5-mini",
+    name="Tech Lead",
+    role="Technical Summarizer",
+    goal="Distill raw commit messages into a clear, developer-friendly summary that highlights user-facing value.",
+    instructions=(
+        "You will receive a batch of raw git commit messages. "
+        "Ignore anything tagged 'chore' or 'docs' — those are housekeeping. "
+        "Focus on 'feat' and 'fix' entries. For each one, explain: "
+        "(1) what changed, and (2) why an end-user should care. "
+        "Be concise but technical enough for a developer audience."
+    ),
+)
+
+# ── Agent B — The Growth Hacker ──────────────────────────────────────────
+growth_hacker = Agent(
+    model="openai/gpt-4o",
+    name="Growth Hacker",
+    role="Developer Social Media Writer",
+    goal="Turn technical summaries into dev-native Twitter/X posts that feel like a smart engineer sharing something useful, not a marketing department announcing it.",
+    instructions=(
+        "You will receive a technical summary produced by the previous agent. "
+        "Write a SINGLE Twitter/X post (NOT a thread). Follow these rules strictly:\n\n"
+
+        "TONE:\n"
+        "- Write like a developer talking to other developers. Direct, no fluff.\n"
+        "- Confident but understated. Never hype or exaggerate.\n"
+        "- NEVER use phrases like 'Exciting news!', 'We're thrilled', 'Game-changer', "
+        "'Just dropped', or any corporate marketing language.\n"
+        "- Short punchy sentences. Let line breaks do the work.\n\n"
+
+        "STRUCTURE (follow this layout):\n"
+        "- Line 1: A calm, confident hook (one sentence). Can end with a single emoji like a rocket.\n"
+        "- Blank line.\n"
+        "- 2-3 short lines of context explaining what shipped and why it matters.\n"
+        "- Blank line.\n"
+        "- A bullet list of the key changes. Use - or emoji bullets (one emoji per line, e.g. a rocket, wrench, zap). "
+        "Keep each bullet to one short line.\n"
+        "- Blank line.\n"
+        "- CTA: 'Link in the comments' or 'Changelog: [link]'\n\n"
+
+        "EMOJI RULES:\n"
+        "- Use emojis SPARINGLY and only with PURPOSE.\n"
+        "- OK: single emoji at end of hook line, or one emoji per bullet as a visual marker.\n"
+        "- NEVER: emoji chains, mid-sentence emojis, or more than one emoji in a row.\n"
+        "- When in doubt, skip the emoji.\n\n"
+
+        "ABSOLUTE DON'TS:\n"
+        "- No hashtags (no #ProductUpdates, #TechNews, etc.).\n"
+        "- No numbered thread format (no 1/3, 2/3, 3/3).\n"
+        "- No 'we're excited/thrilled/proud' language.\n"
+        "- Do NOT invent features. Only use what the technical summary provides.\n\n"
+
+        "REFERENCE EXAMPLES (match this energy):\n\n"
+
+        "Example A:\n"
+        "We wrote a Medium post about agent standardization.\n\n"
+        "Teams waste weeks starting agent projects, adding safety layers, "
+        "and maintaining & deploying everything.\n\n"
+        "Upsonic fixes this: same structure, same API, shared safety.\n\n"
+        "Read how. Link in the comments.\n\n"
+
+        "Example B:\n"
+        "Upsonic v0.71.0 is live!\n"
+        "We shipped these in this version:\n"
+        "- Culture System & CultureManager\n"
+        "- Simulation System (+built-in scenarios)\n"
+        "- Smoke Test Makefile\n"
+        "- Open-source friendly README\n"
+        "- Direct LLM call metrics bug fix\n"
+        "Link in the comments\n"
+    ),
+)
+
+# ── The Sequential Team ─────────────────────────────────────────────────
+team = Team(
+    agents=[tech_lead, growth_hacker],
+    mode="sequential",
+)
+
+# ── Tasks ────────────────────────────────────────────────────────────────
+tasks = [
+    Task(
+        description=(
+            f"Analyze the following raw git commit messages and produce "
+            f"a concise technical summary of the meaningful, user-facing changes.\n\n"
+            f"Raw commits:\n{RAW_COMMITS}"
+        ),
+        agent=tech_lead
+    ),
+    Task(
+        description=(
+            "Using the technical summary from the previous step, "
+            "create a Twitter/X thread (3 tweets)"
+            "that announce this week's product updates."
+        ),
+        agent=growth_hacker
+    ),
+]
+
+team.print_do(tasks)
+
+print(tasks[-1].response)
+```
+
+### Two-agent pipeline
+
+- **Tech Lead**: Filters commits, focuses on feat/fix, outputs a structured technical summary.
+- **Growth Hacker**: Consumes that summary and applies strict tone/structure rules to produce one tweet.
+
+### Extensibility
+
+You can add more agents (e.g. Editor, Translator) to the `agents` list and add corresponding `Task` entries. Context still flows in order; no extra glue code.
+
+### Cost
+
+Roughly on the order of a few cents per run (Tech Lead on gpt-5-mini, Growth Hacker on gpt-4o). Adjust models in each `Agent()` if you want to trade cost vs. quality.
+
+## Repository
+
+View the full example: [Git Changelog Writer](https://github.com/Upsonic/Examples/tree/master/examples/multi_agent/git_changelog_writer)
