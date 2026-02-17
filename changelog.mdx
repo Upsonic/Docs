@@ -6,6 +6,35 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 > Product updates, improvements, and bug fixes for Upsonic
 
 
+<Update label="Feb 17, 2026">
+	## v0.72.3
+
+	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.72.3)
+
+	## New Features:
+	- Agent execution timeout: Optional `timeout` (seconds) on `do`, `do_async`, `print_do`, and `print_do_async`; execution is cancelled after the limit and `ExecutionTimeoutError` is raised unless partial results are requested.
+	- Partial result on timeout: When `partial_on_timeout=True` and a timeout is set, the agent returns whatever text was generated so far instead of raising; uses streaming internally to accumulate output progressively.
+	- Firecrawl custom tool: New Firecrawl integration with sync/async support; added as optional dependency `firecrawl-py>=4.14.1`.
+	- ExecutionTimeoutError: New exception in `upsonic.exceptions` for timeout scenarios, carrying the timeout value for programmatic handling.
+
+	## Improvements:
+	- Persistent background event loop: Sync entry points use a single daemon-thread event loop instead of `asyncio.run()` per call, avoiding "Event loop is closed" and connection-pool issues with SDK clients.
+	- Token usage on partial/timeout: When execution ends due to timeout with partial results, usage is recorded so task token counts remain accurate.
+	- Pipeline cancellation handling: Pipeline manager handles `GeneratorExit` gracefully when execution is cancelled by timeout; `RunCompletedEvent` only emitted when step results exist.
+	- Mem0 storage: Implementation and tests updated for mem0 sync/async storage.
+	- Retry and usage utilities: Adjusted for timeout and partial-result flows; Firecrawl and custom tools aligned with shared patterns and tests added.
+
+	## Bug Fixes:
+	- Sync execution event loop: Fixed sync agent/team methods failing or leaving closed event loops when called repeatedly by using a persistent background loop.
+	- Firecrawl tool attributes: Corrected tool attribute definitions and usage in Firecrawl custom tool and tests.
+	- Unit test usage: Fixed unit test usage and expectations for new timeout and partial-result behavior.
+
+	Full Changelog: https://github.com/Upsonic/Upsonic/compare/v0.72.2...v0.72.3
+
+	### Pull Requests:
+	- feat: add timeout and partial result handling in Agent execution [@onuratakan](https://github.com/onuratakan) in [#532](https://github.com/Upsonic/Upsonic/pull/532)
+</Update>
+
 <Update label="Feb 14, 2026">
 	## v0.72.2
 
