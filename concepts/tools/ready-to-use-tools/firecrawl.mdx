@@ -1,0 +1,91 @@
+---
+title: "FirecrawlTools"
+description: "Web scraping, crawling, and extraction toolkit using the Firecrawl API"
+---
+
+## Overview
+
+FirecrawlTools provides web scraping, crawling, mapping, search, batch scraping, and LLM-powered extraction via the [Firecrawl](https://firecrawl.dev) API. Use it with an Agent and Task so the model can scrape URLs, crawl sites, search the web, or extract structured data.
+
+<Info>
+**Required:** Set **`FIRECRAWL_API_KEY`** in your environment or `.env`. Get a key at [firecrawl.dev](https://firecrawl.dev). Install the extra: `uv sync --extra custom-tools` or `pip install firecrawl-py`.
+</Info>
+
+## Basic Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.firecrawl import FirecrawlTools
+
+agent = Agent(model="anthropic/claude-sonnet-4-5", tools=[FirecrawlTools()])
+task = Task(description="Scrape https://www.nike.com/ and summarize the main content in one short paragraph.")
+result = agent.do(task)
+print(result)
+```
+
+## Selective Tool Configuration
+
+<Tip>
+Enable only the tools you need via constructor flags. Fewer tools mean less noise and lower Firecrawl usage.
+</Tip>
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.firecrawl import FirecrawlTools
+
+firecrawl_tools = FirecrawlTools(
+    enable_scrape=True,
+    enable_search=True,
+    enable_crawl=False,
+    enable_map=False,
+    enable_batch_scrape=False,
+    enable_extract=False,
+    enable_crawl_management=False,
+    enable_batch_management=False,
+    enable_extract_management=False,
+)
+agent = Agent(model="openai/gpt-4o-mini", tools=[firecrawl_tools])
+task = Task(description="Search the web for 'Upsonic AI agent framework' and summarize the top 3 results.")
+result = agent.do(task)
+print(result)
+```
+
+## Available Tools
+
+By default all of the following are enabled; use constructor flags to disable groups:
+
+1. **scrape_url** – Scrape a single URL (markdown, HTML, JSON).
+2. **crawl_website** – Crawl a site up to a page limit (blocking).
+3. **start_crawl** – Start an async crawl job.
+4. **map_website** – Discover URLs under a domain.
+5. **search_web** – Web search with optional scraping.
+6. **batch_scrape** – Scrape multiple URLs (blocking).
+7. **start_batch_scrape** – Start async batch scrape.
+8. **extract_data** – LLM-powered structured extraction.
+9. **start_extract** – Start async extract job.
+10. **get_crawl_status** – Poll crawl job status.
+11. **cancel_crawl** – Cancel a crawl job.
+12. **get_batch_scrape_status** – Poll batch scrape status.
+13. **get_extract_status** – Poll extract job status.
+
+Scrape formats: `markdown`, `html`, `rawHtml`, `links`, `summary`, `images`.
+
+## Parameters
+
+- **api_key** (str, optional): Firecrawl API key. Defaults to `FIRECRAWL_API_KEY` env var.
+- **api_url** (str, optional): Custom API base URL for self-hosted Firecrawl.
+- **default_formats** (list[str], optional): Default scrape formats (default: `["markdown"]`).
+- **default_scrape_limit** (int): Page limit for crawls (default: 100).
+- **default_search_limit** (int): Result limit for search (default: 5).
+- **timeout** (int): Timeout in seconds for blocking operations (default: 120).
+- **poll_interval** (int): Seconds between job status polls (default: 2).
+- **enable_scrape** (bool): Enable `scrape_url` (default: True).
+- **enable_crawl** (bool): Enable `crawl_website` and `start_crawl` (default: True).
+- **enable_map** (bool): Enable `map_website` (default: True).
+- **enable_search** (bool): Enable `search_web` (default: True).
+- **enable_batch_scrape** (bool): Enable batch scrape tools (default: True).
+- **enable_extract** (bool): Enable extract tools (default: True).
+- **enable_crawl_management** (bool): Enable `get_crawl_status` and `cancel_crawl` (default: True).
+- **enable_batch_management** (bool): Enable `get_batch_scrape_status` (default: True).
+- **enable_extract_management** (bool): Enable `get_extract_status` (default: True).
+- **all** (bool): Enable every tool regardless of flags (default: False).
