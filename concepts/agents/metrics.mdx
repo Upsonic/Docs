@@ -1,0 +1,42 @@
+---
+title: Agent Metrics
+sidebarTitle: Agent Metrics
+description: Track your Agent's token usage and costs across all runs
+---
+
+# Agent Metrics
+
+## Overview
+
+Your **Agent** keeps a single **usage** object that accumulates metrics over every run (`do`, `print_do`, `stream`, etc.). Use it to monitor total tokens, requests, tool calls, cost, and duration for that agent.
+
+When printing is enabled, an **Agent Metrics** panel is shown after each task so you can see the updated totals.
+
+## What You Can Access
+
+On any `Agent` instance, use **`agent.usage`**. It is a `RunUsage` object (or `None` before the first run). After runs, you get:
+
+| Metric | Meaning |
+|--------|--------|
+| `input_tokens` | Total prompt tokens across all runs |
+| `output_tokens` | Total completion tokens across all runs |
+| `requests` | Number of LLM requests |
+| `tool_calls` | Number of tool calls executed |
+| `cost` | Estimated total cost (when available) |
+| `duration` | Total execution time (seconds) |
+
+Other fields (e.g. `cache_read_tokens`, `reasoning_tokens`, `time_to_first_token`) are available on the same object when the provider reports them.
+
+## Example
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("anthropic/claude-sonnet-4-5", print=True)
+agent.print_do(Task("What is 2 + 2? Reply with one number."))
+agent.print_do(Task("What is 3 + 3? Reply with one number."))
+
+# Totals for this agent across all runs
+u = agent.usage
+print(f"Requests: {u.requests}, Input: {u.input_tokens}, Output: {u.output_tokens}, Tool calls: {u.tool_calls}, Cost: ${u.cost:.4f}")
+```
