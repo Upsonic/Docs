@@ -5,6 +5,29 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 
 > Product updates, improvements, and bug fixes for Upsonic
 
+<Update label="Feb 21, 2026">
+	## v0.72.5
+
+	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.72.5)
+
+	## New Features:
+	- **Agent metrics**: Agent runs now expose accumulated usage (tokens, cost) and tool execution tracking for observability and cost monitoring.
+	- **SuperMemory integration**: New vector database provider `SuperMemoryProvider` for RAG and knowledge base, with async SuperMemory API support, configurable via `SuperMemoryConfig` or `upsonic[supermemory]`.
+
+	## Improvements:
+	- **Tool managers (Task vs Agent)**: Task-level tools use a dedicated `ToolManager` on the task; agent and task tool definitions are combined and resolved correctly for validation and execution.
+	- **Anthropic default max tokens**: Default `max_tokens` for Anthropic API increased from 4096 to 16384 for longer responses.
+	- **Pydantic response format in streaming**: When using a Pydantic `response_format` on a task, streaming tool calls for the output tool are validated with `model_validate` and handled correctly in streaming mode.
+
+	## Bug Fixes:
+	- **finish_reason "length"**: When the model hits `max_tokens` and returns `finish_reason == "length"`, tool calls are no longer executed with possibly truncated arguments; the agent is informed via a tool-return message and can retry with shorter content or smaller steps.
+
+	Full Changelog: https://github.com/Upsonic/Upsonic/compare/v0.72.4...v0.72.5
+
+	### Pull Requests:
+	- feat: supermemory storage, agent metrics: [DoganK01](https://github.com/DoganK01) in [#536](https://github.com/Upsonic/Upsonic/pull/536)
+</Update>
+
 
 <Update label="Feb 19, 2026">
 	## v0.72.4
