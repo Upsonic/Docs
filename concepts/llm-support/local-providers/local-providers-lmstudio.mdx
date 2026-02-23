@@ -1,27 +1,27 @@
 ---
-title: "Ollama"
-description: "Using Ollama for local model deployment with Upsonic"
+title: "LM Studio"
+description: "Using LM Studio for local model deployment with Upsonic"
 ---
 
 ## Overview
 
-Ollama allows you to run large language models locally on your machine. Perfect for development, testing, and privacy-sensitive applications.
+LM Studio lets you run large language models locally with an OpenAI-compatible API. It’s useful for development, testing, and privacy-sensitive use cases.
 
 **Model Class:** `OpenAIChatModel` (OpenAI-compatible API)
 
 ## Authentication
 
 ```bash
-export OLLAMA_BASE_URL="http://localhost:11434/v1/" # Required
+export LMSTUDIO_BASE_URL="http://localhost:1234/v1"  # Required
 ```
 
 ## Examples
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.ollama import OllamaModel
+from upsonic.models.lmstudio import LMStudioModel
 
-model = OllamaModel(model_name="llama3.2")
+model = LMStudioModel(model_name="local-model")
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")
@@ -37,11 +37,11 @@ You can set model parameters in two ways: on the model or on the Agent.
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.ollama import OllamaModel, OllamaModelSettings
+from upsonic.models.lmstudio import LMStudioModel, LMStudioModelSettings
 
-model = OllamaModel(
-    model_name="llama3.2",
-    settings=OllamaModelSettings(max_tokens=1024, temperature=0.7)
+model = LMStudioModel(
+    model_name="local-model",
+    settings=LMStudioModelSettings(max_tokens=1024, temperature=0.7)
 )
 agent = Agent(model=model)
 ```
@@ -50,11 +50,11 @@ agent = Agent(model=model)
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.ollama import OllamaModelSettings
+from upsonic.models.lmstudio import LMStudioModelSettings
 
 agent = Agent(
-    model="ollama/llama3.2",
-    settings=OllamaModelSettings(max_tokens=1024, temperature=0.7)
+    model="lmstudio/local-model",
+    settings=LMStudioModelSettings(max_tokens=1024, temperature=0.7)
 )
 ```
 

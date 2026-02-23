@@ -30,6 +30,35 @@ result = agent.do(task)
 print(result)
 ```
 
+## Model Settings
+
+You can set model parameters in two ways: on the model or on the Agent.
+
+**On the model:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.grok import GrokModel, GrokModelSettings
+
+model = GrokModel(
+    model_name="grok-4",
+    settings=GrokModelSettings(max_tokens=1024, temperature=0.7)
+)
+agent = Agent(model=model)
+```
+
+**On the Agent:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.grok import GrokModelSettings
+
+agent = Agent(
+    model="grok/grok-4",
+    settings=GrokModelSettings(max_tokens=1024)
+)
+```
+
 ## Parameters
 
 | Parameter | Type | Description | Default | Source |
