@@ -5,6 +5,31 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 
 > Product updates, improvements, and bug fixes for Upsonic
 
+
+<Update label="Feb 23, 2026">
+	## v0.72.6
+
+	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.72.6)
+	
+	## New Features:
+	- **Qdrant config smoke tests:** Test classes for every QdrantConfig attribute in IN_MEMORY and CLOUD modes.
+	
+	## Improvements:
+	- **Qdrant text index creation:** TextIndexParams now always include a tokenizer and defaults so Cloud and local work without "unknown tokenizer type."
+	- **Qdrant error handling:** Field index failures raise one VectorDBError; full-text index and collection_exists no longer swallow exceptions (only 404/not-found is handled).
+	- **Qdrant smoke test assertions:** Smoke test enhanced
+	
+	## Bug Fixes:
+	- **Qdrant text index on Cloud:** Fixed "unknown tokenizer type" by always setting tokenizer and default params in schema and index creation.
+	- **Qdrant swallowed exceptions:** _create_field_indexes, _server_side_full_text_search, and collection_exists now propagate errors instead of silently ignoring them.
+	
+	
+	Full Changelog: [v0.72.5...v0.72.6](https://github.com/Upsonic/Upsonic/compare/v0.72.5...v0.72.6)
+	
+	### Pull Requests:
+	- _(Add PR name and link when merged.)_
+</Update>
+
 <Update label="Feb 21, 2026">
 	## v0.72.5
 
