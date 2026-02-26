@@ -31,6 +31,35 @@ result = agent.do(task)
 print(result)
 ```
 
+## Model Settings
+
+You can set model parameters in two ways: on the model or on the Agent.
+
+**On the model:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.azure import AzureModel, AzureModelSettings
+
+model = AzureModel(
+    model_name="gpt-4o",
+    settings=AzureModelSettings(max_tokens=1024, temperature=0.7)
+)
+agent = Agent(model=model)
+```
+
+**On the Agent:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.azure import AzureModelSettings
+
+agent = Agent(
+    model="azure/gpt-4o",
+    settings=AzureModelSettings(max_tokens=1024, temperature=0.7)
+)
+```
+
 ## Parameters
 
 | Parameter | Type | Description | Default | Source |

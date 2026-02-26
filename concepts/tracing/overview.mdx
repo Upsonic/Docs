@@ -1,0 +1,261 @@
+---
+title: "OpenTelemetry Tracing"
+description: "Full observability for your AI agents — traces, spans, costs, and token usage"
+---
+
+## Overview
+
+Upsonic instruments every agent run with [OpenTelemetry](https://opentelemetry.io) spans following the **GenAI semantic conventions**. Every LLM call, pipeline step, tool execution, and agent run is traced automatically — giving you complete visibility into what your agent did, how long it took, and how much it cost.
+
+<Info>
+Install the optional dependencies:
+
+```bash
+pip install upsonic[otel]
+# or
+uv sync --extra otel
+```
+</Info>
+
+## What You Get
+
+When tracing is enabled, each agent run produces a span hierarchy:
+
+```
+agent.run (SERVER)
+  └─ pipeline.execute (INTERNAL)
+       ├─ pipeline.step.ModelExecutionStep (INTERNAL)
+       │    └─ chat (CLIENT) — LLM call with GenAI attributes
+       ├─ pipeline.step.ToolExecutionStep (INTERNAL)
+       │    └─ tool.execute (INTERNAL) — per tool call
+       └─ pipeline.step.MemorySaveStep (INTERNAL)
+```
+
+**Attributes on spans include:**
+
+- `gen_ai.request.model`, `gen_ai.response.model` — model used
+- `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens` — token counts
+- `upsonic.cost`, `upsonic.execution_time` — cost and duration
+- `upsonic.tool_call_count` — number of tool calls
+- `upsonic.input`, `upsonic.output` — task input/output
+- `user.id`, `session.id` — user and session tracking
+
+---
+
+## Usage
+
+### Environment Variable — Zero Code Change
+
+Set `UPSONIC_OTEL_ENABLED=true` and every `Agent` is automatically instrumented — no code changes needed.
+
+```bash
+export UPSONIC_OTEL_ENABLED=true
+export UPSONIC_OTEL_ENDPOINT=http://localhost:4317
+```
+
+```python
+from upsonic import Agent
+
+# Automatically instrumented — no instrument= parameter needed
+agent = Agent("openai/gpt-4o")
+agent.print_do("What is 2 + 2?")
+```
+
+When Upsonic is imported, it detects `UPSONIC_OTEL_ENABLED` and calls `Agent.instrument_all()` with a `DefaultTracingProvider` under the hood. All agents created in the process are instrumented automatically.
+
+<Warning>
+`UPSONIC_OTEL_ENDPOINT` must point to a running OTLP collector (Jaeger, Grafana Tempo, etc.). If no collector is reachable, you'll see a `ConnectionError` in stderr at process exit when the exporter tries to flush spans. **This is harmless** — the agent runs normally, spans are simply dropped. See [Troubleshooting](#troubleshooting) below.
+</Warning>
+
+### Quick Start — `instrument=True`
+
+Creates a `DefaultTracingProvider` from environment variables automatically.
+
+```python
+from upsonic import Agent
+
+agent = Agent("openai/gpt-4o", instrument=True)
+agent.print_do("What is 2 + 2?")
+```
+
+### DefaultTracingProvider — Any OTLP Backend
+
+Send traces to Jaeger, Grafana Tempo, Datadog, or any OTLP-compatible collector.
+
+```python
+from upsonic import Agent
+from upsonic.integrations.tracing import DefaultTracingProvider
+
+provider = DefaultTracingProvider(endpoint="http://localhost:4317")
+agent = Agent("openai/gpt-4o", instrument=provider)
+agent.print_do("Summarize this report.")
+```
+
+### DefaultTracingProvider — Full Configuration
+
+```python
+from upsonic import Agent
+from upsonic.integrations.tracing import DefaultTracingProvider
+
+provider = DefaultTracingProvider(
+    endpoint="http://localhost:4317",
+    service_name="payment-agent",
+    sample_rate=0.25,
+    include_content=False,
+)
+
+agent = Agent("openai/gpt-4o", instrument=provider)
+agent.print_do("What is 2 + 2?")
+```
+
+### Global Instrumentation — `Agent.instrument_all()`
+
+Instruments every `Agent` created after the call, without passing `instrument` each time.
+
+```python
+from upsonic import Agent
+from upsonic.integrations.tracing import DefaultTracingProvider
+
+provider = DefaultTracingProvider(endpoint="http://localhost:4317")
+Agent.instrument_all(provider)
+
+agent1 = Agent("openai/gpt-4o")   # instrumented
+agent2 = Agent("openai/gpt-4o")   # also instrumented
+
+agent1.print_do("What is 2 + 2?")
+agent2.print_do("What is 3 + 3?")
+
+Agent.instrument_all(False)        # disable
+```
+
+### Session & User Tracking
+
+```python
+from upsonic import Agent
+from upsonic.integrations.tracing import DefaultTracingProvider
+
+provider = DefaultTracingProvider(endpoint="http://localhost:4317")
+
+agent = Agent(
+    "openai/gpt-4o",
+    instrument=provider,
+    session_id="conversation-123",
+    user_id="user@example.com",
+)
+agent.print_do("What is 2 + 2?")
+```
+
+### Streaming
+
+Tracing works identically with streaming — no extra setup.
+
+```python
+from upsonic import Agent
+from upsonic.integrations.tracing import DefaultTracingProvider
+
+provider = DefaultTracingProvider(endpoint="http://localhost:4317")
+agent = Agent("openai/gpt-4o", instrument=provider)
+
+for chunk in agent.stream("Count to 5", events=False):
+    print(chunk, end="")
+```
+
+### Hide Sensitive Content
+
+```python
+from upsonic import Agent
+from upsonic.integrations.tracing import DefaultTracingProvider
+
+provider = DefaultTracingProvider(endpoint="http://localhost:4317", include_content=False)
+agent = Agent("openai/gpt-4o", instrument=provider)
+agent.print_do("Process SSN: 123-45-6789")
+# Prompts and responses will NOT appear in traces
+```
+
+### Advanced — Raw InstrumentationSettings
+
+For testing or custom setups, pass `InstrumentationSettings` directly.
+
+```python
+from upsonic import Agent
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from upsonic.models.instrumented import InstrumentationSettings
+
+exporter = InMemorySpanExporter()
+tp = TracerProvider()
+tp.add_span_processor(SimpleSpanProcessor(exporter))
+
+settings = InstrumentationSettings(
+    tracer_provider=tp,
+    meter_provider=MeterProvider(),
+)
+
+agent = Agent("openai/gpt-4o", instrument=settings)
+agent.print_do("Hello!")
+
+for span in exporter.get_finished_spans():
+    print(span.name, span.attributes)
+```
+
+---
+
+## Environment Variables
+
+| Env Var | Description | Default |
+|---|---|---|
+| `UPSONIC_OTEL_ENABLED` | Set `true` to auto-instrument all agents on import | — |
+| `UPSONIC_OTEL_ENDPOINT` | OTLP collector endpoint | `http://localhost:4317` |
+| `UPSONIC_OTEL_SERVICE_NAME` | `service.name` resource attribute | `upsonic` |
+| `UPSONIC_OTEL_SAMPLE_RATE` | Sampling rate (0.0–1.0) | `1.0` |
+| `UPSONIC_OTEL_HEADERS` | Comma-separated `key=value` headers | — |
+
+Setting `UPSONIC_OTEL_ENABLED=true` triggers automatic OpenTelemetry setup on import and calls `Agent.instrument_all()`.
+
+---
+
+## Lifecycle
+
+All providers set `flush_on_exit=True` by default — pending spans are flushed automatically when the process exits. You do **not** need to call `shutdown()` manually in normal usage.
+
+Call `shutdown()` explicitly only if you need to flush spans mid-process (e.g., in tests or before a graceful restart).
+
+---
+
+## Troubleshooting
+
+### ConnectionError at process exit
+
+```
+requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=4317):
+Max retries exceeded ... Connection refused
+```
+
+**This is harmless.** It means the OTLP exporter tried to send spans but no collector is running at the configured endpoint. Your agent executed normally — only the trace export failed.
+
+**To fix it**, either:
+
+1. **Run a collector** — start Jaeger, Grafana Tempo, or any OTLP-compatible backend:
+
+```bash
+docker run -d --name jaeger -p 4317:4317 -p 16686:16686 jaegertracing/all-in-one:latest
+```
+
+2. **Use Langfuse instead** — no local collector needed, traces go to the cloud:
+
+```python
+from upsonic.integrations.langfuse import Langfuse
+agent = Agent("openai/gpt-4o", instrument=Langfuse())
+```
+
+3. **Don't use tracing** — simply don't set `instrument` or `UPSONIC_OTEL_ENABLED`.
+
+---
+
+<CardGroup cols={1}>
+  <Card title="Langfuse Integration" icon="chart-line" href="concepts/tracing/integrations/langfuse">
+    Send traces to Langfuse for LLM-specific dashboards, cost tracking, and prompt management.
+  </Card>
+</CardGroup>

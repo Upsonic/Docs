@@ -1,0 +1,992 @@
+---
+title: "Loan Covenant Monitoring Agent"
+description: "Use Upsonic's Team in coordinate mode to extract covenant definitions from loan agreements, calculate financial ratios with custom tools, and assess compliance risk through coordinated specialist agents"
+---
+
+This example demonstrates how to create and use an **Upsonic Team** in **coordinate mode** to automate end-to-end loan covenant compliance monitoring. The example showcases how to leverage Upsonic's multi-agent coordination to orchestrate three specialist agents that work together on document parsing, financial calculation, and risk assessment.
+
+## Overview
+
+Upsonic framework provides seamless integration for multi-agent systems. This example showcases:
+
+1. **Team Coordination** — Using Team in coordinate mode with a leader agent that delegates to specialists
+2. **Custom Financial Tools** — Six standalone calculation functions used as agent tools
+3. **Structured Output** — Enforced `CovenantMonitoringReport` Pydantic schema for type-safe results
+4. **Agent Personas** — Agents with role, goal, education, and work experience for domain expertise
+5. **Memory Persistence** — In-memory session storage for continuity
+6. **FastAPI Server** — Running the team as a production-ready API server
+
+The team uses three specialist agents:
+- **Covenant Extractor** — Parses loan agreement text to extract covenant definitions and thresholds
+- **Financial Calculator** — Computes financial ratios using custom calculation tools
+- **Risk Assessor** — Evaluates compliance status and produces risk scores with remediation recommendations
+
+## Project Structure
+
+```
+loan_covenant_monitoring/
+├── main.py                    # Entry point with async main() function
+├── team.py                    # Team assembly (coordinate mode + leader)
+├── agents.py                  # 3 specialist agent factory functions
+├── schemas.py                 # Pydantic output schemas
+├── tools.py                   # Custom financial calculation tools
+├── task_builder.py            # Task description builder
+├── upsonic_configs.json       # Upsonic CLI configuration
+├── data/
+│   ├── loan_agreement.txt     # Synthetic loan agreement (5 covenants)
+│   └── financial_data.json    # Synthetic Q4 2025 financials
+└── README.md                  # Quick start guide
+```
+
+### Environment Variables
+
+You can configure the model using environment variables:
+
+```bash
+# Required: Set Anthropic API key (default model uses Anthropic)
+export ANTHROPIC_API_KEY="your-api-key"
+
+# Or if using OpenAI models:
+export OPENAI_API_KEY="your-api-key"
+```
+
+## Installation
+
+```bash
+# Install dependencies from upsonic_configs.json
+upsonic install
+```
+
+### Managing Dependencies
+
+```bash
+# Add a package
+upsonic add <package> <section>
+upsonic add pandas api
+
+# Remove a package
+upsonic remove <package> <section>
+upsonic remove streamlit api
+```
+
+**Sections:** `api`, `development`
+
+## Usage
+
+### Option 1: Run Directly
+
+```bash
+uv run main.py
+```
+
+Runs the agent with default test inputs (GlobalTech Manufacturing Inc., Q4 2025).
+
+### Option 2: Run as API Server
+
+```bash
+upsonic run
+```
+
+Server starts at `http://localhost:8000`. API documentation at `/docs`.
+
+**Example API call:**
+```bash
+curl -X POST http://localhost:8000/call \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputs": {
+        "company_name": "GlobalTech Manufacturing Inc.",
+        "reporting_period": "Q4 2025",
+        "loan_agreement_path": "data/loan_agreement.txt",
+        "financial_data_path": "data/financial_data.json",
+        "focus_areas": ["Leverage ratio trending toward covenant limit"]
+    }
+  }'
+```
+
+## How It Works
+
+| Component | Description |
+|-----------|-------------|
+| Team (coordinate mode) | Leader agent orchestrates the full monitoring workflow |
+| Covenant Extractor Agent | Parses loan agreement text to extract covenant definitions and thresholds |
+| Financial Calculator Agent | Uses 5 calculation tools to compute ratios from raw financial data |
+| Risk Assessor Agent | Uses compliance evaluation tool to assess status and score risk |
+| Custom Tools | 6 standalone financial functions (leverage, interest coverage, current ratio, DSCR, tangible net worth, compliance evaluation) |
+| Structured Output | `CovenantMonitoringReport` Pydantic model enforced as response format |
+| Memory | In-memory session persistence for continuity |
+
+### Example Output
+
+**Query:**
+```json
+{
+  "inputs": {
+    "company_name": "GlobalTech Manufacturing Inc.",
+    "reporting_period": "Q4 2025",
+    "loan_agreement_path": "data/loan_agreement.txt",
+    "financial_data_path": "data/financial_data.json"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "company_name": "GlobalTech Manufacturing Inc.",
+  "reporting_period": "Q4 2025",
+  "report": {
+    "company_name": "GlobalTech Manufacturing Inc.",
+    "reporting_period": "Q4 2025",
+    "compliance_results": [
+      {"covenant_name": "Leverage Ratio", "status": "near_breach", "actual_value": 3.62, "threshold": 3.75},
+      {"covenant_name": "Interest Coverage Ratio", "status": "compliant", "actual_value": 2.79, "threshold": 2.0},
+      {"covenant_name": "Current Ratio", "status": "compliant", "actual_value": 1.35, "threshold": 1.2},
+      {"covenant_name": "Debt Service Coverage Ratio", "status": "breached", "actual_value": 1.15, "threshold": 1.25},
+      {"covenant_name": "Tangible Net Worth", "status": "compliant", "actual_value": 70000000, "threshold": 50000000}
+    ],
+    "risk_assessment": {
+      "overall_risk_score": 45,
+      "risk_level": "high",
+      "breached_count": 1,
+      "near_breach_count": 1,
+      "compliant_count": 3
+    },
+    "executive_summary": "...",
+    "next_steps": ["..."]
+  },
+  "monitoring_completed": true
+}
+```
+
+## Complete Implementation
+
+### main.py
+
+```python
+"""
+Main entry point for Loan Covenant Monitoring Agent.
+
+This module provides the async entry point "main" that coordinates
+the comprehensive loan covenant monitoring process.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+from pathlib import Path
+from typing import Dict, Any, Optional, List
+
+from upsonic import Task
+
+try:
+    from .team import create_covenant_monitoring_team
+    from .task_builder import build_covenant_monitoring_task
+    from .schemas import CovenantMonitoringReport
+except ImportError:
+    from team import create_covenant_monitoring_team
+    from task_builder import build_covenant_monitoring_task
+    from schemas import CovenantMonitoringReport
+
+
+async def main(inputs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Main async function for loan covenant monitoring.
+
+    Args:
+        inputs: Dictionary containing:
+            - company_name: Name of the borrower company (required)
+            - reporting_period: Period being monitored, e.g. "Q4 2025" (required)
+            - loan_agreement_path: Path to loan agreement text file (required)
+            - financial_data_path: Path to financial data JSON file (required)
+            - focus_areas: Optional list of priority focus areas
+            - enable_memory: Whether to enable memory persistence (default: True)
+            - model: Optional model identifier (default: "anthropic/claude-sonnet-4-5")
+
+    Returns:
+        Dictionary containing the covenant monitoring report and metadata.
+    """
+    company_name: str = inputs.get("company_name", "")
+    if not company_name:
+        raise ValueError("company_name is required in inputs")
+
+    reporting_period: str = inputs.get("reporting_period", "")
+    if not reporting_period:
+        raise ValueError("reporting_period is required in inputs")
+
+    loan_agreement_path: str = inputs.get("loan_agreement_path", "")
+    if not loan_agreement_path:
+        raise ValueError("loan_agreement_path is required in inputs")
+
+    financial_data_path: str = inputs.get("financial_data_path", "")
+    if not financial_data_path:
+        raise ValueError("financial_data_path is required in inputs")
+
+    focus_areas: Optional[List[str]] = inputs.get("focus_areas")
+    enable_memory: bool = inputs.get("enable_memory", True)
+    model: str = inputs.get("model", "anthropic/claude-sonnet-4-5")
+    print_flag: Optional[bool] = inputs.get("print")
+
+    team = create_covenant_monitoring_team(
+        model=model,
+        enable_memory=enable_memory,
+        print=print_flag,
+    )
+
+    task_description: str = build_covenant_monitoring_task(
+        company_name=company_name,
+        reporting_period=reporting_period,
+        focus_areas=focus_areas,
+    )
+
+    task: Task = Task(
+        task_description,
+        context=[loan_agreement_path, financial_data_path],
+    )
+
+    result = await team.do_async(task)
+
+    if isinstance(result, CovenantMonitoringReport):
+        report_dict: Dict[str, Any] = result.model_dump()
+    else:
+        report_dict = {"raw_output": str(result)}
+
+    return {
+        "company_name": company_name,
+        "reporting_period": reporting_period,
+        "report": report_dict,
+        "monitoring_completed": True,
+    }
+
+
+if __name__ == "__main__":
+    import sys
+
+    script_dir: Path = Path(__file__).parent
+
+    test_inputs: Dict[str, Any] = {
+        "company_name": "GlobalTech Manufacturing Inc.",
+        "reporting_period": "Q4 2025",
+        "loan_agreement_path": str(script_dir / "data" / "loan_agreement.txt"),
+        "financial_data_path": str(script_dir / "data" / "financial_data.json"),
+        "focus_areas": [
+            "Leverage ratio trending toward covenant limit",
+            "Debt service capacity under current cash flow",
+        ],
+        "enable_memory": False,
+        "model": "anthropic/claude-sonnet-4-5",
+        "print": True,
+    }
+
+    if len(sys.argv) > 1:
+        try:
+            with open(sys.argv[1], "r") as f:
+                test_inputs = json.load(f)
+        except Exception as e:
+            print(f"Error loading JSON file: {e}")
+            print("Using default test inputs")
+
+    try:
+        result = asyncio.run(main(test_inputs))
+
+        print("\n" + "=" * 80)
+        print("Loan Covenant Monitoring Report - Completed")
+        print("=" * 80)
+        print(f"\nCompany: {result['company_name']}")
+        print(f"Period:  {result['reporting_period']}")
+        print(f"Status:  {'Completed' if result.get('monitoring_completed') else 'Failed'}")
+
+        report: Dict[str, Any] = result.get("report", {})
+
+        if "executive_summary" in report:
+            print(f"\n--- Executive Summary ---\n{report['executive_summary']}")
+
+        if "risk_assessment" in report:
+            risk: Dict[str, Any] = report["risk_assessment"]
+            print("\n--- Risk Assessment ---")
+            print(f"  Risk Score : {risk.get('overall_risk_score', 'N/A')} / 100")
+            print(f"  Risk Level : {risk.get('risk_level', 'N/A')}")
+            print(
+                f"  Breached: {risk.get('breached_count', 0)} | "
+                f"Near Breach: {risk.get('near_breach_count', 0)} | "
+                f"Compliant: {risk.get('compliant_count', 0)}"
+            )
+
+        if "compliance_results" in report:
+            print("\n--- Covenant Compliance Details ---")
+            print("-" * 60)
+            status_symbols: Dict[str, str] = {
+                "compliant": "[OK]",
+                "near_breach": "[!!]",
+                "breached": "[XX]",
+            }
+            for covenant in report["compliance_results"]:
+                symbol: str = status_symbols.get(covenant.get("status", ""), "[??]")
+                print(
+                    f"  {symbol} {covenant.get('covenant_name', 'Unknown')}: "
+                    f"{covenant.get('actual_value', 'N/A')} vs "
+                    f"{covenant.get('threshold', 'N/A')} "
+                    f"(headroom: {covenant.get('headroom_percentage', 'N/A')}%)"
+                )
+
+        if "next_steps" in report:
+            print("\n--- Recommended Next Steps ---")
+            for i, step in enumerate(report["next_steps"], 1):
+                print(f"  {i}. {step}")
+
+        print("\n" + "=" * 80)
+        print("\nFull report (JSON):")
+        print(json.dumps(report, indent=2, default=str))
+
+    except Exception as e:
+        print(f"\nError during execution: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+```
+
+### team.py
+
+```python
+"""
+Team assembly and configuration for covenant monitoring.
+
+Creates a coordinated Team with a leader agent that orchestrates
+covenant extraction, financial calculation, and compliance assessment.
+"""
+
+from __future__ import annotations
+
+from typing import Optional
+
+from upsonic import Agent, Team
+from upsonic.storage import Memory, InMemoryStorage
+
+try:
+    from .agents import (
+        create_covenant_extractor_agent,
+        create_financial_calculator_agent,
+        create_risk_assessor_agent,
+    )
+    from .schemas import CovenantMonitoringReport
+except ImportError:
+    from agents import (
+        create_covenant_extractor_agent,
+        create_financial_calculator_agent,
+        create_risk_assessor_agent,
+    )
+    from schemas import CovenantMonitoringReport
+
+
+def create_covenant_monitoring_team(
+    model: str = "anthropic/claude-sonnet-4-5",
+    enable_memory: bool = True,
+    print: Optional[bool] = None,
+) -> Team:
+    """Create the coordinated Team for end-to-end covenant monitoring.
+
+    Uses coordinate mode with a leader agent that delegates to three
+    specialist agents: covenant extractor, financial calculator, and
+    risk assessor.
+
+    Args:
+        model: Model identifier for the leader/coordinator agent.
+        enable_memory: Whether to enable in-memory session persistence.
+        print: If True, do() prints; if False, print_do() does not. Respects UPSONIC_AGENT_PRINT env.
+
+    Returns:
+        Configured Team instance ready for covenant monitoring tasks.
+    """
+    leader: Agent = Agent(
+        model=model,
+        name="Covenant Monitoring Coordinator",
+        role="Head of Loan Portfolio Monitoring",
+        goal=(
+            "Coordinate the end-to-end covenant monitoring process by delegating "
+            "to specialist agents and synthesizing a comprehensive compliance report"
+        ),
+        system_prompt=(
+            "You coordinate the loan covenant monitoring workflow.\n\n"
+            "WORKFLOW:\n"
+            "1. Delegate to Covenant Extractor: Have them parse the loan agreement and "
+            "extract all covenant definitions with thresholds for the applicable period\n"
+            "2. Delegate to Financial Calculator: Have them calculate all required ratios "
+            "using the financial data and their calculation tools\n"
+            "3. Delegate to Risk Assessor: Have them evaluate compliance for each covenant "
+            "using the extracted thresholds and calculated ratios\n"
+            "4. Synthesize all findings into the final structured report\n\n"
+            "IMPORTANT:\n"
+            "- Ensure each covenant definition is matched with its corresponding ratio\n"
+            "- Pass the correct threshold and constraint type to the risk assessor\n"
+            "- The final report must cover every covenant's compliance status\n"
+            "- Include an overall risk assessment with a numerical score and risk level\n"
+            "- Provide actionable next steps, especially for any breached or near-breach covenants"
+        ),
+    )
+
+    memory: Optional[Memory] = None
+    if enable_memory:
+        memory = Memory(
+            storage=InMemoryStorage(),
+            session_id="covenant_monitoring_session",
+            full_session_memory=True,
+        )
+
+    covenant_extractor: Agent = create_covenant_extractor_agent()
+    financial_calculator: Agent = create_financial_calculator_agent()
+    risk_assessor: Agent = create_risk_assessor_agent()
+
+    team: Team = Team(
+        entities=[covenant_extractor, financial_calculator, risk_assessor],
+        mode="coordinate",
+        leader=leader,
+        response_format=CovenantMonitoringReport,
+        memory=memory,
+        name="Loan Covenant Monitoring Team",
+        print=print,
+    )
+
+    return team
+```
+
+### agents.py
+
+```python
+"""
+Specialized agent creation functions for covenant monitoring.
+
+Each function creates an Agent with a specific domain expertise:
+- Covenant extraction from legal documents
+- Financial ratio calculation using custom tools
+- Compliance assessment and risk evaluation
+"""
+
+from __future__ import annotations
+
+from typing import List, Callable
+
+from upsonic import Agent
+
+try:
+    from .tools import (
+        calculate_leverage_ratio,
+        calculate_interest_coverage_ratio,
+        calculate_current_ratio,
+        calculate_debt_service_coverage_ratio,
+        calculate_tangible_net_worth,
+        evaluate_covenant_compliance,
+    )
+except ImportError:
+    from tools import (
+        calculate_leverage_ratio,
+        calculate_interest_coverage_ratio,
+        calculate_current_ratio,
+        calculate_debt_service_coverage_ratio,
+        calculate_tangible_net_worth,
+        evaluate_covenant_compliance,
+    )
+
+
+def create_covenant_extractor_agent(model: str = "openai/gpt-4o-mini") -> Agent:
+    """Create a specialist agent for extracting covenant definitions from loan agreements.
+
+    Args:
+        model: Model identifier for the agent.
+
+    Returns:
+        Configured Agent for covenant extraction.
+    """
+    return Agent(
+        model=model,
+        name="Covenant Extractor",
+        role="Legal Document Analyst specializing in commercial loan agreements",
+        goal=(
+            "Extract and structure every financial covenant definition from the loan "
+            "agreement, including precise thresholds, formulas, constraint types, and "
+            "testing frequencies"
+        ),
+        system_prompt=(
+            "You are a specialist in analyzing commercial loan agreements and credit "
+            "facility documentation. Your task is to:\n"
+            "- Identify every financial covenant in the provided agreement text\n"
+            "- Extract the exact numerical threshold for the applicable period\n"
+            "- Determine the formula specified for each covenant\n"
+            "- Classify each as 'maximum' (must not exceed) or 'minimum' (must not fall below)\n"
+            "- Note the testing frequency (quarterly TTM, point-in-time, etc.)\n\n"
+            "CRITICAL: Only extract values explicitly stated in the document. Never infer "
+            "or estimate thresholds. Use the exact step-down schedule applicable to the "
+            "reporting period being analyzed."
+        ),
+        education="JD in Corporate Law, CFA Charterholder",
+        work_experience="15 years in leveraged finance documentation and loan agreement analysis",
+        tool_call_limit=5,
+    )
+
+
+def create_financial_calculator_agent(model: str = "openai/gpt-4o-mini") -> Agent:
+    """Create a specialist agent for computing financial ratios using calculation tools.
+
+    Args:
+        model: Model identifier for the agent.
+
+    Returns:
+        Configured Agent with financial calculation tools.
+    """
+    financial_tools: List[Callable[..., dict]] = [
+        calculate_leverage_ratio,
+        calculate_interest_coverage_ratio,
+        calculate_current_ratio,
+        calculate_debt_service_coverage_ratio,
+        calculate_tangible_net_worth,
+    ]
+
+    return Agent(
+        model=model,
+        name="Financial Calculator",
+        role="Quantitative Financial Analyst",
+        goal=(
+            "Calculate all required financial ratios and metrics from raw financial "
+            "data using the provided calculation tools, producing an audit-ready trail"
+        ),
+        system_prompt=(
+            "You are a quantitative analyst responsible for computing financial ratios "
+            "needed for covenant compliance testing.\n\n"
+            "RULES:\n"
+            "1. ALWAYS use the provided calculation tools. NEVER compute ratios manually.\n"
+            "2. Use exact figures from the financial data. Do not round or adjust inputs.\n"
+            "3. For each ratio, identify the correct input values from the financial data "
+            "and call the corresponding tool.\n"
+            "4. Report all results with their component values for audit trail.\n\n"
+            "Available tools:\n"
+            "- calculate_leverage_ratio(total_debt, ebitda)\n"
+            "- calculate_interest_coverage_ratio(ebit, interest_expense)\n"
+            "- calculate_current_ratio(current_assets, current_liabilities)\n"
+            "- calculate_debt_service_coverage_ratio(net_operating_income, total_debt_service)\n"
+            "- calculate_tangible_net_worth(total_assets, total_liabilities, intangible_assets)"
+        ),
+        education="MS in Financial Engineering, FRM Certification",
+        work_experience="10 years in credit risk analytics and financial modeling",
+        tools=financial_tools,
+        tool_call_limit=15,
+    )
+
+
+def create_risk_assessor_agent(model: str = "openai/gpt-4o-mini") -> Agent:
+    """Create a specialist agent for evaluating covenant compliance and risk.
+
+    Args:
+        model: Model identifier for the agent.
+
+    Returns:
+        Configured Agent with the compliance evaluation tool.
+    """
+    compliance_tools: List[Callable[..., dict]] = [evaluate_covenant_compliance]
+
+    return Agent(
+        model=model,
+        name="Risk Assessor",
+        role="Credit Risk Officer",
+        goal=(
+            "Evaluate covenant compliance status for each covenant using the evaluation "
+            "tool, calculate overall risk score, and provide actionable recommendations"
+        ),
+        system_prompt=(
+            "You are a senior credit risk officer evaluating loan covenant compliance.\n\n"
+            "PROCESS:\n"
+            "1. For each covenant, call evaluate_covenant_compliance with:\n"
+            "   - covenant_name: the covenant's name\n"
+            "   - actual_value: the calculated ratio/metric value\n"
+            "   - threshold: the covenant threshold from the agreement\n"
+            "   - constraint_type: 'maximum' or 'minimum'\n"
+            "2. Analyze headroom percentage for each to assess comfort level\n"
+            "3. Compute overall risk score using this methodology:\n"
+            "   - Start at 0 (no risk)\n"
+            "   - Add 30 points per breached covenant\n"
+            "   - Add 15 points per near-breach covenant\n"
+            "   - Risk levels: 0-20=Low, 21-40=Moderate, 41-70=High, 71-100=Critical\n"
+            "4. Provide specific, actionable recommendations for any covenant that is "
+            "near breach or breached, considering both immediate remediation and "
+            "structural solutions\n\n"
+            "Consider cure provisions and grace periods when formulating recommendations."
+        ),
+        education="MBA in Finance, PRM Certification",
+        work_experience="12 years in commercial banking credit risk and portfolio monitoring",
+        tools=compliance_tools,
+        tool_call_limit=15,
+    )
+```
+
+### tools.py
+
+```python
+"""
+Custom financial calculation tools for covenant monitoring.
+
+Provides standalone calculation and compliance evaluation functions
+used by the financial calculator and risk assessor agents.
+"""
+
+from __future__ import annotations
+
+from typing import Dict, Any
+
+
+def calculate_leverage_ratio(total_debt: float, ebitda: float) -> Dict[str, Any]:
+    """Calculate the Leverage Ratio (Total Debt / EBITDA).
+
+    Args:
+        total_debt: Total outstanding funded debt in dollars.
+        ebitda: Earnings Before Interest, Taxes, Depreciation, and Amortization in dollars.
+
+    Returns:
+        Dictionary with ratio value, formula used, and input components.
+    """
+    if ebitda <= 0:
+        return {
+            "ratio_name": "Leverage Ratio",
+            "value": float("inf"),
+            "formula": "Total Funded Debt / EBITDA",
+            "components": {"total_debt": total_debt, "ebitda": ebitda},
+            "warning": "EBITDA is zero or negative; ratio is undefined",
+        }
+
+    ratio: float = round(total_debt / ebitda, 4)
+    return {
+        "ratio_name": "Leverage Ratio",
+        "value": ratio,
+        "formula": "Total Funded Debt / EBITDA",
+        "components": {"total_debt": total_debt, "ebitda": ebitda},
+    }
+
+
+def calculate_interest_coverage_ratio(ebit: float, interest_expense: float) -> Dict[str, Any]:
+    """Calculate the Interest Coverage Ratio (EBIT / Interest Expense).
+
+    Args:
+        ebit: Earnings Before Interest and Taxes in dollars.
+        interest_expense: Total interest expense in dollars.
+
+    Returns:
+        Dictionary with ratio value, formula used, and input components.
+    """
+    if interest_expense <= 0:
+        return {
+            "ratio_name": "Interest Coverage Ratio",
+            "value": float("inf"),
+            "formula": "EBIT / Interest Expense",
+            "components": {"ebit": ebit, "interest_expense": interest_expense},
+            "warning": "Interest expense is zero or negative; ratio is undefined",
+        }
+
+    ratio: float = round(ebit / interest_expense, 4)
+    return {
+        "ratio_name": "Interest Coverage Ratio",
+        "value": ratio,
+        "formula": "EBIT / Interest Expense",
+        "components": {"ebit": ebit, "interest_expense": interest_expense},
+    }
+
+
+def calculate_current_ratio(current_assets: float, current_liabilities: float) -> Dict[str, Any]:
+    """Calculate the Current Ratio (Current Assets / Current Liabilities).
+
+    Args:
+        current_assets: Total current assets in dollars.
+        current_liabilities: Total current liabilities in dollars.
+
+    Returns:
+        Dictionary with ratio value, formula used, and input components.
+    """
+    if current_liabilities <= 0:
+        return {
+            "ratio_name": "Current Ratio",
+            "value": float("inf"),
+            "formula": "Current Assets / Current Liabilities",
+            "components": {"current_assets": current_assets, "current_liabilities": current_liabilities},
+            "warning": "Current liabilities is zero or negative; ratio is undefined",
+        }
+
+    ratio: float = round(current_assets / current_liabilities, 4)
+    return {
+        "ratio_name": "Current Ratio",
+        "value": ratio,
+        "formula": "Current Assets / Current Liabilities",
+        "components": {"current_assets": current_assets, "current_liabilities": current_liabilities},
+    }
+
+
+def calculate_debt_service_coverage_ratio(
+    net_operating_income: float,
+    total_debt_service: float,
+) -> Dict[str, Any]:
+    """Calculate the Debt Service Coverage Ratio (Net Operating Income / Total Debt Service).
+
+    Args:
+        net_operating_income: EBITDA minus unfunded capex minus cash taxes paid, in dollars.
+        total_debt_service: Sum of scheduled principal payments and interest payments, in dollars.
+
+    Returns:
+        Dictionary with ratio value, formula used, and input components.
+    """
+    if total_debt_service <= 0:
+        return {
+            "ratio_name": "Debt Service Coverage Ratio",
+            "value": float("inf"),
+            "formula": "Net Operating Income / Total Debt Service",
+            "components": {
+                "net_operating_income": net_operating_income,
+                "total_debt_service": total_debt_service,
+            },
+            "warning": "Total debt service is zero or negative; ratio is undefined",
+        }
+
+    ratio: float = round(net_operating_income / total_debt_service, 4)
+    return {
+        "ratio_name": "Debt Service Coverage Ratio",
+        "value": ratio,
+        "formula": "Net Operating Income / Total Debt Service",
+        "components": {
+            "net_operating_income": net_operating_income,
+            "total_debt_service": total_debt_service,
+        },
+    }
+
+
+def calculate_tangible_net_worth(
+    total_assets: float,
+    total_liabilities: float,
+    intangible_assets: float,
+) -> Dict[str, Any]:
+    """Calculate Tangible Net Worth (Total Assets - Total Liabilities - Intangible Assets).
+
+    Args:
+        total_assets: Total assets in dollars.
+        total_liabilities: Total liabilities in dollars.
+        intangible_assets: Intangible assets including goodwill, patents, trademarks, in dollars.
+
+    Returns:
+        Dictionary with calculated value, formula used, and input components.
+    """
+    tangible_net_worth: float = round(total_assets - total_liabilities - intangible_assets, 2)
+    return {
+        "metric_name": "Tangible Net Worth",
+        "value": tangible_net_worth,
+        "formula": "Total Assets - Total Liabilities - Intangible Assets",
+        "components": {
+            "total_assets": total_assets,
+            "total_liabilities": total_liabilities,
+            "intangible_assets": intangible_assets,
+        },
+    }
+
+
+def evaluate_covenant_compliance(
+    covenant_name: str,
+    actual_value: float,
+    threshold: float,
+    constraint_type: str,
+) -> Dict[str, Any]:
+    """Evaluate whether a financial covenant is compliant, near breach, or breached.
+
+    Uses a 10 percent buffer zone to determine near-breach status.
+
+    Args:
+        covenant_name: Name of the covenant being evaluated.
+        actual_value: The actual calculated ratio or metric value.
+        threshold: The covenant threshold from the loan agreement.
+        constraint_type: Either 'maximum' (value must be at or below threshold) or 'minimum' (value must be at or above threshold).
+
+    Returns:
+        Dictionary with compliance status, headroom percentage, and assessment details.
+    """
+    near_breach_buffer: float = 0.10
+
+    if constraint_type.lower() not in ("maximum", "minimum"):
+        return {
+            "covenant_name": covenant_name,
+            "error": f"Invalid constraint_type '{constraint_type}'. Must be 'maximum' or 'minimum'.",
+        }
+
+    if constraint_type.lower() == "maximum":
+        if actual_value > threshold:
+            status: str = "breached"
+            headroom_pct: float = round(-((actual_value - threshold) / threshold) * 100, 2)
+        elif actual_value > threshold * (1 - near_breach_buffer):
+            status = "near_breach"
+            headroom_pct = round(((threshold - actual_value) / threshold) * 100, 2)
+        else:
+            status = "compliant"
+            headroom_pct = round(((threshold - actual_value) / threshold) * 100, 2)
+    else:
+        if actual_value < threshold:
+            status = "breached"
+            headroom_pct = round(-((threshold - actual_value) / threshold) * 100, 2)
+        elif actual_value < threshold * (1 + near_breach_buffer):
+            status = "near_breach"
+            headroom_pct = round(((actual_value - threshold) / threshold) * 100, 2)
+        else:
+            status = "compliant"
+            headroom_pct = round(((actual_value - threshold) / threshold) * 100, 2)
+
+    return {
+        "covenant_name": covenant_name,
+        "actual_value": actual_value,
+        "threshold": threshold,
+        "constraint_type": constraint_type,
+        "status": status,
+        "headroom_percentage": headroom_pct,
+    }
+```
+
+### upsonic_configs.json
+
+```json
+{
+    "envinroment_variables": {
+        "UPSONIC_WORKERS_AMOUNT": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "API_WORKERS": {
+            "type": "number",
+            "description": "The number of workers for the Upsonic API",
+            "default": 1
+        },
+        "RUNNER_CONCURRENCY": {
+            "type": "number",
+            "description": "The number of runners for the Upsonic API",
+            "default": 1
+        }
+    },
+    "machine_spec": {
+        "cpu": 2,
+        "memory": 4096,
+        "storage": 1024
+    },
+    "agent_name": "Loan Covenant Monitoring Agent",
+    "description": "AI agent team that monitors loan covenant compliance by extracting covenant definitions from agreements, calculating financial ratios with custom tools, and assessing breach risk using coordinated specialist agents",
+    "icon": "shield-check",
+    "language": "python",
+    "streamlit": false,
+    "proxy_agent": false,
+    "dependencies": {
+        "api": [
+            "upsonic",
+            "anthropic"
+        ],
+        "development": [
+            "python-dotenv",
+            "pytest"
+        ]
+    },
+    "entrypoints": {
+        "api_file": "main.py",
+        "streamlit_file": "streamlit_app.py"
+    },
+    "input_schema": {
+        "inputs": {
+            "company_name": {
+                "type": "string",
+                "description": "Name of the borrower company (required)",
+                "required": true,
+                "default": null
+            },
+            "reporting_period": {
+                "type": "string",
+                "description": "Period being monitored, e.g. 'Q4 2025' (required)",
+                "required": true,
+                "default": null
+            },
+            "loan_agreement_path": {
+                "type": "string",
+                "description": "Path to the loan agreement text file (required)",
+                "required": true,
+                "default": null
+            },
+            "financial_data_path": {
+                "type": "string",
+                "description": "Path to the financial data JSON file (required)",
+                "required": true,
+                "default": null
+            },
+            "focus_areas": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Optional list of priority focus areas for the analysis",
+                "required": false,
+                "default": null
+            },
+            "enable_memory": {
+                "type": "boolean",
+                "description": "Whether to enable in-memory session persistence",
+                "required": false,
+                "default": true
+            },
+            "model": {
+                "type": "string",
+                "description": "Model identifier for the coordinator agent (e.g. anthropic/claude-sonnet-4-5, openai/gpt-4o)",
+                "required": false,
+                "default": "anthropic/claude-sonnet-4-5"
+            },
+            "print": {
+                "type": "boolean",
+                "description": "If true, do() prints output; if false, print_do() does not. Overridden by UPSONIC_AGENT_PRINT env.",
+                "required": false
+            }
+        }
+    },
+    "output_schema": {
+        "company_name": {
+            "type": "string",
+            "description": "The borrower company name"
+        },
+        "reporting_period": {
+            "type": "string",
+            "description": "The period that was monitored"
+        },
+        "report": {
+            "type": "object",
+            "description": "Full CovenantMonitoringReport with covenants, ratios, compliance results, risk assessment, executive summary, and next steps"
+        },
+        "monitoring_completed": {
+            "type": "boolean",
+            "description": "Whether the monitoring process completed successfully"
+        }
+    }
+}
+```
+
+## Key Features
+
+### Team Coordination (Coordinate Mode)
+
+The leader agent uses Upsonic's coordinate mode to automatically delegate tasks to the three specialist agents, synthesize their findings, and produce a unified compliance report.
+
+### Specialist Agents with Personas
+
+Each agent is configured with domain-specific expertise:
+- **Covenant Extractor**: Legal document analysis with JD/CFA credentials and 15 years of leveraged finance experience
+- **Financial Calculator**: Quantitative analysis with FRM certification and custom calculation tools
+- **Risk Assessor**: Credit risk evaluation with PRM certification and compliance scoring methodology
+
+### Custom Financial Tools
+
+Six standalone functions provide deterministic, auditable financial calculations:
+- `calculate_leverage_ratio` — Total Debt / EBITDA
+- `calculate_interest_coverage_ratio` — EBIT / Interest Expense
+- `calculate_current_ratio` — Current Assets / Current Liabilities
+- `calculate_debt_service_coverage_ratio` — Net Operating Income / Total Debt Service
+- `calculate_tangible_net_worth` — Total Assets - Total Liabilities - Intangible Assets
+- `evaluate_covenant_compliance` — Determines compliant / near-breach / breached status with headroom
+
+### Structured Output
+
+The `CovenantMonitoringReport` Pydantic model enforces consistent, machine-readable output with covenant definitions, calculated ratios, compliance results, risk assessment, executive summary, and next steps.
+
+## Repository
+
+View the complete example: [Loan Covenant Monitoring Agent](https://github.com/Upsonic/Examples/tree/master/examples/loan_covenant_monitoring)

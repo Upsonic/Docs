@@ -29,6 +29,35 @@ result = agent.do(task)
 print(result)
 ```
 
+## Model Settings
+
+You can set model parameters in two ways: on the model or on the Agent.
+
+**On the model:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+
+model = OpenAIChatModel(
+    model_name="gpt-4o-mini",
+    settings=OpenAIChatModelSettings(max_tokens=1024, temperature=0.7)
+)
+agent = Agent(model=model)
+```
+
+**On the Agent (with model string or model instance):**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIChatModelSettings
+
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    settings=OpenAIChatModelSettings(max_tokens=1024, temperature=0.7)
+)
+```
+
 ## Parameters
 
 | Parameter | Type | Description | Default | Source |
