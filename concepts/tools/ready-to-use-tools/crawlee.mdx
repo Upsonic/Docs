@@ -1,0 +1,294 @@
+---
+title: "CrawleeTools"
+description: "Local web scraping, crawling, and data extraction toolkit — no API key required"
+---
+
+## Overview
+
+CrawleeTools provides HTTP-based and browser-based web scraping, crawling, link/table/metadata extraction, and screenshot capture via [Crawlee](https://crawlee.dev). All operations run locally on your machine — **no API key is needed**. Use it with an Agent and Task so the model can scrape pages, crawl sites, extract structured data, or capture screenshots.
+
+<Info>
+**No API key required.** Install the extras:
+
+```bash
+# HTTP-based tools (scrape, links, tables, metadata, crawl)
+uv sync --extra custom-tools
+# or
+pip install 'crawlee[beautifulsoup]'
+
+# Browser-based tools (dynamic scrape, screenshot) — optional
+pip install 'crawlee[playwright]'
+uv run playwright install   # downloads browser binaries (Chromium, Firefox, WebKit)
+```
+</Info>
+
+## Basic Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.crawlee import CrawleeTools
+
+agent = Agent(model="openai/gpt-4o", tools=[CrawleeTools()])
+task = Task(description="Scrape https://www.nike.com/ and summarize the main content in one short paragraph.")
+result = agent.print_do(task)
+print(result)
+```
+
+## Selective Tool Configuration
+
+<Tip>
+Enable only the tools you need via constructor flags. Fewer tools mean less noise for the model and faster execution.
+</Tip>
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.crawlee import CrawleeTools
+
+crawlee_tools = CrawleeTools(
+    enable_scrape=True,
+    enable_extract_links=True,
+    enable_extract_with_selector=False,
+    enable_extract_tables=False,
+    enable_get_page_metadata=True,
+    enable_crawl=False,
+    enable_scrape_dynamic=False,
+    enable_screenshot=False,
+)
+agent = Agent(model="openai/gpt-4o-mini", tools=crawlee_tools.functions())
+task = Task(description="Extract all links from https://www.nike.com/help and list the top 10 most relevant ones.")
+result = agent.print_do(task)
+print(result)
+```
+
+## Browser-Based Tools
+
+For JavaScript-rendered pages or screenshots, the Playwright-based tools require two install steps:
+
+```bash
+pip install 'crawlee[playwright]'
+uv run playwright install   # downloads browser binaries (Chromium, Firefox, WebKit)
+```
+
+<Warning>
+Installing the `playwright` Python package alone is **not enough**. You must also run `uv run playwright install` to download the actual browser binaries. Without this step, Playwright tools will fail with `Executable doesn't exist` errors.
+</Warning>
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.crawlee import CrawleeTools
+
+crawlee_tools = CrawleeTools(
+    enable_scrape=False,
+    enable_extract_links=False,
+    enable_extract_with_selector=False,
+    enable_extract_tables=False,
+    enable_get_page_metadata=False,
+    enable_crawl=False,
+    enable_scrape_dynamic=True,
+    enable_screenshot=True,
+    headless=True,
+    browser_type="chromium",
+)
+agent = Agent(model="anthropic/claude-sonnet-4-5", tools=crawlee_tools.functions())
+task = Task(description="Take a screenshot of https://www.nike.com and describe what you see.")
+result = agent.print_do(task)
+print(result)
+```
+
+## Available Tools
+
+By default all eight tools are enabled; use constructor flags to disable any you don't need:
+
+| # | Tool | Engine | Description |
+|---|------|--------|-------------|
+| 1 | **scrape_url** | HTTP | Scrape a single URL and extract clean text content. |
+| 2 | **extract_links** | HTTP | Extract all links (href + text) from a page, with optional CSS filter. |
+| 3 | **extract_with_selector** | HTTP | Extract elements matching a CSS selector (text, HTML, attributes). |
+| 4 | **extract_tables** | HTTP | Parse HTML tables into structured JSON (headers + rows). |
+| 5 | **get_page_metadata** | HTTP | Extract title, description, Open Graph, Twitter Card, canonical URL, and favicon. |
+| 6 | **crawl_website** | HTTP | Crawl a site following same-domain links with depth and page limits. |
+| 7 | **scrape_dynamic_page** | Browser | Scrape a JavaScript-rendered page using a real browser (Playwright). |
+| 8 | **take_screenshot** | Browser | Capture a full-page or viewport PNG screenshot of a rendered page. |
+
+<Note>
+Tools 1–6 use HTTP requests via **BeautifulSoup** and do not need a browser.
+Tools 7–8 use **Playwright** and require `crawlee[playwright]` plus `uv run playwright install`.
+</Note>
+
+## Parameters
+
+### General
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| **headless** | `bool` | `True` | Run Playwright browsers in headless mode (no visible window). |
+| **browser_type** | `str` | `"chromium"` | Browser engine for Playwright (`"chromium"`, `"firefox"`, `"webkit"`). |
+| **max_request_retries** | `int` | `3` | Number of retries for failed HTTP requests. |
+| **max_concurrency** | `int` | `5` | Maximum parallel requests during crawls. |
+| **proxy_urls** | `list[str]` | `None` | List of proxy server URLs for rotation. |
+| **respect_robots_txt** | `bool` | `True` | Honour `robots.txt` directives. |
+| **max_content_length** | `int` | `50000` | Maximum characters of extracted text per page. |
+
+### Tool Enable/Disable Flags
+
+| Parameter | Default | Controls |
+|-----------|---------|----------|
+| **enable_scrape** | `True` | `scrape_url` |
+| **enable_extract_links** | `True` | `extract_links` |
+| **enable_extract_with_selector** | `True` | `extract_with_selector` |
+| **enable_extract_tables** | `True` | `extract_tables` |
+| **enable_get_page_metadata** | `True` | `get_page_metadata` |
+| **enable_crawl** | `True` | `crawl_website` |
+| **enable_scrape_dynamic** | `True` | `scrape_dynamic_page` |
+| **enable_screenshot** | `True` | `take_screenshot` |
+| **all** | `False` | Enable every tool regardless of individual flags. |
+
+## Tool Details
+
+### scrape_url
+
+Scrape a single URL and extract its text content using HTTP (no browser).
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `url` | `str` | — | The URL to scrape. |
+| `only_main_content` | `bool` | `True` | Strip nav, header, footer, script, and style elements. |
+| `max_content_length` | `int \| None` | `None` | Override the instance-level character limit. |
+
+**Returns:** JSON with `url`, `title`, `text`, `status_code`.
+
+---
+
+### extract_links
+
+Extract all links from a web page.
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `url` | `str` | — | The URL to extract links from. |
+| `css_filter` | `str \| None` | `None` | CSS selector to limit which `<a>` tags are included. |
+
+**Returns:** JSON with `url`, `links` (list of `{href, text}`), `total_links`, `status_code`.
+
+---
+
+### extract_with_selector
+
+Extract specific elements from a page using a CSS selector.
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `url` | `str` | — | The URL to scrape. |
+| `selector` | `str` | — | CSS selector (e.g. `"h2.title"`, `"div.product-card"`). |
+| `max_content_length` | `int \| None` | `None` | Override the instance-level character limit per element. |
+
+**Returns:** JSON with `url`, `selector`, `matches` (list of `{text, html, tag, attributes}`), `count`, `status_code`.
+
+---
+
+### extract_tables
+
+Extract HTML tables from a page as structured JSON.
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `url` | `str` | — | The URL containing tables. |
+| `table_index` | `int \| None` | `None` | Extract only the table at this zero-based index. |
+
+**Returns:** JSON with `url`, `tables` (list of `{table_index, headers, rows, row_count, column_count}`), `table_count`, `status_code`.
+
+---
+
+### get_page_metadata
+
+Extract metadata from a page including title, meta tags, and Open Graph data.
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `url` | `str` | — | The URL to extract metadata from. |
+
+**Returns:** JSON with `url`, `title`, `description`, `canonical`, `favicon`, `og_*` fields, `twitter_*` fields, `all_meta`, `status_code`.
+
+---
+
+### crawl_website
+
+Crawl a website starting from a seed URL, following same-domain links.
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `url` | `str` | — | The starting URL. |
+| `max_pages` | `int` | `10` | Maximum pages to visit. |
+| `max_depth` | `int \| None` | `None` | Maximum link depth from the seed URL. |
+| `include_patterns` | `list[str] \| None` | `None` | Glob patterns for URLs to include (e.g. `["/blog/**"]`). |
+| `exclude_patterns` | `list[str] \| None` | `None` | Glob patterns for URLs to exclude (e.g. `["/admin/**"]`). |
+| `only_main_content` | `bool` | `True` | Strip nav/header/footer/script/style elements. |
+| `max_content_length` | `int \| None` | `None` | Override the instance-level character limit per page. |
+
+**Returns:** JSON with `seed_url`, `pages` (list of `{url, title, text, status_code}`), `pages_crawled`.
+
+---
+
+### scrape_dynamic_page
+
+Scrape a JavaScript-rendered page using a real browser (Playwright).
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `url` | `str` | — | The URL to scrape. |
+| `wait_for_selector` | `str \| None` | `None` | CSS selector to wait for before extracting content. |
+| `max_content_length` | `int \| None` | `None` | Override the instance-level character limit. |
+
+**Returns:** JSON with `url`, `title`, `text`, `html_length`.
+
+<Warning>
+Requires `crawlee[playwright]` and `uv run playwright install`. Falls back to an error message if not installed.
+</Warning>
+
+---
+
+### take_screenshot
+
+Capture a PNG screenshot of a rendered page using a real browser.
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `url` | `str` | — | The URL to screenshot. |
+| `full_page` | `bool` | `True` | Capture the entire scrollable page, not just the viewport. |
+| `output_path` | `str \| None` | `None` | File path to save the screenshot (auto-generated if omitted). |
+| `wait_for_selector` | `str \| None` | `None` | CSS selector to wait for before capturing. |
+
+**Returns:** JSON with `url`, `title`, `screenshot_path`, `screenshot_size_bytes`.
+
+<Warning>
+Requires `crawlee[playwright]` and `uv run playwright install`. Falls back to an error message if not installed.
+</Warning>
+
+## Proxy Support
+
+Pass a list of proxy URLs to rotate requests through proxies:
+
+```python
+from upsonic.tools.custom_tools.crawlee import CrawleeTools
+
+crawlee_tools = CrawleeTools(
+    proxy_urls=[
+        "http://user:pass@proxy1.example.com:8080",
+        "http://user:pass@proxy2.example.com:8080",
+    ],
+)
+```
+
+## Comparison with FirecrawlTools
+
+| Feature | CrawleeTools | FirecrawlTools |
+|---------|-------------|----------------|
+| API Key Required | No | Yes |
+| Runs Locally | Yes | No (cloud API) |
+| HTTP Scraping | Yes (BeautifulSoup) | Yes (Firecrawl API) |
+| Browser Scraping | Yes (Playwright) | No |
+| Screenshots | Yes | No |
+| LLM Extraction | No | Yes |
+| Web Search | No | Yes |
+| Batch Operations | No | Yes |
+| Rate Limits | None (local) | API-dependent |

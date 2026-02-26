@@ -44,7 +44,7 @@ firecrawl_tools = FirecrawlTools(
     enable_batch_management=False,
     enable_extract_management=False,
 )
-agent = Agent(model="openai/gpt-4o-mini", tools=[firecrawl_tools])
+agent = Agent(model="openai/gpt-4o-mini", tools=firecrawl_tools.functions())
 task = Task(description="Search the web for 'Upsonic AI agent framework' and summarize the top 3 results.")
 result = agent.do(task)
 print(result)
