@@ -1,0 +1,209 @@
+---
+title: "Expense Tracker Bot"
+description: "A Telegram bot that reads receipt photos with OCR and tracks expenses to CSV, powered by AutonomousAgent with workspace-driven behavior."
+---
+
+A Telegram bot built with Upsonic's **AutonomousAgent** that reads receipt photos via OCR, extracts structured data, and logs expenses to a CSV file in its workspace. The agent's behavior (how to parse receipts, what CSV columns to use, how to handle duplicates) is defined entirely in `AGENTS.md`, not in code.
+
+## Overview
+
+The setup has three parts:
+
+1. **AutonomousAgent** with a workspace directory and one custom tool (`ocr_extract_text`)
+2. **TelegramInterface** in CHAT mode for conversational context
+3. **Workspace files** (`AGENTS.md`, `SOUL.md`) that define the agent's behavior and identity
+
+The agent handles CSV creation, writing, duplicate checking, and monthly summaries on its own through workspace filesystem access. The only custom tool is OCR, because the agent can't read images natively.
+
+## Project Structure
+
+```
+expense_tracker_bot/
+├── main.py              # AutonomousAgent + TelegramInterface
+├── tools.py             # OCR extraction tool
+├── requirements.txt     # upsonic[ocr], anthropic, etc.
+└── workspace/
+    ├── AGENTS.md        # Behavior: receipt workflow, CSV schema, rules
+    ├── SOUL.md          # Identity and personality
+    ├── expenses.csv     # Created by agent at runtime
+    └── memory/          # Daily session logs
+```
+
+### Environment Variables
+
+```bash
+ANTHROPIC_API_KEY=your-api-key
+TELEGRAM_BOT_TOKEN=your-bot-token
+TELEGRAM_WEBHOOK_URL=https://xxxx.ngrok-free.app
+```
+
+## Installation
+
+```bash
+cd examples/autonomous_agents/expense_tracker_bot
+uv venv && source .venv/bin/activate
+uv pip install -r requirements.txt
+```
+
+Create a Telegram bot via **@BotFather**, then start ngrok:
+
+```bash
+ngrok http 8000
+```
+
+## Usage
+
+```bash
+python main.py
+```
+
+The server starts on `0.0.0.0:8000` and registers the Telegram webhook.
+
+| Message | What happens |
+|---------|-------------|
+| Photo of a receipt | OCR reads text, agent parses and saves to `expenses.csv` |
+| "summary" or "this month" | Agent reads CSV and returns category breakdown |
+| `/reset` | Clears conversation context |
+
+## How It Works
+
+| Component | Role |
+|-----------|------|
+| AutonomousAgent | Reads workspace files, manages CSV, handles all logic |
+| `ocr_extract_text` | The only custom tool: EasyOCR reads receipt images |
+| AGENTS.md | Defines receipt workflow, CSV format, duplicate rules, summary logic |
+| SOUL.md | Agent identity and personality |
+| TelegramInterface | Webhook-based chat with conversation memory |
+
+### Flow
+
+1. User sends a receipt photo in Telegram
+2. Agent calls `ocr_extract_text` (auto-detects the image path)
+3. Agent parses OCR output following rules in `AGENTS.md`: converts dates, normalizes amounts, picks a category
+4. Agent reads `expenses.csv` to check for duplicates, then appends the new row
+5. Agent replies with a short confirmation and monthly running total
+
+## Complete Implementation
+
+### main.py
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent
+from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
+
+from tools import ocr_extract_text
+
+load_dotenv()
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-5",
+    tools=[ocr_extract_text],
+    workspace=os.path.join(os.path.dirname(__file__), "workspace"),
+)
+
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    mode=InterfaceMode.CHAT,
+    reset_command="/reset",
+    parse_mode="Markdown",
+)
+
+manager = InterfaceManager(interfaces=[telegram])
+manager.serve(host="0.0.0.0", port=8000)
+```
+
+No system prompt, no hardcoded behavior. The agent reads everything from its workspace.
+
+### tools.py
+
+```python
+import glob
+import os
+import tempfile
+
+from upsonic.ocr import OCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
+from upsonic.tools.config import tool
+
+
+def _find_latest_telegram_image() -> str | None:
+    """Find the most recently created telegram_media temp file."""
+    tmp_dir = tempfile.gettempdir()
+    candidates = glob.glob(os.path.join(tmp_dir, "telegram_media_*"))
+    if not candidates:
+        return None
+    return max(candidates, key=os.path.getmtime)
+
+
+@tool
+def ocr_extract_text(image_path: str = "") -> str:
+    """Extracts text from receipt/invoice photos sent by the user."""
+    if not image_path or not os.path.isfile(image_path):
+        discovered = _find_latest_telegram_image()
+        if discovered:
+            image_path = discovered
+        else:
+            return "ERROR: No image found to process. Please send a photo again."
+
+    try:
+        engine = EasyOCREngine(languages=["tr"], gpu=False, rotation_fix=True)
+        ocr = OCR(layer_1_ocr_engine=engine)
+        result = ocr.process_file(image_path)
+    except Exception as e:
+        return f"ERROR: OCR operation failed: {e}"
+
+    lines = []
+    total_confidence = 0.0
+    block_count = 0
+
+    for block in result.blocks:
+        text = block.text.strip()
+        if not text:
+            continue
+        conf = block.confidence
+        total_confidence += conf
+        block_count += 1
+        lines.append(f"[{conf:.0%}] {text}")
+
+    if block_count == 0:
+        return "OCR could not detect any text. The image may not be clear."
+
+    avg_confidence = total_confidence / block_count
+    output = f"=== OCR Result (Average Confidence: {avg_confidence:.0%}) ===\n"
+    output += "\n".join(lines)
+
+    if avg_confidence < 0.6:
+        output += (
+            "\n\nWARNING: OCR confidence score is low (<60%). "
+            "Results may be incorrect, ask the user for confirmation."
+        )
+
+    return output
+```
+
+One tool. Auto-detects Telegram media files, runs EasyOCR, returns text with confidence scores.
+
+## Workspace: AGENTS.md
+
+The key to this example. Instead of hardcoding CSV logic in Python, the agent reads its instructions from `AGENTS.md`:
+
+- **Receipt workflow**: call OCR, parse output, check duplicates, save, confirm
+- **CSV schema**: columns, types, format rules (dates as YYYY-MM-DD, amounts as floats)
+- **Summary logic**: group by category, compute percentages, show totals
+- **Rules**: always use `ocr_extract_text` for images, never delete data files
+
+Change the CSV schema or add new categories by editing `AGENTS.md`. The agent adapts without touching code.
+
+## Notes
+
+- OCR language is set to Turkish (`tr`). Change the `languages` parameter in `tools.py` for other languages.
+- Install with `upsonic[ocr]` to get EasyOCR and its dependencies.
+- The agent has full filesystem access within the workspace but no shell access (`enable_shell` defaults to disabled for this setup).
+
+## Repository
+
+View the full example: [Expense Tracker Bot](https://github.com/Upsonic/Examples/tree/master/examples/autonomous_agents/expense_tracker_bot)
