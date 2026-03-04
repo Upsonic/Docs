@@ -1,0 +1,91 @@
+---
+title: "Outlines"
+description: "Using Outlines library for local and non-API models with Upsonic"
+---
+
+## Overview
+
+Outlines provides structured generation and control for models run locally or via SGLang, using the [Outlines](https://github.com/outlines-dev/outlines) library. There is no API key or base URL; you build an `OutlinesModel` from a concrete backend (Transformers, LlamaCpp, MLXLM, SGLang, or vLLM offline). Tool calls are not supported; JSON schema and JSON object output are supported.
+
+**Model Class:** `OutlinesModel`
+
+## Authentication
+
+No API key or environment variables are required. For SGLang, configure `base_url` and optional `api_key` in `OutlinesModel.from_sglang()`.
+
+## Examples
+
+**From Transformers (local):**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.outlines import OutlinesModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+hf_model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-1B-Instruct")
+tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-1B-Instruct")
+model = OutlinesModel.from_transformers(hf_model, tokenizer)
+agent = Agent(model=model)
+
+task = Task("Hello, how are you?")
+result = agent.do(task)
+print(result)
+```
+
+**From SGLang (remote server):**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.outlines import OutlinesModel
+
+model = OutlinesModel.from_sglang("http://localhost:30000", model_name="meta-llama/Llama-3.2-1B-Instruct")
+agent = Agent(model=model)
+
+task = Task("Hello, how are you?")
+result = agent.do(task)
+print(result)
+```
+
+## Model Settings
+
+You can set model parameters on the model or on the Agent. Supported parameters depend on the backend (Transformers, LlamaCpp, SGLang, vLLMOffline).
+
+**On the model:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.outlines import OutlinesModel
+from upsonic.models.settings import ModelSettings
+
+model = OutlinesModel.from_sglang(
+    "http://localhost:30000",
+    settings=ModelSettings(max_tokens=1024, temperature=0.7)
+)
+agent = Agent(model=model)
+```
+
+**On the Agent:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.settings import ModelSettings
+
+agent = Agent(
+    model=model,  # OutlinesModel instance required; no provider/model string
+    settings=ModelSettings(max_tokens=1024, temperature=0.7)
+)
+```
+
+## Parameters
+
+Supported settings vary by backend. Base options:
+
+| Parameter | Type | Description | Default | Backends |
+|-----------|------|-------------|---------|----------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model default | Transformers, LlamaCpp, SGLang, vLLMOffline |
+| `temperature` | `float` | Sampling temperature | 1.0 | Transformers, LlamaCpp, SGLang, vLLMOffline |
+| `top_p` | `float` | Nucleus sampling | 1.0 | Transformers, LlamaCpp, SGLang, vLLMOffline |
+| `seed` | `int` | Random seed | None | LlamaCpp, vLLMOffline |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 | LlamaCpp, SGLang, vLLMOffline |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 | LlamaCpp, SGLang, vLLMOffline |
+| `logit_bias` | `dict[str, int]` | Logit bias per token | None | Transformers, LlamaCpp, vLLMOffline |

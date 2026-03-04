@@ -1,27 +1,27 @@
 ---
-title: "Groq"
-description: "Using Groq for ultra-fast LLM inference with Upsonic"
+title: "GitHub Models"
+description: "Using GitHub Models API with Upsonic"
 ---
 
 ## Overview
 
-Groq provides ultra-fast inference through their Language Processing Unit (LPU) technology. Access open-source models with industry-leading speed and built-in web search capabilities.
+GitHub Models provides access to multiple AI providers through an OpenAI-compatible API at `https://models.github.ai/inference`.
 
-**Model Class:** `GroqModel`
+**Model Class:** `GitHubModel`
 
 ## Authentication
 
 ```bash
-export GROQ_API_KEY="gsk_..."
+export GITHUB_API_KEY="..."
 ```
 
 ## Examples
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.groq import GroqModel
+from upsonic.models.github import GitHubModel
 
-model = GroqModel(model_name="openai/gpt-oss-120b")
+model = GitHubModel(model_name="openai/gpt-5")
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")
@@ -37,11 +37,11 @@ You can set model parameters in two ways: on the model or on the Agent.
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.groq import GroqModel, GroqModelSettings
+from upsonic.models.github import GitHubModel, GitHubModelSettings
 
-model = GroqModel(
-    model_name="openai/gpt-oss-120b",
-    settings=GroqModelSettings(max_tokens=1024, temperature=0.7)
+model = GitHubModel(
+    model_name="openai/gpt-5",
+    settings=GitHubModelSettings(max_tokens=1024, temperature=0.7)
 )
 agent = Agent(model=model)
 ```
@@ -50,11 +50,11 @@ agent = Agent(model=model)
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.groq import GroqModelSettings
+from upsonic.models.github import GitHubModelSettings
 
 agent = Agent(
-    model="groq/llama-3.3-70b-versatile",
-    settings=GroqModelSettings(max_tokens=1024)
+    model="github/openai/gpt-5",
+    settings=GitHubModelSettings(max_tokens=1024, temperature=0.7)
 )
 ```
 
@@ -62,7 +62,7 @@ agent = Agent(
 
 | Parameter | Type | Description | Default | Source |
 |-----------|------|-------------|---------|--------|
-| `max_tokens` | `int` | Maximum tokens to generate | 1024 | Base |
+| `max_tokens` | `int` | Maximum tokens to generate | Model default | Base |
 | `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 | Base |
 | `top_p` | `float` | Nucleus sampling | 1.0 | Base |
 | `seed` | `int` | Random seed | None | Base |
@@ -71,4 +71,3 @@ agent = Agent(
 | `frequency_penalty` | `float` | Token frequency penalty | 0.0 | Base |
 | `parallel_tool_calls` | `bool` | Allow parallel tools | True | Base |
 | `timeout` | `float` | Request timeout (seconds) | 600 | Base |
-| `groq_reasoning_format` | `'hidden' \| 'raw' \| 'parsed'` | Reasoning output format | None | Specific |

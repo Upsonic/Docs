@@ -1,0 +1,91 @@
+---
+title: "FileSearchTool"
+description: "A built-in tool that allows models to search through uploaded files using vector search"
+---
+
+## Overview
+
+A built-in tool that provides a fully managed Retrieval-Augmented Generation (RAG) system. It handles file storage, chunking, embedding generation, and context injection into prompts, allowing your agent to search through uploaded files using vector search.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import FileSearchTool
+from upsonic.models.openai import OpenAIResponsesModel
+
+# Create model with OpenAI Responses API
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"
+)
+
+# Create file search tool with vector store IDs
+# Vector stores must be created via the OpenAI API beforehand
+file_search = FileSearchTool(
+    file_store_ids=["vs_abc123"]
+)
+
+# Create task
+task = Task(
+    description="Search through the uploaded documents and find information about quarterly revenue",
+    tools=[file_search]
+)
+
+# Create agent
+agent = Agent(model=model, name="Document Search Agent")
+
+# Execute
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+## Advanced Example
+
+```python
+from upsonic.tools.builtin_tools import FileSearchTool
+from upsonic import Agent, Task
+from upsonic.models.openai import OpenAIResponsesModel
+
+model = OpenAIResponsesModel(
+    model_name="gpt-4o",
+    provider="openai"
+)
+
+# Search across multiple vector stores (max 2 for OpenAI)
+file_search = FileSearchTool(
+    file_store_ids=["vs_policies", "vs_procedures"]
+)
+
+task = Task(
+    description="""
+    Search through the company documents and answer the following:
+    1. What is the remote work policy?
+    2. What are the guidelines for expense reporting?
+    """,
+    tools=[file_search]
+)
+
+agent = Agent(model=model, name="HR Knowledge Agent")
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+## Parameters
+
+- `file_store_ids` (Sequence[str], **required**): The file store IDs to search through (max 2 for OpenAI)
+  - For OpenAI: Vector store IDs created via the [OpenAI API](https://platform.openai.com/docs/api-reference/vector-stores)
+  - For Google: File search store names uploaded and processed via the Gemini Files API
+
+## Provider Support
+
+- OpenAI Responses: ✅ Full support
+- Google (Gemini): ✅ Full support
+- Anthropic: ❌ Not supported
+
+## Characteristics
+
+- Fully managed RAG pipeline (chunking, embedding, retrieval)
+- Vector-based semantic search across uploaded documents
+- Provider-managed file storage and indexing
+- Automatic context injection into model prompts

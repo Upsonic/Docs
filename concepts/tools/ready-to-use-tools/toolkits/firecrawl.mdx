@@ -1,0 +1,87 @@
+---
+title: "FirecrawlTools"
+description: "Web scraping, crawling, and extraction via Firecrawl API. Inherits ToolKit."
+---
+
+## Overview
+
+**FirecrawlTools** extends **ToolKit** and uses the [Firecrawl](https://firecrawl.dev) API for scraping, crawling, mapping, web search, batch scraping, and LLM-powered extraction.
+
+<Info>
+**Required:** Set **`FIRECRAWL_API_KEY`** (env or `.env`). Install: `pip install firecrawl-py`.
+</Info>
+
+**Tools (13):** `scrape_url`, `crawl_website`, `start_crawl`, `get_crawl_status`, `cancel_crawl`, `map_website`, `search_web`, `batch_scrape`, `start_batch_scrape`, `get_batch_scrape_status`, `extract_data`, `start_extract`, `get_extract_status`. Use **ToolKit**'s `exclude_tools` / `include_tools` to limit which tools the agent sees.
+
+---
+
+## Examples
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.firecrawl import FirecrawlTools
+
+agent = Agent(model="anthropic/claude-sonnet-4-5", tools=[FirecrawlTools()])
+task = Task(description="Scrape https://www.nike.com.tr and summarize the main content in one short paragraph.")
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.firecrawl import FirecrawlTools
+
+tools = FirecrawlTools(
+    default_scrape_limit=50,
+    default_search_limit=10,
+    fc_timeout=60,
+    exclude_tools=["crawl_website", "start_crawl", "get_crawl_status", "cancel_crawl"],
+    timeout=60.0,
+)
+agent = Agent(model="openai/gpt-4o", tools=[tools])
+task = Task(description="Search the web for 'Upsonic AI agent framework' and summarize the top 3 results.")
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+## Parameters
+
+### FirecrawlTools
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | from env `FIRECRAWL_API_KEY` | Firecrawl API key. |
+| `api_url` | `str \| None` | `None` | Custom API base URL for self-hosted Firecrawl. |
+| `default_formats` | `list[str] \| None` | `["markdown"]` | Default output formats for scrape operations. |
+| `default_scrape_limit` | `int` | `100` | Default page limit for crawl operations. |
+| `default_search_limit` | `int` | `5` | Default result limit for search operations. |
+| `fc_timeout` | `int` | `120` | Timeout in seconds for blocking operations. |
+| `poll_interval` | `int` | `2` | Seconds between job status polls. |
+
+### ToolKit (base)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `include_tools` | `list[str] \| None` | `None` | Tool names to add to the candidate set (additive). |
+| `exclude_tools` | `list[str] \| None` | `None` | Tool names to remove from the candidate set. |
+| `use_async` | `bool` | `False` | If `True`, register async methods and drop sync. |
+| `requires_confirmation` | `bool \| None` | `None` | Require user confirmation before tool execution. |
+| `requires_user_input` | `bool \| None` | `None` | Require user input for specified fields. |
+| `user_input_fields` | `list[str] \| None` | `None` | Field names that require user input. |
+| `external_execution` | `bool \| None` | `None` | Tool runs externally (deferred execution). |
+| `show_result` | `bool \| None` | `None` | Show tool result in console. |
+| `stop_after_tool_call` | `bool \| None` | `None` | Stop agent after one tool call. |
+| `sequential` | `bool \| None` | `None` | Run tools sequentially. |
+| `cache_results` | `bool \| None` | `None` | Cache tool results. |
+| `cache_dir` | `str \| None` | `None` | Directory for cache storage. |
+| `cache_ttl` | `int \| None` | `None` | Cache TTL in seconds. |
+| `tool_hooks` | `Any \| None` | `None` | Before/after hooks for tool execution. |
+| `max_retries` | `int \| None` | `None` | Max retries per tool call. |
+| `timeout` | `float \| None` | `None` | Timeout in seconds for tool execution. |
+| `strict` | `bool \| None` | `None` | Strict JSON schema validation. |
+| `docstring_format` | `str \| None` | `None` | Docstring format for schema generation. |
+| `require_parameter_descriptions` | `bool \| None` | `None` | Require parameter descriptions in schema. |
