@@ -5,6 +5,19 @@ read_when:
   - Bootstrapping a workspace manually
 ---
 
+The `BOOTSTRAP.md` file is the first-run ritual for new agents. Place it inside your **workspace** directory and when the agent starts for the first time, it will follow the bootstrap instructions to establish its identity, learn about the user, and set up the workspace.
+
+## How It Works
+
+1. Create a file called `BOOTSTRAP.md` in your workspace folder
+2. On first run, the agent reads it and walks through the setup with the user
+3. Once complete, the agent deletes `BOOTSTRAP.md` — it's no longer needed
+
+## Template
+
+Copy and customize this template for your use case:
+
+```markdown
 # BOOTSTRAP.md - Hello, World
 
 _You just woke up. Time to figure out who you are._
@@ -60,3 +73,4 @@ Delete this file. You don't need a bootstrap script anymore — you're you now.
 ---
 
 _Good luck out there. Make it count._
+```
