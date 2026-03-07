@@ -39,6 +39,36 @@ result = agent.do(task)
 print(result)
 ```
 
+## Model Settings
+
+You can set model parameters in two ways: on the model or on the Agent.
+
+**On the model:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.google import GoogleModel, GoogleModelSettings
+
+model = GoogleModel(
+    model_name="gemini-2.5-flash",
+    provider="google-gla",
+    settings=GoogleModelSettings(max_tokens=1024, temperature=0.7)
+)
+agent = Agent(model=model)
+```
+
+**On the Agent:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.google import GoogleModelSettings
+
+agent = Agent(
+    model="google-gla/gemini-2.5-flash",
+    settings=GoogleModelSettings(max_tokens=1024)
+)
+```
+
 ## Parameters
 
 | Parameter | Type | Description | Default | Source |

@@ -1,0 +1,95 @@
+---
+title: "WebFetchTool"
+description: "A built-in tool that allows models to access and read contents from URLs"
+---
+
+## Overview
+
+A built-in tool that allows models to fetch and read content directly from URLs. This is the recommended replacement for the deprecated `UrlContextTool`.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.builtin_tools import WebFetchTool
+from upsonic.models.anthropic import AnthropicModel
+
+# Create model with Anthropic
+model = AnthropicModel(
+    model_name="claude-sonnet-4-5",
+    provider="anthropic"
+)
+
+# Basic web fetch tool
+web_fetch = WebFetchTool()
+
+# Create task
+task = Task(
+    description="Fetch the content from https://docs.python.org and summarize the key features of Python",
+    tools=[web_fetch]
+)
+
+# Create agent
+agent = Agent(model=model, name="Web Fetch Agent")
+
+# Execute
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+## Advanced Configuration
+
+```python
+from upsonic.tools.builtin_tools import WebFetchTool
+from upsonic import Agent, Task
+from upsonic.models.anthropic import AnthropicModel
+
+model = AnthropicModel(
+    model_name="claude-sonnet-4-5",
+    provider="anthropic"
+)
+
+# Advanced web fetch with domain filtering and citations
+advanced_fetch = WebFetchTool(
+    max_uses=5,
+    allowed_domains=["docs.python.org", "wiki.python.org"],
+    enable_citations=True,
+    max_content_tokens=2000
+)
+
+task = Task(
+    description="""
+    Fetch and analyze the following Python documentation pages:
+    1. https://docs.python.org/3/tutorial/
+    2. https://docs.python.org/3/library/functions.html
+
+    Provide a structured summary of what each page covers.
+    """,
+    tools=[advanced_fetch]
+)
+
+agent = Agent(model=model, name="Documentation Reader Agent")
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+## Parameters
+
+- `max_uses` (int, optional): Maximum number of URL fetches allowed
+  - Supported by: Anthropic
+- `allowed_domains` (List[str], optional): Only fetch from these domains
+  - Supported by: Anthropic
+  - Note: Cannot use both `allowed_domains` and `blocked_domains` with Anthropic
+- `blocked_domains` (List[str], optional): Never fetch from these domains
+  - Supported by: Anthropic
+  - Note: Cannot use both `blocked_domains` and `allowed_domains` with Anthropic
+- `enable_citations` (bool): Enable citations for fetched content (default: False)
+  - Supported by: Anthropic
+- `max_content_tokens` (int, optional): Maximum content length in tokens for fetched content
+  - Supported by: Anthropic
+
+## Provider Support
+
+- Anthropic: ✅ Full support
+- Google: ✅ Full support
+- OpenAI Responses: ❌ Not supported

@@ -1,27 +1,29 @@
 ---
-title: "OpenRouter"
-description: "Using OpenRouter for unified access to multiple LLM providers with Upsonic"
+title: "SambaNova"
+description: "Using SambaNova AI for open and hosted models with Upsonic"
 ---
 
 ## Overview
 
-OpenRouter provides unified access to models from OpenAI, Anthropic, Google, Meta, and many others through a single API. Simplifies multi-model applications with consistent pricing and routing.
+SambaNova provides an OpenAI-compatible API for multiple model families. The default endpoint is `https://api.sambanova.ai/v1`; you can override it with `SAMBANOVA_BASE_URL` or pass `base_url` to `SambaNovaProvider`. Model profiles are matched by name prefix (e.g. `deepseek-*`, `llama-*`, `qwen*`, `mistral*`).
 
-**Model Class:** `OpenAIChatModel` (OpenAI-compatible API)
+**Model Class:** `SambaNovaModel`
 
 ## Authentication
 
 ```bash
-export OPENROUTER_API_KEY="sk-or-..."
+export SAMBANOVA_API_KEY="..."
+# Optional: custom base URL
+export SAMBANOVA_BASE_URL="https://api.sambanova.ai/v1"
 ```
 
 ## Examples
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openrouter import OpenRouterModel
+from upsonic.models.sambanova import SambaNovaModel
 
-model = OpenRouterModel(model_name="anthropic/claude-3-5-sonnet")
+model = SambaNovaModel(model_name="gpt-oss-120b")
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")
@@ -37,11 +39,11 @@ You can set model parameters in two ways: on the model or on the Agent.
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openrouter import OpenRouterModel, OpenRouterModelSettings
+from upsonic.models.sambanova import SambaNovaModel, SambaNovaModelSettings
 
-model = OpenRouterModel(
-    model_name="anthropic/claude-3-5-sonnet",
-    settings=OpenRouterModelSettings(max_tokens=1024, temperature=0.7)
+model = SambaNovaModel(
+    model_name="gpt-oss-120b",
+    settings=SambaNovaModelSettings(max_tokens=1024, temperature=0.7)
 )
 agent = Agent(model=model)
 ```
@@ -50,11 +52,11 @@ agent = Agent(model=model)
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openrouter import OpenRouterModelSettings
+from upsonic.models.sambanova import SambaNovaModelSettings
 
 agent = Agent(
-    model="openrouter/anthropic/claude-3-5-sonnet",
-    settings=OpenRouterModelSettings(max_tokens=1024, temperature=0.7)
+    model="sambanova/gpt-oss-120b",
+    settings=SambaNovaModelSettings(max_tokens=1024, temperature=0.7)
 )
 ```
 

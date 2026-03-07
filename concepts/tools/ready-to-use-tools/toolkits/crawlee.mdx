@@ -1,0 +1,87 @@
+---
+title: "CrawleeTools"
+description: "Local web scraping and crawling via Crawlee — no API key. Inherits ToolKit."
+---
+
+## Overview
+
+**CrawleeTools** extends **ToolKit** and provides HTTP-based (BeautifulSoup) and browser-based (Playwright) scraping, link/table/metadata extraction, crawling, and screenshots. All operations run locally — **no API key**.
+
+<Info>
+**Install:** `pip install 'crawlee[beautifulsoup]'` (required). For browser tools: `pip install 'crawlee[playwright]'` then `uv run playwright install`.
+</Info>
+
+**Tools (8):** `scrape_url`, `extract_links`, `extract_with_selector`, `extract_tables`, `get_page_metadata`, `crawl_website`, `scrape_dynamic_page`, `take_screenshot`. Use **ToolKit**'s `exclude_tools` / `include_tools` to enable only what you need.
+
+---
+
+## Examples
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.crawlee import CrawleeTools
+
+agent = Agent(model="openai/gpt-4o", tools=[CrawleeTools()])
+task = Task(description="Scrape https://www.nike.com.tr and summarize the main content in one short paragraph.")
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.crawlee import CrawleeTools
+
+tools = CrawleeTools(
+    respect_robots_txt=False,
+    max_content_length=30_000,
+    exclude_tools=["scrape_dynamic_page", "take_screenshot"],
+    timeout=120.0,
+)
+agent = Agent(model="openai/gpt-4o", tools=[tools])
+task = Task(description="Extract links from https://www.nike.com.tr and list the first 5.")
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+## Parameters
+
+### CrawleeTools
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `headless` | `bool` | `True` | Run Playwright browsers in headless mode (no visible window). |
+| `browser_type` | `str` | `"chromium"` | Browser engine for Playwright: `"chromium"`, `"firefox"`, or `"webkit"`. |
+| `max_request_retries` | `int` | `3` | Number of retries for failed HTTP requests. |
+| `max_concurrency` | `int` | `5` | Maximum parallel requests during crawls. |
+| `proxy_urls` | `list[str] \| None` | `None` | List of proxy URLs for request rotation. |
+| `respect_robots_txt` | `bool` | `True` | Honour `robots.txt` directives. |
+| `max_content_length` | `int` | `50000` | Maximum characters of extracted text per page. |
+
+### ToolKit (base)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `include_tools` | `list[str] \| None` | `None` | Tool names to add to the candidate set (additive). |
+| `exclude_tools` | `list[str] \| None` | `None` | Tool names to remove from the candidate set. |
+| `use_async` | `bool` | `False` | If `True`, register async methods and drop sync. |
+| `requires_confirmation` | `bool \| None` | `None` | Require user confirmation before tool execution. |
+| `requires_user_input` | `bool \| None` | `None` | Require user input for specified fields. |
+| `user_input_fields` | `list[str] \| None` | `None` | Field names that require user input. |
+| `external_execution` | `bool \| None` | `None` | Tool runs externally (deferred execution). |
+| `show_result` | `bool \| None` | `None` | Show tool result in console. |
+| `stop_after_tool_call` | `bool \| None` | `None` | Stop agent after one tool call. |
+| `sequential` | `bool \| None` | `None` | Run tools sequentially. |
+| `cache_results` | `bool \| None` | `None` | Cache tool results. |
+| `cache_dir` | `str \| None` | `None` | Directory for cache storage. |
+| `cache_ttl` | `int \| None` | `None` | Cache TTL in seconds. |
+| `tool_hooks` | `Any \| None` | `None` | Before/after hooks for tool execution. |
+| `max_retries` | `int \| None` | `None` | Max retries per tool call. |
+| `timeout` | `float \| None` | `None` | Timeout in seconds for tool execution. |
+| `strict` | `bool \| None` | `None` | Strict JSON schema validation. |
+| `docstring_format` | `str \| None` | `None` | Docstring format for schema generation. |
+| `require_parameter_descriptions` | `bool \| None` | `None` | Require parameter descriptions in schema. |

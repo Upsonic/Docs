@@ -1,0 +1,196 @@
+---
+title: "Langfuse"
+description: "Send agent traces to Langfuse for LLM observability, cost tracking, and prompt analytics"
+---
+
+## Overview
+
+The `Langfuse` class sends OpenTelemetry traces directly to [Langfuse](https://langfuse.com) via its OTLP endpoint. You get full visibility into every agent run — LLM calls, tool executions, token usage, costs, and latency — in the Langfuse dashboard.
+
+<Info>
+Install the optional dependencies:
+
+```bash
+pip install upsonic[langfuse]
+# or
+uv sync --extra langfuse
+```
+</Info>
+
+## Setup
+
+Get your keys from the [Langfuse dashboard](https://cloud.langfuse.com) → Settings → API Keys.
+
+Set them as environment variables:
+
+```bash
+export LANGFUSE_PUBLIC_KEY=pk-lf-...
+export LANGFUSE_SECRET_KEY=sk-lf-...
+```
+
+Or pass them directly in code (see below).
+
+---
+
+## Usage
+
+### Minimal — Keys from Environment
+
+```python
+from upsonic import Agent
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = Agent("openai/gpt-4o", instrument=langfuse)
+agent.print_do("What is 2 + 2?")
+```
+
+### Explicit Keys
+
+```python
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse(
+    public_key="pk-lf-abc123",
+    secret_key="sk-lf-xyz789",
+)
+```
+
+### US Region
+
+```python
+langfuse = Langfuse(region="us")
+```
+
+### Self-Hosted
+
+```python
+langfuse = Langfuse(host="https://langfuse.mycompany.com")
+```
+
+### Full Configuration
+
+```python
+langfuse = Langfuse(
+    public_key="pk-lf-abc123",
+    secret_key="sk-lf-xyz789",
+    region="eu",                  # "eu" (default) or "us"
+    service_name="my-agent",      # default: "upsonic"
+    sample_rate=0.5,              # sample 50% of traces
+    include_content=True,         # include prompts/responses
+)
+```
+
+---
+
+## Session & User Tracking
+
+Group multiple runs under one session and tag with a user ID — both show up in the Langfuse dashboard.
+
+```python
+from upsonic import Agent
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+
+agent = Agent(
+    "openai/gpt-4o",
+    instrument=langfuse,
+    session_id="chat-session-001",
+    user_id="dogan@example.com",
+)
+
+agent.print_do("First question")
+agent.print_do("Follow-up")  # same session → grouped in Langfuse
+```
+
+## Hide Sensitive Content
+
+```python
+from upsonic import Agent
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse(include_content=False)
+agent = Agent("openai/gpt-4o", instrument=langfuse)
+agent.print_do("My SSN is 123-45-6789")
+# Prompts and responses will NOT appear in Langfuse
+```
+
+## Multiple Agents, One Provider
+
+```python
+from upsonic import Agent
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+
+researcher = Agent("openai/gpt-4o", instrument=langfuse, name="Researcher")
+writer = Agent("openai/gpt-4o", instrument=langfuse, name="Writer")
+
+researcher.print_do("Research quantum computing")
+writer.print_do("Write a summary about AI")
+```
+
+## Global Instrumentation
+
+```python
+from upsonic import Agent
+from upsonic.integrations.langfuse import Langfuse
+
+Agent.instrument_all(Langfuse())
+
+agent = Agent("openai/gpt-4o")  # automatically traced to Langfuse
+agent.print_do("Hello!")
+```
+
+## Streaming
+
+Works with both sync and async streaming — no extra setup.
+
+```python
+from upsonic import Agent
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = Agent("openai/gpt-4o", instrument=langfuse)
+
+for chunk in agent.stream("Count to 5", events=False):
+    print(chunk, end="", flush=True)
+print()
+```
+
+---
+
+## What You See in Langfuse
+
+| Dashboard Section | What It Shows |
+|---|---|
+| **Traces** | Each `agent.do()` / `agent.do_async()` call as a trace with input, output, duration |
+| **Observations** | Nested spans: pipeline steps, LLM calls (`chat`), tool executions |
+| **Sessions** | Grouped traces sharing the same `session_id` |
+| **Users** | Traces tagged with `user_id` |
+| **Cost** | Per-trace and per-LLM-call cost from token usage |
+| **Latency** | Execution time for the full run and each sub-span |
+
+---
+
+## Parameters Reference
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `public_key` | `str` | env `LANGFUSE_PUBLIC_KEY` | Langfuse public key |
+| `secret_key` | `str` | env `LANGFUSE_SECRET_KEY` | Langfuse secret key |
+| `host` | `str` | env `LANGFUSE_HOST` | Custom host URL |
+| `region` | `"eu"` \| `"us"` | `"eu"` | Cloud region (ignored if `host` is set) |
+| `service_name` | `str` | `"upsonic"` | Service name in traces |
+| `sample_rate` | `float` | `1.0` | Fraction of traces to sample (0.0–1.0) |
+| `include_content` | `bool` | `True` | Include prompts/responses in traces |
+| `flush_on_exit` | `bool` | `True` | Auto-flush on process exit |
+
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `LANGFUSE_PUBLIC_KEY` | Langfuse public key (`pk-lf-...`) |
+| `LANGFUSE_SECRET_KEY` | Langfuse secret key (`sk-lf-...`) |
+| `LANGFUSE_HOST` | Custom Langfuse host URL |

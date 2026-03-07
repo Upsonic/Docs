@@ -21,12 +21,41 @@ export GROQ_API_KEY="gsk_..."
 from upsonic import Agent, Task
 from upsonic.models.groq import GroqModel
 
-model = GroqModel(model_name="llama-3.3-70b-versatile")
+model = GroqModel(model_name="openai/gpt-oss-120b")
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")
 result = agent.do(task)
 print(result)
+```
+
+## Model Settings
+
+You can set model parameters in two ways: on the model or on the Agent.
+
+**On the model:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.groq import GroqModel, GroqModelSettings
+
+model = GroqModel(
+    model_name="openai/gpt-oss-120b",
+    settings=GroqModelSettings(max_tokens=1024, temperature=0.7)
+)
+agent = Agent(model=model)
+```
+
+**On the Agent:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.groq import GroqModelSettings
+
+agent = Agent(
+    model="groq/llama-3.3-70b-versatile",
+    settings=GroqModelSettings(max_tokens=1024)
+)
 ```
 
 ## Parameters
