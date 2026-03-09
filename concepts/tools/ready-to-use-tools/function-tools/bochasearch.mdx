@@ -1,0 +1,73 @@
+---
+title: "BoCha Search"
+description: "Web search tool using the BoCha AI search API"
+---
+
+## Overview
+
+Web search tool using the [BoCha](https://bochaai.com) AI-powered search API. Returns structured results with titles, URLs, summaries, and metadata.
+
+<Info>
+**Required:** A BoCha API key. Get one at [bochaai.com](https://bochaai.com). Install the extra: `pip install aiohttp`.
+</Info>
+
+## Quick Start — No Attributes
+
+Call the factory function with only the required API key.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.common_tools import bocha_search_tool
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-5",
+    name="BoCha Search Agent",
+    tools=[bocha_search_tool(api_key="your_bocha_api_key")],
+)
+task = Task(description="Search for 'latest AI agent frameworks 2025'.")
+result = agent.print_do(task)
+print(result)
+```
+
+## Parameters
+
+**Function Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| **api_key** | `str` | — | Your BoCha API key (required). |
+
+**Tool Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| **query** | `str` | — | Search keywords. |
+| **freshness** | `str` | `"noLimit"` | Time range — `"noLimit"`, `"oneDay"`, `"oneWeek"`, `"oneMonth"`, `"oneYear"`, `"YYYY-MM-DD"`, or `"YYYY-MM-DD..YYYY-MM-DD"`. |
+| **summary** | `bool` | `True` | Whether to include text summaries. |
+| **count** | `int` | `10` | Number of results to return (1–50). |
+| **include** | `str` | `None` | Domains to include, separated by `\|` or `,`. |
+| **exclude** | `str` | `None` | Domains to exclude, separated by `\|` or `,`. |
+
+## Result Format
+
+Search results are returned as a list of dictionaries:
+
+```python
+[
+    {
+        "title": "Page Title",
+        "url": "https://example.com/page",
+        "summary": "Text summary of the page content",
+        "site_name": "Example",
+        "site_icon": "https://example.com/favicon.ico",
+        "date_last_crawled": "2025-01-15T00:00:00"
+    },
+    # ... more results
+]
+```
+
+## Installation
+
+```bash
+pip install aiohttp
+```

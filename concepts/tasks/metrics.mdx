@@ -31,7 +31,8 @@ After executing a task, metrics are available directly on the `Task` instance.
 |----------|------|-------------|
 | `duration` | `float \| None` | Total wall-clock execution time (seconds) |
 | `model_execution_time` | `float \| None` | Time spent inside LLM API calls (seconds) |
-| `upsonic_execution_time` | `float \| None` | Framework overhead = `duration - model_execution_time` (seconds) |
+| `tool_execution_time` | `float \| None` | Time spent executing tools (seconds) |
+| `upsonic_execution_time` | `float \| None` | Framework overhead = `duration - model_execution_time - tool_execution_time` (seconds) |
 | `start_time` | `float \| None` | Unix timestamp when the task started |
 | `end_time` | `float \| None` | Unix timestamp when the task finished |
 
@@ -58,6 +59,7 @@ After executing a task, metrics are available directly on the `Task` instance.
 | `reasoning_tokens` | `int` | Tokens used for reasoning |
 | `duration` | `float \| None` | Total task execution time (seconds) |
 | `model_execution_time` | `float \| None` | Time in LLM API calls (seconds) |
+| `tool_execution_time` | `float \| None` | Time spent executing tools (seconds) |
 | `upsonic_execution_time` | `float \| None` | Framework overhead time (seconds) |
 | `cost` | `float \| None` | Estimated cost of this task |
 
@@ -67,7 +69,7 @@ After executing a task, metrics are available directly on the `Task` instance.
 ```python
 from upsonic import Agent, Task
 
-agent = Agent("openai/gpt-4o-mini")
+agent = Agent("anthropic/claude-sonnet-4-5")
 task = Task("Summarize the key benefits of AI agents in production systems")
 
 agent.print_do(task)
@@ -77,6 +79,7 @@ print(f"Input tokens:     {task.total_input_token}")
 print(f"Output tokens:    {task.total_output_token}")
 print(f"Duration:         {task.duration:.2f}s")
 print(f"Model time:       {task.model_execution_time:.2f}s")
+print(f"Tool time:        {(task.tool_execution_time or 0):.2f}s")
 print(f"Framework time:   {task.upsonic_execution_time:.2f}s")
 ```
 
@@ -91,8 +94,9 @@ When you use `print_do` or `print_do_async`, the **Task Metrics** panel is displ
 │  Input Tokens:          762                           │
 │  Output Tokens:         408                           │
 │  Total Estimated Cost:  $0.0004                       │
-│  Time Taken:            9.55 seconds                  │
+│  Time Taken:            10.55 seconds                  │
 │  Model Execution Time:  7.99 seconds                  │
+│  Tool Execution Time:   1.00 seconds                  │
 │  Framework Overhead:    1.56 seconds                  │
 ╰───────────────────────────────────────────────────────╯
 ```
@@ -104,7 +108,7 @@ For programmatic access to the full usage data, use `task.usage`:
 ```python
 from upsonic import Agent, Task
 
-agent = Agent("openai/gpt-4o-mini")
+agent = Agent("anthropic/claude-sonnet-4-5")
 task = Task("What is 2 + 2?")
 agent.do(task)
 
@@ -113,6 +117,7 @@ print(f"Input tokens:     {u.input_tokens}")
 print(f"Output tokens:    {u.output_tokens}")
 print(f"Duration:         {u.duration:.2f}s")
 print(f"Model time:       {u.model_execution_time:.2f}s")
+print(f"Tool time:        {u.tool_execution_time or 0:.2f}s")
 print(f"Framework time:   {u.upsonic_execution_time:.2f}s")
 ```
 
@@ -121,7 +126,7 @@ print(f"Framework time:   {u.upsonic_execution_time:.2f}s")
 ```python
 from upsonic import Agent, Task
 
-agent = Agent("openai/gpt-4o-mini")
+agent = Agent("anthropic/claude-sonnet-4-5")
 
 tasks = [
     Task("Analyze sentiment of customer feedback"),
@@ -137,6 +142,7 @@ for task in tasks:
     print(f"  Tokens:    {task.total_input_token + task.total_output_token}")
     print(f"  Duration:  {task.duration:.2f}s")
     print(f"  Model:     {task.model_execution_time:.2f}s")
+    print(f"  Tool:      {(task.tool_execution_time or 0):.2f}s")
     print(f"  Overhead:  {task.upsonic_execution_time:.2f}s\n")
 ```
 
@@ -147,7 +153,7 @@ Each task has its own independent `TaskUsage` instance. Running multiple tasks o
 ```python
 from upsonic import Agent, Task
 
-agent = Agent("openai/gpt-4o-mini")
+agent = Agent("anthropic/claude-sonnet-4-5")
 
 task_a = Task("Say hello.")
 task_b = Task("Say goodbye.")

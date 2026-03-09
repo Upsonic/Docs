@@ -1,0 +1,60 @@
+---
+title: "Deployment Overview"
+description: "Choose how to deploy your Upsonic agents — FastAPI vs Django"
+sidebarTitle: "Overview"
+---
+
+Upsonic agents can be exposed via HTTP APIs or integrated into full web applications. Two common options are **FastAPI** and **Django**. This page helps you choose the right one.
+
+## When to Use Which
+
+| Use case | Prefer |
+|----------|--------|
+| **High-throughput APIs**, async I/O, minimal boilerplate | **FastAPI** |
+| **REST/JSON APIs** only, no admin UI or DB models | **FastAPI** |
+| **DB models**, migrations, admin panel | **Django** |
+| **User management**, auth, permissions out of the box | **Django** |
+| **Server-rendered or hybrid UI** (templates, forms) | **Django** |
+
+## FastAPI — Pros & Cons
+
+**Pros**
+
+- **Async-native**: Endpoints are async; use `agent.do_async()` without blocking the event loop.
+- **Fast**: High performance for I/O-bound workloads (LLM calls, tool calls).
+- **Lightweight**: No ORM or admin by default; ideal for API-only services.
+- **OpenAPI**: Auto-generated docs and schema.
+
+**Cons**
+
+- No built-in admin, user model, or migrations — you add them yourself if needed.
+- Not ideal when you need a full app with UI and CRUD backed by a framework.
+
+**Choose FastAPI when:** You are building an **API-first** product (e.g. agent-as-a-service, webhooks, internal tools) and want **async** and **speed** without Django's full stack.
+
+## Django — Pros & Cons
+
+**Pros**
+
+- **ORM & migrations**: Define models, run migrations, manage schema.
+- **Admin**: Built-in admin for CRUD and user management.
+- **Auth**: User model, groups, permissions, session/auth out of the box.
+- **Templates & forms**: Server-rendered pages and form handling.
+
+**Cons**
+
+- Heavier than FastAPI; async support is present but Django's strength is sync request/response.
+- More setup and conventions for a "simple API only" use case.
+
+**Choose Django when:** You need **database models**, **user management**, or a **web UI** (admin or custom views) and want one framework for both app and agent endpoints.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Deploy via FastAPI" icon="bolt" href="/deployment/fastapi">
+    Async endpoints with <code>agent.do_async()</code>, Docker, and structured responses.
+  </Card>
+  <Card title="Deploy via Django" icon="server" href="/deployment/django">
+    Integrate agents into Django views with DB models and optional admin.
+  </Card>
+</CardGroup>

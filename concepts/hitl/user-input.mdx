@@ -1,0 +1,498 @@
+---
+title: User Input
+sidebarTitle: User Input
+description: Pause agents for user-provided field values, then resume with filled inputs
+---
+
+User Input allows you to mark specific tool parameters as *user-provided*. The agent fills in the rest of the arguments and invokes the tool; the run pauses so the user can supply values for the designated fields. Once the schema is filled and marked answered, resume with `continue_run_async()`. Use this for operations where the agent decides *what* to do but the user must supply *who* or *when* (e.g. email recipient, meeting date).
+
+## Quick Start
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_user_input=True, user_input_fields=["to_address"])
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email. The agent provides subject and body, the user provides the address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            field_dict["value"] = "user@example.com"
+    requirement.tool_execution.answered = True
+
+async def main():
+    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    task = Task(
+        description="Send an email with subject 'Hello' and body 'Hello, world!'.",
+        tools=[send_email]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    for requirement in output.active_requirements:
+        if requirement.needs_user_input:
+            fill_user_input(requirement)
+
+    result = await agent.continue_run_async(run_id=output.run_id, return_output=True)
+    print(result.output)
+
+asyncio.run(main())
+```
+
+## Core Concepts
+
+### Defining Tools That Require User Input
+
+Use `@tool(requires_user_input=True, user_input_fields=[...])` and list the parameter names that the user must supply:
+
+```python
+from upsonic.tools import tool
+
+@tool(requires_user_input=True, user_input_fields=["to_address"])
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """
+    Send an email. The agent provides subject and body, the user provides the address.
+
+    Args:
+        subject: Email subject
+        body: Email body content
+        to_address: Recipient email address (provided by user)
+    """
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+
+@tool(requires_user_input=True, user_input_fields=["priority", "assignee"])
+def create_ticket(title: str, description: str, priority: str, assignee: str) -> str:
+    """Create a support ticket. Agent provides title/description, user provides priority/assignee."""
+    return f"Ticket '{title}' created with priority={priority}, assignee={assignee}"
+
+
+@tool(requires_user_input=True, user_input_fields=["date", "attendees"])
+def schedule_meeting(topic: str, date: str, attendees: str) -> str:
+    """Schedule a meeting. Agent provides topic, user provides date and attendees."""
+    return f"Meeting '{topic}' scheduled for {date} with attendees: {attendees}"
+```
+
+### User Input Schema
+
+Each requirement exposes `user_input_schema`: a list of field dicts with `name`, optional `field_type`, and `value`. Set `value` for each field and then set `requirement.tool_execution.answered = True` before resuming. Example helper:
+
+```python
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            name = field_dict["name"]
+            field_dict["value"] = "user@example.com"  # or from UI/API
+    requirement.tool_execution.answered = True
+```
+
+### HITL Handler
+
+Use a unified callback to fill user input during continuation:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_user_input=True, user_input_fields=["to_address"])
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email. The agent provides subject and body, the user provides the address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            field_dict["value"] = "user@example.com"
+    requirement.tool_execution.answered = True
+
+def hitl_handler(requirement) -> None:
+    if requirement.needs_user_input:
+        fill_user_input(requirement)
+
+async def main():
+    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    task = Task(
+        description="Send an email with subject 'Hello' and body 'Hello, world!'.",
+        tools=[send_email]
+    )
+    output = await agent.do_async(task, return_output=True)
+    for requirement in output.active_requirements:
+        if requirement.needs_user_input:
+            fill_user_input(requirement)
+
+    result = await agent.continue_run_async(
+        run_id=output.run_id,
+        return_output=True,
+        hitl_handler=hitl_handler,
+    )
+    print(result.output)
+
+asyncio.run(main())
+```
+
+## Continuation Methods
+
+### Resume with `run_id` (Same Agent)
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_user_input=True, user_input_fields=["to_address"])
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email. The agent provides subject and body, the user provides the address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            field_dict["value"] = "user@example.com"
+    requirement.tool_execution.answered = True
+
+async def user_input_with_run_id_same_agent():
+    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    task = Task(
+        description="Send an email with subject 'Hello' and body 'Hello, world!'.",
+        tools=[send_email]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    for requirement in output.active_requirements:
+        if requirement.needs_user_input:
+            fill_user_input(requirement)
+
+    result = await agent.continue_run_async(run_id=output.run_id, return_output=True)
+    return result
+
+asyncio.run(user_input_with_run_id_same_agent())
+```
+
+### Resume with `task` (Same Agent)
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_user_input=True, user_input_fields=["to_address"])
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email. The agent provides subject and body, the user provides the address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            field_dict["value"] = "user@example.com"
+    requirement.tool_execution.answered = True
+
+async def user_input_with_task_same_agent():
+    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    task = Task(
+        description="Send an email with subject 'Hello' and body 'Hello, world!'.",
+        tools=[send_email]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    for requirement in output.active_requirements:
+        if requirement.needs_user_input:
+            fill_user_input(requirement)
+
+    result = await agent.continue_run_async(task=task, return_output=True)
+    return result
+
+asyncio.run(user_input_with_task_same_agent())
+```
+
+### Resume with `run_id` (New Agent - Cross-Process)
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.db.database import SqliteDatabase
+
+@tool(requires_user_input=True, user_input_fields=["to_address"])
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email. The agent provides subject and body, the user provides the address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            field_dict["value"] = "user@example.com"
+    requirement.tool_execution.answered = True
+
+async def user_input_with_run_id_new_agent():
+    db = SqliteDatabase(db_file="user_input.db", session_id="session_1", user_id="user_1")
+    agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=db)
+    task = Task(
+        description="Send an email with subject 'Hello' and body 'Hello, world!'.",
+        tools=[send_email]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+    run_id = output.run_id
+
+    for requirement in output.active_requirements:
+        if requirement.needs_user_input:
+            fill_user_input(requirement)
+
+    new_agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=db)
+    result = await new_agent.continue_run_async(
+        run_id=run_id,
+        requirements=output.requirements,
+        return_output=True
+    )
+    return result
+
+asyncio.run(user_input_with_run_id_new_agent())
+```
+
+### Resume with `task` (New Agent - Cross-Process)
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.db.database import SqliteDatabase
+
+@tool(requires_user_input=True, user_input_fields=["to_address"])
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email. The agent provides subject and body, the user provides the address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            field_dict["value"] = "user@example.com"
+    requirement.tool_execution.answered = True
+
+async def user_input_with_task_new_agent():
+    db = SqliteDatabase(db_file="user_input.db", session_id="session_1", user_id="user_1")
+    agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=db)
+    task = Task(
+        description="Send an email with subject 'Hello' and body 'Hello, world!'.",
+        tools=[send_email]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    for requirement in output.active_requirements:
+        if requirement.needs_user_input:
+            fill_user_input(requirement)
+
+    new_agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=db)
+    result = await new_agent.continue_run_async(
+        task=task,
+        requirements=output.requirements,
+        return_output=True
+    )
+    return result
+
+asyncio.run(user_input_with_task_new_agent())
+```
+
+## Multiple User Input Tools
+
+### Loop-Based Handling
+
+When the agent invokes multiple user-input tools, loop until there are no active requirements:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_user_input=True, user_input_fields=["priority", "assignee"])
+def create_ticket(title: str, description: str, priority: str, assignee: str) -> str:
+    """Create a support ticket. Agent provides title/description, user provides priority/assignee."""
+    return f"Ticket '{title}' created with priority={priority}, assignee={assignee}"
+
+@tool(requires_user_input=True, user_input_fields=["date", "attendees"])
+def schedule_meeting(topic: str, date: str, attendees: str) -> str:
+    """Schedule a meeting. Agent provides topic, user provides date and attendees."""
+    return f"Meeting '{topic}' scheduled for {date} with attendees: {attendees}"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    values = {"priority": "high", "assignee": "john.doe", "date": "2026-04-01", "attendees": "alice, bob"}
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            name = field_dict["name"]
+            field_dict["value"] = values.get(name, f"test_{name}")
+    requirement.tool_execution.answered = True
+
+async def user_input_multiple_tools_loop_run_id():
+    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    task = Task(
+        description=(
+            "First, create a support ticket titled 'Bug Report' with description 'App crashes on login'. "
+            "Then schedule a meeting about 'Bug Triage'."
+        ),
+        tools=[create_ticket, schedule_meeting]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    while output.active_requirements:
+        for requirement in output.active_requirements:
+            if requirement.needs_user_input:
+                fill_user_input(requirement)
+
+        output = await agent.continue_run_async(
+            run_id=output.run_id,
+            return_output=True
+        )
+
+    return output
+
+asyncio.run(user_input_multiple_tools_loop_run_id())
+```
+
+### Using hitl_handler for Multiple Tools
+
+Resolve the first pause, then pass `hitl_handler` so subsequent user-input pauses are filled automatically:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_user_input=True, user_input_fields=["priority", "assignee"])
+def create_ticket(title: str, description: str, priority: str, assignee: str) -> str:
+    """Create a support ticket. Agent provides title/description, user provides priority/assignee."""
+    return f"Ticket '{title}' created with priority={priority}, assignee={assignee}"
+
+@tool(requires_user_input=True, user_input_fields=["date", "attendees"])
+def schedule_meeting(topic: str, date: str, attendees: str) -> str:
+    """Schedule a meeting. Agent provides topic, user provides date and attendees."""
+    return f"Meeting '{topic}' scheduled for {date} with attendees: {attendees}"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    values = {"priority": "high", "assignee": "john.doe", "date": "2026-04-01", "attendees": "alice, bob"}
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            name = field_dict["name"]
+            field_dict["value"] = values.get(name, f"test_{name}")
+    requirement.tool_execution.answered = True
+
+def hitl_handler(requirement) -> None:
+    if requirement.needs_user_input:
+        fill_user_input(requirement)
+
+async def user_input_multiple_tools_handler_run_id():
+    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    task = Task(
+        description=(
+            "First, create a support ticket titled 'Bug Report' with description 'App crashes on login'. "
+            "Then schedule a meeting about 'Bug Triage'."
+        ),
+        tools=[create_ticket, schedule_meeting]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    for requirement in output.active_requirements:
+        if requirement.needs_user_input:
+            fill_user_input(requirement)
+
+    result = await agent.continue_run_async(
+        run_id=output.run_id,
+        return_output=True,
+        hitl_handler=hitl_handler,
+    )
+    return result
+
+asyncio.run(user_input_multiple_tools_handler_run_id())
+```
+
+## Cross-Process User Input
+
+Resume in a different process (or new agent) after the user fills fields:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.db.database import SqliteDatabase
+
+@tool(requires_user_input=True, user_input_fields=["to_address"])
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email. The agent provides subject and body, the user provides the address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            field_dict["value"] = "user@example.com"
+    requirement.tool_execution.answered = True
+
+async def user_input_cross_process_run_id():
+    db = SqliteDatabase(db_file="user_input.db", session_id="session_1", user_id="user_1")
+    agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=db)
+    task = Task(
+        description="Send an email with subject 'Report' and body 'Monthly report attached'.",
+        tools=[send_email]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+    run_id = output.run_id
+
+    if output.is_paused and output.active_requirements:
+        for req in output.active_requirements:
+            if req.tool_execution:
+                print(f"  - Tool: {req.tool_execution.tool_name}")
+            if req.user_input_schema:
+                for field_dict in req.user_input_schema:
+                    print(f"    Field: {field_dict['name']} (type={field_dict.get('field_type', 'str')})")
+
+    for req in output.active_requirements:
+        if req.needs_user_input:
+            fill_user_input(req)
+
+    new_db = SqliteDatabase(db_file="user_input.db", session_id="session_1", user_id="user_1")
+    new_agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=new_db)
+    result = await new_agent.continue_run_async(
+        run_id=run_id,
+        requirements=output.requirements,
+        return_output=True
+    )
+    return result
+
+asyncio.run(user_input_cross_process_run_id())
+```
+
+## Important Notes
+
+- **Direct Call Mode Only**: HITL continuation only supports direct call mode. Streaming is not supported for continuation.
+- **Requirements Parameter**: When resuming with a new agent, pass `requirements=output.requirements` so filled user input is applied.
+- **answered Flag**: Set `requirement.tool_execution.answered = True` after filling all fields in `user_input_schema`.
+- **pause_reason**: When paused for user input, `output.pause_reason == "user_input"` and `output.is_paused` is `True`.
+- **Persistent Storage**: For cross-process scenarios, use persistent storage (e.g. `SqliteDatabase`).

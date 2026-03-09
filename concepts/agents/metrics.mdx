@@ -40,7 +40,8 @@ On any `Agent` instance, use **`agent.usage`**. It returns an `AgentUsage` objec
 |----------|------|-------------|
 | `duration` | `float \| None` | Total execution time across all runs (seconds) |
 | `model_execution_time` | `float \| None` | Total time spent inside LLM API calls (seconds) |
-| `upsonic_execution_time` | `float \| None` | Framework overhead time = `duration - model_execution_time` (seconds) |
+| `tool_execution_time` | `float \| None` | Total time spent executing tools across all runs (seconds) |
+| `upsonic_execution_time` | `float \| None` | Framework overhead = `duration - model_execution_time - tool_execution_time` (seconds) |
 
 ### Cost Metrics
 
@@ -67,6 +68,8 @@ print(f"Tool calls:      {u.tool_calls}")
 print(f"Cost:            ${u.cost:.4f}")
 print(f"Duration:        {u.duration:.2f}s")
 print(f"Model time:      {u.model_execution_time:.2f}s")
+if u.tool_execution_time is not None:
+    print(f"Tool time:       {u.tool_execution_time:.2f}s")
 print(f"Framework time:  {u.upsonic_execution_time:.2f}s")
 ```
 
@@ -83,8 +86,9 @@ When you use `print_do` or `print_do_async`, the **Agent Metrics** panel display
 │  Total Output Tokens:    915                          │
 │  Total Tool Calls:       2                            │
 │  Total Estimated Cost:   $0.0008                      │
-│  Total Duration:         20.55 seconds                │
+│  Total Duration:         21.55 seconds                │
 │  Model Execution Time:   18.17 seconds                │
+│  Tool Execution Time:    1.00 seconds               │
 │  Framework Overhead:     2.38 seconds                 │
 ╰───────────────────────────────────────────────────────╯
 ```

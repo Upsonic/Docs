@@ -1,0 +1,409 @@
+---
+title: Dynamic User Input
+sidebarTitle: Dynamic User Input
+description: Let the agent request user-provided fields at runtime via get_user_input
+---
+
+Dynamic User Input lets the agent decide *at runtime* which fields it needs from the user by calling the `get_user_input` tool from `UserControlFlowTools`. The run pauses so the user can fill those fields; you then resume with `continue_run_async()`. Unlike static `@tool(requires_user_input=True)`, the set of fields is not fixed at tool definition time—the agent constructs the request based on context (e.g. "I need the recipient email to send this").
+
+## Quick Start
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.tools.user_input import UserControlFlowTools
+
+@tool
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email to the given address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            name = field_dict["name"]
+            field_dict["value"] = "dynamic@example.com"
+    requirement.tool_execution.answered = True
+
+async def main():
+    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent")
+    task = Task(
+        description="Send an email with the body 'What is the weather in Tokyo?'",
+        tools=[send_email, UserControlFlowTools()]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    while output.is_paused and output.active_requirements:
+        for requirement in output.active_requirements:
+            if requirement.needs_user_input:
+                fill_user_input(requirement)
+        output = await agent.continue_run_async(run_id=output.run_id, return_output=True)
+
+    print(output.output)
+
+asyncio.run(main())
+```
+
+## Core Concepts
+
+### Static vs Dynamic User Input
+
+| | Static User Input | Dynamic User Input |
+|--|-------------------|--------------------|
+| **Definition** | `@tool(requires_user_input=True, user_input_fields=[...])` | Agent calls `get_user_input` from `UserControlFlowTools` |
+| **Fields** | Fixed at tool definition | Chosen by the agent at runtime |
+| **Use case** | Known parameters (e.g. always need `to_address` for send_email) | Context-dependent (e.g. "I need recipient for this email", "I need date range for this report") |
+
+### UserControlFlowTools
+
+Register the toolkit so the agent can call `get_user_input`:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.tools.user_input import UserControlFlowTools
+
+@tool
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email to the given address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+async def main():
+    agent = Agent("openai/gpt-4o-mini")
+    task = Task(
+        description="Send an email with the body 'What is the weather in Tokyo?'",
+        tools=[send_email, UserControlFlowTools()]
+    )
+    output = await agent.do_async(task, return_output=True)
+    return output
+
+asyncio.run(main())
+```
+
+The agent will call `get_user_input` with a list of field names (and optional types/descriptions); the framework pauses and exposes `user_input_schema` on the requirement. Fill each field's `value` and set `requirement.tool_execution.answered = True`, then resume.
+
+### Filling Dynamic Fields
+
+Same pattern as static user input: iterate `requirement.user_input_schema`, set `value`, then set `answered = True`:
+
+```python
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            name = field_dict["name"]
+            field_dict["value"] = "dynamic@example.com"  # or from UI/API
+    requirement.tool_execution.answered = True
+```
+
+### Multi-Round Behavior
+
+The agent may request user input more than once in a single run (e.g. first recipient, then confirm subject). Use a **while-loop** until `output` is no longer paused or has no active requirements:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.tools.user_input import UserControlFlowTools
+
+@tool
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email to the given address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            name = field_dict["name"]
+            field_dict["value"] = "dynamic@example.com"
+    requirement.tool_execution.answered = True
+
+async def main():
+    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent")
+    task = Task(
+        description="Send an email with the body 'What is the weather in Tokyo?'",
+        tools=[send_email, UserControlFlowTools()]
+    )
+    output = await agent.do_async(task, return_output=True)
+
+    while output.is_paused and output.active_requirements:
+        for requirement in output.active_requirements:
+            if requirement.needs_user_input:
+                fill_user_input(requirement)
+        output = await agent.continue_run_async(run_id=output.run_id, return_output=True)
+
+    print(output.output)
+
+asyncio.run(main())
+```
+
+## Continuation Methods
+
+### Resume with `run_id` (Same Agent) – While-Loop
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.tools.user_input import UserControlFlowTools
+
+@tool
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email to the given address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            name = field_dict["name"]
+            field_dict["value"] = "dynamic@example.com"
+    requirement.tool_execution.answered = True
+
+async def dynamic_input_with_run_id_same_agent():
+    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent")
+    task = Task(
+        description="Send an email with the body 'What is the weather in Tokyo?'",
+        tools=[send_email, UserControlFlowTools()]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    while output.is_paused and output.active_requirements:
+        for requirement in output.active_requirements:
+            if requirement.needs_user_input:
+                fill_user_input(requirement)
+        output = await agent.continue_run_async(run_id=output.run_id, return_output=True)
+
+    return output
+
+asyncio.run(dynamic_input_with_run_id_same_agent())
+```
+
+### Resume with `task` (Same Agent) – While-Loop
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.tools.user_input import UserControlFlowTools
+
+@tool
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email to the given address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            name = field_dict["name"]
+            field_dict["value"] = "dynamic@example.com"
+    requirement.tool_execution.answered = True
+
+async def dynamic_input_with_task_same_agent():
+    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent")
+    task = Task(
+        description="Send an email with the body 'What is the weather in Tokyo?'",
+        tools=[send_email, UserControlFlowTools()]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    while output.is_paused and output.active_requirements:
+        for requirement in output.active_requirements:
+            if requirement.needs_user_input:
+                fill_user_input(requirement)
+        output = await agent.continue_run_async(task=task, return_output=True)
+
+    return output
+
+asyncio.run(dynamic_input_with_task_same_agent())
+```
+
+### Resume with `run_id` (New Agent - Cross-Process)
+
+Use a while-loop when resuming with a new agent; the agent may trigger multiple user-input pauses:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.tools.user_input import UserControlFlowTools
+from upsonic.db.database import SqliteDatabase
+
+@tool
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email to the given address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            name = field_dict["name"]
+            field_dict["value"] = "dynamic@example.com"
+    requirement.tool_execution.answered = True
+
+async def dynamic_input_with_run_id_new_agent():
+    db = SqliteDatabase(db_file="dynamic_input.db", session_id="session_1", user_id="user_1")
+    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent", db=db)
+    task = Task(
+        description="Send an email with the body 'What is the weather in Tokyo?'",
+        tools=[send_email, UserControlFlowTools()]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+    run_id = output.run_id
+
+    while output.is_paused and output.active_requirements:
+        for requirement in output.active_requirements:
+            if requirement.needs_user_input:
+                fill_user_input(requirement)
+        new_agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent", db=db)
+        output = await new_agent.continue_run_async(
+            run_id=run_id,
+            requirements=output.requirements,
+            return_output=True
+        )
+
+    return output
+
+asyncio.run(dynamic_input_with_run_id_new_agent())
+```
+
+### Using hitl_handler
+
+Resolve the first pause manually, then pass `hitl_handler` so subsequent dynamic user-input pauses are filled automatically. If the agent only requests input once, a single continuation may be enough; for multi-round flows, you may still need a loop or multiple continuations with the handler:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.tools.user_input import UserControlFlowTools
+
+@tool
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email to the given address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            name = field_dict["name"]
+            field_dict["value"] = "dynamic@example.com"
+    requirement.tool_execution.answered = True
+
+def hitl_handler(requirement) -> None:
+    if requirement.needs_user_input:
+        fill_user_input(requirement)
+
+async def dynamic_input_with_hitl_handler_run_id():
+    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent")
+    task = Task(
+        description="Send an email with the body 'What is the weather in Tokyo?'",
+        tools=[send_email, UserControlFlowTools()]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    if output.is_paused:
+        for requirement in output.active_requirements:
+            if requirement.needs_user_input:
+                fill_user_input(requirement)
+
+        result = await agent.continue_run_async(
+            run_id=output.run_id,
+            return_output=True,
+            hitl_handler=hitl_handler,
+        )
+    else:
+        result = output
+
+    return result
+
+asyncio.run(dynamic_input_with_hitl_handler_run_id())
+```
+
+## Cross-Process Dynamic User Input
+
+One process runs the agent and pauses; another (or same) fills the dynamically requested fields and resumes with a new agent:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.tools.user_input import UserControlFlowTools
+from upsonic.db.database import SqliteDatabase
+
+@tool
+def send_email(subject: str, body: str, to_address: str) -> str:
+    """Send an email to the given address."""
+    return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
+
+def fill_user_input(requirement) -> None:
+    if not requirement.user_input_schema:
+        return
+    for field_dict in requirement.user_input_schema:
+        if isinstance(field_dict, dict) and field_dict.get("value") is None:
+            name = field_dict["name"]
+            field_dict["value"] = "dynamic@example.com"
+    requirement.tool_execution.answered = True
+
+async def dynamic_input_cross_process_run_id():
+    db = SqliteDatabase(db_file="dynamic_input.db", session_id="session_1", user_id="user_1")
+    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent", db=db)
+    task = Task(
+        description="Send an email with the body 'What is the weather in Tokyo?'",
+        tools=[send_email, UserControlFlowTools()]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+    run_id = output.run_id
+
+    if output.is_paused and output.active_requirements:
+        for req in output.active_requirements:
+            if req.user_input_schema:
+                for field_dict in req.user_input_schema:
+                    print(f"  Field: {field_dict.get('name')} (type={field_dict.get('field_type', 'str')})")
+
+        for req in output.active_requirements:
+            if req.needs_user_input:
+                fill_user_input(req)
+
+        new_db = SqliteDatabase(db_file="dynamic_input.db", session_id="session_1", user_id="user_1")
+        new_agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent", db=new_db)
+        result = await new_agent.continue_run_async(
+            run_id=run_id,
+            requirements=output.requirements,
+            return_output=True
+        )
+    else:
+        result = output
+
+    return result
+
+asyncio.run(dynamic_input_cross_process_run_id())
+```
+
+## Important Notes
+
+- **Direct Call Mode Only**: HITL continuation only supports direct call mode. Streaming is not supported for continuation.
+- **Multi-Round**: Prefer a while-loop (`while output.is_paused and output.active_requirements`) because the agent may call `get_user_input` multiple times in one run.
+- **Requirements Parameter**: When resuming with a new agent, always pass `requirements=output.requirements` so the filled schema is applied.
+- **answered Flag**: Set `requirement.tool_execution.answered = True` after filling all fields in `user_input_schema`.
+- **Persistent Storage**: For cross-process scenarios, use persistent storage (e.g. `SqliteDatabase`).
+- **UserControlFlowTools**: Must be included in the task's `tools` list for the agent to have access to `get_user_input`.
