@@ -1,276 +1,182 @@
 ---
-title: Task Metrics & Cost Tracking
-sidebarTitle: Task Metrics & Cost Tracking
-description: Track token usage and costs for your AI agent operations
+title: Task Metrics
+sidebarTitle: Task Metrics
+description: Track token usage, timing, and costs for individual task executions
 ---
+
+# Task Metrics
 
 ## Overview
 
-Task metrics provide detailed insights into the cost and token usage of your AI operations. Every task execution tracks input/output tokens, calculates costs based on the model used, and provides a unique identifier for tracking purposes.
+Every task execution tracks detailed metrics including token counts, timing breakdowns, estimated cost, and tool calls. All timing and token data lives in `task.usage` (`TaskUsage`) — the single source of truth for task-level metrics.
 
-## Available Metrics
+When printing is enabled (`print_do` / `print_do_async`), a **Task Metrics** panel is displayed after each task execution.
 
-After executing a task, you can access the following metrics:
+## Accessing Task Metrics
 
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `total_cost` | float | Total cost in USD for the task execution |
-| `total_input_token` | int | Number of input tokens processed |
-| `total_output_token` | int | Number of output tokens generated |
-| `price_id` | str | Unique identifier for the pricing model used |
-| `get_total_cost()` | method | Method to retrieve the total cost |
+After executing a task, metrics are available directly on the `Task` instance.
+
+### Token & Cost Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `total_input_token` | `int \| None` | Number of input/prompt tokens used |
+| `total_output_token` | `int \| None` | Number of output/completion tokens generated |
+| `total_cost` | `float \| None` | Estimated cost in USD |
+| `price_id` | `str` | Unique identifier for tracking this task's pricing |
+
+### Timing Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `duration` | `float \| None` | Total wall-clock execution time (seconds) |
+| `model_execution_time` | `float \| None` | Time spent inside LLM API calls (seconds) |
+| `tool_execution_time` | `float \| None` | Time spent executing tools (seconds) |
+| `upsonic_execution_time` | `float \| None` | Framework overhead = `duration - model_execution_time - tool_execution_time` (seconds) |
+| `start_time` | `float \| None` | Unix timestamp when the task started |
+| `end_time` | `float \| None` | Unix timestamp when the task finished |
+
+### Response & Tool Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `response` | `str \| BaseModel \| None` | The task's output after execution |
+| `tool_calls` | `list[dict]` | List of tool calls made during execution |
+
+### The `usage` Property (TaskUsage)
+
+`task.usage` returns the underlying `TaskUsage` object — the single source of truth for all task-level metrics. The timing properties above (`duration`, `model_execution_time`, `upsonic_execution_time`) delegate directly to this object.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `requests` | `int` | Number of LLM API requests made for this task |
+| `tool_calls` | `int` | Number of tool calls executed during this task |
+| `input_tokens` | `int` | Input tokens (accumulated from model responses) |
+| `output_tokens` | `int` | Output tokens (accumulated from model responses) |
+| `total_tokens` | `int` | Sum of `input_tokens + output_tokens` |
+| `cache_write_tokens` | `int` | Tokens written to cache |
+| `cache_read_tokens` | `int` | Tokens read from cache |
+| `reasoning_tokens` | `int` | Tokens used for reasoning |
+| `duration` | `float \| None` | Total task execution time (seconds) |
+| `model_execution_time` | `float \| None` | Time in LLM API calls (seconds) |
+| `tool_execution_time` | `float \| None` | Time spent executing tools (seconds) |
+| `upsonic_execution_time` | `float \| None` | Framework overhead time (seconds) |
+| `cost` | `float \| None` | Estimated cost of this task |
+
 
 ## Basic Usage
 
-### Tracking Agent Costs
-
 ```python
 from upsonic import Agent, Task
 
-# Create agent and task
-agent = Agent(model="anthropic/claude-sonnet-4-5")
+agent = Agent("anthropic/claude-sonnet-4-5")
 task = Task("Summarize the key benefits of AI agents in production systems")
 
-# Execute task
-result = agent.print_do(task)
+agent.print_do(task)
 
-# Access metrics
-print(f"Cost: ${task.total_cost:.6f}")
-print(f"Input tokens: {task.total_input_token}")
-print(f"Output tokens: {task.total_output_token}")
-print(f"Price ID: {task.price_id}")
+print(f"Cost:             ${task.total_cost:.6f}")
+print(f"Input tokens:     {task.total_input_token}")
+print(f"Output tokens:    {task.total_output_token}")
+print(f"Duration:         {task.duration:.2f}s")
+print(f"Model time:       {task.model_execution_time:.2f}s")
+print(f"Tool time:        {(task.tool_execution_time or 0):.2f}s")
+print(f"Framework time:   {task.upsonic_execution_time:.2f}s")
 ```
 
-**Output:**
+## Printed Panel
+
+When you use `print_do` or `print_do_async`, the **Task Metrics** panel is displayed:
+
 ```
-Cost: $0.000011
-Input tokens: 68
-Output tokens: 45
-Price ID: 939ab57e-6a77-45e2-b593-f65212056bcd
-```
-
-### Tracking Direct LLM Call Costs
-
-```python
-from upsonic import Task
-from upsonic.client import LLMClient
-
-# Create LLM client
-client = LLMClient(model="anthropic/claude-sonnet-4-5")
-
-# Create task
-task = Task("What are the benefits of RAG systems?")
-
-# Execute with client
-response = client.chat([{"role": "user", "content": task.description}])
-
-# Metrics are automatically tracked
-print(f"Total cost: ${task.get_total_cost():.6f}")
-print(f"Tokens used: {task.total_input_token + task.total_output_token}")
+╭──────────────────── Task Metrics ─────────────────────╮
+│  Price ID:              a1b2c3d4-e5f6-...             │
+│                                                       │
+│  Input Tokens:          762                           │
+│  Output Tokens:         408                           │
+│  Total Estimated Cost:  $0.0004                       │
+│  Time Taken:            10.55 seconds                  │
+│  Model Execution Time:  7.99 seconds                  │
+│  Tool Execution Time:   1.00 seconds                  │
+│  Framework Overhead:    1.56 seconds                  │
+╰───────────────────────────────────────────────────────╯
 ```
 
-## Cost Monitoring
+## Accessing Usage Directly
 
-### Monitoring Multiple Tasks
+For programmatic access to the full usage data, use `task.usage`:
 
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="anthropic/claude-sonnet-4-5")
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task("What is 2 + 2?")
+agent.do(task)
+
+u = task.usage
+print(f"Input tokens:     {u.input_tokens}")
+print(f"Output tokens:    {u.output_tokens}")
+print(f"Duration:         {u.duration:.2f}s")
+print(f"Model time:       {u.model_execution_time:.2f}s")
+print(f"Tool time:        {u.tool_execution_time or 0:.2f}s")
+print(f"Framework time:   {u.upsonic_execution_time:.2f}s")
+```
+
+## Monitoring Multiple Tasks
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("anthropic/claude-sonnet-4-5")
 
 tasks = [
     Task("Analyze sentiment of customer feedback"),
     Task("Extract key entities from the document"),
-    Task("Generate a summary report")
+    Task("Generate a summary report"),
 ]
-
-total_cost = 0
-total_tokens = 0
 
 for task in tasks:
-    result = agent.print_do(task)
-    
-    cost = task.total_cost
-    tokens = task.total_input_token + task.total_output_token
-    
-    total_cost += cost
-    total_tokens += tokens
-    
-    print(f"Task: {task.description[:40]}...")
-    print(f"  Cost: ${cost:.6f}")
-    print(f"  Tokens: {tokens}\n")
-
-print(f"Total cost: ${total_cost:.6f}")
-print(f"Total tokens: {total_tokens}")
-```
-
-### Budget Alerting
-
-```python
-from upsonic import Agent, Task
-
-def execute_with_budget(agent, task, max_cost=0.01):
-    """Execute task with cost limit"""
-    result = agent.print_do(task)
-    
-    if task.total_cost > max_cost:
-        print(f"⚠️  Warning: Task exceeded budget!")
-        print(f"   Expected: ${max_cost}")
-        print(f"   Actual: ${task.total_cost:.6f}")
-    
-    return result
-
-agent = Agent(model="anthropic/claude-sonnet-4-5")
-task = Task("Generate a detailed analysis report")
-
-result = execute_with_budget(agent, task, max_cost=0.001)
-```
-
-## Cost Comparison Across Models
-
-```python
-from upsonic import Agent, Task
-
-models = [
-    "openai/gpt-4o",
-    "openai/gpt-4o-mini",
-    "anthropic/claude-sonnet-4-5"
-]
-
-task_description = "Explain quantum computing in simple terms"
-
-print("Cost Comparison:\n")
-
-for model in models:
-    agent = Agent(model=model)
-    task = Task(task_description)
-    
-    result = agent.print_do(task)
-    
-    print(f"{model}")
-    print(f"  Cost: ${task.total_cost:.6f}")
-    print(f"  Tokens: {task.total_input_token + task.total_output_token}\n")
-```
-
-## Best Practices
-
-### 1. Cost Tracking Context Manager
-
-```python
-class CostTracker:
-    def __init__(self):
-        self.total_cost = 0
-        self.task_count = 0
-    
-    def track(self, task):
-        self.total_cost += task.total_cost
-        self.task_count += 1
-    
-    def summary(self):
-        avg_cost = self.total_cost / self.task_count if self.task_count > 0 else 0
-        return {
-            "total_cost": self.total_cost,
-            "task_count": self.task_count,
-            "average_cost": avg_cost
-        }
-
-# Usage
-tracker = CostTracker()
-agent = Agent(model="anthropic/claude-sonnet-4-5")
-
-for i in range(10):
-    task = Task(f"Process item {i}")
     agent.print_do(task)
-    tracker.track(task)
 
-stats = tracker.summary()
-print(f"Processed {stats['task_count']} tasks")
-print(f"Total cost: ${stats['total_cost']:.6f}")
-print(f"Average: ${stats['average_cost']:.6f}")
+    print(f"Task: {task.description[:40]}...")
+    print(f"  Cost:      ${task.total_cost:.6f}")
+    print(f"  Tokens:    {task.total_input_token + task.total_output_token}")
+    print(f"  Duration:  {task.duration:.2f}s")
+    print(f"  Model:     {task.model_execution_time:.2f}s")
+    print(f"  Tool:      {(task.tool_execution_time or 0):.2f}s")
+    print(f"  Overhead:  {task.upsonic_execution_time:.2f}s\n")
 ```
 
-### 2. Logging for Analysis
+## Independence Across Tasks
 
-```python
-import json
-from datetime import datetime
-
-def log_task_metrics(task, filename="task_metrics.jsonl"):
-    """Log task metrics for later analysis"""
-    metrics = {
-        "timestamp": datetime.now().isoformat(),
-        "description": task.description[:100],
-        "cost": task.total_cost,
-        "input_tokens": task.total_input_token,
-        "output_tokens": task.total_output_token,
-        "price_id": task.price_id
-    }
-    
-    with open(filename, "a") as f:
-        f.write(json.dumps(metrics) + "\n")
-
-# Usage
-agent = Agent(model="anthropic/claude-sonnet-4-5")
-task = Task("Analyze customer sentiment")
-agent.print_do(task)
-log_task_metrics(task)
-```
-
-## Understanding Price IDs
-
-Each model and pricing tier has a unique `price_id`. This identifier:
-
-- Links to the specific pricing model used
-- Remains consistent for the same model/tier combination
-- Helps track pricing changes over time
-- Can be used for detailed billing breakdowns
+Each task has its own independent `TaskUsage` instance. Running multiple tasks on the same agent does not mix their metrics:
 
 ```python
 from upsonic import Agent, Task
 
-agent = Agent(model="anthropic/claude-sonnet-4-5")
-task = Task("Sample query")
-agent.print_do(task)
+agent = Agent("anthropic/claude-sonnet-4-5")
 
-print(f"Model: {agent.model}")
-print(f"Price ID: {task.price_id}")
+task_a = Task("Say hello.")
+task_b = Task("Say goodbye.")
+
+agent.do(task_a)
+agent.do(task_b)
+
+# Each task has its own usage
+assert task_a.usage is not task_b.usage
+print(f"Task A duration: {task_a.duration:.2f}s")
+print(f"Task B duration: {task_b.duration:.2f}s")
 ```
 
 ## Cost Optimization Tips
 
-1. **Choose the right model**: Use smaller models (gpt-4o-mini) for simpler tasks
-2. **Optimize prompts**: Shorter, clearer prompts use fewer input tokens
-3. **Cache results**: Use [task caching](/concepts/tasks/task-caching) for repeated queries
-4. **Batch operations**: Process multiple items in a single task when possible
-5. **Monitor trends**: Track metrics over time to identify optimization opportunities
-
-## Troubleshooting
-
-### Metrics Not Available
-
-If metrics are not populated, ensure:
-- The task has been executed
-- The model provider supports token counting
-- The task completed successfully
-
-```python
-task = Task("Test query")
-result = agent.print_do(task)
-
-if task.total_cost is None:
-    print("Metrics not available - check task execution")
-else:
-    print(f"Metrics available: ${task.total_cost:.6f}")
-```
-
-<Note>
-  **Cost Tracking Accuracy**
-  
-  Costs are calculated based on the model provider's pricing at execution time. Token counts are precise, and costs are calculated using the latest pricing information from each provider.
-</Note>
+1. **Choose the right model** — Use smaller models (`gpt-4o-mini`) for simple tasks
+2. **Optimize prompts** — Shorter, clearer prompts reduce input tokens
+3. **Use caching** — Enable [task caching](/concepts/tasks/task-caching) for repeated queries
+4. **Monitor timing** — Use `model_execution_time` vs `upsonic_execution_time` to identify bottlenecks
 
 ## Related Documentation
 
-- [Task Caching](/concepts/tasks/task-caching) - Reduce costs with caching
-- [Task Attributes](/concepts/tasks/attributes) - All available task attributes
-- [Task Results](/concepts/tasks/results) - Accessing task execution results
+- [Agent Metrics](/metrics) — Accumulated agent-level usage across all runs
+- [Task Caching](/concepts/tasks/task-caching) — Reduce costs with caching
+- [Task Attributes](/concepts/tasks/attributes) — All available task attributes
+- [Task Results](/concepts/tasks/results) — Accessing task execution results

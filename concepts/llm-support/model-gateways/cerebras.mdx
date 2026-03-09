@@ -1,0 +1,72 @@
+---
+title: "Cerebras"
+description: "Using Cerebras API for fast inference with Upsonic"
+---
+
+## Overview
+
+Cerebras provides an OpenAI-compatible API at `https://api.cerebras.ai/v1` for fast inference. Some OpenAI parameters are not supported: `frequency_penalty`, `logit_bias`, `presence_penalty`, `parallel_tool_calls`, and `service_tier`.
+
+**Model Class:** `CerebrasModel`
+
+## Authentication
+
+```bash
+export CEREBRAS_API_KEY="..."
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.cerebras import CerebrasModel
+
+model = CerebrasModel(model_name="gpt-oss-120b")
+agent = Agent(model=model)
+
+task = Task("Hello, how are you?")
+result = agent.do(task)
+print(result)
+```
+
+## Model Settings
+
+You can set model parameters in two ways: on the model or on the Agent.
+
+**On the model:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.cerebras import CerebrasModel, CerebrasModelSettings
+
+model = CerebrasModel(
+    model_name="gpt-oss-120b",
+    settings=CerebrasModelSettings(max_tokens=1024, temperature=0.7)
+)
+agent = Agent(model=model)
+```
+
+**On the Agent:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.cerebras import CerebrasModelSettings
+
+agent = Agent(
+    model="cerebras/gpt-oss-120b",
+    settings=CerebrasModelSettings(max_tokens=1024, temperature=0.7)
+)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model default | Base |
+| `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 | Base |
+| `top_p` | `float` | Nucleus sampling | 1.0 | Base |
+| `seed` | `int` | Random seed | None | Base |
+| `stop_sequences` | `list[str]` | Stop sequences | None | Base |
+| `timeout` | `float` | Request timeout (seconds) | 600 | Base |
+
+**Not supported by Cerebras:** `presence_penalty`, `frequency_penalty`, `logit_bias`, `parallel_tool_calls`, `service_tier`. Omit these in settings when using the Cerebras provider.

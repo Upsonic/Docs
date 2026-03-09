@@ -1,0 +1,218 @@
+---
+title: "Deploy via Django"
+description: "Integrate Upsonic agents into Django with views, optional DB models and admin"
+sidebarTitle: "Django"
+---
+
+This guide shows how to run a Upsonic agent inside a Django project. Choose Django when you need **database models**, **user management**, or **admin UI** alongside your agent API.
+
+## Prerequisites
+
+- Django 4.1+ (for async view support if you use `agent.do_async()`)
+- A Django project already created, or follow the steps below to create one
+
+## Setup
+
+<Steps>
+  <Step title="Initialize the project with uv">
+    ```bash
+    mkdir my-django-agent && cd my-django-agent
+    uv init
+    uv add django upsonic anthropic
+    ```
+  </Step>
+  <Step title="Create a Django project and app">
+    ```bash
+    uv run django-admin startproject myproject .
+    uv run python manage.py startapp agent_api
+    ```
+  </Step>
+  <Step title="Register the app">
+    Add `"agent_api"` to `INSTALLED_APPS` in `myproject/settings.py`.
+  </Step>
+  <Step title="Configure URLs">
+    In `myproject/urls.py`, include the app URLs:
+
+    ```python myproject/urls.py
+    from django.urls import path, include
+
+    urlpatterns = [
+        path("api/", include("agent_api.urls")),
+    ]
+    ```
+  </Step>
+  <Step title="Create the agent view and URL">
+    In `agent_api/views.py`:
+
+    ```python agent_api/views.py
+    from django.http import JsonResponse, HttpRequest
+    from django.views.decorators.http import require_GET
+    from upsonic import Agent, Task
+    from upsonic.tools import WebSearch
+
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        name="Support Agent",
+        company_url="https://your-company.com",
+        company_objective="To assist users with their questions",
+    )
+
+    @require_GET
+    def ask(request: HttpRequest) -> JsonResponse:
+        query: str = request.GET.get("query", "")
+        if not query:
+            return JsonResponse({"error": "Missing query"}, status=400)
+        task = Task(query, tools=[WebSearch])
+        response = agent.do(task)
+        return JsonResponse({"response": response})
+    ```
+
+    In `agent_api/urls.py` (create the file):
+
+    ```python agent_api/urls.py
+    from django.urls import path
+    from . import views
+
+    urlpatterns = [
+        path("ask/", views.ask),
+    ]
+    ```
+  </Step>
+  <Step title="Run the server">
+    ```bash
+    export ANTHROPIC_API_KEY=your_api_key
+    uv run python manage.py runserver
+    ```
+    Call the agent: `http://localhost:8000/api/ask/?query=Hello`
+  </Step>
+</Steps>
+
+## Step 2: Docker
+
+<Steps>
+  <Step title="Create a `.dockerignore` file">
+    ```txt .dockerignore
+    .venv
+    __pycache__
+    db.sqlite3
+    ```
+  </Step>
+  <Step title="Create a `Dockerfile`">
+    ```dockerfile Dockerfile
+    FROM python:3.12-slim
+
+    WORKDIR /app
+
+    COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+    COPY pyproject.toml uv.lock ./
+    RUN uv sync --frozen --no-dev
+
+    COPY . .
+
+    CMD ["uv", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+    ```
+  </Step>
+  <Step title="Build and run the image">
+    ```bash
+    docker build -t my-django-agent .
+    docker run -p 8000:8000 -e ANTHROPIC_API_KEY=your_api_key my-django-agent
+    ```
+  </Step>
+  <Step title="Access the app">
+    Call the agent: `http://localhost:8000/api/ask/?query=Hello`
+  </Step>
+</Steps>
+
+<Info>
+For production, replace `manage.py runserver` with Gunicorn:
+
+```dockerfile
+CMD ["uv", "run", "gunicorn", "myproject.wsgi:application", "--bind", "0.0.0.0:8000"]
+```
+
+Add Gunicorn as a dependency: `uv add gunicorn`.
+</Info>
+
+## Async view with `agent.do_async()`
+
+Django 4.1+ supports async views. Use `agent.do_async()` so the worker is not blocked during LLM calls.
+
+```python agent_api/views.py
+from django.http import JsonResponse, HttpRequest
+from django.views.decorators.http import require_GET
+from upsonic import Agent, Task
+from upsonic.tools import WebSearch
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    name="Support Agent",
+    company_url="https://your-company.com",
+    company_objective="To assist users with their questions",
+)
+
+@require_GET
+async def ask_async(request: HttpRequest) -> JsonResponse:
+    query: str = request.GET.get("query", "")
+    if not query:
+        return JsonResponse({"error": "Missing query"}, status=400)
+    task = Task(query, tools=[WebSearch])
+    response = await agent.do_async(task)
+    return JsonResponse({"response": response})
+```
+
+Register the async route in `agent_api/urls.py`:
+
+```python
+urlpatterns = [
+    path("ask/", views.ask),
+    path("ask-async/", views.ask_async),
+]
+```
+
+<Warning>
+When using async views, run Django with an ASGI server (e.g. `uvicorn` or `daphne`). With `runserver`, Django runs in a single thread and async may not scale. For production use:
+
+```bash
+uv add uvicorn
+uv run uvicorn myproject.asgi:application --host 0.0.0.0 --port 8000
+```
+</Warning>
+
+## Using with Django auth and DB
+
+You can use the request user and DB in the same view before or after calling the agent.
+
+```python agent_api/views.py
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, HttpRequest
+from django.views.decorators.http import require_GET
+from upsonic import Agent, Task
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    name="Support Agent",
+    company_url="https://your-company.com",
+    company_objective="To assist users with their questions",
+)
+
+@require_GET
+@login_required
+def ask(request: HttpRequest) -> JsonResponse:
+    query: str = request.GET.get("query", "")
+    if not query:
+        return JsonResponse({"error": "Missing query"}, status=400)
+    task = Task(query)
+    response = agent.do(task)
+    return JsonResponse({"response": response, "user_id": request.user.id})
+```
+
+Store agent runs in the DB by defining a model (e.g. in `agent_api/models.py`), running migrations, and saving after `agent.do()` or `agent.do_async()`.
+
+## Key takeaways
+
+- Use **sync** views with `agent.do(task)` when you rely on `runserver` or a WSGI server.
+- Use **async** views with `await agent.do_async(task)` and an ASGI server for better concurrency.
+- Combine with Django auth, ORM, and admin when you need user management and persistence.
+
+For a minimal API-only deployment with maximum async performance, see [Deploy via FastAPI](/deployment/fastapi).

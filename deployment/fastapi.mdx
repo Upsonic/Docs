@@ -1,0 +1,177 @@
+---
+title: "Deploy via FastAPI"
+description: "Run Upsonic agents with FastAPI using async agent.do_async() and Docker"
+sidebarTitle: "FastAPI"
+---
+
+This guide walks you through:
+
+- Building a minimal FastAPI app with a Upsonic agent using **async** endpoints and `agent.do_async()`
+- Containerizing with Docker
+- Running locally
+
+## Why async with FastAPI
+
+FastAPI is async-native. Use `agent.do_async()` in your route handlers so the event loop is not blocked during LLM and tool calls. That keeps the server responsive under concurrent requests.
+
+## Setup
+
+<Steps>
+  <Step title="Create a new directory for your project">
+    Create a new directory and navigate into it:
+
+    ```shell
+    mkdir my-upsonic-project
+    cd my-upsonic-project
+    ```
+
+    Resulting structure:
+
+    ```shell
+    my-upsonic-project/
+    ├── main.py
+    ├── Dockerfile
+    ├── .dockerignore
+    ├── pyproject.toml
+    ```
+  </Step>
+  <Step title="Initialize the project with uv">
+    ```bash
+    uv init
+    uv add fastapi upsonic uvicorn anthropic
+    ```
+  </Step>
+</Steps>
+
+## Step 1: Create the FastAPI app
+
+<Steps>
+  <Step title="Create `main.py` with async endpoints and `agent.do_async()`">
+    ```python main.py
+    from fastapi import FastAPI
+    from upsonic import Agent, Task
+    from upsonic.tools import WebSearch
+
+    app = FastAPI()
+
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        name="Customer Support",
+        company_url="https://your-company.com",
+        company_objective="To provide excellent customer service and support",
+    )
+
+    @app.get("/ask")
+    async def ask(query: str) -> dict[str, str]:
+        task = Task(query, tools=[WebSearch])
+        response = await agent.do_async(task)
+        return {"response": response}
+    ```
+  </Step>
+  <Step title="Set ANTHROPIC_API_KEY">
+    ```bash
+    export ANTHROPIC_API_KEY=your_api_key  # On Windows: set ANTHROPIC_API_KEY=your_api_key
+    ```
+  </Step>
+  <Step title="Run the app">
+    ```bash
+    uv run uvicorn main:app --reload
+    ```
+  </Step>
+</Steps>
+
+## Step 2: Docker
+
+<Steps>
+  <Step title="Create a `.dockerignore` file">
+    ```txt .dockerignore
+    .venv
+    __pycache__
+    ```
+  </Step>
+  <Step title="Create a `Dockerfile`">
+    ```dockerfile Dockerfile
+    FROM python:3.12-slim
+
+    WORKDIR /app
+
+    COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+    COPY pyproject.toml uv.lock ./
+    RUN uv sync --frozen --no-dev
+
+    COPY . .
+
+    CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ```
+  </Step>
+  <Step title="Build and run the image">
+    ```bash
+    docker build -t my-upsonic-app .
+    docker run -p 8000:8000 -e ANTHROPIC_API_KEY=your_api_key my-upsonic-app
+    ```
+  </Step>
+  <Step title="Access the app">
+    Open `http://localhost:8000`. Interactive API docs: `http://localhost:8000/docs`.
+  </Step>
+</Steps>
+
+## Step 3: Structured responses (async)
+
+Use Pydantic models and `agent.do_async()` with `response_format` for typed JSON responses.
+
+<Steps>
+  <Step title="Add structured response in `main.py`">
+    ```python main.py
+    from fastapi import FastAPI
+    from upsonic import Agent, Task
+    from upsonic.tools import WebSearch
+    from pydantic import BaseModel
+    from typing import List
+
+    app = FastAPI()
+
+    class TravelRecommendation(BaseModel):
+        destination: str
+        attractions: List[str]
+        best_time_to_visit: str
+        estimated_budget: str
+
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        name="Travel Advisor",
+        company_url="https://your-travel-company.com",
+        company_objective="To provide personalized travel recommendations and advice",
+    )
+
+    @app.get("/travel-recommendation")
+    async def get_travel_recommendation(
+        destination_type: str, budget: str, duration: str
+    ) -> TravelRecommendation:
+        task = Task(
+            f"Recommend a travel destination for a {duration} trip with {destination_type} experience and {budget} budget",
+            tools=[WebSearch],
+            response_format=TravelRecommendation,
+        )
+        response = await agent.do_async(task)
+        return response
+
+    @app.get("/ask")
+    async def ask(query: str) -> dict[str, str]:
+        task = Task(query, tools=[WebSearch])
+        response = await agent.do_async(task)
+        return {"response": response}
+    ```
+  </Step>
+  <Step title="Test the structured endpoint">
+    ```bash
+    curl "http://localhost:8000/travel-recommendation?destination_type=beach&budget=medium&duration=7%20days"
+    ```
+  </Step>
+</Steps>
+
+## Key takeaways
+
+- Use **async** route handlers and **`await agent.do_async(task)`** so FastAPI's event loop stays non-blocking.
+- Use `response_format=YourPydanticModel` when you need structured JSON.
+- Run in production with `uv run uvicorn main:app --host 0.0.0.0 --port 8000` or via Docker as above.

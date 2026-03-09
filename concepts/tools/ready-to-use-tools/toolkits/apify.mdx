@@ -1,0 +1,97 @@
+---
+title: "ApifyTools"
+description: "Web scraping, data extraction, and web automation toolkit powered by Apify Actors"
+---
+
+## Overview
+
+ApifyTools integrates [Apify](https://apify.com/) Actors into your agents as callable tools. Apify is a platform with a marketplace of ready-to-use Actors for web scraping, data extraction, search engine scraping, social media scraping, and more. Each Actor you register becomes an individual tool that the model can call with the Actor's input parameters.
+
+<Info>
+**Requires an API key.** Sign up at [Apify Console](https://console.apify.com/sign-up) and get your token from the [Integrations page](https://docs.apify.com/platform/integrations/api).
+
+```bash
+# Install the required package
+uv sync --extra custom-tools
+# or
+pip install apify-client
+```
+</Info>
+
+## Basic Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.apify import ApifyTools
+
+agent = Agent(
+    "openai/gpt-4o",
+    tools=[
+        ApifyTools(
+            actors=["apify/rag-web-browser"],
+            apify_api_token="your_apify_api_token",  # Or set the APIFY_API_TOKEN environment variable
+        )
+    ],
+)
+task = Task(
+    "What information can you find on https://docs.upsonic.ai/get-started/introduction ?")
+agent.print_do(task)
+```
+
+## Multi-Actor Configuration
+
+Register multiple Actors at once so the model can pick the best tool for the job:
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.apify import ApifyTools
+
+apify_tools = ApifyTools(
+    actors=[
+        "apify/rag-web-browser",
+        "apify/google-search-scraper",
+        "apify/website-content-crawler",
+    ],
+    apify_api_token="your_apify_api_token",
+)
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-5",
+    tools=[apify_tools],
+)
+task = Task(
+    "Search for 'Upsonic AI agent framework' using Google search, then visit the official website "
+    "and give me a one-paragraph summary of what Upsonic is."
+)
+agent.print_do(task)
+```
+
+## Popular Actors
+
+You can register any Actor from the [Apify Store](https://apify.com/store). Here are some popular ones:
+
+| Actor ID | Description |
+|----------|-------------|
+| `apify/rag-web-browser` | Searches the web or fetches a URL, cleans and formats content for LLM/RAG use. |
+| `apify/google-search-scraper` | Scrapes Google Search results for a query, returning titles, URLs, and snippets. |
+| `apify/website-content-crawler` | Crawls an entire website and extracts clean text content from every page. |
+| `apify/web-scraper` | General-purpose web scraper with configurable page functions. |
+| `compass/crawler-google-places` | Extracts business data from Google Maps and Google Places. |
+| `apify/instagram-scraper` | Scrapes Instagram profiles, posts, hashtags, and locations. |
+
+<Tip>
+Each registered Actor becomes a tool named `apify_actor_<actor_id>` (with `/` and `-` replaced by `_`). For example, `apify/rag-web-browser` becomes `apify_actor_apify_rag_web_browser`. The model receives the Actor's full input schema as the tool's docstring, so it knows which parameters to pass.
+</Tip>
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| **actors** | `str` or `List[str]` | `None` | Single Actor ID or list of Actor IDs to register as tools. |
+| **apify_api_token** | `str` | `None` | Apify API token. Falls back to `APIFY_API_TOKEN` environment variable. |
+
+## Resources
+
+- [Apify Store — Browse available Actors](https://apify.com/store)
+- [Apify Actor Documentation](https://docs.apify.com/actors)
+- [Apify API Token](https://docs.apify.com/platform/integrations/api)

@@ -1,31 +1,54 @@
 ---
 title: Agent Metrics
 sidebarTitle: Agent Metrics
-description: Track your Agent's token usage and costs across all runs
+description: Track your Agent's token usage, timing, and costs across all runs
 ---
 
 # Agent Metrics
 
 ## Overview
 
-Your **Agent** keeps a single **usage** object that accumulates metrics over every run (`do`, `print_do`, `stream`, etc.). Use it to monitor total tokens, requests, tool calls, cost, and duration for that agent.
+Your **Agent** keeps a single **`usage`** object (`AgentUsage`) that accumulates metrics over every run. Use it to monitor total tokens, requests, tool calls, cost, and detailed timing breakdowns for that agent.
 
-When printing is enabled, an **Agent Metrics** panel is shown after each task so you can see the updated totals.
+When printing is enabled (`print_do` / `print_do_async`), an **Agent Metrics** panel is displayed after each task so you can see the updated totals.
 
-## What You Can Access
+## Accessing Agent Metrics
 
-On any `Agent` instance, use **`agent.usage`**. It is a `RunUsage` object (or `None` before the first run). After runs, you get:
+On any `Agent` instance, use **`agent.usage`**. It returns an `AgentUsage` object (or `None` before the first run).
 
-| Metric | Meaning |
-|--------|--------|
-| `input_tokens` | Total prompt tokens across all runs |
-| `output_tokens` | Total completion tokens across all runs |
-| `requests` | Number of LLM requests |
-| `tool_calls` | Number of tool calls executed |
-| `cost` | Estimated total cost (when available) |
-| `duration` | Total execution time (seconds) |
+### Token Metrics
 
-Other fields (e.g. `cache_read_tokens`, `reasoning_tokens`, `time_to_first_token`) are available on the same object when the provider reports them.
+| Property | Type | Description |
+|----------|------|-------------|
+| `input_tokens` | `int` | Total prompt/input tokens across all runs |
+| `output_tokens` | `int` | Total completion/output tokens across all runs |
+| `total_tokens` | `int` | Sum of `input_tokens + output_tokens` |
+| `cache_write_tokens` | `int` | Total tokens written to the cache |
+| `cache_read_tokens` | `int` | Total tokens read from the cache |
+| `reasoning_tokens` | `int` | Total tokens used for reasoning (e.g. chain-of-thought) |
+
+### Request & Tool Metrics
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `requests` | `int` | Total number of LLM API requests made |
+| `tool_calls` | `int` | Total number of tool calls executed |
+
+### Timing Metrics
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `duration` | `float \| None` | Total execution time across all runs (seconds) |
+| `model_execution_time` | `float \| None` | Total time spent inside LLM API calls (seconds) |
+| `tool_execution_time` | `float \| None` | Total time spent executing tools across all runs (seconds) |
+| `upsonic_execution_time` | `float \| None` | Framework overhead = `duration - model_execution_time - tool_execution_time` (seconds) |
+
+### Cost Metrics
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `cost` | `float \| None` | Estimated total cost across all runs (provider-specific) |
+
 
 ## Example
 
@@ -36,7 +59,42 @@ agent = Agent("anthropic/claude-sonnet-4-5", print=True)
 agent.print_do(Task("What is 2 + 2? Reply with one number."))
 agent.print_do(Task("What is 3 + 3? Reply with one number."))
 
-# Totals for this agent across all runs
 u = agent.usage
-print(f"Requests: {u.requests}, Input: {u.input_tokens}, Output: {u.output_tokens}, Tool calls: {u.tool_calls}, Cost: ${u.cost:.4f}")
+
+print(f"Requests:        {u.requests}")
+print(f"Input tokens:    {u.input_tokens}")
+print(f"Output tokens:   {u.output_tokens}")
+print(f"Tool calls:      {u.tool_calls}")
+print(f"Cost:            ${u.cost:.4f}")
+print(f"Duration:        {u.duration:.2f}s")
+print(f"Model time:      {u.model_execution_time:.2f}s")
+if u.tool_execution_time is not None:
+    print(f"Tool time:       {u.tool_execution_time:.2f}s")
+print(f"Framework time:  {u.upsonic_execution_time:.2f}s")
 ```
+
+## Printed Panel
+
+When you use `print_do` or `print_do_async`, the **Agent Metrics** panel displays after each task:
+
+```
+╭──────────────────── Agent Metrics ────────────────────╮
+│  Agent:                  MyAgent                      │
+│                                                       │
+│  Total Requests:         4                            │
+│  Total Input Tokens:     1,552                        │
+│  Total Output Tokens:    915                          │
+│  Total Tool Calls:       2                            │
+│  Total Estimated Cost:   $0.0008                      │
+│  Total Duration:         21.55 seconds                │
+│  Model Execution Time:   18.17 seconds                │
+│  Tool Execution Time:    1.00 seconds               │
+│  Framework Overhead:     2.38 seconds                 │
+╰───────────────────────────────────────────────────────╯
+```
+
+## Accumulation Behavior
+
+- **Across tasks**: Every call to `do` / `print_do` / `do_async` / `print_do_async` adds to the same `agent.usage`. The `AgentUsage` object accumulates each task's `TaskUsage` via its `incr()` method.
+- **Sub-agent propagation**: When an agent uses another agent as a tool, the sub-agent's usage (tokens, requests, tool calls, cost, timing) is propagated into the parent agent's `usage`.
+- **Independent agents**: Each `Agent` instance has its own independent `AgentUsage`. Two different agents never share usage.

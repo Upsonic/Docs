@@ -1,0 +1,471 @@
+---
+title: User Confirmation
+sidebarTitle: User Confirmation
+description: Pause agents for user approval or rejection of tool calls, then resume
+---
+
+User Confirmation allows you to mark tools as requiring explicit user approval before execution. The agent pauses when it invokes such a tool; you present the pending call to the user, then call `confirm()` or `reject()` and resume with `continue_run_async()`. Ideal for sensitive operations like deletions, deployments, or payments.
+
+## Quick Start
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires user confirmation."""
+    return f"Sensitive operation completed on: {data}"
+
+async def main():
+    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    task = Task(
+        description="Perform a sensitive operation on the data 'user_records_2024'.",
+        tools=[sensitive_operation]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    assert output.is_paused
+    assert output.pause_reason == "confirmation"
+
+    for requirement in output.active_requirements:
+        if requirement.needs_confirmation:
+            requirement.confirm()
+
+    result = await agent.continue_run_async(run_id=output.run_id, return_output=True)
+    print(result.output)
+
+asyncio.run(main())
+```
+
+## Core Concepts
+
+### Defining Tools That Require Confirmation
+
+Use the `@tool(requires_confirmation=True)` decorator:
+
+```python
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires user confirmation."""
+    return f"Sensitive operation completed on: {data}"
+
+
+@tool(requires_confirmation=True)
+def delete_records(table: str, condition: str) -> str:
+    """Delete records from a database table - requires user confirmation."""
+    return f"Deleted records from {table} where {condition}"
+
+
+@tool(requires_confirmation=True)
+def deploy_to_production(version: str, environment: str) -> str:
+    """Deploy application to production - requires user confirmation."""
+    return f"Deployed version {version} to {environment}"
+```
+
+### Resolving Requirements
+
+Each requirement exposes `confirm()` and `reject()`. Use them after you have `output` from `agent.do_async(task, return_output=True)`:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires user confirmation."""
+    return f"Sensitive operation completed on: {data}"
+
+async def main():
+    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    task = Task(
+        description="Perform a sensitive operation on the data 'user_records_2024'.",
+        tools=[sensitive_operation]
+    )
+    output = await agent.do_async(task, return_output=True)
+
+    for requirement in output.active_requirements:
+        if requirement.needs_confirmation:
+            requirement.confirm()
+            # or: requirement.reject(note="Not authorized to run this operation")
+
+    result = await agent.continue_run_async(run_id=output.run_id, return_output=True)
+    print(result.output)
+
+asyncio.run(main())
+```
+
+- **confirm()**: Injects approval; the tool runs with the planned arguments when you resume.
+- **reject(note="...")**: Injects rejection; the agent receives the note and continues without executing the tool.
+
+### HITL Handler
+
+Use a unified callback to resolve confirmation (and other HITL types) during continuation:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires user confirmation."""
+    return f"Sensitive operation completed on: {data}"
+
+def hitl_handler(requirement) -> None:
+    if requirement.needs_confirmation:
+        requirement.confirm()
+
+async def main():
+    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    task = Task(
+        description="Perform a sensitive operation on the data 'user_records_2024'.",
+        tools=[sensitive_operation]
+    )
+    output = await agent.do_async(task, return_output=True)
+    for requirement in output.active_requirements:
+        if requirement.needs_confirmation:
+            requirement.confirm()
+
+    result = await agent.continue_run_async(
+        run_id=output.run_id,
+        return_output=True,
+        hitl_handler=hitl_handler,
+    )
+    print(result.output)
+
+asyncio.run(main())
+```
+
+## Continuation Methods
+
+### Resume with `run_id` (Same Agent)
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires user confirmation."""
+    return f"Sensitive operation completed on: {data}"
+
+async def confirmation_approve_with_run_id_same_agent():
+    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    task = Task(
+        description="Perform a sensitive operation on the data 'user_records_2024'.",
+        tools=[sensitive_operation]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    for requirement in output.active_requirements:
+        if requirement.needs_confirmation:
+            requirement.confirm()
+
+    result = await agent.continue_run_async(run_id=output.run_id, return_output=True)
+    return result
+
+asyncio.run(confirmation_approve_with_run_id_same_agent())
+```
+
+### Resume with `task` (Same Agent)
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires user confirmation."""
+    return f"Sensitive operation completed on: {data}"
+
+async def confirmation_approve_with_task_same_agent():
+    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    task = Task(
+        description="Perform a sensitive operation on the data 'user_records_2024'.",
+        tools=[sensitive_operation]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    for requirement in output.active_requirements:
+        if requirement.needs_confirmation:
+            requirement.confirm()
+
+    result = await agent.continue_run_async(task=task, return_output=True)
+    return result
+
+asyncio.run(confirmation_approve_with_task_same_agent())
+```
+
+### Rejecting a Tool Call
+
+The agent receives the rejection note and completes without executing the tool:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires user confirmation."""
+    return f"Sensitive operation completed on: {data}"
+
+async def confirmation_reject_with_run_id_same_agent():
+    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    task = Task(
+        description="Perform a sensitive operation on the data 'user_records_2024'.",
+        tools=[sensitive_operation]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    for requirement in output.active_requirements:
+        if requirement.needs_confirmation:
+            requirement.reject(note="Not authorized to run this operation")
+
+    result = await agent.continue_run_async(run_id=output.run_id, return_output=True)
+    return result
+
+asyncio.run(confirmation_reject_with_run_id_same_agent())
+```
+
+### Resume with `run_id` (New Agent - Cross-Process)
+
+Use persistent storage and pass `requirements` when resuming with a new agent:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.db.database import SqliteDatabase
+
+@tool(requires_confirmation=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires user confirmation."""
+    return f"Sensitive operation completed on: {data}"
+
+async def confirmation_with_run_id_new_agent():
+    db = SqliteDatabase(db_file="confirmation.db", session_id="session_1", user_id="user_1")
+    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=db)
+    task = Task(
+        description="Perform a sensitive operation on the data 'user_records_2024'.",
+        tools=[sensitive_operation]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+    run_id = output.run_id
+
+    for requirement in output.active_requirements:
+        if requirement.needs_confirmation:
+            requirement.confirm()
+
+    new_agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=db)
+    result = await new_agent.continue_run_async(
+        run_id=run_id,
+        requirements=output.requirements,
+        return_output=True
+    )
+    return result
+
+asyncio.run(confirmation_with_run_id_new_agent())
+```
+
+### Resume with `task` (New Agent - Cross-Process)
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.db.database import SqliteDatabase
+
+@tool(requires_confirmation=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires user confirmation."""
+    return f"Sensitive operation completed on: {data}"
+
+async def confirmation_with_task_new_agent():
+    db = SqliteDatabase(db_file="confirmation.db", session_id="session_1", user_id="user_1")
+    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=db)
+    task = Task(
+        description="Perform a sensitive operation on the data 'user_records_2024'.",
+        tools=[sensitive_operation]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    for requirement in output.active_requirements:
+        if requirement.needs_confirmation:
+            requirement.confirm()
+
+    new_agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=db)
+    result = await new_agent.continue_run_async(
+        task=task,
+        requirements=output.requirements,
+        return_output=True
+    )
+    return result
+
+asyncio.run(confirmation_with_task_new_agent())
+```
+
+## Multiple Confirmation Tools
+
+### Loop-Based Handling
+
+When the agent invokes multiple confirmation tools, loop until there are no active requirements:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True)
+def delete_records(table: str, condition: str) -> str:
+    """Delete records - requires user confirmation."""
+    return f"Deleted records from {table} where {condition}"
+
+@tool(requires_confirmation=True)
+def deploy_to_production(version: str, environment: str) -> str:
+    """Deploy to production - requires user confirmation."""
+    return f"Deployed version {version} to {environment}"
+
+async def confirmation_multiple_tools_loop_run_id():
+    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    task = Task(
+        description=(
+            "First, delete records from the 'users' table where status='inactive'. "
+            "Then deploy version '2.1.0' to the 'production' environment."
+        ),
+        tools=[delete_records, deploy_to_production]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    while output.active_requirements:
+        for requirement in output.active_requirements:
+            if requirement.needs_confirmation:
+                requirement.confirm()
+
+        output = await agent.continue_run_async(
+            run_id=output.run_id,
+            return_output=True
+        )
+
+    return output
+
+asyncio.run(confirmation_multiple_tools_loop_run_id())
+```
+
+### Using hitl_handler for Multiple Tools
+
+Resolve the first pause yourself, then pass `hitl_handler` so subsequent confirmation pauses are handled automatically:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True)
+def delete_records(table: str, condition: str) -> str:
+    """Delete records - requires user confirmation."""
+    return f"Deleted records from {table} where {condition}"
+
+@tool(requires_confirmation=True)
+def deploy_to_production(version: str, environment: str) -> str:
+    """Deploy to production - requires user confirmation."""
+    return f"Deployed version {version} to {environment}"
+
+def hitl_handler(requirement) -> None:
+    if requirement.needs_confirmation:
+        requirement.confirm()
+
+async def confirmation_multiple_tools_handler_run_id():
+    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    task = Task(
+        description=(
+            "First, delete records from the 'users' table where status='inactive'. "
+            "Then deploy version '2.1.0' to the 'production' environment."
+        ),
+        tools=[delete_records, deploy_to_production]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+
+    for requirement in output.active_requirements:
+        if requirement.needs_confirmation:
+            requirement.confirm()
+
+    result = await agent.continue_run_async(
+        run_id=output.run_id,
+        return_output=True,
+        hitl_handler=hitl_handler,
+    )
+    return result
+
+asyncio.run(confirmation_multiple_tools_handler_run_id())
+```
+
+## Cross-Process Confirmation
+
+Full pattern: one process runs the agent and pauses; another (or same) process resolves confirmation and resumes with a new agent:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.db.database import SqliteDatabase
+
+@tool(requires_confirmation=True)
+def sensitive_operation(data: str) -> str:
+    """Perform a sensitive operation that requires user confirmation."""
+    return f"Sensitive operation completed on: {data}"
+
+async def confirmation_cross_process_run_id():
+    db = SqliteDatabase(db_file="confirmation.db", session_id="session_1", user_id="user_1")
+    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=db)
+    task = Task(
+        description="Perform a sensitive operation on the data 'audit_logs'.",
+        tools=[sensitive_operation]
+    )
+
+    output = await agent.do_async(task, return_output=True)
+    run_id = output.run_id
+
+    if output.is_paused and output.active_requirements:
+        for req in output.active_requirements:
+            if req.tool_execution:
+                print(f"  - Tool: {req.tool_execution.tool_name}")
+                print(f"    Args: {req.tool_execution.tool_args}")
+
+    for req in output.active_requirements:
+        if req.needs_confirmation:
+            req.confirm()
+
+    new_db = SqliteDatabase(db_file="confirmation.db", session_id="session_1", user_id="user_1")
+    new_agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=new_db)
+    result = await new_agent.continue_run_async(
+        run_id=run_id,
+        requirements=output.requirements,
+        return_output=True
+    )
+    return result
+
+asyncio.run(confirmation_cross_process_run_id())
+```
+
+## Important Notes
+
+- **Direct Call Mode Only**: HITL continuation only supports direct call mode. Streaming is not supported for continuation.
+- **Requirements Parameter**: When resuming with a new agent, pass `requirements=output.requirements` so the resolved confirm/reject state is applied.
+- **Persistent Storage**: For cross-process scenarios, use persistent storage (e.g. `SqliteDatabase`).
+- **pause_reason**: When paused for confirmation, `output.pause_reason == "confirmation"` and `output.is_paused` is `True`.

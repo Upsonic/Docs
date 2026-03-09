@@ -1,0 +1,82 @@
+---
+title: "xAI"
+description: "Using xAI native SDK for Grok and other xAI models with Upsonic"
+---
+
+## Overview
+
+xAI provides access to Grok and other models via the native [xAI SDK](https://github.com/xai-org/xai-sdk-python). Upsonic integrates using `XaiModel`, which supports built-in tools (web search, code execution, MCP), reasoning content, and structured output.
+
+**Model Class:** `XaiModel`
+
+## Authentication
+
+```bash
+export XAI_API_KEY="..."  # Required (or pass api_key to XaiProvider)
+```
+
+## Examples
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.xai import XaiModel
+
+model = XaiModel(model_name="grok-2-1212")
+agent = Agent(model=model)
+
+task = Task("Hello, how are you?")
+result = agent.do(task)
+print(result)
+```
+
+## Model Settings
+
+You can set model parameters in two ways: on the model or on the Agent.
+
+**On the model:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.xai import XaiModel, XaiModelSettings
+
+model = XaiModel(
+    model_name="grok-2-1212",
+    settings=XaiModelSettings(max_tokens=1024, temperature=0.7)
+)
+agent = Agent(model=model)
+```
+
+**On the Agent:**
+
+```python
+from upsonic import Agent, Task
+from upsonic.models.xai import XaiModelSettings
+
+agent = Agent(
+    model="xai/grok-2-1212",
+    settings=XaiModelSettings(max_tokens=1024, temperature=0.7)
+)
+```
+
+## Parameters
+
+| Parameter | Type | Description | Default | Source |
+|-----------|------|-------------|---------|--------|
+| `max_tokens` | `int` | Maximum tokens to generate | Model default | Base |
+| `temperature` | `float` | Sampling temperature (0.0-2.0) | 1.0 | Base |
+| `top_p` | `float` | Nucleus sampling | 1.0 | Base |
+| `stop_sequences` | `list[str]` | Stop sequences | None | Base |
+| `presence_penalty` | `float` | Token presence penalty | 0.0 | Base |
+| `frequency_penalty` | `float` | Token frequency penalty | 0.0 | Base |
+| `parallel_tool_calls` | `bool` | Allow parallel tools | True | Base |
+| `timeout` | `float` | Request timeout (seconds) | 600 | Base |
+| `xai_logprobs` | `bool` | Return log probabilities | False | xAI |
+| `xai_top_logprobs` | `int` | Top N logprobs per position (0–20) | None | xAI |
+| `xai_user` | `str` | End-user identifier for abuse monitoring | None | xAI |
+| `xai_store_messages` | `bool` | Store messages for continuity | None | xAI |
+| `xai_previous_response_id` | `str` | Previous response ID to continue | None | xAI |
+| `xai_include_encrypted_content` | `bool` | Include encrypted content in response | False | xAI |
+| `xai_include_code_execution_output` | `bool` | Include code execution results | None | xAI |
+| `xai_include_web_search_output` | `bool` | Include web search results | None | xAI |
+| `xai_include_inline_citations` | `bool` | Include inline citations | None | xAI |
+| `xai_include_mcp_output` | `bool` | Include MCP results | None | xAI |

@@ -21,7 +21,7 @@ description: "TelegramInterface parameters, endpoints, and API reference"
 | `reset_command` | `Optional[str]` | `"/reset"` | Command to reset chat session (CHAT mode). Set `None` to disable. |
 | `storage` | `Optional[Storage]` | `None` | Storage backend for chat sessions (CHAT mode). |
 | `allowed_user_ids` | `Optional[List[int]]` | `None` | Whitelist of Telegram user IDs; `None` = allow all. |
-| `webhook_secret` | `Optional[str]` | `None` | Secret for webhook validation (`X-Telegram-Bot-Api-Secret-Token`). |
+| `webhook_secret` | `Optional[str]` | `None` | Secret for webhook validation (`X-Telegram-Bot-Api-Secret-Token`). Falls back to `TELEGRAM_WEBHOOK_SECRET` env var if unset. |
 | `webhook_url` | `Optional[str]` | `None` | Base URL for auto-setting webhook on startup. |
 | `parse_mode` | `Optional[str]` | `"HTML"` | Default parse mode: `"HTML"`, `"Markdown"`, `"MarkdownV2"`, or `None`. |
 | `disable_web_page_preview` | `bool` | `False` | Disable link previews in messages. |
@@ -41,7 +41,7 @@ description: "TelegramInterface parameters, endpoints, and API reference"
 | Method | Parameters | Return Type | Description |
 | ------ | ---------- | ----------- | ----------- |
 | `attach_routes` | None | `APIRouter` | Returns the FastAPI router with Telegram endpoints. |
-| `health_check` | None | `Dict[str, Any]` | Returns health and configuration (bot, webhook, mode, whitelist). |
+| `health_check` | None | `Dict[str, Any]` | Returns health status, configuration (bot connectivity, mode, reset_command, whitelist, parse_mode, behavior flags), and optional bot info from Telegram. |
 | `is_user_allowed` | `user_id: int` | `bool` | Returns whether the user is allowed (whitelist check). |
 
 ## Full Configuration Example
@@ -82,6 +82,44 @@ telegram = TelegramInterface(
 
 manager = InterfaceManager(interfaces=[telegram])
 manager.serve(host="0.0.0.0", port=8000, reload=False)
+```
+
+## Human-in-the-Loop (HITL) Confirmation
+
+Tools decorated with `@tool(requires_confirmation=True)` pause the run until the user confirms or rejects in Telegram. The interface sends a message with inline **Confirm** / **Reject** buttons; callbacks are handled automatically. Works in both TASK and CHAT modes.
+
+```python
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
+from upsonic.tools import tool
+
+@tool(requires_confirmation=True)
+def calculate_factorial(n: int) -> int:
+    """Calculate the factorial of a number."""
+    if n == 0:
+        return 1
+    return n * calculate_factorial(n - 1)
+
+agent = Agent(
+    model="openai/gpt-4o-mini",
+    tools=[calculate_factorial],
+    name="TelegramChatBot",
+    system_prompt="You are a friendly AI assistant on Telegram. You remember conversation context.",
+    print=True,
+)
+
+telegram = TelegramInterface(
+    agent=agent,
+    bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+    webhook_url=os.getenv("TELEGRAM_WEBHOOK_URL"),
+    webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET"),
+    mode=InterfaceMode.CHAT,
+    reset_command="/reset",
+)
+
+manager = InterfaceManager(interfaces=[telegram])
+manager.serve(host="0.0.0.0", port=8000)
 ```
 
 ## Streaming
@@ -158,7 +196,7 @@ All endpoints are mounted under the `/telegram` prefix.
 ### `POST /telegram/set-webhook`
 
 * Sets the bot webhook URL.
-* Query/body: `url` (required), `secret_token` (optional), `drop_pending_updates` (optional, default `False`).
+* Query: `url` (required), `secret_token` (optional), `drop_pending_updates` (optional, default `False`).
 * Returns `{"success": bool}`.
 
 If you didn't set `TELEGRAM_WEBHOOK_URL`, you can register the webhook manually after starting the server:

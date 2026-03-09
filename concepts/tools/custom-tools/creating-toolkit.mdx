@@ -1,168 +1,316 @@
 ---
 title: "Creating ToolKit"
-description: "Organize related tools in a class"
+description: "Organize related tools in a class with filtering, async mode, and configuration"
 ---
 
-## Overview
+## Getting Started
 
-ToolKits allow you to organize related tools together in a class. Only methods decorated with `@tool` are exposed as tools to the agent.
-
-## Example
+Create a class that extends `ToolKit` and mark methods with `@tool` to expose them to the agent.
 
 ```python
 from upsonic import Agent, Task
 from upsonic.tools import tool, ToolKit
 
-class CalculatorToolKit(ToolKit):
-    """A toolkit for mathematical operations."""
-
+class MathToolKit(ToolKit):
     @tool
     def add(self, a: float, b: float) -> float:
-        """
-        Add two numbers.
+        """Add two numbers."""
+        return a + b
 
-        Args:
-            a: First number
-            b: Second number
+    @tool
+    def multiply(self, a: float, b: float) -> float:
+        """Multiply two numbers."""
+        return a * b
 
-        Returns:
-            Sum of a and b
-        """
+    def _validate(self, x: float) -> bool:
+        """Internal helper -- not exposed (no @tool)."""
+        return x >= 0
+
+agent = Agent(model="openai/gpt-4o", name="Math Agent")
+task = Task(description="Calculate (15 + 27) * 2", tools=[MathToolKit()])
+result = agent.print_do(task)
+```
+
+## Filtering Tools
+
+Control which methods are registered at instantiation time.
+
+### `include_tools` -- Add Non-Decorated Methods
+
+Adds named methods to the tool set alongside any `@tool`-decorated ones.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolKit
+
+class FileToolKit(ToolKit):
+    @tool
+    def read_file(self, path: str) -> str:
+        """Read a file."""
+        return f"Contents of {path}"
+
+    def write_file(self, path: str, content: str) -> str:
+        """Write a file. Not @tool-decorated by default."""
+        return f"Wrote to {path}"
+
+agent = Agent(model="openai/gpt-4o", name="File Agent")
+# 'read_file' (decorated) + 'write_file' (explicitly included) are both available
+task = Task(
+    description="Read config.txt then write 'done' to output.txt",
+    tools=[FileToolKit(include_tools=["write_file"])],
+)
+result = agent.print_do(task)
+```
+
+### `exclude_tools` -- Remove Tools
+
+Removes named methods. Always takes priority over `include_tools` and `@tool`.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolKit
+
+class AdminToolKit(ToolKit):
+    @tool
+    def list_users(self) -> str:
+        """List all users."""
+        return "alice, bob, charlie"
+
+    @tool
+    def delete_user(self, name: str) -> str:
+        """Delete a user."""
+        return f"Deleted {name}"
+
+agent = Agent(model="openai/gpt-4o", name="Admin Agent")
+# Only 'list_users' is available -- 'delete_user' is blocked
+task = Task(
+    description="List all users",
+    tools=[AdminToolKit(exclude_tools=["delete_user"])],
+)
+result = agent.print_do(task)
+```
+
+## Async Tools
+
+Set `use_async=True` to register **all public async methods** and drop all sync methods.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolKit
+
+class SearchToolKit(ToolKit):
+    @tool
+    def sync_search(self, query: str) -> str:
+        """Sync search -- dropped when use_async=True."""
+        return f"Sync: {query}"
+
+    async def async_search(self, query: str) -> str:
+        """Async search -- auto-discovered by use_async."""
+        return f"Async: {query}"
+
+    async def async_suggest(self, query: str) -> str:
+        """Async suggestions -- also auto-discovered."""
+        return f"Suggestions for: {query}"
+
+agent = Agent(model="openai/gpt-4o", name="Search Agent")
+# Only 'async_search' and 'async_suggest' are registered
+task = Task(
+    description="Search for 'upsonic framework'",
+    tools=[SearchToolKit(use_async=True)],
+)
+result = agent.print_do(task)
+```
+
+Combine with `include_tools` to keep a specific sync method:
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolKit
+
+class SearchToolKit(ToolKit):
+    @tool
+    def sync_search(self, query: str) -> str:
+        """Sync fallback search."""
+        return f"Sync: {query}"
+
+    async def async_search(self, query: str) -> str:
+        """Async search."""
+        return f"Async: {query}"
+
+agent = Agent(model="openai/gpt-4o", name="Search Agent")
+# Both async AND the explicitly included sync method are registered
+task = Task(
+    description="Search for 'upsonic framework'",
+    tools=[SearchToolKit(use_async=True, include_tools=["sync_search"])],
+)
+result = agent.print_do(task)
+```
+
+## Configuration
+
+### Toolkit-Wide Defaults
+
+Pass config fields to `__init__` to apply them to every tool in the toolkit.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolKit
+
+class PaymentToolKit(ToolKit):
+    @tool
+    def charge(self, amount: float) -> str:
+        """Charge a payment."""
+        return f"Charged ${amount}"
+
+    @tool
+    def refund(self, amount: float) -> str:
+        """Refund a payment."""
+        return f"Refunded ${amount}"
+
+agent = Agent(model="openai/gpt-4o", name="Payment Agent")
+task = Task(
+    description="Charge $49.99",
+    # Both 'charge' and 'refund' get timeout=120s and require confirmation
+    tools=[PaymentToolKit(timeout=120.0, requires_confirmation=True)],
+)
+result = agent.print_do(task)
+```
+
+### Per-Tool Config via `@tool`
+
+Set config on individual methods. The toolkit `__init__` overrides overlapping fields.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolKit
+
+class DeployToolKit(ToolKit):
+    @tool(requires_confirmation=True, timeout=300.0)
+    def deploy(self, env: str) -> str:
+        """Deploy to an environment."""
+        return f"Deployed to {env}"
+
+    @tool(timeout=30.0)
+    def check_status(self, env: str) -> str:
+        """Check deployment status."""
+        return f"{env} is healthy"
+
+# timeout=60.0 overrides BOTH decorator timeouts (300.0 and 30.0)
+# requires_confirmation=True on 'deploy' survives (not overridden)
+toolkit = DeployToolKit(timeout=60.0)
+
+agent = Agent(model="openai/gpt-4o", name="Deploy Agent")
+task = Task(description="Check the status of production", tools=[toolkit])
+result = agent.print_do(task)
+```
+
+| Source         | Priority | Scope       |
+|----------------|----------|-------------|
+| `__init__`     | Highest  | All tools   |
+| `@tool()`      | Lower    | Single tool |
+
+
+## Building Reusable ToolKits
+
+Accept `**kwargs` and forward to `super().__init__()` so users can pass filtering and config parameters without modifying the class.
+
+```python
+from typing import Any
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolKit
+
+class GitHubToolKit(ToolKit):
+    def __init__(self, api_token: str, **kwargs: Any):
+        super().__init__(**kwargs)
+        self.api_token = api_token
+
+    @tool
+    def list_repos(self, org: str) -> str:
+        """List repositories for an organization."""
+        return f"Repos for {org}: repo1, repo2"
+
+    @tool
+    def create_issue(self, repo: str, title: str) -> str:
+        """Create a GitHub issue."""
+        return f"Created '{title}' in {repo}"
+
+    @tool
+    def close_issue(self, repo: str, issue_number: int) -> str:
+        """Close a GitHub issue."""
+        return f"Closed #{issue_number} in {repo}"
+
+# Users can filter and configure at instantiation
+toolkit = GitHubToolKit(
+    api_token="ghp_...",
+    exclude_tools=["close_issue"],
+    timeout=60.0,
+)
+
+agent = Agent(model="openai/gpt-4o", name="GitHub Agent")
+task = Task(
+    description="List repos for 'upsonic' and create an issue titled 'Bug fix' in repo1",
+    tools=[toolkit],
+)
+result = agent.print_do(task)
+```
+
+## Runtime Tool Management
+
+Add or remove tools after agent creation.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolKit
+
+class MathToolKit(ToolKit):
+    @tool
+    def add(self, a: float, b: float) -> float:
+        """Add two numbers."""
         return a + b
 
     @tool
     def subtract(self, a: float, b: float) -> float:
-        """
-        Subtract b from a.
-
-        Args:
-            a: First number
-            b: Second number
-
-        Returns:
-            Difference of a and b
-        """
+        """Subtract b from a."""
         return a - b
 
     @tool
     def multiply(self, a: float, b: float) -> float:
-        """
-        Multiply two numbers.
-
-        Args:
-            a: First number
-            b: Second number
-
-        Returns:
-            Product of a and b
-        """
+        """Multiply two numbers."""
         return a * b
 
-    @tool
-    def divide(self, a: float, b: float) -> float:
-        """
-        Divide a by b.
+toolkit = MathToolKit()
+agent = Agent(model="openai/gpt-4o", name="Math Agent", tools=[toolkit])
 
-        Args:
-            a: Numerator
-            b: Denominator
-
-        Returns:
-            Quotient of a and b
-        """
-        if b == 0:
-            raise ValueError("Cannot divide by zero")
-        return a / b
-
-# Create task with the toolkit
-task = Task(
-    description="Calculate (15 + 27) * 2 and then divide by 3",
-    tools=[CalculatorToolKit()]
-)
-
-# Create agent
-agent = Agent(model="anthropic/claude-sonnet-4-5", name="Math Agent")
-
-# Execute
-result = agent.print_do(task)
-print("Result:", result)
-```
-
-## State Management
-
-ToolKits can maintain state between tool calls:
-
-```python
-from upsonic.tools import ToolKit, tool
-
-class ShoppingCart(ToolKit):
-    def __init__(self):
-        self.items = []
-    
-    @tool
-    def add_item(self, name: str, price: float) -> str:
-        """Add an item to the shopping cart."""
-        self.items.append({"name": name, "price": price})
-        return f"Added {name} (${price}) to cart"
-    
-    @tool
-    def get_total(self) -> float:
-        """Calculate the total price of all items."""
-        return sum(item["price"] for item in self.items)
-    
-    @tool
-    def list_items(self) -> list:
-        """List all items in the cart."""
-        return self.items
-```
-
-## Async Methods
-
-ToolKits support async methods for I/O operations:
-
-```python
-from upsonic.tools import ToolKit, tool
-import httpx
-
-class APIToolKit(ToolKit):
-    def __init__(self, base_url: str):
-        self.base_url = base_url
-        self.client = httpx.AsyncClient()
-    
-    @tool
-    async def fetch_data(self, endpoint: str) -> dict:
-        """Fetch data from the API."""
-        response = await self.client.get(f"{self.base_url}/{endpoint}")
-        return response.json()
-    
-    @tool
-    async def post_data(self, endpoint: str, data: dict) -> dict:
-        """Post data to the API."""
-        response = await self.client.post(
-            f"{self.base_url}/{endpoint}",
-            json=data
-        )
-        return response.json()
-```
-
-## Managing ToolKit Tools
-
-Remove individual methods or the entire toolkit:
-
-```python
-toolkit = CalculatorToolKit()
-agent.add_tools(toolkit)
-
-# Remove single method (toolkit stays in agent.tools)
+# Remove one method by name (toolkit stays registered)
 agent.remove_tools("add")
 
-# Remove entire toolkit (removes all its methods)
+task = Task(description="Subtract 10 from 50, then multiply by 3")
+result = agent.print_do(task)
+
+# Remove the entire toolkit (removes all remaining methods)
 agent.remove_tools(toolkit)
 ```
 
-## Best Practices
+## Parameter Reference
 
-1. **Group related functionality**: Keep tools that work together in the same ToolKit
-2. **Use descriptive class names**: The class name helps document the toolkit's purpose
-3. **Initialize dependencies in `__init__`**: Set up database connections, API clients, etc.
-4. **Use helper methods for shared logic**: Non-decorated methods are not exposed as tools
+| Parameter                        | Type         | Effect                                                       |
+|----------------------------------|--------------|--------------------------------------------------------------|
+| `include_tools`                  | `list[str]`  | Adds named methods to the tool set (additive)                |
+| `exclude_tools`                  | `list[str]`  | Removes named methods (always wins)                          |
+| `use_async`                      | `bool`       | Registers all public async methods, drops all sync           |
+| `timeout`                        | `float`      | Execution timeout in seconds                                 |
+| `max_retries`                    | `int`        | Maximum retry attempts on failure                            |
+| `requires_confirmation`          | `bool`       | Pause for user confirmation before execution                 |
+| `requires_user_input`            | `bool`       | Pause and prompt the user for input before execution         |
+| `user_input_fields`              | `list[str]`  | Field names to prompt the user for when `requires_user_input` is True |
+| `external_execution`             | `bool`       | Tool execution is handled by an external process             |
+| `show_result`                    | `bool`       | Show output to user instead of sending it back to the LLM    |
+| `stop_after_tool_call`           | `bool`       | Terminate the agent run after this tool executes             |
+| `sequential`                     | `bool`       | Disable parallel execution for this tool                     |
+| `cache_results`                  | `bool`       | Cache results based on arguments                             |
+| `cache_dir`                      | `str`        | Directory to store cache files                               |
+| `cache_ttl`                      | `int`        | Cache time-to-live in seconds                                |
+| `tool_hooks`                     | `ToolHooks`  | Before/after callables for tool execution lifecycle          |
+| `strict`                         | `bool`       | Enforce strict JSON schema validation                        |
+| `docstring_format`               | `str`        | Docstring format: `"google"`, `"numpy"`, `"sphinx"`, or `"auto"` |
+| `require_parameter_descriptions` | `bool`       | Raise error if required parameter descriptions are missing   |

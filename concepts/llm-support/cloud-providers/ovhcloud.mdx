@@ -1,27 +1,27 @@
 ---
-title: "OpenRouter"
-description: "Using OpenRouter for unified access to multiple LLM providers with Upsonic"
+title: "OVHcloud"
+description: "Using OVHcloud AI Endpoints with Upsonic"
 ---
 
 ## Overview
 
-OpenRouter provides unified access to models from OpenAI, Anthropic, Google, Meta, and many others through a single API. Simplifies multi-model applications with consistent pricing and routing.
+OVHcloud AI Endpoints expose an OpenAI-compatible API at `https://oai.endpoints.kepler.ai.cloud.ovh.net/v1` for multiple model families. Model profiles are matched by name prefix.
 
-**Model Class:** `OpenAIChatModel` (OpenAI-compatible API)
+**Model Class:** `OVHcloudModel`
 
 ## Authentication
 
 ```bash
-export OPENROUTER_API_KEY="sk-or-..."
+export OVHCLOUD_API_KEY="..."
 ```
 
 ## Examples
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openrouter import OpenRouterModel
+from upsonic.models.ovhcloud import OVHcloudModel
 
-model = OpenRouterModel(model_name="anthropic/claude-3-5-sonnet")
+model = OVHcloudModel(model_name="deepseek-r1-distill-llama-70b")
 agent = Agent(model=model)
 
 task = Task("Hello, how are you?")
@@ -37,11 +37,11 @@ You can set model parameters in two ways: on the model or on the Agent.
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openrouter import OpenRouterModel, OpenRouterModelSettings
+from upsonic.models.ovhcloud import OVHcloudModel, OVHcloudModelSettings
 
-model = OpenRouterModel(
-    model_name="anthropic/claude-3-5-sonnet",
-    settings=OpenRouterModelSettings(max_tokens=1024, temperature=0.7)
+model = OVHcloudModel(
+    model_name="deepseek-r1-distill-llama-70b",
+    settings=OVHcloudModelSettings(max_tokens=1024, temperature=0.7)
 )
 agent = Agent(model=model)
 ```
@@ -50,11 +50,11 @@ agent = Agent(model=model)
 
 ```python
 from upsonic import Agent, Task
-from upsonic.models.openrouter import OpenRouterModelSettings
+from upsonic.models.ovhcloud import OVHcloudModelSettings
 
 agent = Agent(
-    model="openrouter/anthropic/claude-3-5-sonnet",
-    settings=OpenRouterModelSettings(max_tokens=1024, temperature=0.7)
+    model="ovhcloud/deepseek-r1-distill-llama-70b",
+    settings=OVHcloudModelSettings(max_tokens=1024, temperature=0.7)
 )
 ```
 
