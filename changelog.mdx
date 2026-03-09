@@ -5,6 +5,50 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 
 > Product updates, improvements, and bug fixes for Upsonic
 
+<Update label="Mar 9, 2026">
+
+## v0.73.0
+
+[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.73.0)
+
+## New Features
+
+- **Model setting dataclasses for providers**: Typed model configuration classes for multiple LLM providers for clearer, type-safe model setup.
+- **Langfuse and PromptLayer integration**: Tracing and observability integration with Langfuse and PromptLayer for agent runs.
+- **HITL integrations (User input, User confirmation, Dynamic user input)**: New human-in-the-loop flows for user input, confirmation, and dynamic input during execution.
+- **Telegram HITL integration**: Human-in-the-loop support via Telegram for remote confirmation and input.
+- **Apify integration**: Integration with Apify for using Apify actors and tools from the framework.
+- **Examples repository as git submodule**: Official [Upsonic/Examples](https://github.com/Upsonic/Examples) repository added as a git submodule under `examples/`.
+- **Model and tool execution time tracking and metrics table**: Execution time for model and tool calls plus framework overhead surfaced in the metrics table.
+- **New model providers**: Additional LLM provider support beyond existing providers.
+
+## Improvements
+
+- **README content and examples**: Simplified overview and key features; added AutonomousAgent section with code example; Safety Engine example updated to PIIAnonymizePolicy; OCR installation and usage example; AgentOS section condensed.
+- **Discord community badge and CTA**: Discord badge in the header badge row and invite link in quick nav and Community & Support section for better community visibility.
+- **ToolKit refactor**: Refactored ToolKit implementation for clearer structure and maintainability.
+- **Task and Agent metrics refactor**: Refactored task and agent metrics collection and reporting.
+- **Anthropic input type**: Enhanced input type handling for the Anthropic provider.
+- **Team printing logic**: Team printing behavior aligned with Agent printing for consistent console output.
+- **Usage tracking**: Refactored usage tracking implementation.
+
+## Bug Fixes
+
+- **AutonomousAgent streaming**: Fixed streaming behavior for AutonomousAgent.
+- **ContextManagementMiddleware**: Fixed context management middleware behavior.
+- **Bedrock environment variable**: Corrected environment variable handling for AWS Bedrock.
+
+**Full Changelog**: https://github.com/Upsonic/Upsonic/compare/v0.72.6...v0.73.0
+
+### Pull Requests
+
+- docs: update README content and examples: [@IremOztimur](https://github.com/IremOztimur) in [#535](https://github.com/Upsonic/Upsonic/pull/535)
+- feat: add Examples repository as a git submodule: [@IremOztimur](https://github.com/IremOztimur) in [#542](https://github.com/Upsonic/Upsonic/pull/542)
+- doc: add Discord community badge to README: [@IremOztimur](https://github.com/IremOztimur) in [#543](https://github.com/Upsonic/Upsonic/pull/543)
+- feat: new model setting classes for models: [@DoganK01](https://github.com/DoganK01) in [#540](https://github.com/Upsonic/Upsonic/pull/540)
+
+</Update>
+
 
 <Update label="Feb 23, 2026">
 	## v0.72.6
