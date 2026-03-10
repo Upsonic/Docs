@@ -1,0 +1,64 @@
+---
+title: IDE Integration
+sidebarTitle: IDE Integration
+description: Add Upsonic documentation to your coding tools for AI-assisted development
+---
+
+Add Upsonic documentation directly into your IDE so AI assistants can reference it while you code. This gives you better autocomplete suggestions, more accurate answers, and faster development with Upsonic.
+
+## Cursor
+
+1. Open **Settings** (gear icon or `Cmd+,` / `Ctrl+,`)
+2. Navigate to **Indexing & Docs**
+3. Click **Add**
+4. Paste the following URL:
+
+```
+https://docs.upsonic.ai/llms-full.txt
+```
+
+5. Click **Confirm**
+
+Once indexed, Cursor's AI will have full access to Upsonic's documentation when answering your questions and generating code.
+
+## Windsurf
+
+1. Open **Settings**
+2. Navigate to the **Docs** or **Indexing** section
+3. Add a new documentation source with the URL:
+
+```
+https://docs.upsonic.ai/llms-full.txt
+```
+
+## VSCode (with Copilot or AI extensions)
+
+For VSCode-based AI extensions that support custom documentation sources, add:
+
+```
+https://docs.upsonic.ai/llms-full.txt
+```
+
+Refer to your specific extension's documentation for where to configure external doc sources.
+
+## Available Documentation Files
+
+Upsonic provides two documentation files for LLM consumption:
+
+| File | URL | Description |
+|------|-----|-------------|
+| **llms.txt** | `https://docs.upsonic.ai/llms.txt` | Lightweight index with links to all documentation pages |
+| **llms-full.txt** | `https://docs.upsonic.ai/llms-full.txt` | Complete documentation in a single file (recommended) |
+
+<Tip>
+  Use **llms-full.txt** for the best experience. It contains the entire Upsonic documentation in one file, giving your IDE's AI assistant full context about the framework.
+</Tip>
+
+## What This Enables
+
+With Upsonic docs indexed in your IDE, you can:
+
+- **Ask questions** about Upsonic directly in your editor and get accurate answers
+- **Generate code** that follows Upsonic best practices and patterns
+- **Debug faster** with context-aware suggestions based on the framework's API
+- **Discover features** like Safety Engine policies, MCP tools, or Memory options without leaving your IDE
