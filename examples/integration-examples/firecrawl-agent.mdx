@@ -1,0 +1,219 @@
+---
+title: "Firecrawl Shopping Scraper"
+description: "Use Upsonic's Agent with FirecrawlTools to scrape a shopping website and extract product names, prices, and descriptions in a structured, readable format."
+---
+
+This example shows how to build a **product extraction agent** using Upsonic's **Agent** with the built-in **FirecrawlTools**. Point it at any shopping website and it scrapes the page, pulls out product names, prices, and short descriptions, then returns the results as a clean, structured table.
+
+The example targets [books.toscrape.com](http://books.toscrape.com) — a publicly available, scraping-safe demo bookstore — but the same pattern works for any publicly accessible e-commerce site.
+
+## Overview
+
+The agent has three components:
+
+1. **Agent** — LLM-driven agent that orchestrates scraping and data extraction
+2. **FirecrawlTools** — Built-in Upsonic toolkit wrapping the Firecrawl API; only `scrape_url` is enabled to keep the tool surface minimal
+3. **Task** — Defines the target URL and the exact output format
+
+## Project Structure
+
+```
+firecrawl_shopping_scraper/
+├── main.py          # Entry point: Agent + FirecrawlTools + Task
+├── requirements.txt # Python dependencies
+└── .env             # API keys (never commit this file)
+```
+
+### Environment Variables
+
+<Tip>
+  **Get your free Firecrawl API key** — [Sign up at firecrawl.dev](https://firecrawl.dev), navigate to your dashboard, and copy your key. No credit card required to get started.
+</Tip>
+
+```bash
+# Required: Firecrawl API key — https://firecrawl.dev
+FIRECRAWL_API_KEY=fc-your-key-here
+
+# Required: LLM provider key (example uses Anthropic Claude)
+ANTHROPIC_API_KEY=your-anthropic-key-here
+```
+
+## Installation
+
+```bash
+# With uv (recommended)
+uv venv && source .venv/bin/activate
+uv pip install upsonic "firecrawl-py" python-dotenv
+
+# With pip
+python3 -m venv .venv && source .venv/bin/activate
+pip install upsonic firecrawl-py python-dotenv
+```
+
+## Complete Implementation
+
+### main.py
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.firecrawl import FirecrawlTools
+
+load_dotenv()
+
+# ── 1. Configure FirecrawlTools — only scrape_url is needed ───────
+firecrawl = FirecrawlTools(
+    enable_scrape=True,
+    enable_crawl=False,
+    enable_map=False,
+    enable_search=False,
+    enable_batch_scrape=False,
+    enable_extract=False,
+    enable_crawl_management=False,
+    enable_batch_management=False,
+    enable_extract_management=False,
+)
+
+# ── 2. Define the extraction task ─────────────────────────────────
+task = Task(
+    description="""
+    Scrape the homepage of http://books.toscrape.com and extract ALL
+    products visible on the page.
+
+    For each product return:
+      - Name  (full book title)
+      - Price (as shown, e.g. '£51.77')
+      - Rating (word form, e.g. 'Three')
+
+    Format the output as a Markdown table:
+
+    | # | Book Title | Price | Rating |
+    |---|-----------|-------|--------|
+
+    Sort by price descending. Add a one-line summary at the top
+    with the total number of products found and the price range.
+    """
+)
+
+# ── 3. Create the agent ───────────────────────────────────────────
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    tools=[firecrawl],
+)
+
+# ── 4. Run ────────────────────────────────────────────────────────
+result = agent.do(task)
+print(result)
+```
+
+### requirements.txt
+
+```
+upsonic
+firecrawl-py
+python-dotenv
+anthropic
+```
+
+## How It Works
+
+| Step | What Happens |
+|------|-------------|
+| 1 | `agent.do(task)` sends the task prompt to the LLM |
+| 2 | The LLM calls `scrape_url("http://books.toscrape.com")` via FirecrawlTools |
+| 3 | Firecrawl fetches the page and returns clean Markdown |
+| 4 | The LLM parses the Markdown, identifies every product block, and extracts name, price, and rating |
+| 5 | Results are formatted as a sorted Markdown table and returned |
+
+## Sample Output
+
+```
+Found 20 products · Price range: £10.00 – £59.69
+
+| #  | Book Title                                   | Price  | Rating |
+|----|----------------------------------------------|--------|--------|
+| 1  | Libertarianism for Beginners                 | £59.69 | Two    |
+| 2  | It's Only the Himalayas                      | £52.29 | Two    |
+| 3  | The Black Maria                              | £52.15 | One    |
+| 4  | Starving Hearts (Triangular Trade Trilogy…)  | £13.99 | Two    |
+| 5  | ...                                          | ...    | ...    |
+```
+
+## Extending the Example
+
+### Crawl multiple pages
+
+Switch from `scrape_url` to `crawl_website` to follow pagination automatically:
+
+```python
+firecrawl = FirecrawlTools(
+    enable_scrape=False,
+    enable_crawl=True,
+    enable_crawl_management=True,
+)
+
+task = Task(
+    description="""
+    Crawl http://books.toscrape.com (up to 5 pages) and extract every
+    product: name, price, and rating. Return a single Markdown table
+    sorted by price descending.
+    """
+)
+```
+
+### Structured JSON extraction
+
+Use `extract_data` for schema-driven, LLM-powered extraction directly inside Firecrawl:
+
+```python
+firecrawl = FirecrawlTools(
+    enable_scrape=False,
+    enable_extract=True,
+)
+
+task = Task(
+    description="""
+    Use extract_data on http://books.toscrape.com/* with this JSON schema:
+    {
+      "products": [
+        {"name": "string", "price": "string", "rating": "string"}
+      ]
+    }
+    Return the raw structured result.
+    """
+)
+```
+
+### Point at a different shop
+
+Replace the URL in the task description with any publicly accessible store:
+
+```python
+task = Task(
+    description="""
+    Scrape https://your-target-shop.com and extract all visible products.
+    For each product return name, price, and a short description (1-2 sentences).
+    Format as a Markdown table sorted by price descending.
+    """
+)
+```
+
+## Key Features
+
+| Feature | Detail |
+|---------|--------|
+| Minimal tool surface | Only `scrape_url` is enabled — the agent cannot accidentally crawl, search, or batch-scrape |
+| Clean Markdown input | Firecrawl strips boilerplate and returns structured Markdown, making product parsing straightforward |
+| Model-agnostic | Swap `anthropic/claude-sonnet-4-6` for any Upsonic-supported provider |
+| Extensible | Switch to `crawl_website` or `extract_data` for multi-page or schema-driven extraction |
+
+## Security Notes
+
+- The agent only has access to `scrape_url` — it cannot read local files, execute code, or access other systems.
+- Only point the agent at publicly accessible URLs. Firecrawl respects `robots.txt` by default.
+- Store `FIRECRAWL_API_KEY` and `ANTHROPIC_API_KEY` in `.env` — never hardcode keys in source files.
+
+## Repository
+
+View the full example: [Firecrawl Shopping Scraper](https://github.com/Upsonic/Examples/tree/master/examples/integration_examples/firecrawl_shopping_scraper)

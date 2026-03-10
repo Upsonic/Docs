@@ -11,37 +11,42 @@ Comprehensive OCR with multiple specialized pipelines for advanced document unde
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.paddleocr import PaddleOCR, PPStructureV3, PPChatOCRv4, PaddleOCRVL
+from upsonic.ocr.layer_1.engines import (
+    PaddleOCREngine, PPStructureV3Engine,
+    PPChatOCRv4Engine, PaddleOCRVLEngine
+)
+# Also available: from upsonic.ocr import PaddleOCREngine, PPStructureV3Engine, ...
 
 # General OCR (PP-OCRv5)
-ocr = OCR(PaddleOCR, lang='en', ocr_version='PP-OCRv5')
+engine = PaddleOCREngine(lang='en', ocr_version='PP-OCRv5')
+ocr = OCR(layer_1_ocr_engine=engine)
 text = ocr.get_text('document.pdf')
 
 # Advanced document structure recognition
-ocr_structure = OCR(
-    PPStructureV3,
+engine_structure = PPStructureV3Engine(
     use_table_recognition=True,
     use_formula_recognition=True
 )
+ocr_structure = OCR(layer_1_ocr_engine=engine_structure)
 result = ocr_structure.process_file('research_paper.pdf')
 
 # Chat-based document understanding
-ocr_chat = OCR(
-    PPChatOCRv4,
+engine_chat = PPChatOCRv4Engine(
     use_table_recognition=True,
     use_seal_recognition=True
 )
+ocr_chat = OCR(layer_1_ocr_engine=engine_chat)
 
 # Vision-Language document understanding
-ocr_vl = OCR(
-    PaddleOCRVL,
+engine_vl = PaddleOCRVLEngine(
     use_layout_detection=True,
     use_chart_recognition=True,
     format_block_content=True
 )
+ocr_vl = OCR(layer_1_ocr_engine=engine_vl)
 ```
 
-## PaddleOCR (General OCR)
+## PaddleOCREngine (General OCR)
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -54,7 +59,7 @@ ocr_vl = OCR(
 | `text_rec_score_thresh` | float | `None` | Text recognition score threshold |
 | `return_word_box` | bool | `None` | Return word-level bounding boxes |
 
-## PPStructureV3 (Document Structure)
+## PPStructureV3Engine (Document Structure)
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -65,7 +70,7 @@ ocr_vl = OCR(
 | `layout_threshold` | float | `None` | Layout detection score threshold |
 | `lang` | str | `'en'` | Language code |
 
-## PPChatOCRv4 (Chat-based OCR)
+## PPChatOCRv4Engine (Chat-based OCR)
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -74,7 +79,7 @@ ocr_vl = OCR(
 | `mllm_chat_bot_config` | dict | `None` | Multimodal LLM configuration |
 | `retriever_config` | dict | `None` | Retriever configuration for vector search |
 
-## PaddleOCRVL (Vision-Language)
+## PaddleOCRVLEngine (Vision-Language)
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|

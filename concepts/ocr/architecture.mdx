@@ -1,0 +1,55 @@
+---
+title: "Architecture"
+description: "Understanding the layered OCR pipeline architecture"
+---
+
+## Layered Architecture
+
+The Unified OCR system is built on a layered architecture that separates concerns and enables flexible engine composition.
+
+### Layer 0 — Document Preparation
+
+Handles file validation, PDF-to-image conversion, and image preprocessing before OCR processing begins.
+
+- **File validation**: Checks file existence and supported formats (.png, .jpg, .jpeg, .bmp, .tiff, .tif, .webp, .pdf)
+- **PDF conversion**: Converts PDF pages to images at configurable DPI using `convert_document`
+- **Image preprocessing**: Optional rotation correction, contrast enhancement, and noise reduction
+
+### Layer 1 — OCR Engines
+
+Each OCR engine runs independently on prepared images and returns structured `OCRResult` objects.
+
+Available engines:
+- `EasyOCREngine` — Deep learning-based, 80+ languages
+- `RapidOCREngine` — ONNX Runtime-based, lightweight and fast
+- `TesseractOCREngine` — Google's open-source engine, 100+ languages
+- `DeepSeekOCREngine` — VLLM-based batch processing
+- `DeepSeekOllamaOCREngine` — Ollama-based local processing
+- `PaddleOCREngine`, `PPStructureV3Engine`, `PPChatOCRv4Engine`, `PaddleOCRVLEngine` — PaddlePaddle family
+
+### Orchestrator — `OCR` Class
+
+The top-level `OCR` class orchestrates the full pipeline:
+
+1. Receives a file path
+2. Delegates to Layer 0 for document preparation
+3. Passes prepared images to the configured Layer 1 engine
+4. Aggregates results, calculates confidence scores, and tracks metrics
+
+## Pipeline Flow
+
+```
+File (PDF/Image)
+    │
+    ▼
+Layer 0: convert_document → preprocessed images
+    │
+    ▼
+Layer 1: Engine.process(images) → OCRResult
+    │
+    ▼
+Orchestrator: aggregate results, metrics, confidence
+    │
+    ▼
+Final OCRResult
+```

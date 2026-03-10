@@ -9,10 +9,11 @@ The OCR system automatically tracks metrics for all operations. Metrics include 
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.easyocr import EasyOCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine
 
-# Create OCR instance
-ocr = OCR(EasyOCR, languages=['en'])
+# Create engine and orchestrator
+engine = EasyOCREngine(languages=['en'])
+ocr = OCR(layer_1_ocr_engine=engine)
 
 # Process multiple files
 ocr.get_text('document1.pdf')
@@ -39,22 +40,20 @@ Use metrics to analyze and optimize OCR performance across different providers a
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.easyocr import EasyOCR
-from upsonic.ocr.rapidocr import RapidOCR
-from upsonic.ocr.tesseract import TesseractOCR
+from upsonic.ocr.layer_1.engines import EasyOCREngine, RapidOCREngine, TesseractOCREngine
 
 def benchmark_providers(file_path):
     """Compare performance of different OCR providers."""
     providers = [
-        ('EasyOCR', EasyOCR, {'languages': ['en'], 'gpu': False}),
-        ('RapidOCR', RapidOCR, {'languages': ['en']}),
-        ('Tesseract', TesseractOCR, {'languages': ['eng']})
+        ('EasyOCR', EasyOCREngine(languages=['en'], gpu=False)),
+        ('RapidOCR', RapidOCREngine(languages=['en'])),
+        ('Tesseract', TesseractOCREngine(languages=['eng']))
     ]
 
     results = {}
 
-    for name, provider_class, params in providers:
-        ocr = OCR(provider_class, **params)
+    for name, engine in providers:
+        ocr = OCR(layer_1_ocr_engine=engine)
         ocr.reset_metrics()
 
         # Process file

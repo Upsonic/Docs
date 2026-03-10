@@ -11,15 +11,18 @@ DeepSeek OCR provides optimized batch processing for multi-page PDFs, processing
 
 ```python
 from upsonic.ocr import OCR
-from upsonic.ocr.deepseek import DeepSeekOCR
+from upsonic.ocr.layer_1.engines import DeepSeekOCREngine
+# Also available: from upsonic.ocr import DeepSeekOCREngine
 
-# Create DeepSeek OCR
-ocr = OCR(
-    DeepSeekOCR,
+# Create DeepSeek engine
+engine = DeepSeekOCREngine(
     model_name="deepseek-ai/DeepSeek-OCR",
     temperature=0.0,
     max_tokens=8192
 )
+
+# Create OCR orchestrator
+ocr = OCR(layer_1_ocr_engine=engine)
 
 # Automatically uses batch processing for PDFs
 result = ocr.process_file('multi_page_document.pdf')
