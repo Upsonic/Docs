@@ -1,8 +1,38 @@
 ---
-summary: "User profile record"
-read_when:
-  - Bootstrapping a workspace manually
+title: "USER.md"
+sidebarTitle: "USER.md"
+description: "A ready-to-use USER.md template for configuring your agent's user profile"
 ---
+
+The `USER.md` file holds what your agent knows about the person it's helping — name, preferences, context. Place it inside your **workspace** directory and the agent can read and update it to personalize assistance.
+
+## Where to Use
+
+You can use `USER.md` with:
+
+- [**Agent** with workspace](/concepts/agents/advanced/workspace) — Set the `workspace` parameter on your Agent
+- [**AutonomousAgent**](/concepts/autonomous-agent/overview) — Comes with workspace support built-in
+
+## How It Works
+
+1. Create a file called `USER.md` in your workspace folder (same folder as `AGENTS.md` and `SOUL.md`)
+2. Set the `workspace` parameter on your agent to point to that folder
+3. The agent reads `USER.md` when instructed by `AGENTS.md` (e.g. "Read `USER.md` — this is who you're helping") and can update it as it learns about the user
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-5",
+    workspace="/path/to/my_agent_folder"  # USER.md lives here
+)
+```
+
+## Template
+
+Copy and customize this template for your use case:
+
+```markdown
 
 # USER.md - About Your Human
 
@@ -21,3 +51,4 @@ _(What do they care about? What projects are they working on? What annoys them? 
 ---
 
 The more you know, the better you can help. But remember — you're learning about a person, not building a dossier. Respect the difference.
+```

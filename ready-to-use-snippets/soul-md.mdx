@@ -1,9 +1,38 @@
 ---
-title: "SOUL.md Template"
-summary: "Workspace template for SOUL.md"
-read_when:
-  - Bootstrapping a workspace manually
+title: "SOUL.md"
+sidebarTitle: "SOUL.md"
+description: "A ready-to-use SOUL.md template for configuring your agent's personality"
 ---
+
+The `SOUL.md` file defines your agent's personality, core truths, and boundaries. Place it inside your **workspace** directory alongside `AGENTS.md` and the agent will load it as part of its identity.
+
+## Where to Use
+
+You can use `SOUL.md` with:
+
+- [**Agent** with workspace](/concepts/agents/advanced/workspace) — Set the `workspace` parameter on your Agent
+- [**AutonomousAgent**](/concepts/autonomous-agent/overview) — Comes with workspace support built-in
+
+## How It Works
+
+1. Create a file called `SOUL.md` in your workspace folder (same folder as `AGENTS.md`)
+2. Set the `workspace` parameter on your agent to point to that folder
+3. The agent reads `SOUL.md` when instructed by `AGENTS.md` (e.g. "Read `SOUL.md` — this is who you are")
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-5",
+    workspace="/path/to/my_agent_folder"  # SOUL.md lives here
+)
+```
+
+## Template
+
+Copy and customize this template for your use case:
+
+```markdown
 
 # SOUL.md - Who You Are
 
@@ -41,3 +70,4 @@ If you change this file, tell the user — it's your soul, and they should know.
 ---
 
 _This file is yours to evolve. As you learn who you are, update it._
+```
