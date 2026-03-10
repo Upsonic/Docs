@@ -76,6 +76,34 @@
                                 ]
                             },
                             {
+                                "group": "Autonomous Agent",
+                                "icon": "robot",
+                                "tag": "NEW",
+                                "pages": [
+                                    "concepts/autonomous-agent/overview",
+                                    "concepts/autonomous-agent/attributes",
+                                    "concepts/autonomous-agent/examples/basic-autonomous-agent-example",
+                                    {
+                                        "group": "Usage",
+                                        "pages": [
+                                            "concepts/autonomous-agent/creating-an-autonomous-agent",
+                                            "concepts/autonomous-agent/running-an-autonomous-agent",
+                                            "concepts/autonomous-agent/agents-md"
+                                        ],
+                                        "collapsed": false
+                                    },
+                                    {
+                                        "group": "Advanced",
+                                        "pages": [
+                                            "concepts/autonomous-agent/advanced/filesystem-tools",
+                                            "concepts/autonomous-agent/advanced/memory-integration",
+                                            "concepts/autonomous-agent/advanced/shell-tools",
+                                            "concepts/autonomous-agent/advanced/workspace-security"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
                                 "group": "Safety Engine (Guardrails)",
                                 "icon": "shield-check",
                                 "tag": "NEW",
@@ -280,14 +308,15 @@
                                                         "group": "Function Tools",
                                                         "pages": [
                                                             "concepts/tools/ready-to-use-tools/function-tools/duckduckgo",
+                                                            "concepts/tools/ready-to-use-tools/function-tools/bochasearch",
                                                             "concepts/tools/ready-to-use-tools/function-tools/tavily"
                                                         ]
                                                     },
                                                     {
                                                         "group": "ToolKits",
                                                         "pages": [
-                                                            "concepts/tools/ready-to-use-tools/toolkits/firecrawl",
-                                                            "concepts/tools/ready-to-use-tools/toolkits/crawlee"
+                                                            "concepts/tools/ready-to-use-tools/toolkits/apify",
+                                                            "concepts/tools/ready-to-use-tools/toolkits/firecrawl"
                                                         ]
                                                     },
                                                     {
@@ -299,6 +328,8 @@
                                                                 "pages": [
                                                                     "concepts/tools/ready-to-use-tools/model-provider-tools/tools/web-search-tool",
                                                                     "concepts/tools/ready-to-use-tools/model-provider-tools/tools/web-search-user-location",
+                                                                    "concepts/tools/ready-to-use-tools/model-provider-tools/tools/web-fetch-tool",
+                                                                    "concepts/tools/ready-to-use-tools/model-provider-tools/tools/file-search-tool",
                                                                     "concepts/tools/ready-to-use-tools/model-provider-tools/tools/code-execution-tool",
                                                                     "concepts/tools/ready-to-use-tools/model-provider-tools/tools/url-context-tool",
                                                                     "concepts/tools/ready-to-use-tools/model-provider-tools/tools/mcp-server-tool",
@@ -334,16 +365,26 @@
                                         "group": "Usage",
                                         "pages": [
                                             "concepts/memory/choosing-right-memory-types",
-                                            "concepts/memory/memory-types/conversation-memory",
-                                            "concepts/memory/memory-types/summary-memory",
-                                            "concepts/memory/memory-types/focus-memory",
-                                            "concepts/memory/storage-options/inmemory-storage",
-                                            "concepts/memory/storage-options/json-storage",
-                                            "concepts/memory/storage-options/sqlite-storage",
-                                            "concepts/memory/storage-options/postgres-storage",
-                                            "concepts/memory/storage-options/redis-storage",
-                                            "concepts/memory/storage-options/mem0-storage",
-                                            "concepts/memory/storage-options/mongo-storage",
+                                            {
+                                                "group": "Memory Types",
+                                                "pages": [
+                                                    "concepts/memory/memory-types/conversation-memory",
+                                                    "concepts/memory/memory-types/focus-memory",
+                                                    "concepts/memory/memory-types/summary-memory"
+                                                ]
+                                            },
+                                            {
+                                                "group": "Storage Options",
+                                                "pages": [
+                                                    "concepts/memory/storage-options/inmemory-storage",
+                                                    "concepts/memory/storage-options/json-storage",
+                                                    "concepts/memory/storage-options/mem0-storage",
+                                                    "concepts/memory/storage-options/mongo-storage",
+                                                    "concepts/memory/storage-options/postgres-storage",
+                                                    "concepts/memory/storage-options/redis-storage",
+                                                    "concepts/memory/storage-options/sqlite-storage"
+                                                ]
+                                            },
                                             "concepts/memory/storage-tables"
                                         ],
                                         "collapsed": false
@@ -351,10 +392,10 @@
                                     {
                                         "group": "Integrations",
                                         "pages": [
-                                            "concepts/memory/storage-options/async-sqlite-storage",
-                                            "concepts/memory/storage-options/async-postgres-storage",
+                                            "concepts/memory/storage-options/async-mem0-storage",
                                             "concepts/memory/storage-options/async-mongo-storage",
-                                            "concepts/memory/storage-options/async-mem0-storage"
+                                            "concepts/memory/storage-options/async-postgres-storage",
+                                            "concepts/memory/storage-options/async-sqlite-storage"
                                         ]
                                     }
                                 ]
@@ -516,7 +557,7 @@
                                         "pages": [
                                             "concepts/llm-support/local-providers/local-providers-ollama",
                                             "concepts/llm-support/local-providers/local-providers-vllm",
-                                            "concepts/llm-support/local-providers/local-providers-lmstudio.mdx"
+                                            "concepts/llm-support/local-providers/local-providers-lmstudio"
                                         ]
                                     },
                                     {
@@ -602,34 +643,6 @@
                                     "concepts/culture/overview"
                                 ],
                                 "tag": "NEW"
-                            },
-                            {
-                                "group": "Autonomous Agent",
-                                "icon": "robot",
-                                "tag": "NEW",
-                                "pages": [
-                                    "concepts/autonomous-agent/overview",
-                                    "concepts/autonomous-agent/attributes",
-                                    "concepts/autonomous-agent/examples/basic-autonomous-agent-example",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/autonomous-agent/creating-an-autonomous-agent",
-                                            "concepts/autonomous-agent/running-an-autonomous-agent",
-                                            "concepts/autonomous-agent/agents-md"
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/autonomous-agent/advanced/filesystem-tools",
-                                            "concepts/autonomous-agent/advanced/memory-integration",
-                                            "concepts/autonomous-agent/advanced/shell-tools",
-                                            "concepts/autonomous-agent/advanced/workspace-security"
-                                        ]
-                                    }
-                                ]
                             },
                             {
                                 "group": "Deep Agent",
