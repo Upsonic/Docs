@@ -1,0 +1,432 @@
+---
+title: "PromptLayer Advanced API"
+description: "Complete runnable examples for PromptLayer datasets, reports, evaluations, and prompt registry"
+---
+
+## Prompt Registry
+
+Load versioned prompt templates from PromptLayer and use them as system prompts.
+
+```python
+import os
+from upsonic import Agent, Task
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+# Get a prompt by name (latest version)
+system_prompt = pl.get_prompt("my-agent-v2")
+
+agent = Agent(
+    "openai/gpt-4o",
+    system_prompt=system_prompt,
+    promptlayer=pl,
+)
+
+task = Task(description="Hello!")
+agent.print_do(task)
+
+pl.shutdown()
+```
+
+{/* Screenshot: PromptLayer Prompt Registry page */}
+
+---
+
+## Dataset Groups
+
+Dataset groups organize your evaluation data. Each group can contain multiple versions.
+
+### Create and List Dataset Groups
+
+```python
+import os
+import uuid
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+# Create a dataset group
+name = f"my-dataset-{uuid.uuid4().hex[:8]}"
+result = pl.create_dataset_group(name)
+group_id = result["dataset_group"]["id"]
+print(f"Created dataset group: {name} (ID: {group_id})")
+
+# List all dataset groups
+datasets = pl.list_datasets()
+for ds in datasets["datasets"]:
+    group = ds.get("dataset_group", {})
+    print(f"  {group.get('name')}: ID {group.get('id')}")
+
+# Filter by name
+filtered = pl.list_datasets(name=name)
+print(f"Found {len(filtered['datasets'])} matching datasets")
+
+pl.shutdown()
+```
+
+{/* Screenshot: PromptLayer Datasets page showing groups */}
+
+### Async Variants
+
+```python
+import asyncio
+import os
+import uuid
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+async def main():
+    name = f"async-dataset-{uuid.uuid4().hex[:8]}"
+    result = await pl.acreate_dataset_group(name)
+    print(f"Created: {result['dataset_group']['name']}")
+
+    datasets = await pl.alist_datasets()
+    print(f"Total datasets: {len(datasets['datasets'])}")
+
+    await pl.ashutdown()
+
+asyncio.run(main())
+```
+
+---
+
+## Dataset Versions
+
+Upload CSV data as new dataset versions.
+
+### Upload from CSV (Base64)
+
+```python
+import os
+import base64
+import uuid
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+# Create a dataset group first
+name = f"csv-upload-{uuid.uuid4().hex[:8]}"
+group_result = pl.create_dataset_group(name)
+group_id = group_result["dataset_group"]["id"]
+
+# Prepare CSV content
+csv_content = "query,expected_output\nWhat is 2+2?,4\nWhat is 3+3?,6\n"
+b64 = base64.b64encode(csv_content.encode()).decode()
+
+# Upload as a new dataset version
+result = pl.create_dataset_version_from_file(
+    group_id,
+    file_name="eval_data.csv",
+    file_content_base64=b64,
+)
+print(f"Upload success: {result.get('success')}")
+print(f"Dataset version ID: {result.get('dataset_id')}")
+
+pl.shutdown()
+```
+
+{/* Screenshot: PromptLayer dataset version with rows */}
+
+### Create Version from Filter
+
+Pull logged requests into a dataset version using tag filters:
+
+```python
+import os
+import uuid
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+# Assumes you already have a dataset group
+name = f"filter-dataset-{uuid.uuid4().hex[:8]}"
+group_result = pl.create_dataset_group(name)
+group_id = group_result["dataset_group"]["id"]
+
+result = pl.create_dataset_version_from_filter(
+    group_id,
+    tags=["upsonic-eval", "accuracy-eval"],
+    columns=[
+        {
+            "name": "query",
+            "type": "TEXT",
+            "metadata_key": "eval_type",
+        }
+    ],
+)
+print(f"Filter version result: {result}")
+
+pl.shutdown()
+```
+
+---
+
+## Reports
+
+Reports let you run evaluations on your datasets directly in PromptLayer.
+
+### Create, Get, and Delete a Report
+
+```python
+import os
+import base64
+import time
+import uuid
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+# 1. Create a dataset group with data
+name = f"report-test-{uuid.uuid4().hex[:8]}"
+group_result = pl.create_dataset_group(name)
+group_id = group_result["dataset_group"]["id"]
+
+# 2. Upload a CSV version
+csv_content = "query,expected_output\nWhat is 2+2?,4\nWhat is 3+3?,6\n"
+b64 = base64.b64encode(csv_content.encode()).decode()
+pl.create_dataset_version_from_file(group_id, "data.csv", b64)
+
+# 3. Wait for CSV processing (async on PromptLayer side)
+time.sleep(10)
+
+# 4. Create a report
+report_result = pl.create_report(group_id, name=name)
+report_id = report_result["report_id"]
+print(f"Report ID: {report_id}")
+
+# 5. Get report details
+time.sleep(2)
+report = pl.get_report(report_id)
+print(f"Report: {report['report']['id']}")
+
+# 6. Get report score
+score = pl.get_report_score(report_id)
+print(f"Score: {score}")
+
+# 7. Delete report by name
+delete_result = pl.delete_report_by_name(name)
+print(f"Deleted: {delete_result.get('success')}")
+
+pl.shutdown()
+```
+
+{/* Screenshot: PromptLayer Report page */}
+
+### Async Variants
+
+```python
+import asyncio
+import os
+import base64
+import time
+import uuid
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+async def main():
+    name = f"async-report-{uuid.uuid4().hex[:8]}"
+    group_result = await pl.acreate_dataset_group(name)
+    group_id = group_result["dataset_group"]["id"]
+
+    csv_content = "query,expected_output\nWhat is 1+1?,2\n"
+    b64 = base64.b64encode(csv_content.encode()).decode()
+    await pl.acreate_dataset_version_from_file(group_id, "data.csv", b64)
+
+    time.sleep(10)
+
+    report_result = await pl.acreate_report(group_id, name=name)
+    report_id = report_result["report_id"]
+    print(f"Report ID: {report_id}")
+
+    time.sleep(2)
+    fetched = await pl.aget_report(report_id)
+    print(f"Report: {fetched['report']['id']}")
+
+    await pl.adelete_report_by_name(name)
+    print("Deleted")
+
+    await pl.ashutdown()
+
+asyncio.run(main())
+```
+
+---
+
+## List Evaluations
+
+Query evaluations stored in PromptLayer.
+
+```python
+import os
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+# List all evaluations
+evals = pl.list_evaluations()
+print(f"Total evaluations: {len(evals['evaluations'])}")
+
+# With pagination
+evals = pl.list_evaluations(page=1, per_page=10)
+print(f"Page 1: {len(evals['evaluations'])} evaluations")
+
+# Filter by name
+evals = pl.list_evaluations(name="accuracy")
+print(f"Accuracy evaluations: {len(evals['evaluations'])}")
+
+pl.shutdown()
+```
+
+### Async Variant
+
+```python
+import asyncio
+import os
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+async def main():
+    evals = await pl.alist_evaluations()
+    print(f"Total: {len(evals['evaluations'])}")
+    await pl.ashutdown()
+
+asyncio.run(main())
+```
+
+---
+
+## Manual Logging
+
+Log custom requests to PromptLayer with full control.
+
+```python
+import os
+import time
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+pl.log(
+    provider="openai",
+    model="gpt-4o",
+    input_text="What is 2 + 2?",
+    output_text="4",
+    start_time=time.time() - 1.5,
+    end_time=time.time(),
+    input_tokens=10,
+    output_tokens=1,
+    price=0.001,
+    tags=["custom-tag", "my-project"],
+    metadata={"experiment": "v1", "user": "dogan"},
+    score=95,
+    status="SUCCESS",
+    function_name="math_qa",
+)
+
+print("Request logged")
+
+pl.shutdown()
+```
+
+### Async Variant
+
+```python
+import asyncio
+import os
+import time
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+async def main():
+    await pl.alog(
+        provider="openai",
+        model="gpt-4o",
+        input_text="What is 2 + 2?",
+        output_text="4",
+        start_time=time.time() - 1.5,
+        end_time=time.time(),
+        input_tokens=10,
+        output_tokens=1,
+        price=0.001,
+        tags=["custom-tag"],
+    )
+    print("Request logged")
+    await pl.ashutdown()
+
+asyncio.run(main())
+```
+
+---
+
+## Scoring and Metadata
+
+Add scores and metadata to logged requests.
+
+```python
+import os
+import time
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+# Log a request first
+request_id = pl.log(
+    provider="openai",
+    model="gpt-4o",
+    input_text="Hello",
+    output_text="Hi there!",
+    start_time=time.time() - 1,
+    end_time=time.time(),
+)
+print(f"Request ID: {request_id}")
+
+# Add a score
+pl.score(request_id, score=85)
+print("Score added")
+
+# Add metadata
+pl.add_metadata(request_id, metadata={"reviewer": "dogan", "quality": "good"})
+print("Metadata added")
+
+pl.shutdown()
+```
+
+---
+
+## Workflows
+
+Manage PromptLayer workflows.
+
+```python
+import os
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+
+# List existing workflows
+workflows = pl.list_workflows()
+print(f"Total workflows: {len(workflows.get('workflows', []))}")
+
+# Create a workflow
+workflow = pl.create_workflow(
+    name="My Evaluation Pipeline",
+    steps=[
+        {"name": "step1", "type": "prompt", "prompt_name": "my-agent-v2"},
+    ],
+)
+print(f"Workflow ID: {workflow.get('id')}")
+
+# Patch a workflow
+pl.patch_workflow(
+    workflow_id=workflow["id"],
+    name="Updated Pipeline",
+)
+print("Workflow updated")
+
+pl.shutdown()
+```
