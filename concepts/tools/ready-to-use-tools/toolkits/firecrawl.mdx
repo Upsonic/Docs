@@ -54,8 +54,6 @@ print(result)
 
 ## Parameters
 
-### FirecrawlTools
-
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `api_key` | `str \| None` | from env `FIRECRAWL_API_KEY` | Firecrawl API key. |
@@ -65,27 +63,3 @@ print(result)
 | `default_search_limit` | `int` | `5` | Default result limit for search operations. |
 | `fc_timeout` | `int` | `120` | Timeout in seconds for blocking operations. |
 | `poll_interval` | `int` | `2` | Seconds between job status polls. |
-
-### ToolKit (base)
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `include_tools` | `list[str] \| None` | `None` | Tool names to add to the candidate set (additive). |
-| `exclude_tools` | `list[str] \| None` | `None` | Tool names to remove from the candidate set. |
-| `use_async` | `bool` | `False` | If `True`, register async methods and drop sync. |
-| `requires_confirmation` | `bool \| None` | `None` | Require user confirmation before tool execution. |
-| `requires_user_input` | `bool \| None` | `None` | Require user input for specified fields. |
-| `user_input_fields` | `list[str] \| None` | `None` | Field names that require user input. |
-| `external_execution` | `bool \| None` | `None` | Tool runs externally (deferred execution). |
-| `show_result` | `bool \| None` | `None` | Show tool result in console. |
-| `stop_after_tool_call` | `bool \| None` | `None` | Stop agent after one tool call. |
-| `sequential` | `bool \| None` | `None` | Run tools sequentially. |
-| `cache_results` | `bool \| None` | `None` | Cache tool results. |
-| `cache_dir` | `str \| None` | `None` | Directory for cache storage. |
-| `cache_ttl` | `int \| None` | `None` | Cache TTL in seconds. |
-| `tool_hooks` | `Any \| None` | `None` | Before/after hooks for tool execution. |
-| `max_retries` | `int \| None` | `None` | Max retries per tool call. |
-| `timeout` | `float \| None` | `None` | Timeout in seconds for tool execution. |
-| `strict` | `bool \| None` | `None` | Strict JSON schema validation. |
-| `docstring_format` | `str \| None` | `None` | Docstring format for schema generation. |
-| `require_parameter_descriptions` | `bool \| None` | `None` | Require parameter descriptions in schema. |

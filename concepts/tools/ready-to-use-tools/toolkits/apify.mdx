@@ -70,6 +70,36 @@ task = Task(
 agent.print_do(task)
 ```
 
+## Actor Defaults
+
+Use `actor_defaults` to pre-set input parameters for specific Actors. These values are always sent to the Actor but **hidden from the LLM** — the model won't see or override them.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.apify import ApifyTools
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    tools=[
+        ApifyTools(
+            actors=["compass/crawler-google-places"],
+            apify_api_token="your_apify_api_token",
+            actor_defaults={
+                "compass/crawler-google-places": {
+                    "maxCrawledPlacesPerSearch": 3,
+                    "language": "en",
+                }
+            },
+        )
+    ],
+)
+
+task = Task("Find the best falafel places in Kadikoy, Istanbul")
+agent.print_do(task)
+```
+
+Pre-set values are merged underneath LLM-provided arguments at call time. The LLM only sees and controls parameters **not** listed in `actor_defaults`.
+
 ## Popular Actors
 
 You can register any Actor from the [Apify Store](https://apify.com/store). Here are some popular ones:
@@ -93,6 +123,7 @@ Each registered Actor becomes a tool named `apify_actor_<actor_id>` (with `/` an
 |-----------|------|---------|-------------|
 | **actors** | `str` or `List[str]` | `None` | Single Actor ID or list of Actor IDs to register as tools. |
 | **apify_api_token** | `str` | `None` | Apify API token. Falls back to `APIFY_API_TOKEN` environment variable. |
+| **actor_defaults** | `Dict[str, Dict[str, Any]]` | `None` | Per-actor default input values. Keys are actor IDs, values are dicts of parameter → value. Hidden from the LLM and merged at call time. |
 
 ## Resources
 
