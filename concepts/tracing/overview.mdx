@@ -35,9 +35,19 @@ agent.run (SERVER)
 
 - `gen_ai.request.model`, `gen_ai.response.model` — model used
 - `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens` — token counts
-- `upsonic.cost`, `upsonic.execution_time` — cost and duration
+- `gen_ai.request.temperature`, `gen_ai.request.max_tokens` — request parameters
+- `gen_ai.response.id`, `gen_ai.response.finish_reasons` — response metadata
+- `upsonic.total_cost`, `upsonic.execution_time` — cost and duration
+- `upsonic.model_execution_time`, `upsonic.framework_overhead_time` — timing breakdown
+- `upsonic.time_to_first_token` — streaming latency
 - `upsonic.tool_call_count` — number of tool calls
+- `upsonic.tool.name`, `upsonic.tool.execution_time`, `upsonic.tool.success` — per-tool details
 - `upsonic.input`, `upsonic.output` — task input/output
+- `upsonic.run_id`, `upsonic.status` — run identification and status
+- `upsonic.agent.name`, `upsonic.agent.model` — agent metadata
+- `upsonic.usage.total_tokens`, `upsonic.usage.cache_read_tokens`, `upsonic.usage.cache_write_tokens` — detailed token usage
+- `upsonic.pipeline.total_steps`, `upsonic.pipeline.executed_steps` — pipeline progress
+- `upsonic.step.name`, `upsonic.step.status`, `upsonic.step.execution_time` — per-step details
 - `user.id`, `session.id` — user and session tracking
 
 ---
