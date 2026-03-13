@@ -21,7 +21,7 @@ description: "Web scraping, crawling, and extraction via Firecrawl API. Inherits
 from upsonic import Agent, Task
 from upsonic.tools.custom_tools.firecrawl import FirecrawlTools
 
-agent = Agent(model="anthropic/claude-sonnet-4-5", tools=[FirecrawlTools()])
+agent = Agent(model="anthropic/claude-sonnet-4-6", tools=[FirecrawlTools()])
 task = Task(description="Scrape https://www.nike.com.tr and summarize the main content in one short paragraph.")
 result = agent.print_do(task)
 print(result)
@@ -40,7 +40,7 @@ tools = FirecrawlTools(
     exclude_tools=["crawl_website", "start_crawl", "get_crawl_status", "cancel_crawl"],
     timeout=60.0,
 )
-agent = Agent(model="openai/gpt-4o", tools=[tools])
+agent = Agent(model="anthropic/claude-sonnet-4-6", tools=[tools])
 task = Task(description="Search the web for 'Upsonic AI agent framework' and summarize the top 3 results.")
 result = agent.print_do(task)
 print(result)

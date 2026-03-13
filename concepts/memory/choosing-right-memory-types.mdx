@@ -53,10 +53,10 @@ memory = Memory(
     session_id="meeting_001",
     full_session_memory=True
     summary_memory=True,
-    model="openai/gpt-4o-mini"  # Required for summaries
+    model="anthropic/claude-sonnet-4-5"  # Required for summaries
 )
 
-agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
 
 result1 = agent.do(Task("Let's discuss Q1 revenue targets"))
 result2 = agent.do(Task("Now let's cover hiring plans"))
@@ -83,7 +83,7 @@ memory = Memory(
     model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
 
 result = agent.do(Task("I'm a backend developer who prefers Python"))
 print(result)  # Agent learns about user
@@ -106,10 +106,10 @@ memory = Memory(
     full_session_memory=True,
     summary_memory=True,
     num_last_messages=20,  # Keep last 20 turns + summary
-    model="openai/gpt-4o-mini"
+    model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
 
 result = agent.do(Task("Let's continue learning Python functions"))
 print(result)
@@ -137,7 +137,7 @@ memory = Memory(
     model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
 
 result1 = agent.do(Task("Hi! I'm a data scientist learning about LLMs"))
 result2 = agent.do(Task("What recommendations do you have for me?"))

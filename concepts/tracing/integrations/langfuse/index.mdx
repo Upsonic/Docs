@@ -35,7 +35,7 @@ from upsonic import Agent, Task
 from upsonic.integrations.langfuse import Langfuse
 
 langfuse = Langfuse()
-agent = Agent("openai/gpt-4o", instrument=langfuse)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
 
 task = Task(description="What is 2 + 2?")
 agent.print_do(task)
@@ -66,7 +66,7 @@ langfuse = Langfuse(
 )
 
 agent = Agent(
-    "openai/gpt-4o",
+    "anthropic/claude-sonnet-4-6",
     instrument=langfuse,
     session_id="chat-session-001",
     user_id="user@example.com",
@@ -100,8 +100,8 @@ from upsonic.eval import AccuracyEvaluator
 
 langfuse = Langfuse()
 
-agent = Agent("openai/gpt-4o", instrument=langfuse)
-judge = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+judge = Agent("anthropic/claude-sonnet-4-6")
 
 evaluator = AccuracyEvaluator(
     judge_agent=judge,
@@ -132,8 +132,8 @@ from upsonic.integrations.langfuse import Langfuse
 from upsonic.eval import AccuracyEvaluator
 
 langfuse = Langfuse()
-agent = Agent("openai/gpt-4o", instrument=langfuse)
-judge = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+judge = Agent("anthropic/claude-sonnet-4-6")
 
 evaluator = AccuracyEvaluator(
     judge_agent=judge,

@@ -17,7 +17,7 @@ from upsonic import Agent, Task
 from upsonic.integrations.langfuse import Langfuse
 
 langfuse = Langfuse()
-agent = Agent("openai/gpt-4o", instrument=langfuse)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
 
 # Run the agent and get the trace ID
 result = agent.do("What is the weather in Paris?", return_output=True)
@@ -63,7 +63,7 @@ from upsonic import Agent, Task
 from upsonic.integrations.langfuse import Langfuse
 
 langfuse = Langfuse()
-agent = Agent("openai/gpt-4o", instrument=langfuse)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
 
 result = agent.do("What is 2 + 2?", return_output=True)
 trace_id = result.trace_id
@@ -87,7 +87,7 @@ from upsonic import Agent, Task
 from upsonic.integrations.langfuse import Langfuse
 
 langfuse = Langfuse()
-agent = Agent("openai/gpt-4o", instrument=langfuse)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
 
 result = agent.do("Hello!", return_output=True)
 trace_id = result.trace_id
@@ -121,7 +121,7 @@ from upsonic import Agent, Task
 from upsonic.integrations.langfuse import Langfuse
 
 langfuse = Langfuse()
-agent = Agent("openai/gpt-4o", instrument=langfuse)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
 
 result = agent.do("Hello!", return_output=True)
 trace_id = result.trace_id
@@ -151,7 +151,7 @@ from upsonic import Agent, Task
 from upsonic.integrations.langfuse import Langfuse
 
 langfuse = Langfuse()
-agent = Agent("openai/gpt-4o", instrument=langfuse)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
 
 # Create configs
 numeric_config = langfuse.create_score_config(
@@ -238,7 +238,7 @@ from upsonic import Agent, Task
 from upsonic.integrations.langfuse import Langfuse
 
 langfuse = Langfuse()
-agent = Agent("openai/gpt-4o", instrument=langfuse)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
 
 # 1. Create a dataset
 langfuse.create_dataset(
@@ -345,7 +345,7 @@ from upsonic import Agent, Task
 from upsonic.integrations.langfuse import Langfuse
 
 langfuse = Langfuse()
-agent = Agent("openai/gpt-4o", instrument=langfuse)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
 
 # 1. Create score configs for the queue
 numeric_config = langfuse.create_score_config(
@@ -462,7 +462,7 @@ from upsonic import Agent, Task
 from upsonic.integrations.langfuse import Langfuse
 
 langfuse = Langfuse()
-agent = Agent("openai/gpt-4o", instrument=langfuse)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
 
 result = agent.do("What is 2 + 2?", return_output=True)
 trace_id = result.trace_id
