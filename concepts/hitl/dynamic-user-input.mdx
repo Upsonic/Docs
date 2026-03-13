@@ -29,7 +29,7 @@ def fill_user_input(requirement) -> None:
     requirement.tool_execution.answered = True
 
 async def main():
-    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="dynamic_input_agent")
     task = Task(
         description="Send an email with the body 'What is the weather in Tokyo?'",
         tools=[send_email, UserControlFlowTools()]
@@ -74,7 +74,7 @@ def send_email(subject: str, body: str, to_address: str) -> str:
     return f"Email sent to {to_address} with subject '{subject}' and body '{body}'"
 
 async def main():
-    agent = Agent("openai/gpt-4o-mini")
+    agent = Agent("anthropic/claude-sonnet-4-6")
     task = Task(
         description="Send an email with the body 'What is the weather in Tokyo?'",
         tools=[send_email, UserControlFlowTools()]
@@ -127,7 +127,7 @@ def fill_user_input(requirement) -> None:
     requirement.tool_execution.answered = True
 
 async def main():
-    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="dynamic_input_agent")
     task = Task(
         description="Send an email with the body 'What is the weather in Tokyo?'",
         tools=[send_email, UserControlFlowTools()]
@@ -170,7 +170,7 @@ def fill_user_input(requirement) -> None:
     requirement.tool_execution.answered = True
 
 async def dynamic_input_with_run_id_same_agent():
-    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="dynamic_input_agent")
     task = Task(
         description="Send an email with the body 'What is the weather in Tokyo?'",
         tools=[send_email, UserControlFlowTools()]
@@ -212,7 +212,7 @@ def fill_user_input(requirement) -> None:
     requirement.tool_execution.answered = True
 
 async def dynamic_input_with_task_same_agent():
-    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="dynamic_input_agent")
     task = Task(
         description="Send an email with the body 'What is the weather in Tokyo?'",
         tools=[send_email, UserControlFlowTools()]
@@ -258,7 +258,7 @@ def fill_user_input(requirement) -> None:
 
 async def dynamic_input_with_run_id_new_agent():
     db = SqliteDatabase(db_file="dynamic_input.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent", db=db)
+    agent = Agent("anthropic/claude-sonnet-4-6", name="dynamic_input_agent", db=db)
     task = Task(
         description="Send an email with the body 'What is the weather in Tokyo?'",
         tools=[send_email, UserControlFlowTools()]
@@ -271,7 +271,7 @@ async def dynamic_input_with_run_id_new_agent():
         for requirement in output.active_requirements:
             if requirement.needs_user_input:
                 fill_user_input(requirement)
-        new_agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent", db=db)
+        new_agent = Agent("anthropic/claude-sonnet-4-6", name="dynamic_input_agent", db=db)
         output = await new_agent.continue_run_async(
             run_id=run_id,
             requirements=output.requirements,
@@ -312,7 +312,7 @@ def hitl_handler(requirement) -> None:
         fill_user_input(requirement)
 
 async def dynamic_input_with_hitl_handler_run_id():
-    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="dynamic_input_agent")
     task = Task(
         description="Send an email with the body 'What is the weather in Tokyo?'",
         tools=[send_email, UserControlFlowTools()]
@@ -365,7 +365,7 @@ def fill_user_input(requirement) -> None:
 
 async def dynamic_input_cross_process_run_id():
     db = SqliteDatabase(db_file="dynamic_input.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent", db=db)
+    agent = Agent("anthropic/claude-sonnet-4-6", name="dynamic_input_agent", db=db)
     task = Task(
         description="Send an email with the body 'What is the weather in Tokyo?'",
         tools=[send_email, UserControlFlowTools()]
@@ -385,7 +385,7 @@ async def dynamic_input_cross_process_run_id():
                 fill_user_input(req)
 
         new_db = SqliteDatabase(db_file="dynamic_input.db", session_id="session_1", user_id="user_1")
-        new_agent = Agent("openai/gpt-4o-mini", name="dynamic_input_agent", db=new_db)
+        new_agent = Agent("anthropic/claude-sonnet-4-6", name="dynamic_input_agent", db=new_db)
         result = await new_agent.continue_run_async(
             run_id=run_id,
             requirements=output.requirements,

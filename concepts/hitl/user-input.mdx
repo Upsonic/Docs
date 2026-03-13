@@ -27,7 +27,7 @@ def fill_user_input(requirement) -> None:
     requirement.tool_execution.answered = True
 
 async def main():
-    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent")
     task = Task(
         description="Send an email with subject 'Hello' and body 'Hello, world!'.",
         tools=[send_email]
@@ -121,7 +121,7 @@ def hitl_handler(requirement) -> None:
         fill_user_input(requirement)
 
 async def main():
-    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent")
     task = Task(
         description="Send an email with subject 'Hello' and body 'Hello, world!'.",
         tools=[send_email]
@@ -164,7 +164,7 @@ def fill_user_input(requirement) -> None:
     requirement.tool_execution.answered = True
 
 async def user_input_with_run_id_same_agent():
-    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent")
     task = Task(
         description="Send an email with subject 'Hello' and body 'Hello, world!'.",
         tools=[send_email]
@@ -203,7 +203,7 @@ def fill_user_input(requirement) -> None:
     requirement.tool_execution.answered = True
 
 async def user_input_with_task_same_agent():
-    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent")
     task = Task(
         description="Send an email with subject 'Hello' and body 'Hello, world!'.",
         tools=[send_email]
@@ -244,7 +244,7 @@ def fill_user_input(requirement) -> None:
 
 async def user_input_with_run_id_new_agent():
     db = SqliteDatabase(db_file="user_input.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=db)
+    agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent", db=db)
     task = Task(
         description="Send an email with subject 'Hello' and body 'Hello, world!'.",
         tools=[send_email]
@@ -257,7 +257,7 @@ async def user_input_with_run_id_new_agent():
         if requirement.needs_user_input:
             fill_user_input(requirement)
 
-    new_agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=db)
+    new_agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent", db=db)
     result = await new_agent.continue_run_async(
         run_id=run_id,
         requirements=output.requirements,
@@ -291,7 +291,7 @@ def fill_user_input(requirement) -> None:
 
 async def user_input_with_task_new_agent():
     db = SqliteDatabase(db_file="user_input.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=db)
+    agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent", db=db)
     task = Task(
         description="Send an email with subject 'Hello' and body 'Hello, world!'.",
         tools=[send_email]
@@ -303,7 +303,7 @@ async def user_input_with_task_new_agent():
         if requirement.needs_user_input:
             fill_user_input(requirement)
 
-    new_agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=db)
+    new_agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent", db=db)
     result = await new_agent.continue_run_async(
         task=task,
         requirements=output.requirements,
@@ -346,7 +346,7 @@ def fill_user_input(requirement) -> None:
     requirement.tool_execution.answered = True
 
 async def user_input_multiple_tools_loop_run_id():
-    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent")
     task = Task(
         description=(
             "First, create a support ticket titled 'Bug Report' with description 'App crashes on login'. "
@@ -406,7 +406,7 @@ def hitl_handler(requirement) -> None:
         fill_user_input(requirement)
 
 async def user_input_multiple_tools_handler_run_id():
-    agent = Agent("openai/gpt-4o-mini", name="user_input_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent")
     task = Task(
         description=(
             "First, create a support ticket titled 'Bug Report' with description 'App crashes on login'. "
@@ -456,7 +456,7 @@ def fill_user_input(requirement) -> None:
 
 async def user_input_cross_process_run_id():
     db = SqliteDatabase(db_file="user_input.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=db)
+    agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent", db=db)
     task = Task(
         description="Send an email with subject 'Report' and body 'Monthly report attached'.",
         tools=[send_email]
@@ -478,7 +478,7 @@ async def user_input_cross_process_run_id():
             fill_user_input(req)
 
     new_db = SqliteDatabase(db_file="user_input.db", session_id="session_1", user_id="user_1")
-    new_agent = Agent("openai/gpt-4o-mini", name="user_input_agent", db=new_db)
+    new_agent = Agent("anthropic/claude-sonnet-4-6", name="user_input_agent", db=new_db)
     result = await new_agent.continue_run_async(
         run_id=run_id,
         requirements=output.requirements,

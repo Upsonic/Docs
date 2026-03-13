@@ -57,7 +57,7 @@ export UPSONIC_OTEL_ENDPOINT=http://localhost:4317
 from upsonic import Agent
 
 # Automatically instrumented — no instrument= parameter needed
-agent = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-6")
 agent.print_do("What is 2 + 2?")
 ```
 
@@ -74,7 +74,7 @@ Creates a `DefaultTracingProvider` from environment variables automatically.
 ```python
 from upsonic import Agent
 
-agent = Agent("openai/gpt-4o", instrument=True)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=True)
 agent.print_do("What is 2 + 2?")
 ```
 
@@ -87,7 +87,7 @@ from upsonic import Agent
 from upsonic.integrations.tracing import DefaultTracingProvider
 
 provider = DefaultTracingProvider(endpoint="http://localhost:4317")
-agent = Agent("openai/gpt-4o", instrument=provider)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=provider)
 agent.print_do("Summarize this report.")
 ```
 
@@ -104,7 +104,7 @@ provider = DefaultTracingProvider(
     include_content=False,
 )
 
-agent = Agent("openai/gpt-4o", instrument=provider)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=provider)
 agent.print_do("What is 2 + 2?")
 ```
 
@@ -119,8 +119,8 @@ from upsonic.integrations.tracing import DefaultTracingProvider
 provider = DefaultTracingProvider(endpoint="http://localhost:4317")
 Agent.instrument_all(provider)
 
-agent1 = Agent("openai/gpt-4o")   # instrumented
-agent2 = Agent("openai/gpt-4o")   # also instrumented
+agent1 = Agent("anthropic/claude-sonnet-4-6")   # instrumented
+agent2 = Agent("anthropic/claude-sonnet-4-6")   # also instrumented
 
 agent1.print_do("What is 2 + 2?")
 agent2.print_do("What is 3 + 3?")
@@ -137,7 +137,7 @@ from upsonic.integrations.tracing import DefaultTracingProvider
 provider = DefaultTracingProvider(endpoint="http://localhost:4317")
 
 agent = Agent(
-    "openai/gpt-4o",
+    "anthropic/claude-sonnet-4-6",
     instrument=provider,
     session_id="conversation-123",
     user_id="user@example.com",
@@ -154,7 +154,7 @@ from upsonic import Agent
 from upsonic.integrations.tracing import DefaultTracingProvider
 
 provider = DefaultTracingProvider(endpoint="http://localhost:4317")
-agent = Agent("openai/gpt-4o", instrument=provider)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=provider)
 
 for chunk in agent.stream("Count to 5", events=False):
     print(chunk, end="")
@@ -167,7 +167,7 @@ from upsonic import Agent
 from upsonic.integrations.tracing import DefaultTracingProvider
 
 provider = DefaultTracingProvider(endpoint="http://localhost:4317", include_content=False)
-agent = Agent("openai/gpt-4o", instrument=provider)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=provider)
 agent.print_do("Process SSN: 123-45-6789")
 # Prompts and responses will NOT appear in traces
 ```
@@ -193,7 +193,7 @@ settings = InstrumentationSettings(
     meter_provider=MeterProvider(),
 )
 
-agent = Agent("openai/gpt-4o", instrument=settings)
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=settings)
 agent.print_do("Hello!")
 
 for span in exporter.get_finished_spans():
@@ -247,7 +247,7 @@ docker run -d --name jaeger -p 4317:4317 -p 16686:16686 jaegertracing/all-in-one
 
 ```python
 from upsonic.integrations.langfuse import Langfuse
-agent = Agent("openai/gpt-4o", instrument=Langfuse())
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=Langfuse())
 ```
 
 3. **Don't use tracing** — simply don't set `instrument` or `UPSONIC_OTEL_ENABLED`.

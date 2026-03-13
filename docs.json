@@ -212,8 +212,25 @@
                 "icon": "chart-line",
                 "pages": [
                   "concepts/tracing/overview",
-                  "concepts/tracing/langfuse",
-                  "concepts/tracing/promptlayer"
+                  {
+                    "group": "Integrations",
+                    "pages": [
+                      {
+                        "group": "Langfuse",
+                        "pages": [
+                          "concepts/tracing/integrations/langfuse/index",
+                          "concepts/tracing/integrations/langfuse/advanced"
+                        ]
+                      },
+                      {
+                        "group": "PromptLayer",
+                        "pages": [
+                          "concepts/tracing/integrations/promptlayer/index",
+                          "concepts/tracing/integrations/promptlayer/advanced"
+                        ]
+                      }
+                    ]
+                  }
                 ]
               },
               {
@@ -292,38 +309,48 @@
                         ]
                       },
                       {
-                        "group": "Model Provider Tools",
+                        "group": "Ready-to-Use Tools",
                         "pages": [
-                          "concepts/tools/model-provider-tools/supported-providers",
-                          "concepts/tools/model-provider-tools/web-search-tool",
-                          "concepts/tools/model-provider-tools/web-search-user-location",
-                          "concepts/tools/model-provider-tools/web-fetch-tool",
-                          "concepts/tools/model-provider-tools/file-search-tool",
-                          "concepts/tools/model-provider-tools/code-execution-tool",
-                          "concepts/tools/model-provider-tools/url-context-tool",
-                          "concepts/tools/model-provider-tools/mcp-server-tool",
-                          "concepts/tools/model-provider-tools/image-generation-tool"
-                        ]
-                      },
-                      {
-                        "group": "Search Tools",
-                        "pages": [
-                          "concepts/tools/search-tools/duckduckgo",
-                          "concepts/tools/search-tools/bochasearch",
-                          "concepts/tools/search-tools/tavily"
-                        ]
-                      },
-                      {
-                        "group": "Data Tools",
-                        "pages": [
-                          "concepts/tools/data-tools/yfinance"
-                        ]
-                      },
-                      {
-                        "group": "Scraping Tools",
-                        "pages": [
-                          "concepts/tools/scraping-tools/apify",
-                          "concepts/tools/scraping-tools/firecrawl"
+                          {
+                            "group": "Class Tools",
+                            "pages": [
+                              "concepts/tools/ready-to-use-tools/class-tools/yfinance-tools"
+                            ]
+                          },
+                          {
+                            "group": "Function Tools",
+                            "pages": [
+                              "concepts/tools/ready-to-use-tools/function-tools/duckduckgo",
+                              "concepts/tools/ready-to-use-tools/function-tools/bochasearch",
+                              "concepts/tools/ready-to-use-tools/function-tools/tavily"
+                            ]
+                          },
+                          {
+                            "group": "ToolKits",
+                            "pages": [
+                              "concepts/tools/ready-to-use-tools/toolkits/apify",
+                              "concepts/tools/ready-to-use-tools/toolkits/firecrawl"
+                            ]
+                          },
+                          {
+                            "group": "Model Provider Tools",
+                            "pages": [
+                              "concepts/tools/ready-to-use-tools/model-provider-tools/supported-providers",
+                              {
+                                "group": "Available Tools",
+                                "pages": [
+                                  "concepts/tools/ready-to-use-tools/model-provider-tools/tools/web-search-tool",
+                                  "concepts/tools/ready-to-use-tools/model-provider-tools/tools/web-search-user-location",
+                                  "concepts/tools/ready-to-use-tools/model-provider-tools/tools/web-fetch-tool",
+                                  "concepts/tools/ready-to-use-tools/model-provider-tools/tools/file-search-tool",
+                                  "concepts/tools/ready-to-use-tools/model-provider-tools/tools/code-execution-tool",
+                                  "concepts/tools/ready-to-use-tools/model-provider-tools/tools/url-context-tool",
+                                  "concepts/tools/ready-to-use-tools/model-provider-tools/tools/mcp-server-tool",
+                                  "concepts/tools/ready-to-use-tools/model-provider-tools/tools/image-generation-tool"
+                                ]
+                              }
+                            ]
+                          }
                         ]
                       }
                     ]
@@ -358,26 +385,26 @@
                           "concepts/memory/memory-types/focus-memory",
                           "concepts/memory/memory-types/summary-memory"
                         ]
+                      },
+                      {
+                        "group": "Storage Options",
+                        "pages": [
+                          "concepts/memory/storage-options/inmemory-storage",
+                          "concepts/memory/storage-options/json-storage",
+                          "concepts/memory/storage-options/sqlite-storage",
+                          "concepts/memory/storage-options/postgres-storage",
+                          "concepts/memory/storage-options/redis-storage",
+                          "concepts/memory/storage-options/mem0-storage",
+                          "concepts/memory/storage-options/mongo-storage",
+                          "concepts/memory/storage-options/async-sqlite-storage",
+                          "concepts/memory/storage-options/async-postgres-storage",
+                          "concepts/memory/storage-options/async-mongo-storage",
+                          "concepts/memory/storage-options/async-mem0-storage",
+                          "concepts/memory/storage-tables"
+                        ]
                       }
                     ],
                     "collapsed": false
-                  },
-                  {
-                    "group": "Storage Backends",
-                    "pages": [
-                      "concepts/memory/storage/inmemory",
-                      "concepts/memory/storage/json",
-                      "concepts/memory/storage/sqlite",
-                      "concepts/memory/storage/postgres",
-                      "concepts/memory/storage/redis",
-                      "concepts/memory/storage/mongo",
-                      "concepts/memory/storage/mem0",
-                      "concepts/memory/storage/async-sqlite",
-                      "concepts/memory/storage/async-postgres",
-                      "concepts/memory/storage/async-mongo",
-                      "concepts/memory/storage/async-mem0",
-                      "concepts/memory/storage/storage-tables"
-                    ]
                   }
                 ]
               },
@@ -398,64 +425,69 @@
                     "collapsed": false
                   },
                   {
+                    "group": "Integrations",
+                    "pages": [
+                      {
+                        "group": "Embedding Providers",
+                        "pages": [
+                          "concepts/knowledgebase/embedding-providers/openai",
+                          "concepts/knowledgebase/embedding-providers/azure",
+                          "concepts/knowledgebase/embedding-providers/google",
+                          "concepts/knowledgebase/embedding-providers/bedrock",
+                          "concepts/knowledgebase/embedding-providers/huggingface",
+                          "concepts/knowledgebase/embedding-providers/fastembed",
+                          "concepts/knowledgebase/embedding-providers/ollama"
+                        ]
+                      },
+                      {
+                        "group": "Document Loaders",
+                        "pages": [
+                          "concepts/knowledgebase/loaders/pdfplumber",
+                          "concepts/knowledgebase/loaders/pymupdf",
+                          "concepts/knowledgebase/loaders/pypdf",
+                          "concepts/knowledgebase/loaders/docx",
+                          "concepts/knowledgebase/loaders/docling",
+                          "concepts/knowledgebase/loaders/csv",
+                          "concepts/knowledgebase/loaders/json",
+                          "concepts/knowledgebase/loaders/markdown",
+                          "concepts/knowledgebase/loaders/html",
+                          "concepts/knowledgebase/loaders/xml",
+                          "concepts/knowledgebase/loaders/yml",
+                          "concepts/knowledgebase/loaders/text"
+                        ]
+                      },
+                      {
+                        "group": "Text Splitters",
+                        "pages": [
+                          "concepts/knowledgebase/splitters/recursive",
+                          "concepts/knowledgebase/splitters/semantic",
+                          "concepts/knowledgebase/splitters/agentic",
+                          "concepts/knowledgebase/splitters/character",
+                          "concepts/knowledgebase/splitters/markdown",
+                          "concepts/knowledgebase/splitters/html",
+                          "concepts/knowledgebase/splitters/json",
+                          "concepts/knowledgebase/splitters/python"
+                        ]
+                      },
+                      {
+                        "group": "Vector Stores",
+                        "pages": [
+                          "concepts/knowledgebase/storage-providers/pgvector",
+                          "concepts/knowledgebase/storage-providers/chroma",
+                          "concepts/knowledgebase/storage-providers/qdrant",
+                          "concepts/knowledgebase/storage-providers/pinecone",
+                          "concepts/knowledgebase/storage-providers/milvus",
+                          "concepts/knowledgebase/storage-providers/faiss",
+                          "concepts/knowledgebase/storage-providers/weaviate",
+                          "concepts/knowledgebase/storage-providers/supermemory"
+                        ]
+                      }
+                    ]
+                  },
+                  {
                     "group": "Advanced",
                     "pages": [
                       "concepts/knowledgebase/advanced"
-                    ]
-                  },
-                  {
-                    "group": "Vector Stores",
-                    "pages": [
-                      "concepts/knowledgebase/vector-stores/chroma",
-                      "concepts/knowledgebase/vector-stores/qdrant",
-                      "concepts/knowledgebase/vector-stores/pinecone",
-                      "concepts/knowledgebase/vector-stores/milvus",
-                      "concepts/knowledgebase/vector-stores/pgvector",
-                      "concepts/knowledgebase/vector-stores/faiss",
-                      "concepts/knowledgebase/vector-stores/weaviate",
-                      "concepts/knowledgebase/vector-stores/supermemory"
-                    ]
-                  },
-                  {
-                    "group": "Embedding Providers",
-                    "pages": [
-                      "concepts/knowledgebase/embedding-providers/openai",
-                      "concepts/knowledgebase/embedding-providers/azure",
-                      "concepts/knowledgebase/embedding-providers/google",
-                      "concepts/knowledgebase/embedding-providers/bedrock",
-                      "concepts/knowledgebase/embedding-providers/huggingface",
-                      "concepts/knowledgebase/embedding-providers/fastembed",
-                      "concepts/knowledgebase/embedding-providers/ollama"
-                    ]
-                  },
-                  {
-                    "group": "Document Loaders",
-                    "pages": [
-                      "concepts/knowledgebase/document-loaders/pypdf",
-                      "concepts/knowledgebase/document-loaders/pdfplumber",
-                      "concepts/knowledgebase/document-loaders/pymupdf",
-                      "concepts/knowledgebase/document-loaders/docling",
-                      "concepts/knowledgebase/document-loaders/docx",
-                      "concepts/knowledgebase/document-loaders/csv",
-                      "concepts/knowledgebase/document-loaders/json",
-                      "concepts/knowledgebase/document-loaders/markdown",
-                      "concepts/knowledgebase/document-loaders/html",
-                      "concepts/knowledgebase/document-loaders/xml",
-                      "concepts/knowledgebase/document-loaders/yml",
-                      "concepts/knowledgebase/document-loaders/text"
-                    ]
-                  },
-                  {
-                    "group": "Text Splitters",
-                    "pages": [
-                      "concepts/knowledgebase/text-splitters/recursive",
-                      "concepts/knowledgebase/text-splitters/semantic",
-                      "concepts/knowledgebase/text-splitters/agentic",
-                      "concepts/knowledgebase/text-splitters/character",
-                      "concepts/knowledgebase/text-splitters/markdown",
-                      "concepts/knowledgebase/text-splitters/html",
-                      "concepts/knowledgebase/text-splitters/json",
-                      "concepts/knowledgebase/text-splitters/python"
                     ]
                   }
                 ]
@@ -499,60 +531,60 @@
                   "concepts/llm-support/llm-overview",
                   "concepts/llm-support/model-as-string",
                   "concepts/llm-support/compatibility-overview",
-                  "concepts/llm-support/openai-compatible",
-                  "concepts/llm-support/error-handling",
                   {
-                    "group": "Providers",
+                    "group": "Native Providers",
                     "pages": [
                       {
-                        "group": "Native Providers",
+                        "group": "OpenAI",
                         "pages": [
-                          "concepts/llm-support/providers/openai-chat",
-                          "concepts/llm-support/providers/openai-responses",
-                          "concepts/llm-support/providers/anthropic",
-                          "concepts/llm-support/providers/google",
-                          "concepts/llm-support/providers/grok",
-                          "concepts/llm-support/providers/mistral",
-                          "concepts/llm-support/providers/cohere",
-                          "concepts/llm-support/providers/moonshotai",
-                          "concepts/llm-support/providers/xai"
+                          "concepts/llm-support/native-providers/native-providers-openai-chat",
+                          "concepts/llm-support/native-providers/native-providers-openai-responses"
                         ]
                       },
-                      {
-                        "group": "Cloud Providers",
-                        "pages": [
-                          "concepts/llm-support/providers/azure",
-                          "concepts/llm-support/providers/bedrock",
-                          "concepts/llm-support/providers/huggingface",
-                          "concepts/llm-support/providers/heroku",
-                          "concepts/llm-support/providers/ovhcloud"
-                        ]
-                      },
-                      {
-                        "group": "Local Providers",
-                        "pages": [
-                          "concepts/llm-support/providers/ollama",
-                          "concepts/llm-support/providers/vllm",
-                          "concepts/llm-support/providers/lmstudio"
-                        ]
-                      },
-                      {
-                        "group": "Model Gateways",
-                        "pages": [
-                          "concepts/llm-support/providers/groq",
-                          "concepts/llm-support/providers/litellm",
-                          "concepts/llm-support/providers/nvidia",
-                          "concepts/llm-support/providers/openrouter",
-                          "concepts/llm-support/providers/cerebras",
-                          "concepts/llm-support/providers/github",
-                          "concepts/llm-support/providers/outlines",
-                          "concepts/llm-support/providers/sambanova",
-                          "concepts/llm-support/providers/together",
-                          "concepts/llm-support/providers/vercel"
-                        ]
-                      }
+                      "concepts/llm-support/native-providers/native-providers-anthropic",
+                      "concepts/llm-support/native-providers/native-providers-google",
+                      "concepts/llm-support/native-providers/native-providers-grok",
+                      "concepts/llm-support/native-providers/native-providers-mistral",
+                      "concepts/llm-support/native-providers/native-providers-cohere",
+                      "concepts/llm-support/native-providers/moonshotai",
+                      "concepts/llm-support/native-providers/xai"
                     ]
-                  }
+                  },
+                  {
+                    "group": "Cloud Providers",
+                    "pages": [
+                      "concepts/llm-support/cloud-providers/cloud-providers-azure",
+                      "concepts/llm-support/cloud-providers/cloud-providers-bedrock",
+                      "concepts/llm-support/cloud-providers/cloud-providers-huggingface",
+                      "concepts/llm-support/cloud-providers/heroku",
+                      "concepts/llm-support/cloud-providers/ovhcloud"
+                    ]
+                  },
+                  {
+                    "group": "Local Providers",
+                    "pages": [
+                      "concepts/llm-support/local-providers/local-providers-ollama",
+                      "concepts/llm-support/local-providers/local-providers-vllm",
+                      "concepts/llm-support/local-providers/local-providers-lmstudio"
+                    ]
+                  },
+                  {
+                    "group": "Model Gateways",
+                    "pages": [
+                      "concepts/llm-support/model-gateways/cerebras",
+                      "concepts/llm-support/model-gateways/github",
+                      "concepts/llm-support/model-gateways/model-gateways-groq",
+                      "concepts/llm-support/model-gateways/model-gateways-litellm",
+                      "concepts/llm-support/model-gateways/model-gateways-nvidia",
+                      "concepts/llm-support/model-gateways/model-gateways-openrouter",
+                      "concepts/llm-support/model-gateways/outlines",
+                      "concepts/llm-support/model-gateways/sambanova",
+                      "concepts/llm-support/model-gateways/together",
+                      "concepts/llm-support/model-gateways/vercel"
+                    ]
+                  },
+                  "concepts/llm-support/openai-compatible",
+                  "concepts/llm-support/error-handling"
                 ]
               },
               {
@@ -568,6 +600,17 @@
                     "pages": [
                       "concepts/ocr/create-an-ocr",
                       "concepts/ocr/running-an-ocr",
+                      {
+                        "group": "Layer 1 Engines",
+                        "pages": [
+                          "concepts/ocr/providers/easyocr",
+                          "concepts/ocr/providers/rapidocr",
+                          "concepts/ocr/providers/tesseract",
+                          "concepts/ocr/providers/deepseek-ocr",
+                          "concepts/ocr/providers/deepseek-ocr-ollama",
+                          "concepts/ocr/providers/paddleocr"
+                        ]
+                      },
                       "concepts/ocr/timeout",
                       "concepts/ocr/metrics-and-performance"
                     ],
@@ -578,17 +621,6 @@
                     "pages": [
                       "concepts/ocr/advanced-features",
                       "concepts/ocr/exception-handling"
-                    ]
-                  },
-                  {
-                    "group": "Engines",
-                    "pages": [
-                      "concepts/ocr/engines/easyocr",
-                      "concepts/ocr/engines/rapidocr",
-                      "concepts/ocr/engines/tesseract",
-                      "concepts/ocr/engines/paddleocr",
-                      "concepts/ocr/engines/deepseek-ocr",
-                      "concepts/ocr/engines/deepseek-ocr-ollama"
                     ]
                   }
                 ]
@@ -670,11 +702,22 @@
                 "icon": "plug",
                 "pages": [
                   "concepts/interfaces/Overview",
-                  "concepts/interfaces/slack",
-                  "concepts/interfaces/whatsapp",
-                  "concepts/interfaces/telegram",
-                  "concepts/interfaces/gmail",
-                  "concepts/interfaces/telegram-advanced"
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/interfaces/Gmail",
+                      "concepts/interfaces/Slack",
+                      "concepts/interfaces/Telegram",
+                      "concepts/interfaces/Whatsapp"
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/interfaces/telegram-advanced"
+                    ]
+                  }
                 ]
               },
               {
@@ -820,20 +863,6 @@
                 "icon": "sitemap",
                 "pages": [
                   "concepts/graph"
-                ]
-              },
-              {
-                "group": "Browser Use",
-                "icon": "globe",
-                "pages": [
-                  "concepts/browser-use"
-                ]
-              },
-              {
-                "group": "Computer Use",
-                "icon": "display",
-                "pages": [
-                  "concepts/computer-use"
                 ]
               }
             ]
@@ -1122,227 +1151,5 @@
     "gtm": {
       "tagId": "GTM-MQ8VVXSB"
     }
-  },
-  "redirects": [
-    {
-      "source": "/concepts/llm-support/native-providers/native-providers-openai-chat",
-      "destination": "/integrations/llm-providers/openai-chat"
-    },
-    {
-      "source": "/concepts/llm-support/native-providers/native-providers-openai-responses",
-      "destination": "/integrations/llm-providers/openai-responses"
-    },
-    {
-      "source": "/concepts/llm-support/native-providers/native-providers-anthropic",
-      "destination": "/integrations/llm-providers/anthropic"
-    },
-    {
-      "source": "/concepts/llm-support/native-providers/native-providers-google",
-      "destination": "/integrations/llm-providers/google"
-    },
-    {
-      "source": "/concepts/llm-support/native-providers/native-providers-grok",
-      "destination": "/integrations/llm-providers/grok"
-    },
-    {
-      "source": "/concepts/llm-support/native-providers/native-providers-mistral",
-      "destination": "/integrations/llm-providers/mistral"
-    },
-    {
-      "source": "/concepts/llm-support/native-providers/native-providers-cohere",
-      "destination": "/integrations/llm-providers/cohere"
-    },
-    {
-      "source": "/concepts/llm-support/native-providers/moonshotai",
-      "destination": "/integrations/llm-providers/moonshotai"
-    },
-    {
-      "source": "/concepts/llm-support/native-providers/xai",
-      "destination": "/integrations/llm-providers/xai"
-    },
-    {
-      "source": "/concepts/llm-support/cloud-providers/cloud-providers-azure",
-      "destination": "/integrations/llm-providers/azure"
-    },
-    {
-      "source": "/concepts/llm-support/cloud-providers/cloud-providers-bedrock",
-      "destination": "/integrations/llm-providers/bedrock"
-    },
-    {
-      "source": "/concepts/llm-support/cloud-providers/cloud-providers-huggingface",
-      "destination": "/integrations/llm-providers/huggingface"
-    },
-    {
-      "source": "/concepts/llm-support/cloud-providers/heroku",
-      "destination": "/integrations/llm-providers/heroku"
-    },
-    {
-      "source": "/concepts/llm-support/cloud-providers/ovhcloud",
-      "destination": "/integrations/llm-providers/ovhcloud"
-    },
-    {
-      "source": "/concepts/llm-support/local-providers/local-providers-ollama",
-      "destination": "/integrations/llm-providers/ollama"
-    },
-    {
-      "source": "/concepts/llm-support/local-providers/local-providers-vllm",
-      "destination": "/integrations/llm-providers/vllm"
-    },
-    {
-      "source": "/concepts/llm-support/local-providers/local-providers-lmstudio",
-      "destination": "/integrations/llm-providers/lmstudio"
-    },
-    {
-      "source": "/concepts/llm-support/model-gateways/model-gateways-groq",
-      "destination": "/integrations/llm-providers/groq"
-    },
-    {
-      "source": "/concepts/llm-support/model-gateways/model-gateways-litellm",
-      "destination": "/integrations/llm-providers/litellm"
-    },
-    {
-      "source": "/concepts/llm-support/model-gateways/model-gateways-nvidia",
-      "destination": "/integrations/llm-providers/nvidia"
-    },
-    {
-      "source": "/concepts/llm-support/model-gateways/model-gateways-openrouter",
-      "destination": "/integrations/llm-providers/openrouter"
-    },
-    {
-      "source": "/concepts/llm-support/model-gateways/cerebras",
-      "destination": "/integrations/llm-providers/cerebras"
-    },
-    {
-      "source": "/concepts/llm-support/model-gateways/github",
-      "destination": "/integrations/llm-providers/github"
-    },
-    {
-      "source": "/concepts/llm-support/model-gateways/outlines",
-      "destination": "/integrations/llm-providers/outlines"
-    },
-    {
-      "source": "/concepts/llm-support/model-gateways/sambanova",
-      "destination": "/integrations/llm-providers/sambanova"
-    },
-    {
-      "source": "/concepts/llm-support/model-gateways/together",
-      "destination": "/integrations/llm-providers/together"
-    },
-    {
-      "source": "/concepts/llm-support/model-gateways/vercel",
-      "destination": "/integrations/llm-providers/vercel"
-    },
-    {
-      "source": "/concepts/knowledgebase/storage-providers/:slug*",
-      "destination": "/integrations/vector-stores/:slug*"
-    },
-    {
-      "source": "/concepts/knowledgebase/embedding-providers/:slug*",
-      "destination": "/integrations/embedding-providers/:slug*"
-    },
-    {
-      "source": "/concepts/knowledgebase/loaders/:slug*",
-      "destination": "/integrations/document-loaders/:slug*"
-    },
-    {
-      "source": "/concepts/knowledgebase/splitters/:slug*",
-      "destination": "/integrations/text-splitters/:slug*"
-    },
-    {
-      "source": "/concepts/memory/storage-options/inmemory-storage",
-      "destination": "/integrations/memory-storage/inmemory"
-    },
-    {
-      "source": "/concepts/memory/storage-options/json-storage",
-      "destination": "/integrations/memory-storage/json"
-    },
-    {
-      "source": "/concepts/memory/storage-options/sqlite-storage",
-      "destination": "/integrations/memory-storage/sqlite"
-    },
-    {
-      "source": "/concepts/memory/storage-options/postgres-storage",
-      "destination": "/integrations/memory-storage/postgres"
-    },
-    {
-      "source": "/concepts/memory/storage-options/redis-storage",
-      "destination": "/integrations/memory-storage/redis"
-    },
-    {
-      "source": "/concepts/memory/storage-options/mem0-storage",
-      "destination": "/integrations/memory-storage/mem0"
-    },
-    {
-      "source": "/concepts/memory/storage-options/mongo-storage",
-      "destination": "/integrations/memory-storage/mongo"
-    },
-    {
-      "source": "/concepts/memory/storage-options/async-sqlite-storage",
-      "destination": "/integrations/memory-storage/async-sqlite"
-    },
-    {
-      "source": "/concepts/memory/storage-options/async-postgres-storage",
-      "destination": "/integrations/memory-storage/async-postgres"
-    },
-    {
-      "source": "/concepts/memory/storage-options/async-mongo-storage",
-      "destination": "/integrations/memory-storage/async-mongo"
-    },
-    {
-      "source": "/concepts/memory/storage-options/async-mem0-storage",
-      "destination": "/integrations/memory-storage/async-mem0"
-    },
-    {
-      "source": "/concepts/memory/storage-tables",
-      "destination": "/integrations/memory-storage/storage-tables"
-    },
-    {
-      "source": "/concepts/interfaces/Slack",
-      "destination": "/integrations/interfaces/slack"
-    },
-    {
-      "source": "/concepts/interfaces/Whatsapp",
-      "destination": "/integrations/interfaces/whatsapp"
-    },
-    {
-      "source": "/concepts/interfaces/Telegram",
-      "destination": "/integrations/interfaces/telegram"
-    },
-    {
-      "source": "/concepts/interfaces/Gmail",
-      "destination": "/integrations/interfaces/gmail"
-    },
-    {
-      "source": "/concepts/interfaces/telegram-advanced",
-      "destination": "/integrations/interfaces/telegram-advanced"
-    },
-    {
-      "source": "/concepts/tracing/integrations/:slug*",
-      "destination": "/integrations/tracing/:slug*"
-    },
-    {
-      "source": "/concepts/tools/ready-to-use-tools/function-tools/:slug*",
-      "destination": "/integrations/search-tools/:slug*"
-    },
-    {
-      "source": "/concepts/tools/ready-to-use-tools/class-tools/yfinance-tools",
-      "destination": "/integrations/data-tools/yfinance"
-    },
-    {
-      "source": "/concepts/tools/ready-to-use-tools/toolkits/:slug*",
-      "destination": "/integrations/scraping-tools/:slug*"
-    },
-    {
-      "source": "/concepts/tools/ready-to-use-tools/model-provider-tools/supported-providers",
-      "destination": "/integrations/model-provider-tools/supported-providers"
-    },
-    {
-      "source": "/concepts/tools/ready-to-use-tools/model-provider-tools/tools/:slug*",
-      "destination": "/integrations/model-provider-tools/:slug*"
-    },
-    {
-      "source": "/concepts/ocr/providers/:slug*",
-      "destination": "/integrations/ocr-engines/:slug*"
-    }
-  ]
+  }
 }

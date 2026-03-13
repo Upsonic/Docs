@@ -1,0 +1,193 @@
+---
+title: "Langfuse"
+description: "Send agent traces to Langfuse for LLM observability, cost tracking, and prompt analytics"
+---
+
+## Setup
+
+Get your keys from the [Langfuse dashboard](https://cloud.langfuse.com) → Settings → API Keys.
+
+```bash
+export LANGFUSE_PUBLIC_KEY=pk-lf-...
+export LANGFUSE_SECRET_KEY=sk-lf-...
+```
+
+<Info>
+Install the optional dependencies:
+
+```bash
+pip install upsonic[langfuse]
+# or
+uv sync --extra langfuse
+```
+</Info>
+
+---
+
+## Usage with Agent / Task
+
+Every `agent.do()` or `agent.print_do()` (including async versions) call is automatically traced to Langfuse when you pass `instrument=langfuse`.
+
+### Minimal — Keys from Environment
+
+```python
+from upsonic import Agent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+task = Task(description="What is 2 + 2?")
+agent.print_do(task)
+
+langfuse.shutdown()
+```
+
+{/* Screenshot: Langfuse trace detail showing input, output, duration */}
+
+### Full Configuration with Session & User Tracking
+
+```python
+from upsonic import Agent, Task
+from upsonic.integrations.langfuse import Langfuse
+from upsonic.tools import tool
+
+@tool
+def get_weather(city: str) -> str:
+    """Get the current weather for a city."""
+    return f"Sunny in {city}, 22°C"
+
+langfuse = Langfuse(
+    public_key="pk-lf-abc123",
+    secret_key="sk-lf-xyz789",
+    region="us",                  # "eu" (default) or "us"
+    service_name="my-agent",
+    include_content=True,         # include prompts/responses (default)
+)
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    instrument=langfuse,
+    session_id="chat-session-001",
+    user_id="user@example.com",
+    tools=[get_weather],
+)
+
+task = Task(description="What is the weather in Paris?")
+agent.print_do(task)
+
+langfuse.shutdown()
+```
+
+{/* Screenshot: Langfuse trace with session grouping and tool calls */}
+
+---
+
+## Usage with Evaluation
+
+### AccuracyEvaluator with Langfuse Datasets
+
+When you pass `langfuse` to `AccuracyEvaluator`, evaluation results are automatically:
+1. Logged as a **dataset item**
+2. Linked to the agent's **trace** via a **dataset run item**
+3. **Scored** on the trace with the evaluation result
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.integrations.langfuse import Langfuse
+from upsonic.eval import AccuracyEvaluator
+
+langfuse = Langfuse()
+
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+judge = Agent("anthropic/claude-sonnet-4-6")
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=agent,
+    query="What is the capital of France?",
+    expected_output="Paris",
+    langfuse=langfuse,
+    langfuse_dataset_name="my-eval-dataset",  # optional, default: "accuracy-eval"
+    langfuse_run_name="run-v1",               # optional, default: auto-generated
+)
+
+result = asyncio.run(evaluator.run())
+print(f"Score: {result.average_score}/10")
+
+langfuse.shutdown()
+```
+
+{/* Screenshot: Langfuse Datasets page showing dataset items and run results */}
+
+### AccuracyEvaluator with Multiple Iterations
+
+Run the same query multiple times to get statistical confidence:
+
+```python
+import asyncio
+from upsonic import Agent
+from upsonic.integrations.langfuse import Langfuse
+from upsonic.eval import AccuracyEvaluator
+
+langfuse = Langfuse()
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+judge = Agent("anthropic/claude-sonnet-4-6")
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=agent,
+    query="What is 10 + 5? Reply with just the number.",
+    expected_output="15",
+    num_iterations=3,
+    langfuse=langfuse,
+    langfuse_dataset_name="math-eval",
+)
+
+result = asyncio.run(evaluator.run())
+print(f"Average score: {result.average_score}/10")
+print(f"Iterations: {len(result.evaluation_scores)}")
+
+langfuse.shutdown()
+```
+
+{/* Screenshot: Langfuse trace with accuracy_eval_score */}
+
+### AccuracyEvaluator Parameters
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `langfuse` | `Langfuse` | `None` | Langfuse instance for dataset logging |
+| `langfuse_dataset_name` | `str` | `"accuracy-eval"` | Name of the Langfuse dataset to create/use |
+| `langfuse_run_name` | `str` | auto-generated | Name for the dataset run |
+| `num_iterations` | `int` | `1` | Number of times to run the evaluation |
+
+---
+
+## Advanced APIs
+
+For direct access to Langfuse's scoring, datasets, and annotation queue APIs, see the [Advanced Langfuse Guide](/tracing/integrations/langfuse/advanced).
+
+---
+
+## Parameters Reference
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `public_key` | `str` | env `LANGFUSE_PUBLIC_KEY` | Langfuse public key |
+| `secret_key` | `str` | env `LANGFUSE_SECRET_KEY` | Langfuse secret key |
+| `host` | `str` | env `LANGFUSE_HOST` | Custom host URL |
+| `region` | `"eu"` \| `"us"` | `"eu"` | Cloud region (ignored if `host` is set) |
+| `service_name` | `str` | `"upsonic"` | Service name in traces |
+| `sample_rate` | `float` | `1.0` | Fraction of traces to sample (0.0–1.0) |
+| `include_content` | `bool` | `True` | Include prompts/responses in traces |
+| `flush_on_exit` | `bool` | `True` | Auto-flush on process exit |
+
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `LANGFUSE_PUBLIC_KEY` | Langfuse public key (`pk-lf-...`) |
+| `LANGFUSE_SECRET_KEY` | Langfuse secret key (`sk-lf-...`) |
+| `LANGFUSE_HOST` | Custom Langfuse host URL |

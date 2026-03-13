@@ -1,0 +1,219 @@
+---
+title: "PromptLayer"
+description: "Log agent runs and evaluations to PromptLayer for prompt management, versioning, and observability"
+---
+
+## Setup
+
+Get your API key from the [PromptLayer dashboard](https://promptlayer.com) → Settings → API Keys.
+
+```bash
+export PROMPTLAYER_API_KEY=pl_...
+export OPENAI_API_KEY=sk-...
+```
+
+<Info>
+No extra dependencies required — PromptLayer uses `httpx` which is already included.
+</Info>
+
+---
+
+## Usage with Agent / Task
+
+Every `agent.do()` or `agent.print_do()` call is automatically logged to PromptLayer when you pass `promptlayer=pl`.
+
+### Minimal — Key from Environment
+
+```python
+import os
+from upsonic import Agent, Task
+from upsonic.integrations.promptlayer import PromptLayer
+
+pl = PromptLayer()
+agent = Agent("anthropic/claude-sonnet-4-6", promptlayer=pl)
+
+task = Task(description="What is 2 + 2?")
+agent.print_do(task)
+
+pl.shutdown()
+```
+
+{/* Screenshot: PromptLayer Live Logs showing the agent run */}
+
+### Full Configuration with Tools and Prompt Registry
+
+```python
+import os
+from upsonic import Agent, Task
+from upsonic.integrations.promptlayer import PromptLayer
+from upsonic.tools import tool
+
+@tool
+def get_weather(city: str) -> str:
+    """Get the current weather for a city."""
+    return f"Sunny in {city}, 22°C"
+
+pl = PromptLayer()
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    system_prompt=pl.get_prompt("my-agent-v2"),  # load versioned prompt from PromptLayer
+    tools=[get_weather],
+    promptlayer=pl,
+)
+
+task = Task(description="What is the weather in Paris?")
+agent.print_do(task)
+
+pl.shutdown()
+```
+
+{/* Screenshot: PromptLayer request detail with system prompt, tool calls, tokens */}
+
+
+---
+
+## Usage with Evaluation
+
+### AccuracyEvaluator with PromptLayer Datasets
+
+When you pass `promptlayer` to `AccuracyEvaluator`, evaluation results are automatically:
+1. **Logged** as a PromptLayer request (with score, metadata, tags)
+2. A **dataset group** is created (if it doesn't exist) to organize your evaluation data
+
+By default, the mode is `"log_only"` — the eval is logged as a request and the dataset group is created, but no CSV is uploaded. You control when to create dataset versions.
+
+```python
+import asyncio
+import os
+from upsonic import Agent, Task
+from upsonic.integrations.promptlayer import PromptLayer
+from upsonic.eval import AccuracyEvaluator
+
+pl = PromptLayer()
+
+agent = Agent("anthropic/claude-sonnet-4-6", promptlayer=pl)
+judge = Agent("anthropic/claude-sonnet-4-6")
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=agent,
+    query="What is the capital of France?",
+    expected_output="Paris",
+    promptlayer=pl,
+    promptlayer_dataset_name="my-eval-dataset",  # optional, default: "accuracy-eval"
+)
+
+result = asyncio.run(evaluator.run())
+print(f"Score: {result.average_score}/10")
+
+pl.shutdown()
+```
+
+{/* Screenshot: PromptLayer Datasets page showing the dataset group and versions */}
+
+### Dataset Modes
+
+Control how evaluation data is stored with `promptlayer_dataset_mode`:
+
+| Mode | Behavior |
+|---|---|
+| `"log_only"` (default) | Creates the dataset group and logs the eval as a request. Use the PromptLayer UI or `create_dataset_version_from_filter` to pull logged requests into a dataset version when you're ready |
+| `"new_version"` | Each eval run uploads a new CSV version to the dataset group automatically |
+
+```python
+import asyncio
+import os
+from upsonic import Agent, Task
+from upsonic.integrations.promptlayer import PromptLayer
+from upsonic.eval import AccuracyEvaluator
+
+pl = PromptLayer()
+
+agent = Agent("anthropic/claude-sonnet-4-6", promptlayer=pl)
+judge = Agent("anthropic/claude-sonnet-4-6")
+
+# Automatically upload CSV on each eval run
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=agent,
+    query="What is 2 + 2?",
+    expected_output="4",
+    promptlayer=pl,
+    promptlayer_dataset_name="my-eval-dataset",
+    promptlayer_dataset_mode="new_version",
+)
+
+result = asyncio.run(evaluator.run())
+print(f"Score: {result.average_score}/10")
+
+pl.shutdown()
+```
+
+SCREENSHOT PLACE
+
+### AccuracyEvaluator with Multiple Iterations
+
+Run the same query multiple times — all iterations land as rows in a single CSV version:
+
+```python
+import asyncio
+import os
+from upsonic import Agent, Task
+from upsonic.integrations.promptlayer import PromptLayer
+from upsonic.eval import AccuracyEvaluator
+
+pl = PromptLayer()
+agent = Agent("anthropic/claude-sonnet-4-6", promptlayer=pl)
+judge = Agent("anthropic/claude-sonnet-4-6")
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=agent,
+    query="What is 10 + 5? Reply with just the number.",
+    expected_output="15",
+    num_iterations=3,
+    promptlayer=pl,
+    promptlayer_dataset_name="math-eval",
+    promptlayer_dataset_mode="new_version",
+)
+
+result = asyncio.run(evaluator.run())
+print(f"Average score: {result.average_score}/10")
+print(f"Iterations: {len(result.evaluation_scores)}")
+
+pl.shutdown()
+```
+
+{/* Screenshot: PromptLayer dataset version showing 3 rows from iterations */}
+
+### AccuracyEvaluator Parameters
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `promptlayer` | `PromptLayer` | `None` | PromptLayer instance for logging and datasets |
+| `promptlayer_dataset_name` | `str` | `"accuracy-eval"` | Name of the dataset group to create/use |
+| `promptlayer_dataset_mode` | `str` | `"log_only"` | `"log_only"` or `"new_version"` |
+| `num_iterations` | `int` | `1` | Number of evaluation iterations |
+
+---
+
+## Advanced APIs
+
+For direct access to PromptLayer's dataset, report, and evaluation APIs, see the [Advanced PromptLayer Guide](/tracing/integrations/promptlayer/advanced).
+
+---
+
+## Parameters Reference
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `api_key` | `str` | env `PROMPTLAYER_API_KEY` | PromptLayer API key (`pl_...`) |
+| `base_url` | `str` | `https://api.promptlayer.com` | Custom API base URL |
+
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `PROMPTLAYER_API_KEY` | PromptLayer API key (`pl_...`) |
+| `PROMPTLAYER_BASE_URL` | Custom PromptLayer API base URL |
