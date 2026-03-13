@@ -56,7 +56,7 @@ Interfaces are added to an InterfaceManager instance through the `interfaces` pa
 from upsonic import Agent
 from upsonic.interfaces import InterfaceManager, SlackInterface
 
-agent = Agent(model="openai/gpt-4o-mini")
+agent = Agent(model="anthropic/claude-sonnet-4-6")
 
 manager = InterfaceManager(
     interfaces=[SlackInterface(agent=agent)],

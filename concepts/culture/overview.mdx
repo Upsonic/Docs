@@ -28,7 +28,7 @@ from upsonic.culture import Culture
 # 1. Tone of Speech  2. Topics to Avoid  3. Topics to Help With  4. Things to Pay Attention To
 culture = Culture(description="You are a 5-star hotel receptionist")
 
-agent = Agent("openai/gpt-4o-mini", culture=culture)
+agent = Agent("anthropic/claude-sonnet-4-6", culture=culture)
 
 # Stays focused on hotel services, not general-purpose help
 result = agent.do("Can you help me debug my Python code?")
@@ -48,7 +48,7 @@ from upsonic import Agent, Chat
 
 async def test_without_culture():
     agent = Agent(
-        "openai/gpt-4o-mini",
+        "anthropic/claude-sonnet-4-6",
         system_prompt="You are a 5-star hotel receptionist.",
         print=False
     )
@@ -85,7 +85,7 @@ from upsonic.culture import Culture
 
 async def test_with_culture():
     culture = Culture(description="You are a 5-star hotel receptionist")
-    agent = Agent("openai/gpt-4o-mini", culture=culture, print=False)
+    agent = Agent("anthropic/claude-sonnet-4-6", culture=culture, print=False)
     
     chat = Chat(session_id=f"test_{uuid.uuid4().hex[:8]}", user_id="user1", agent=agent)
     
@@ -201,7 +201,7 @@ Culture(
 from upsonic.culture import Culture, CultureManager
 
 culture = Culture(description="You are a 5-star hotel receptionist")
-manager = CultureManager(model="openai/gpt-4o-mini")
+manager = CultureManager(model="anthropic/claude-sonnet-4-6")
 manager.set_culture(culture)
 manager.prepare()  # Sync version
 print(manager.extracted_guidelines)

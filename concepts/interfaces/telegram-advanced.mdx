@@ -52,7 +52,7 @@ from upsonic import Agent
 from upsonic.interfaces import InterfaceManager, TelegramInterface, InterfaceMode
 
 agent = Agent(
-    model="openai/gpt-4o-mini",
+    model="anthropic/claude-sonnet-4-6",
     name="TelegramChatBot",
     system_prompt="You are a helpful AI assistant on Telegram.",
     print=True,
@@ -102,7 +102,7 @@ def calculate_factorial(n: int) -> int:
     return n * calculate_factorial(n - 1)
 
 agent = Agent(
-    model="openai/gpt-4o-mini",
+    model="anthropic/claude-sonnet-4-6",
     tools=[calculate_factorial],
     name="TelegramChatBot",
     system_prompt="You are a friendly AI assistant on Telegram. You remember conversation context.",
@@ -132,7 +132,7 @@ from upsonic import Agent
 from upsonic.interfaces import InterfaceManager, TelegramInterface
 
 agent = Agent(
-    model="openai/gpt-4o-mini",
+    model="anthropic/claude-sonnet-4-6",
     name="TelegramBot",
 )
 
@@ -162,7 +162,7 @@ from upsonic import AutonomousAgent
 from upsonic.interfaces import InterfaceManager, TelegramInterface
 
 agent = AutonomousAgent(
-    model="openai/gpt-4o-mini",
+    model="anthropic/claude-sonnet-4-6",
     name="TelegramBot",
     heartbeat=True,
     heartbeat_period=30,

@@ -30,7 +30,7 @@ from upsonic import Agent, Task
 from upsonic.integrations.promptlayer import PromptLayer
 
 pl = PromptLayer()
-agent = Agent("openai/gpt-4o", promptlayer=pl)
+agent = Agent("anthropic/claude-sonnet-4-6", promptlayer=pl)
 
 task = Task(description="What is 2 + 2?")
 agent.print_do(task)
@@ -56,7 +56,7 @@ def get_weather(city: str) -> str:
 pl = PromptLayer()
 
 agent = Agent(
-    "openai/gpt-4o",
+    "anthropic/claude-sonnet-4-6",
     system_prompt=pl.get_prompt("my-agent-v2"),  # load versioned prompt from PromptLayer
     tools=[get_weather],
     promptlayer=pl,
@@ -92,8 +92,8 @@ from upsonic.eval import AccuracyEvaluator
 
 pl = PromptLayer()
 
-agent = Agent("openai/gpt-4o", promptlayer=pl)
-judge = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-6", promptlayer=pl)
+judge = Agent("anthropic/claude-sonnet-4-6")
 
 evaluator = AccuracyEvaluator(
     judge_agent=judge,
@@ -130,8 +130,8 @@ from upsonic.eval import AccuracyEvaluator
 
 pl = PromptLayer()
 
-agent = Agent("openai/gpt-4o", promptlayer=pl)
-judge = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-6", promptlayer=pl)
+judge = Agent("anthropic/claude-sonnet-4-6")
 
 # Automatically upload CSV on each eval run
 evaluator = AccuracyEvaluator(
@@ -164,8 +164,8 @@ from upsonic.integrations.promptlayer import PromptLayer
 from upsonic.eval import AccuracyEvaluator
 
 pl = PromptLayer()
-agent = Agent("openai/gpt-4o", promptlayer=pl)
-judge = Agent("openai/gpt-4o")
+agent = Agent("anthropic/claude-sonnet-4-6", promptlayer=pl)
+judge = Agent("anthropic/claude-sonnet-4-6")
 
 evaluator = AccuracyEvaluator(
     judge_agent=judge,

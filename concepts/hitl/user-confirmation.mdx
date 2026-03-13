@@ -19,7 +19,7 @@ def sensitive_operation(data: str) -> str:
     return f"Sensitive operation completed on: {data}"
 
 async def main():
-    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent")
     task = Task(
         description="Perform a sensitive operation on the data 'user_records_2024'.",
         tools=[sensitive_operation]
@@ -82,7 +82,7 @@ def sensitive_operation(data: str) -> str:
     return f"Sensitive operation completed on: {data}"
 
 async def main():
-    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent")
     task = Task(
         description="Perform a sensitive operation on the data 'user_records_2024'.",
         tools=[sensitive_operation]
@@ -122,7 +122,7 @@ def hitl_handler(requirement) -> None:
         requirement.confirm()
 
 async def main():
-    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent")
     task = Task(
         description="Perform a sensitive operation on the data 'user_records_2024'.",
         tools=[sensitive_operation]
@@ -157,7 +157,7 @@ def sensitive_operation(data: str) -> str:
     return f"Sensitive operation completed on: {data}"
 
 async def confirmation_approve_with_run_id_same_agent():
-    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent")
     task = Task(
         description="Perform a sensitive operation on the data 'user_records_2024'.",
         tools=[sensitive_operation]
@@ -188,7 +188,7 @@ def sensitive_operation(data: str) -> str:
     return f"Sensitive operation completed on: {data}"
 
 async def confirmation_approve_with_task_same_agent():
-    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent")
     task = Task(
         description="Perform a sensitive operation on the data 'user_records_2024'.",
         tools=[sensitive_operation]
@@ -221,7 +221,7 @@ def sensitive_operation(data: str) -> str:
     return f"Sensitive operation completed on: {data}"
 
 async def confirmation_reject_with_run_id_same_agent():
-    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent")
     task = Task(
         description="Perform a sensitive operation on the data 'user_records_2024'.",
         tools=[sensitive_operation]
@@ -256,7 +256,7 @@ def sensitive_operation(data: str) -> str:
 
 async def confirmation_with_run_id_new_agent():
     db = SqliteDatabase(db_file="confirmation.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=db)
+    agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent", db=db)
     task = Task(
         description="Perform a sensitive operation on the data 'user_records_2024'.",
         tools=[sensitive_operation]
@@ -269,7 +269,7 @@ async def confirmation_with_run_id_new_agent():
         if requirement.needs_confirmation:
             requirement.confirm()
 
-    new_agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=db)
+    new_agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent", db=db)
     result = await new_agent.continue_run_async(
         run_id=run_id,
         requirements=output.requirements,
@@ -295,7 +295,7 @@ def sensitive_operation(data: str) -> str:
 
 async def confirmation_with_task_new_agent():
     db = SqliteDatabase(db_file="confirmation.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=db)
+    agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent", db=db)
     task = Task(
         description="Perform a sensitive operation on the data 'user_records_2024'.",
         tools=[sensitive_operation]
@@ -307,7 +307,7 @@ async def confirmation_with_task_new_agent():
         if requirement.needs_confirmation:
             requirement.confirm()
 
-    new_agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=db)
+    new_agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent", db=db)
     result = await new_agent.continue_run_async(
         task=task,
         requirements=output.requirements,
@@ -340,7 +340,7 @@ def deploy_to_production(version: str, environment: str) -> str:
     return f"Deployed version {version} to {environment}"
 
 async def confirmation_multiple_tools_loop_run_id():
-    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent")
     task = Task(
         description=(
             "First, delete records from the 'users' table where status='inactive'. "
@@ -390,7 +390,7 @@ def hitl_handler(requirement) -> None:
         requirement.confirm()
 
 async def confirmation_multiple_tools_handler_run_id():
-    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent")
+    agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent")
     task = Task(
         description=(
             "First, delete records from the 'users' table where status='inactive'. "
@@ -432,7 +432,7 @@ def sensitive_operation(data: str) -> str:
 
 async def confirmation_cross_process_run_id():
     db = SqliteDatabase(db_file="confirmation.db", session_id="session_1", user_id="user_1")
-    agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=db)
+    agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent", db=db)
     task = Task(
         description="Perform a sensitive operation on the data 'audit_logs'.",
         tools=[sensitive_operation]
@@ -452,7 +452,7 @@ async def confirmation_cross_process_run_id():
             req.confirm()
 
     new_db = SqliteDatabase(db_file="confirmation.db", session_id="session_1", user_id="user_1")
-    new_agent = Agent("openai/gpt-4o-mini", name="confirmation_agent", db=new_db)
+    new_agent = Agent("anthropic/claude-sonnet-4-6", name="confirmation_agent", db=new_db)
     result = await new_agent.continue_run_async(
         run_id=run_id,
         requirements=output.requirements,

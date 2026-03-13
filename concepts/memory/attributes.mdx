@@ -38,10 +38,10 @@ memory = Memory(
     full_session_memory=True,
     summary_memory=True,
     user_analysis_memory=True,
-    model="openai/gpt-4o-mini"
+    model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
 
 result = agent.do(Task("Hello! I'm learning Python"))
 print(result)
@@ -99,7 +99,7 @@ memory = Memory(
     model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
 
 result = agent.do(Task("I'm John from Acme Corp, working as a data engineer"))
 print(result)
@@ -131,7 +131,7 @@ memory = Memory(
     model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
 
 result = agent.do(Task("I prefer dark mode and use vim"))
 print(result)
