@@ -1,1144 +1,1159 @@
 {
-    "$schema": "https://mintlify.com/docs.json",
-    "theme": "aspen",
-    "name": "Upsonic AI",
-    "colors": {
-        "primary": "#03D47E",
-        "light": "#00D37F",
-        "dark": "#00D37F"
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "aspen",
+  "name": "Upsonic AI",
+  "colors": {
+    "primary": "#03D47E",
+    "light": "#00D37F",
+    "dark": "#00D37F"
+  },
+  "fonts": {
+    "heading": {
+      "family": "Helvetica",
+      "weight": 750
     },
-    "fonts": {
-        "heading": {
-            "family": "Helvetica",
-            "weight": 750
-        },
-        "body": {
-            "family": "Inter",
-            "weight": 400
-        }
-    },
-    "favicon": "/favicon.png",
-    "navigation": {
-        "tabs": [
-            {
-                "tab": "Upsonic Framework",
-                "groups": [
-                    {
-                        "group": "GET STARTED",
-                        "icon": "https://mintlify-assets.b-cdn.net/compass-2.svg",
-                        "pages": [
-                            "get-started/introduction",
-                            "get-started/quickstart",
-                            "get-started/installation",
-                            "get-started/guides",
-                            "get-started/examples",
-                            "get-started/ide-integration"
-                        ]
-                    },
-                    {
-                        "group": "CONCEPTS",
-                        "icon": "https://mintlify-assets.b-cdn.net/star-2.svg",
-                        "pages": [
-                            {
-                                "group": "Agent",
-                                "icon": "user-robot",
-                                "pages": [
-                                    "concepts/agents/overview",
-                                    "concepts/agents/attributes",
-                                    "concepts/agents/creating-an-agent",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/agents/adding-tools",
-                                            "concepts/agents/image-generation-agent",
-                                            "concepts/agents/running-agents",
-                                            "concepts/agents/access_output",
-                                            "concepts/agents/printing",
-                                            "concepts/agents/debugging-agents",
-                                            "concepts/agents/metrics"
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/agents/advanced/adding-a-memory",
-                                            "concepts/agents/advanced/adding-reasoning",
-                                            "concepts/agents/advanced/adding-thinking",
-                                            "concepts/agents/advanced/automatic-model-selection",
-                                            "concepts/agents/advanced/reliability-and-retries",
-                                            "concepts/agents/advanced/reflection",
-                                            "concepts/agents/advanced/context-compression",
-                                            "concepts/agents/advanced/company-knowledge",
-                                            "concepts/agents/advanced/workspace",
-                                            "concepts/agents/advanced/agent-as-mcp"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Autonomous Agent",
-                                "icon": "robot",
-                                "tag": "NEW",
-                                "pages": [
-                                    "concepts/autonomous-agent/overview",
-                                    "concepts/autonomous-agent/attributes",
-                                    "concepts/autonomous-agent/examples/basic-autonomous-agent-example",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/autonomous-agent/creating-an-autonomous-agent",
-                                            "concepts/autonomous-agent/running-an-autonomous-agent",
-                                            "concepts/autonomous-agent/agents-md"
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/autonomous-agent/advanced/filesystem-tools",
-                                            "concepts/autonomous-agent/advanced/memory-integration",
-                                            "concepts/autonomous-agent/advanced/shell-tools",
-                                            "concepts/autonomous-agent/advanced/workspace-security"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Safety Engine (Guardrails)",
-                                "icon": "shield-check",
-                                "tag": "NEW",
-                                "pages": [
-                                    "concepts/safety-engine/overview",
-                                    "concepts/safety-engine/policy-points",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            {
-                                                "group": "Prebuilt Policies",
-                                                "pages": [
-                                                    {
-                                                        "group": "Privacy & Compliance",
-                                                        "pages": [
-                                                            "concepts/safety-engine/usage/prebuilt-policies/pii-policies",
-                                                            "concepts/safety-engine/usage/prebuilt-policies/phone-number-policies"
-                                                        ]
-                                                    },
-                                                    {
-                                                        "group": "Financial & Legal",
-                                                        "pages": [
-                                                            "concepts/safety-engine/usage/prebuilt-policies/financial-information-policies",
-                                                            "concepts/safety-engine/usage/prebuilt-policies/cryptocurrency-policies",
-                                                            "concepts/safety-engine/usage/prebuilt-policies/legal-information-policies",
-                                                            "concepts/safety-engine/usage/prebuilt-policies/medical-information-policies"
-                                                        ]
-                                                    },
-                                                    {
-                                                        "group": "Security & Threats",
-                                                        "pages": [
-                                                            "concepts/safety-engine/usage/prebuilt-policies/cybersecurity-policies",
-                                                            "concepts/safety-engine/usage/prebuilt-policies/technical-security-policies",
-                                                            "concepts/safety-engine/usage/prebuilt-policies/fraud-detection-policies",
-                                                            "concepts/safety-engine/usage/prebuilt-policies/phishing-policies",
-                                                            "concepts/safety-engine/usage/prebuilt-policies/insider-threat-policies"
-                                                        ]
-                                                    },
-                                                    {
-                                                        "group": "Content Moderation",
-                                                        "pages": [
-                                                            "concepts/safety-engine/usage/prebuilt-policies/adult-content-policies",
-                                                            "concepts/safety-engine/usage/prebuilt-policies/profanity-policies",
-                                                            "concepts/safety-engine/usage/prebuilt-policies/sensitive-social-policies"
-                                                        ]
-                                                    },
-                                                    {
-                                                        "group": "Tool Safety",
-                                                        "pages": [
-                                                            "concepts/safety-engine/usage/prebuilt-policies/tool-safety-policies"
-                                                        ]
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                "group": "Custom Policy",
-                                                "pages": [
-                                                    "concepts/safety-engine/custom-policy/creating-rule",
-                                                    "concepts/safety-engine/custom-policy/creating-action",
-                                                    "concepts/safety-engine/custom-policy/creating-policy"
-                                                ]
-                                            }
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/safety-engine/policy-feedback-loop"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Task",
-                                "icon": "list-check",
-                                "pages": [
-                                    "concepts/tasks/overview",
-                                    "concepts/tasks/attributes",
-                                    "concepts/tasks/creating-task",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/tasks/adding-tools",
-                                            "concepts/tasks/response-format",
-                                            "concepts/tasks/results",
-                                            "concepts/tasks/metrics",
-                                            "concepts/tasks/task-caching",
-                                            {
-                                                "group": "Context",
-                                                "pages": [
-                                                    "concepts/tasks/context-management/adding-document-context-to-task",
-                                                    "concepts/tasks/context-management/adding-tasks-to-other-tasks-as-context",
-                                                    "concepts/tasks/context-management/adding-knowledge-base-to-task-context",
-                                                    "concepts/tasks/context-management/adding-images-to-task-context"
-                                                ]
-                                            }
-                                        ],
-                                        "collapsed": false
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Tracing",
-                                "icon": "chart-line",
-                                "pages": [
-                                    "concepts/tracing/overview",
-                                    {
-                                        "group": "Integrations",
-                                        "pages": [
-                                            {
-                                                "group": "Langfuse",
-                                                "pages": [
-                                                    "concepts/tracing/integrations/langfuse/index",
-                                                    "concepts/tracing/integrations/langfuse/advanced"
-                                                ]
-                                            },
-                                            {
-                                                "group": "PromptLayer",
-                                                "pages": [
-                                                    "concepts/tracing/integrations/promptlayer/index",
-                                                    "concepts/tracing/integrations/promptlayer/advanced"
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Tools",
-                                "icon": "wrench",
-                                "pages": [
-                                    "concepts/tools/overview",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/tools/tool-locations",
-                                            {
-                                                "group": "Custom Tool Creation",
-                                                "pages": [
-                                                    "concepts/tools/custom-tools/overview",
-                                                    "concepts/tools/custom-tools/attributes",
-                                                    "concepts/tools/custom-tools/creating-function-tool",
-                                                    "concepts/tools/custom-tools/creating-class-tool",
-                                                    "concepts/tools/custom-tools/creating-toolkit",
-                                                    {
-                                                        "group": "Behavior & Control",
-                                                        "pages": [
-                                                            "concepts/tools/custom-tools/tool-configurations/required-confirmation",
-                                                            "concepts/tools/custom-tools/tool-configurations/requires-user-input",
-                                                            "concepts/tools/custom-tools/tool-configurations/user-input-fields",
-                                                            "concepts/tools/custom-tools/tool-configurations/external-execution",
-                                                            "concepts/tools/custom-tools/tool-configurations/show-result",
-                                                            "concepts/tools/custom-tools/tool-configurations/stop-after-tool-call"
-                                                        ]
-                                                    },
-                                                    {
-                                                        "group": "Performance",
-                                                        "pages": [
-                                                            "concepts/tools/custom-tools/tool-configurations/sequential-parallel-run",
-                                                            "concepts/tools/custom-tools/tool-configurations/caching",
-                                                            "concepts/tools/custom-tools/tool-configurations/timeout",
-                                                            "concepts/tools/custom-tools/tool-configurations/tool-hooks"
-                                                        ]
-                                                    },
-                                                    {
-                                                        "group": "Schema & Validation",
-                                                        "pages": [
-                                                            "concepts/tools/custom-tools/tool-configurations/strict",
-                                                            "concepts/tools/custom-tools/tool-configurations/docstring-format"
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Integrations",
-                                        "pages": [
-                                            {
-                                                "group": "MCP Tools",
-                                                "pages": [
-                                                    "concepts/tools/mcp-tools/overview",
-                                                    "concepts/tools/mcp-tools/mcp-handler",
-                                                    "concepts/tools/mcp-tools/multi-mcp-handler",
-                                                    {
-                                                        "group": "Server Types",
-                                                        "pages": [
-                                                            "concepts/tools/mcp-tools/mcp-types/sse-server",
-                                                            "concepts/tools/mcp-tools/mcp-types/npx-based",
-                                                            "concepts/tools/mcp-tools/mcp-types/uvx",
-                                                            "concepts/tools/mcp-tools/mcp-types/docker"
-                                                        ]
-                                                    },
-                                                    {
-                                                        "group": "Security",
-                                                        "pages": [
-                                                            "concepts/tools/mcp-tools/advanced/authentication"
-                                                        ]
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                "group": "Ready-to-Use Tools",
-                                                "pages": [
-                                                    {
-                                                        "group": "Class Tools",
-                                                        "pages": [
-                                                            "concepts/tools/ready-to-use-tools/class-tools/yfinance-tools"
-                                                        ]
-                                                    },
-                                                    {
-                                                        "group": "Function Tools",
-                                                        "pages": [
-                                                            "concepts/tools/ready-to-use-tools/function-tools/duckduckgo",
-                                                            "concepts/tools/ready-to-use-tools/function-tools/bochasearch",
-                                                            "concepts/tools/ready-to-use-tools/function-tools/tavily"
-                                                        ]
-                                                    },
-                                                    {
-                                                        "group": "ToolKits",
-                                                        "pages": [
-                                                            "concepts/tools/ready-to-use-tools/toolkits/apify",
-                                                            "concepts/tools/ready-to-use-tools/toolkits/firecrawl"
-                                                        ]
-                                                    },
-                                                    {
-                                                        "group": "Model Provider Tools",
-                                                        "pages": [
-                                                            "concepts/tools/ready-to-use-tools/model-provider-tools/supported-providers",
-                                                            {
-                                                                "group": "Available Tools",
-                                                                "pages": [
-                                                                    "concepts/tools/ready-to-use-tools/model-provider-tools/tools/web-search-tool",
-                                                                    "concepts/tools/ready-to-use-tools/model-provider-tools/tools/web-search-user-location",
-                                                                    "concepts/tools/ready-to-use-tools/model-provider-tools/tools/web-fetch-tool",
-                                                                    "concepts/tools/ready-to-use-tools/model-provider-tools/tools/file-search-tool",
-                                                                    "concepts/tools/ready-to-use-tools/model-provider-tools/tools/code-execution-tool",
-                                                                    "concepts/tools/ready-to-use-tools/model-provider-tools/tools/url-context-tool",
-                                                                    "concepts/tools/ready-to-use-tools/model-provider-tools/tools/mcp-server-tool",
-                                                                    "concepts/tools/ready-to-use-tools/model-provider-tools/tools/image-generation-tool"
-                                                                ]
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/tools/custom-tools/advanced/combining-multiple-tools",
-                                            "concepts/tools/custom-tools/advanced/agent-as-tool",
-                                            "concepts/tools/advanced/adding-tools",
-                                            "concepts/tools/advanced/removing-tools"
-                                        ]
-                                    },
-                                    "concepts/tools/best-practices"
-                                ]
-                            },
-                            {
-                                "group": "Memory",
-                                "icon": "brain",
-                                "pages": [
-                                    "concepts/memory/overview",
-                                    "concepts/memory/attributes",
-                                    "concepts/memory/examples/basic-memory-example",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/memory/choosing-right-memory-types",
-                                            {
-                                                "group": "Memory Types",
-                                                "pages": [
-                                                    "concepts/memory/memory-types/conversation-memory",
-                                                    "concepts/memory/memory-types/focus-memory",
-                                                    "concepts/memory/memory-types/summary-memory"
-                                                ]
-                                            },
-                                            {
-                                                "group": "Storage Options",
-                                                "pages": [
-                                                    "concepts/memory/storage-options/inmemory-storage",
-                                                    "concepts/memory/storage-options/json-storage",
-                                                    "concepts/memory/storage-options/sqlite-storage",
-                                                    "concepts/memory/storage-options/postgres-storage",
-                                                    "concepts/memory/storage-options/redis-storage",
-                                                    "concepts/memory/storage-options/mem0-storage",
-                                                    "concepts/memory/storage-options/mongo-storage",
-                                                    "concepts/memory/storage-options/async-sqlite-storage",
-                                                    "concepts/memory/storage-options/async-postgres-storage",
-                                                    "concepts/memory/storage-options/async-mongo-storage",
-                                                    "concepts/memory/storage-options/async-mem0-storage",
-                                                    "concepts/memory/storage-tables"
-                                                ]
-                                            }
-                                        ],
-                                        "collapsed": false
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Knowledge Base",
-                                "icon": "book-open",
-                                "pages": [
-                                    "concepts/knowledgebase/overview",
-                                    "concepts/knowledgebase/attributes",
-                                    "concepts/knowledgebase/basic-rag-example",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/knowledgebase/putting-files",
-                                            "concepts/knowledgebase/using-as-tool",
-                                            "concepts/knowledgebase/examples"
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Integrations",
-                                        "pages": [
-                                            {
-                                                "group": "Embedding Providers",
-                                                "pages": [
-                                                    "concepts/knowledgebase/embedding-providers/openai",
-                                                    "concepts/knowledgebase/embedding-providers/azure",
-                                                    "concepts/knowledgebase/embedding-providers/google",
-                                                    "concepts/knowledgebase/embedding-providers/bedrock",
-                                                    "concepts/knowledgebase/embedding-providers/huggingface",
-                                                    "concepts/knowledgebase/embedding-providers/fastembed",
-                                                    "concepts/knowledgebase/embedding-providers/ollama"
-                                                ]
-                                            },
-                                            {
-                                                "group": "Document Loaders",
-                                                "pages": [
-                                                    "concepts/knowledgebase/loaders/pdfplumber",
-                                                    "concepts/knowledgebase/loaders/pymupdf",
-                                                    "concepts/knowledgebase/loaders/pypdf",
-                                                    "concepts/knowledgebase/loaders/docx",
-                                                    "concepts/knowledgebase/loaders/docling",
-                                                    "concepts/knowledgebase/loaders/csv",
-                                                    "concepts/knowledgebase/loaders/json",
-                                                    "concepts/knowledgebase/loaders/markdown",
-                                                    "concepts/knowledgebase/loaders/html",
-                                                    "concepts/knowledgebase/loaders/xml",
-                                                    "concepts/knowledgebase/loaders/yml",
-                                                    "concepts/knowledgebase/loaders/text"
-                                                ]
-                                            },
-                                            {
-                                                "group": "Text Splitters",
-                                                "pages": [
-                                                    "concepts/knowledgebase/splitters/recursive",
-                                                    "concepts/knowledgebase/splitters/semantic",
-                                                    "concepts/knowledgebase/splitters/agentic",
-                                                    "concepts/knowledgebase/splitters/character",
-                                                    "concepts/knowledgebase/splitters/markdown",
-                                                    "concepts/knowledgebase/splitters/html",
-                                                    "concepts/knowledgebase/splitters/json",
-                                                    "concepts/knowledgebase/splitters/python"
-                                                ]
-                                            },
-                                            {
-                                                "group": "Vector Stores",
-                                                "pages": [
-                                                    "concepts/knowledgebase/storage-providers/pgvector",
-                                                    "concepts/knowledgebase/storage-providers/chroma",
-                                                    "concepts/knowledgebase/storage-providers/qdrant",
-                                                    "concepts/knowledgebase/storage-providers/pinecone",
-                                                    "concepts/knowledgebase/storage-providers/milvus",
-                                                    "concepts/knowledgebase/storage-providers/faiss",
-                                                    "concepts/knowledgebase/storage-providers/weaviate",
-                                                    "concepts/knowledgebase/storage-providers/supermemory"
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/knowledgebase/advanced"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Team",
-                                "icon": "people-group",
-                                "pages": [
-                                    "concepts/team/overview",
-                                    "concepts/team/attributes",
-                                    "concepts/team/examples/basic-team-example",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            {
-                                                "group": "Team Modes",
-                                                "pages": [
-                                                    "concepts/team/choosing-right-team-mode",
-                                                    "concepts/team/modes/sequential",
-                                                    "concepts/team/modes/coordinate",
-                                                    "concepts/team/modes/route"
-                                                ]
-                                            },
-                                            "concepts/team/assigning-tasks-manually"
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/team/advanced/team-as-mcp",
-                                            "concepts/team/advanced/nested-teams"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "LLM Support",
-                                "icon": "brain-circuit",
-                                "pages": [
-                                    "concepts/llm-support/llm-overview",
-                                    "concepts/llm-support/model-as-string",
-                                    "concepts/llm-support/compatibility-overview",
-                                    {
-                                        "group": "Native Providers",
-                                        "pages": [
-                                            {
-                                                "group": "OpenAI",
-                                                "pages": [
-                                                    "concepts/llm-support/native-providers/native-providers-openai-chat",
-                                                    "concepts/llm-support/native-providers/native-providers-openai-responses"
-                                                ]
-                                            },
-                                            "concepts/llm-support/native-providers/native-providers-anthropic",
-                                            "concepts/llm-support/native-providers/native-providers-google",
-                                            "concepts/llm-support/native-providers/native-providers-grok",
-                                            "concepts/llm-support/native-providers/native-providers-mistral",
-                                            "concepts/llm-support/native-providers/native-providers-cohere",
-                                            "concepts/llm-support/native-providers/moonshotai",
-                                            "concepts/llm-support/native-providers/xai"
-                                        ]
-                                    },
-                                    {
-                                        "group": "Cloud Providers",
-                                        "pages": [
-                                            "concepts/llm-support/cloud-providers/cloud-providers-azure",
-                                            "concepts/llm-support/cloud-providers/cloud-providers-bedrock",
-                                            "concepts/llm-support/cloud-providers/cloud-providers-huggingface",
-                                            "concepts/llm-support/cloud-providers/heroku",
-                                            "concepts/llm-support/cloud-providers/ovhcloud"
-                                        ]
-                                    },
-                                    {
-                                        "group": "Local Providers",
-                                        "pages": [
-                                            "concepts/llm-support/local-providers/local-providers-ollama",
-                                            "concepts/llm-support/local-providers/local-providers-vllm",
-                                            "concepts/llm-support/local-providers/local-providers-lmstudio"
-                                        ]
-                                    },
-                                    {
-                                        "group": "Model Gateways",
-                                        "pages": [
-                                            "concepts/llm-support/model-gateways/cerebras",
-                                            "concepts/llm-support/model-gateways/github",
-                                            "concepts/llm-support/model-gateways/model-gateways-groq",
-                                            "concepts/llm-support/model-gateways/model-gateways-litellm",
-                                            "concepts/llm-support/model-gateways/model-gateways-nvidia",
-                                            "concepts/llm-support/model-gateways/model-gateways-openrouter",
-                                            "concepts/llm-support/model-gateways/outlines",
-                                            "concepts/llm-support/model-gateways/sambanova",
-                                            "concepts/llm-support/model-gateways/together",
-                                            "concepts/llm-support/model-gateways/vercel"
-                                        ]
-                                    },
-                                    "concepts/llm-support/openai-compatible",
-                                    "concepts/llm-support/error-handling"
-                                ]
-                            },
-                            {
-                                "group": "OCR",
-                                "icon": "scanner-image",
-                                "pages": [
-                                    "concepts/ocr/overview",
-                                    "concepts/ocr/architecture",
-                                    "concepts/ocr/attributes",
-                                    "concepts/ocr/examples/basic-ocr-example",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/ocr/create-an-ocr",
-                                            "concepts/ocr/running-an-ocr",
-                                            {
-                                                "group": "Layer 1 Engines",
-                                                "pages": [
-                                                    "concepts/ocr/providers/easyocr",
-                                                    "concepts/ocr/providers/rapidocr",
-                                                    "concepts/ocr/providers/tesseract",
-                                                    "concepts/ocr/providers/deepseek-ocr",
-                                                    "concepts/ocr/providers/deepseek-ocr-ollama",
-                                                    "concepts/ocr/providers/paddleocr"
-                                                ]
-                                            },
-                                            "concepts/ocr/timeout",
-                                            "concepts/ocr/metrics-and-performance"
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/ocr/advanced-features",
-                                            "concepts/ocr/exception-handling"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "HITL (Human in the Loop)",
-                                "icon": "user-check",
-                                "pages": [
-                                    "concepts/hitl/overview",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/hitl/durable-execution",
-                                            "concepts/hitl/external-tool-execution",
-                                            "concepts/hitl/cancel-run",
-                                            "concepts/hitl/user-input",
-                                            "concepts/hitl/dynamic-user-input",
-                                            "concepts/hitl/user-confirmation"
-                                        ],
-                                        "collapsed": false
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Culture",
-                                "icon": "users-gear",
-                                "pages": [
-                                    "concepts/culture/overview"
-                                ],
-                                "tag": "NEW"
-                            },
-                            {
-                                "group": "Deep Agent",
-                                "icon": "brain-circuit",
-                                "pages": [
-                                    "concepts/deep-agent/overview",
-                                    "concepts/deep-agent/attributes",
-                                    "concepts/deep-agent/examples/basic-deep-agent-example",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/deep-agent/capabilities/planning",
-                                            "concepts/deep-agent/capabilities/to-do-management",
-                                            "concepts/deep-agent/capabilities/virtual-file-system",
-                                            "concepts/deep-agent/capabilities/subagent-generation",
-                                            "concepts/deep-agent/capabilities/backends"
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/deep-agent/advanced",
-                                            "concepts/deep-agent/examples/software-developer-agent",
-                                            "concepts/deep-agent/examples/research-and-analysis-agent",
-                                            "concepts/deep-agent/examples/content-creation-agent"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Direct LLM Call",
-                                "icon": "message-bot",
-                                "pages": [
-                                    "concepts/direct-llm-call/overview",
-                                    "concepts/direct-llm-call/attributes",
-                                    "concepts/direct-llm-call/examples/basic-direct-llm-call-example",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/direct-llm-call/image-processing"
-                                        ],
-                                        "collapsed": false
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Interfaces",
-                                "icon": "plug",
-                                "pages": [
-                                    "concepts/interfaces/Overview",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/interfaces/Gmail",
-                                            "concepts/interfaces/Slack",
-                                            "concepts/interfaces/Telegram",
-                                            "concepts/interfaces/Whatsapp"
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/interfaces/telegram-advanced"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Chat",
-                                "icon": "messages",
-                                "pages": [
-                                    "concepts/chat/overview",
-                                    "concepts/chat/attributes",
-                                    "concepts/chat/examples/basic",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/chat/creating-a-chat",
-                                            "concepts/chat/running-a-chat",
-                                            "concepts/chat/history-management",
-                                            "concepts/chat/metrics",
-                                            "concepts/chat/storage-backends"
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/chat/advanced/context-manager",
-                                            "concepts/chat/advanced/error-handling",
-                                            "concepts/chat/advanced/memory-strategies",
-                                            "concepts/chat/examples/multi-session",
-                                            "concepts/chat/examples/persistent-storage",
-                                            "concepts/chat/examples/user-profile"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "StateGraph",
-                                "icon": "diagram-project",
-                                "pages": [
-                                    "concepts/stategraph/overview",
-                                    "concepts/stategraph/attributes",
-                                    "concepts/stategraph/quickstart",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/stategraph/core-concepts"
-                                        ],
-                                        "collapsed": false
-                                    },
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/stategraph/advanced/advanced-features",
-                                            "concepts/stategraph/advanced/building-agents",
-                                            "concepts/stategraph/advanced/human-in-loop",
-                                            "concepts/stategraph/advanced/persistence",
-                                            "concepts/stategraph/advanced/reliability"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "UEL",
-                                "icon": "layer-group",
-                                "pages": [
-                                    "concepts/uel/overview",
-                                    "concepts/uel/attributes",
-                                    {
-                                        "group": "Advanced",
-                                        "pages": [
-                                            "concepts/uel/advanced/async-execution",
-                                            "concepts/uel/advanced/conditional-routing",
-                                            "concepts/uel/advanced/custom-chains",
-                                            "concepts/uel/advanced/parallel-execution",
-                                            "concepts/uel/advanced/rag-patterns",
-                                            "concepts/uel/advanced/memory-modes",
-                                            "concepts/uel/advanced/visualization"
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Simulation",
-                                "icon": "flask",
-                                "pages": [
-                                    "concepts/simulation/overview",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            "concepts/simulation/scenarios/merchant_revenue_forecast"
-                                        ],
-                                        "collapsed": false
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Evals",
-                                "icon": "chart-line",
-                                "pages": [
-                                    "concepts/evals/overview",
-                                    {
-                                        "group": "Usage",
-                                        "pages": [
-                                            {
-                                                "group": "Reliability Evals",
-                                                "pages": [
-                                                    "concepts/evals/usage/reliability/introduction",
-                                                    "concepts/evals/usage/reliability/agent",
-                                                    "concepts/evals/usage/reliability/team",
-                                                    "concepts/evals/usage/reliability/graph"
-                                                ]
-                                            },
-                                            {
-                                                "group": "Performance Evals",
-                                                "pages": [
-                                                    "concepts/evals/usage/performance/introduction",
-                                                    "concepts/evals/usage/performance/agent",
-                                                    "concepts/evals/usage/performance/team",
-                                                    "concepts/evals/usage/performance/graph"
-                                                ]
-                                            },
-                                            {
-                                                "group": "Accuracy Evals",
-                                                "pages": [
-                                                    "concepts/evals/usage/accuracy/introduction",
-                                                    "concepts/evals/usage/accuracy/agent",
-                                                    "concepts/evals/usage/accuracy/team",
-                                                    "concepts/evals/usage/accuracy/graph"
-                                                ]
-                                            }
-                                        ],
-                                        "collapsed": false
-                                    }
-                                ]
-                            },
-                            {
-                                "group": "Canvas",
-                                "icon": "palette",
-                                "pages": [
-                                    "concepts/canvas"
-                                ]
-                            },
-                            {
-                                "group": "Graph",
-                                "icon": "sitemap",
-                                "pages": [
-                                    "concepts/graph"
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "group": "STARTING AN AGENT PROJECT",
-                        "pages": [
-                            "CLI/overview",
-                            "CLI/initialization",
-                            "CLI/start-agent-api"
-                        ]
-                    },
-                    {
-                        "group": "READY TO USE SNIPPETS",
-                        "pages": [
-                            "ready-to-use-snippets/agents-md",
-                            "ready-to-use-snippets/bootstrap",
-                            "ready-to-use-snippets/soul-md",
-                            "ready-to-use-snippets/user-md"
-                        ]
-                    },
-                    {
-                        "group": "DEPLOYMENT",
-                        "pages": [
-                            "deployment/overview",
-                            "deployment/fastapi",
-                            "deployment/django",
-                            "concepts/debugging"
-                        ]
-                    },
-                    {
-                        "group": "FURTHER READINGS",
-                        "pages": [
-                            "further-readings/telemetry",
-                            "further-readings/comparison"
-                        ]
-                    }
-                ]
-            },
-            {
-                "tab": "Upsonic AgentOS",
-                "groups": [
-                    {
-                        "group": "GET STARTED",
-                        "icon": "https://mintlify-assets.b-cdn.net/compass-2.svg",
-                        "pages": [
-                            {
-                                "group": "Installation",
-                                "icon": "download",
-                                "pages": [
-                                    "agentos/get-started/installation/docker",
-                                    "agentos/get-started/installation/kubernetes"
-                                ]
-                            },
-                            "agentos/get-started/deploying-first-agent"
-                        ]
-                    },
-                    {
-                        "group": "CONCEPTS",
-                        "icon": "https://mintlify-assets.b-cdn.net/star-2.svg",
-                        "pages": [
-                            "agentos/concepts/git-connection",
-                            "agentos/concepts/llm-connection",
-                            "agentos/concepts/agent",
-                            "agentos/concepts/metrics",
-                            "agentos/concepts/scheduling",
-                            "agentos/concepts/alerts"
-                        ]
-                    }
-                ]
-            },
-            {
-                "tab": "Universal Commerce Protocol (UCP)",
-                "groups": [
-                    {
-                        "group": "GET STARTED",
-                        "icon": "https://mintlify-assets.b-cdn.net/compass-2.svg",
-                        "pages": [
-                            "ucp/index"
-                        ]
-                    },
-                    {
-                        "group": "Example Agent",
-                        "pages": [
-                            "ucp/example-agent"
-                        ]
-                    }
-                ]
-            },
-            {
-                "tab": "Guides",
-                "groups": [
-                    {
-                        "group": "UPSONIC FRAMEWORK 101",
-                        "icon": "forward-step",
-                        "pages": [
-                            "guides/1-create-a-task",
-                            "guides/2-create-an-agent",
-                            "guides/3-add-a-safety-engine",
-                            "guides/4-add-a-tool",
-                            "guides/5-add-an-mcp",
-                            "guides/6-integrate-a-memory",
-                            "guides/7-creating-a-team-of-agents"
-                        ]
-                    },
-                    {
-                        "group": "AgentOS",
-                        "icon": "forward-step",
-                        "pages": [
-                            "guides/agentos_create_and_deploy_agent"
-                        ]
-                    }
-                ]
-            },
-            {
-                "tab": "Reference",
-                "groups": [
-                    {
-                        "group": "Agent",
-                        "pages": [
-                            "reference/agent/agent"
-                        ]
-                    },
-                    {
-                        "group": "Task",
-                        "pages": [
-                            "reference/task/task"
-                        ]
-                    },
-                    {
-                        "group": "Team",
-                        "pages": [
-                            "reference/team/team"
-                        ]
-                    },
-                    {
-                        "group": "Memory",
-                        "pages": [
-                            "reference/memory/memory"
-                        ]
-                    }
-                ]
-            },
-            {
-                "tab": "Examples",
-                "groups": [
-                    {
-                        "group": "Overview",
-                        "pages": [
-                            "examples/overview/introduction"
-                        ]
-                    },
-                    {
-                        "group": "Video Walkthroughs",
-                        "pages": [
-                            "examples/video-examples/find-agreement-links",
-                            "examples/video-examples/find-example-product",
-                            "examples/video-examples/classify-emails"
-                        ]
-                    },
-                    {
-                        "group": "Business & Sales",
-                        "pages": [
-                            "examples/business-sales/company_research_sales_strategy_agent",
-                            "examples/business-sales/sales_offer_agent",
-                            "examples/business-sales/find-sales-categories",
-                            "examples/business-sales/find-company-website",
-                            "examples/business-sales/extract-people",
-                            "examples/business-sales/ai_lexicon",
-                            "examples/business-sales/landing_page_generation",
-                            "examples/business-sales/loan_covenant_monitoring"
-                        ]
-                    },
-                    {
-                        "group": "Document Analysis",
-                        "pages": [
-                            "examples/document-analysis/contract-analyzer",
-                            "examples/document-analysis/document-analyzer"
-                        ]
-                    },
-                    {
-                        "group": "Code & Development",
-                        "pages": [
-                            "examples/code-development/groq-code-review-agent",
-                            "examples/code-development/git-changelog-writer"
-                        ]
-                    },
-                    {
-                        "group": "Autonomous Agents",
-                        "pages": [
-                            "examples/autonomous-agents/devops-telegram-bot",
-                            "examples/autonomous-agents/expense-tracker-bot",
-                            "examples/autonomous-agents/operations-analyst"
-                        ]
-                    },
-                    {
-                        "group": "Integration Examples",
-                        "pages": [
-                            "examples/integration-examples/firecrawl-agent"
-                        ]
-                    },
-                    {
-                        "group": "Model Integrations",
-                        "pages": [
-                            "examples/model-integrations/nvidia_agent",
-                            "examples/model-integrations/ollama_agent"
-                        ]
-                    },
-                    {
-                        "group": "Safety & Compliance",
-                        "pages": [
-                            "examples/safety-compliance/safety_engine_with_safeguard_llm_models",
-                            "examples/safety-compliance/crypto-block"
-                        ]
-                    }
-                ]
-            },
-            {
-                "tab": "Community",
-                "groups": [
-                    {
-                        "group": "Community",
-                        "pages": [
-                            "community"
-                        ]
-                    }
-                ]
-            },
-            {
-                "tab": "Changelog",
-                "groups": [
-                    {
-                        "group": "Updates",
-                        "pages": [
-                            "changelog"
-                        ]
-                    }
-                ]
-            }
-        ]
-    },
-    "logo": {
-        "light": "/logo/logo_name.png",
-        "dark": "/logo/logo_name_dark.png"
-    },
-    "appearance": {
-        "default": "dark",
-        "strict": false
-    },
-    "navbar": {
-        "links": [
-            {
-                "label": "AgentOS",
-                "href": "https://upsonic.ai/",
-                "external": true
-            }
-        ],
-        "primary": {
-            "type": "github",
-            "href": "https://github.com/Upsonic/Upsonic"
-        }
-    },
-    "interaction": {
-        "drilldown": true
-    },
-    "footer": {
-        "socials": {
-            "discord": "https://discord.gg/7648R8JahY",
-            "x": "https://x.com/UpsonicAI",
-            "github": "https://github.com/Upsonic",
-            "linkedin": "https://www.linkedin.com/company/getupsonic/"
-        }
-    },
-    "integrations": {
-        "gtm": {
-            "tagId": "GTM-MQ8VVXSB"
-        }
+    "body": {
+      "family": "Inter",
+      "weight": 400
     }
+  },
+  "favicon": "/favicon.png",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Upsonic Framework",
+        "groups": [
+          {
+            "group": "GET STARTED",
+            "icon": "https://mintlify-assets.b-cdn.net/compass-2.svg",
+            "pages": [
+              "get-started/introduction",
+              "get-started/quickstart",
+              "get-started/installation",
+              "get-started/guides",
+              "get-started/examples",
+              "get-started/ide-integration"
+            ]
+          },
+          {
+            "group": "CONCEPTS",
+            "icon": "https://mintlify-assets.b-cdn.net/star-2.svg",
+            "pages": [
+              {
+                "group": "Agent",
+                "icon": "user-robot",
+                "pages": [
+                  "concepts/agents/overview",
+                  "concepts/agents/attributes",
+                  "concepts/agents/creating-an-agent",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/agents/adding-tools",
+                      "concepts/agents/image-generation-agent",
+                      "concepts/agents/running-agents",
+                      "concepts/agents/access_output",
+                      "concepts/agents/printing",
+                      "concepts/agents/debugging-agents",
+                      "concepts/agents/metrics"
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/agents/advanced/adding-a-memory",
+                      "concepts/agents/advanced/adding-reasoning",
+                      "concepts/agents/advanced/adding-thinking",
+                      "concepts/agents/advanced/automatic-model-selection",
+                      "concepts/agents/advanced/reliability-and-retries",
+                      "concepts/agents/advanced/reflection",
+                      "concepts/agents/advanced/context-compression",
+                      "concepts/agents/advanced/company-knowledge",
+                      "concepts/agents/advanced/workspace",
+                      "concepts/agents/advanced/agent-as-mcp"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Autonomous Agent",
+                "icon": "robot",
+                "tag": "NEW",
+                "pages": [
+                  "concepts/autonomous-agent/overview",
+                  "concepts/autonomous-agent/attributes",
+                  "concepts/autonomous-agent/examples/basic-autonomous-agent-example",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/autonomous-agent/creating-an-autonomous-agent",
+                      "concepts/autonomous-agent/running-an-autonomous-agent",
+                      "concepts/autonomous-agent/agents-md"
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/autonomous-agent/advanced/filesystem-tools",
+                      "concepts/autonomous-agent/advanced/memory-integration",
+                      "concepts/autonomous-agent/advanced/shell-tools",
+                      "concepts/autonomous-agent/advanced/workspace-security"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Safety Engine (Guardrails)",
+                "icon": "shield-check",
+                "tag": "NEW",
+                "pages": [
+                  "concepts/safety-engine/overview",
+                  "concepts/safety-engine/policy-points",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      {
+                        "group": "Prebuilt Policies",
+                        "pages": [
+                          {
+                            "group": "Privacy & Compliance",
+                            "pages": [
+                              "concepts/safety-engine/usage/prebuilt-policies/pii-policies",
+                              "concepts/safety-engine/usage/prebuilt-policies/phone-number-policies"
+                            ]
+                          },
+                          {
+                            "group": "Financial & Legal",
+                            "pages": [
+                              "concepts/safety-engine/usage/prebuilt-policies/financial-information-policies",
+                              "concepts/safety-engine/usage/prebuilt-policies/cryptocurrency-policies",
+                              "concepts/safety-engine/usage/prebuilt-policies/legal-information-policies",
+                              "concepts/safety-engine/usage/prebuilt-policies/medical-information-policies"
+                            ]
+                          },
+                          {
+                            "group": "Security & Threats",
+                            "pages": [
+                              "concepts/safety-engine/usage/prebuilt-policies/cybersecurity-policies",
+                              "concepts/safety-engine/usage/prebuilt-policies/technical-security-policies",
+                              "concepts/safety-engine/usage/prebuilt-policies/fraud-detection-policies",
+                              "concepts/safety-engine/usage/prebuilt-policies/phishing-policies",
+                              "concepts/safety-engine/usage/prebuilt-policies/insider-threat-policies"
+                            ]
+                          },
+                          {
+                            "group": "Content Moderation",
+                            "pages": [
+                              "concepts/safety-engine/usage/prebuilt-policies/adult-content-policies",
+                              "concepts/safety-engine/usage/prebuilt-policies/profanity-policies",
+                              "concepts/safety-engine/usage/prebuilt-policies/sensitive-social-policies"
+                            ]
+                          },
+                          {
+                            "group": "Tool Safety",
+                            "pages": [
+                              "concepts/safety-engine/usage/prebuilt-policies/tool-safety-policies"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "group": "Custom Policy",
+                        "pages": [
+                          "concepts/safety-engine/custom-policy/creating-rule",
+                          "concepts/safety-engine/custom-policy/creating-action",
+                          "concepts/safety-engine/custom-policy/creating-policy"
+                        ]
+                      }
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/safety-engine/policy-feedback-loop"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Task",
+                "icon": "list-check",
+                "pages": [
+                  "concepts/tasks/overview",
+                  "concepts/tasks/attributes",
+                  "concepts/tasks/creating-task",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/tasks/adding-tools",
+                      "concepts/tasks/response-format",
+                      "concepts/tasks/results",
+                      "concepts/tasks/metrics",
+                      "concepts/tasks/task-caching",
+                      {
+                        "group": "Context",
+                        "pages": [
+                          "concepts/tasks/context-management/adding-document-context-to-task",
+                          "concepts/tasks/context-management/adding-tasks-to-other-tasks-as-context",
+                          "concepts/tasks/context-management/adding-knowledge-base-to-task-context",
+                          "concepts/tasks/context-management/adding-images-to-task-context"
+                        ]
+                      }
+                    ],
+                    "collapsed": false
+                  }
+                ]
+              },
+              {
+                "group": "Tracing",
+                "icon": "chart-line",
+                "pages": [
+                  "concepts/tracing/overview",
+                  {
+                    "group": "Integrations",
+                    "pages": [
+                      {
+                        "group": "Langfuse",
+                        "pages": [
+                          "concepts/tracing/integrations/langfuse/index",
+                          "concepts/tracing/integrations/langfuse/advanced"
+                        ]
+                      },
+                      {
+                        "group": "PromptLayer",
+                        "pages": [
+                          "concepts/tracing/integrations/promptlayer/index",
+                          "concepts/tracing/integrations/promptlayer/advanced"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Tools",
+                "icon": "wrench",
+                "pages": [
+                  "concepts/tools/overview",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/tools/tool-locations",
+                      {
+                        "group": "Custom Tool Creation",
+                        "pages": [
+                          "concepts/tools/custom-tools/overview",
+                          "concepts/tools/custom-tools/attributes",
+                          "concepts/tools/custom-tools/creating-function-tool",
+                          "concepts/tools/custom-tools/creating-class-tool",
+                          "concepts/tools/custom-tools/creating-toolkit",
+                          {
+                            "group": "Behavior & Control",
+                            "pages": [
+                              "concepts/tools/custom-tools/tool-configurations/required-confirmation",
+                              "concepts/tools/custom-tools/tool-configurations/requires-user-input",
+                              "concepts/tools/custom-tools/tool-configurations/user-input-fields",
+                              "concepts/tools/custom-tools/tool-configurations/external-execution",
+                              "concepts/tools/custom-tools/tool-configurations/show-result",
+                              "concepts/tools/custom-tools/tool-configurations/stop-after-tool-call"
+                            ]
+                          },
+                          {
+                            "group": "Performance",
+                            "pages": [
+                              "concepts/tools/custom-tools/tool-configurations/sequential-parallel-run",
+                              "concepts/tools/custom-tools/tool-configurations/caching",
+                              "concepts/tools/custom-tools/tool-configurations/timeout",
+                              "concepts/tools/custom-tools/tool-configurations/tool-hooks"
+                            ]
+                          },
+                          {
+                            "group": "Schema & Validation",
+                            "pages": [
+                              "concepts/tools/custom-tools/tool-configurations/strict",
+                              "concepts/tools/custom-tools/tool-configurations/docstring-format"
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Integrations",
+                    "pages": [
+                      {
+                        "group": "MCP Tools",
+                        "pages": [
+                          "concepts/tools/mcp-tools/overview",
+                          "concepts/tools/mcp-tools/mcp-handler",
+                          "concepts/tools/mcp-tools/multi-mcp-handler",
+                          {
+                            "group": "Server Types",
+                            "pages": [
+                              "concepts/tools/mcp-tools/mcp-types/sse-server",
+                              "concepts/tools/mcp-tools/mcp-types/npx-based",
+                              "concepts/tools/mcp-tools/mcp-types/uvx",
+                              "concepts/tools/mcp-tools/mcp-types/docker"
+                            ]
+                          },
+                          {
+                            "group": "Security",
+                            "pages": [
+                              "concepts/tools/mcp-tools/advanced/authentication"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "group": "Ready-to-Use Tools",
+                        "pages": [
+                          {
+                            "group": "Search Tools",
+                            "pages": [
+                              "concepts/tools/search-tools/duckduckgo",
+                              "concepts/tools/search-tools/bochasearch",
+                              "concepts/tools/search-tools/tavily"
+                            ]
+                          },
+                          {
+                            "group": "Data Tools",
+                            "pages": [
+                              "concepts/tools/data-tools/yfinance"
+                            ]
+                          },
+                          {
+                            "group": "Scraping Tools",
+                            "pages": [
+                              "concepts/tools/scraping-tools/apify",
+                              "concepts/tools/scraping-tools/firecrawl"
+                            ]
+                          },
+                          {
+                            "group": "Model Provider Tools",
+                            "pages": [
+                              "concepts/tools/model-provider-tools/supported-providers",
+                              "concepts/tools/model-provider-tools/web-search-tool",
+                              "concepts/tools/model-provider-tools/web-search-user-location",
+                              "concepts/tools/model-provider-tools/web-fetch-tool",
+                              "concepts/tools/model-provider-tools/file-search-tool",
+                              "concepts/tools/model-provider-tools/code-execution-tool",
+                              "concepts/tools/model-provider-tools/url-context-tool",
+                              "concepts/tools/model-provider-tools/mcp-server-tool",
+                              "concepts/tools/model-provider-tools/image-generation-tool"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/tools/custom-tools/advanced/combining-multiple-tools",
+                      "concepts/tools/custom-tools/advanced/agent-as-tool",
+                      "concepts/tools/advanced/adding-tools",
+                      "concepts/tools/advanced/removing-tools"
+                    ]
+                  },
+                  "concepts/tools/best-practices"
+                ]
+              },
+              {
+                "group": "Memory",
+                "icon": "brain",
+                "pages": [
+                  "concepts/memory/overview",
+                  "concepts/memory/attributes",
+                  "concepts/memory/examples/basic-memory-example",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/memory/choosing-right-memory-types",
+                      {
+                        "group": "Memory Types",
+                        "pages": [
+                          "concepts/memory/memory-types/conversation-memory",
+                          "concepts/memory/memory-types/focus-memory",
+                          "concepts/memory/memory-types/summary-memory"
+                        ]
+                      },
+                      {
+                        "group": "Storage Backends",
+                        "pages": [
+                          "concepts/memory/storage/inmemory",
+                          "concepts/memory/storage/json",
+                          "concepts/memory/storage/sqlite",
+                          "concepts/memory/storage/postgres",
+                          "concepts/memory/storage/redis",
+                          "concepts/memory/storage/mongo",
+                          "concepts/memory/storage/mem0",
+                          "concepts/memory/storage/async-sqlite",
+                          "concepts/memory/storage/async-postgres",
+                          "concepts/memory/storage/async-mongo",
+                          "concepts/memory/storage/async-mem0",
+                          "concepts/memory/storage/storage-tables"
+                        ]
+                      }
+                    ],
+                    "collapsed": false
+                  }
+                ]
+              },
+              {
+                "group": "Knowledge Base",
+                "icon": "book-open",
+                "pages": [
+                  "concepts/knowledgebase/overview",
+                  "concepts/knowledgebase/attributes",
+                  "concepts/knowledgebase/basic-rag-example",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/knowledgebase/putting-files",
+                      "concepts/knowledgebase/using-as-tool",
+                      "concepts/knowledgebase/examples"
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Integrations",
+                    "pages": [
+                      {
+                        "group": "Embedding Providers",
+                        "pages": [
+                          "concepts/knowledgebase/embedding-providers/openai",
+                          "concepts/knowledgebase/embedding-providers/azure",
+                          "concepts/knowledgebase/embedding-providers/google",
+                          "concepts/knowledgebase/embedding-providers/bedrock",
+                          "concepts/knowledgebase/embedding-providers/huggingface",
+                          "concepts/knowledgebase/embedding-providers/fastembed",
+                          "concepts/knowledgebase/embedding-providers/ollama"
+                        ]
+                      },
+                      {
+                        "group": "Document Loaders",
+                        "pages": [
+                          "concepts/knowledgebase/document-loaders/pypdf",
+                          "concepts/knowledgebase/document-loaders/pdfplumber",
+                          "concepts/knowledgebase/document-loaders/pymupdf",
+                          "concepts/knowledgebase/document-loaders/docling",
+                          "concepts/knowledgebase/document-loaders/docx",
+                          "concepts/knowledgebase/document-loaders/csv",
+                          "concepts/knowledgebase/document-loaders/json",
+                          "concepts/knowledgebase/document-loaders/markdown",
+                          "concepts/knowledgebase/document-loaders/html",
+                          "concepts/knowledgebase/document-loaders/xml",
+                          "concepts/knowledgebase/document-loaders/yml",
+                          "concepts/knowledgebase/document-loaders/text"
+                        ]
+                      },
+                      {
+                        "group": "Text Splitters",
+                        "pages": [
+                          "concepts/knowledgebase/text-splitters/recursive",
+                          "concepts/knowledgebase/text-splitters/semantic",
+                          "concepts/knowledgebase/text-splitters/agentic",
+                          "concepts/knowledgebase/text-splitters/character",
+                          "concepts/knowledgebase/text-splitters/markdown",
+                          "concepts/knowledgebase/text-splitters/html",
+                          "concepts/knowledgebase/text-splitters/json",
+                          "concepts/knowledgebase/text-splitters/python"
+                        ]
+                      },
+                      {
+                        "group": "Vector Stores",
+                        "pages": [
+                          "concepts/knowledgebase/vector-stores/chroma",
+                          "concepts/knowledgebase/vector-stores/qdrant",
+                          "concepts/knowledgebase/vector-stores/pinecone",
+                          "concepts/knowledgebase/vector-stores/milvus",
+                          "concepts/knowledgebase/vector-stores/pgvector",
+                          "concepts/knowledgebase/vector-stores/faiss",
+                          "concepts/knowledgebase/vector-stores/weaviate",
+                          "concepts/knowledgebase/vector-stores/supermemory"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/knowledgebase/advanced"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Team",
+                "icon": "people-group",
+                "pages": [
+                  "concepts/team/overview",
+                  "concepts/team/attributes",
+                  "concepts/team/examples/basic-team-example",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      {
+                        "group": "Team Modes",
+                        "pages": [
+                          "concepts/team/choosing-right-team-mode",
+                          "concepts/team/modes/sequential",
+                          "concepts/team/modes/coordinate",
+                          "concepts/team/modes/route"
+                        ]
+                      },
+                      "concepts/team/assigning-tasks-manually"
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/team/advanced/team-as-mcp",
+                      "concepts/team/advanced/nested-teams"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "LLM Support",
+                "icon": "brain-circuit",
+                "pages": [
+                  "concepts/llm-support/llm-overview",
+                  "concepts/llm-support/model-as-string",
+                  "concepts/llm-support/compatibility-overview",
+                  {
+                    "group": "Native Providers",
+                    "pages": [
+                      "concepts/llm-support/providers/openai-chat",
+                      "concepts/llm-support/providers/openai-responses",
+                      "concepts/llm-support/providers/anthropic",
+                      "concepts/llm-support/providers/google",
+                      "concepts/llm-support/providers/grok",
+                      "concepts/llm-support/providers/mistral",
+                      "concepts/llm-support/providers/cohere",
+                      "concepts/llm-support/providers/moonshotai",
+                      "concepts/llm-support/providers/xai"
+                    ]
+                  },
+                  {
+                    "group": "Cloud Providers",
+                    "pages": [
+                      "concepts/llm-support/providers/azure",
+                      "concepts/llm-support/providers/bedrock",
+                      "concepts/llm-support/providers/huggingface",
+                      "concepts/llm-support/providers/heroku",
+                      "concepts/llm-support/providers/ovhcloud"
+                    ]
+                  },
+                  {
+                    "group": "Local Providers",
+                    "pages": [
+                      "concepts/llm-support/providers/ollama",
+                      "concepts/llm-support/providers/vllm",
+                      "concepts/llm-support/providers/lmstudio"
+                    ]
+                  },
+                  {
+                    "group": "Model Gateways",
+                    "pages": [
+                      "concepts/llm-support/providers/groq",
+                      "concepts/llm-support/providers/litellm",
+                      "concepts/llm-support/providers/nvidia",
+                      "concepts/llm-support/providers/openrouter",
+                      "concepts/llm-support/providers/cerebras",
+                      "concepts/llm-support/providers/github",
+                      "concepts/llm-support/providers/outlines",
+                      "concepts/llm-support/providers/sambanova",
+                      "concepts/llm-support/providers/together",
+                      "concepts/llm-support/providers/vercel"
+                    ]
+                  },
+                  "concepts/llm-support/openai-compatible",
+                  "concepts/llm-support/error-handling"
+                ]
+              },
+              {
+                "group": "OCR",
+                "icon": "scanner-image",
+                "pages": [
+                  "concepts/ocr/overview",
+                  "concepts/ocr/architecture",
+                  "concepts/ocr/attributes",
+                  "concepts/ocr/examples/basic-ocr-example",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/ocr/create-an-ocr",
+                      "concepts/ocr/running-an-ocr",
+                      {
+                        "group": "Engines",
+                        "pages": [
+                          "concepts/ocr/engines/easyocr",
+                          "concepts/ocr/engines/rapidocr",
+                          "concepts/ocr/engines/tesseract",
+                          "concepts/ocr/engines/deepseek-ocr",
+                          "concepts/ocr/engines/deepseek-ocr-ollama",
+                          "concepts/ocr/engines/paddleocr"
+                        ]
+                      },
+                      "concepts/ocr/timeout",
+                      "concepts/ocr/metrics-and-performance"
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/ocr/advanced-features",
+                      "concepts/ocr/exception-handling"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "HITL (Human in the Loop)",
+                "icon": "user-check",
+                "pages": [
+                  "concepts/hitl/overview",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/hitl/durable-execution",
+                      "concepts/hitl/external-tool-execution",
+                      "concepts/hitl/cancel-run",
+                      "concepts/hitl/user-input",
+                      "concepts/hitl/dynamic-user-input",
+                      "concepts/hitl/user-confirmation"
+                    ],
+                    "collapsed": false
+                  }
+                ]
+              },
+              {
+                "group": "Culture",
+                "icon": "users-gear",
+                "pages": [
+                  "concepts/culture/overview"
+                ],
+                "tag": "NEW"
+              },
+              {
+                "group": "Deep Agent",
+                "icon": "brain-circuit",
+                "pages": [
+                  "concepts/deep-agent/overview",
+                  "concepts/deep-agent/attributes",
+                  "concepts/deep-agent/examples/basic-deep-agent-example",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/deep-agent/capabilities/planning",
+                      "concepts/deep-agent/capabilities/to-do-management",
+                      "concepts/deep-agent/capabilities/virtual-file-system",
+                      "concepts/deep-agent/capabilities/subagent-generation",
+                      "concepts/deep-agent/capabilities/backends"
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/deep-agent/advanced",
+                      "concepts/deep-agent/examples/software-developer-agent",
+                      "concepts/deep-agent/examples/research-and-analysis-agent",
+                      "concepts/deep-agent/examples/content-creation-agent"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Direct LLM Call",
+                "icon": "message-bot",
+                "pages": [
+                  "concepts/direct-llm-call/overview",
+                  "concepts/direct-llm-call/attributes",
+                  "concepts/direct-llm-call/examples/basic-direct-llm-call-example",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/direct-llm-call/image-processing"
+                    ],
+                    "collapsed": false
+                  }
+                ]
+              },
+              {
+                "group": "Interfaces",
+                "icon": "plug",
+                "pages": [
+                  "concepts/interfaces/Overview",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/interfaces/slack",
+                      "concepts/interfaces/whatsapp",
+                      "concepts/interfaces/telegram",
+                      "concepts/interfaces/gmail"
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/interfaces/telegram-advanced"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Chat",
+                "icon": "messages",
+                "pages": [
+                  "concepts/chat/overview",
+                  "concepts/chat/attributes",
+                  "concepts/chat/examples/basic",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/chat/creating-a-chat",
+                      "concepts/chat/running-a-chat",
+                      "concepts/chat/history-management",
+                      "concepts/chat/metrics",
+                      "concepts/chat/storage-backends"
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/chat/advanced/context-manager",
+                      "concepts/chat/advanced/error-handling",
+                      "concepts/chat/advanced/memory-strategies",
+                      "concepts/chat/examples/multi-session",
+                      "concepts/chat/examples/persistent-storage",
+                      "concepts/chat/examples/user-profile"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "StateGraph",
+                "icon": "diagram-project",
+                "pages": [
+                  "concepts/stategraph/overview",
+                  "concepts/stategraph/attributes",
+                  "concepts/stategraph/quickstart",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/stategraph/core-concepts"
+                    ],
+                    "collapsed": false
+                  },
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/stategraph/advanced/advanced-features",
+                      "concepts/stategraph/advanced/building-agents",
+                      "concepts/stategraph/advanced/human-in-loop",
+                      "concepts/stategraph/advanced/persistence",
+                      "concepts/stategraph/advanced/reliability"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "UEL",
+                "icon": "layer-group",
+                "pages": [
+                  "concepts/uel/overview",
+                  "concepts/uel/attributes",
+                  {
+                    "group": "Advanced",
+                    "pages": [
+                      "concepts/uel/advanced/async-execution",
+                      "concepts/uel/advanced/conditional-routing",
+                      "concepts/uel/advanced/custom-chains",
+                      "concepts/uel/advanced/parallel-execution",
+                      "concepts/uel/advanced/rag-patterns",
+                      "concepts/uel/advanced/memory-modes",
+                      "concepts/uel/advanced/visualization"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Simulation",
+                "icon": "flask",
+                "pages": [
+                  "concepts/simulation/overview",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      "concepts/simulation/scenarios/merchant_revenue_forecast"
+                    ],
+                    "collapsed": false
+                  }
+                ]
+              },
+              {
+                "group": "Evals",
+                "icon": "chart-line",
+                "pages": [
+                  "concepts/evals/overview",
+                  {
+                    "group": "Usage",
+                    "pages": [
+                      {
+                        "group": "Reliability Evals",
+                        "pages": [
+                          "concepts/evals/usage/reliability/introduction",
+                          "concepts/evals/usage/reliability/agent",
+                          "concepts/evals/usage/reliability/team",
+                          "concepts/evals/usage/reliability/graph"
+                        ]
+                      },
+                      {
+                        "group": "Performance Evals",
+                        "pages": [
+                          "concepts/evals/usage/performance/introduction",
+                          "concepts/evals/usage/performance/agent",
+                          "concepts/evals/usage/performance/team",
+                          "concepts/evals/usage/performance/graph"
+                        ]
+                      },
+                      {
+                        "group": "Accuracy Evals",
+                        "pages": [
+                          "concepts/evals/usage/accuracy/introduction",
+                          "concepts/evals/usage/accuracy/agent",
+                          "concepts/evals/usage/accuracy/team",
+                          "concepts/evals/usage/accuracy/graph"
+                        ]
+                      }
+                    ],
+                    "collapsed": false
+                  }
+                ]
+              },
+              {
+                "group": "Canvas",
+                "icon": "palette",
+                "pages": [
+                  "concepts/canvas"
+                ]
+              },
+              {
+                "group": "Graph",
+                "icon": "sitemap",
+                "pages": [
+                  "concepts/graph"
+                ]
+              },
+              {
+                "group": "Browser Use",
+                "icon": "globe",
+                "pages": [
+                  "concepts/browser-use"
+                ]
+              },
+              {
+                "group": "Computer Use",
+                "icon": "display",
+                "pages": [
+                  "concepts/computer-use"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "STARTING AN AGENT PROJECT",
+            "pages": [
+              "CLI/overview",
+              "CLI/initialization",
+              "CLI/start-agent-api"
+            ]
+          },
+          {
+            "group": "READY TO USE SNIPPETS",
+            "pages": [
+              "ready-to-use-snippets/agents-md",
+              "ready-to-use-snippets/bootstrap",
+              "ready-to-use-snippets/soul-md",
+              "ready-to-use-snippets/user-md"
+            ]
+          },
+          {
+            "group": "DEPLOYMENT",
+            "pages": [
+              "deployment/overview",
+              "deployment/fastapi",
+              "deployment/django",
+              "concepts/debugging"
+            ]
+          },
+          {
+            "group": "FURTHER READINGS",
+            "pages": [
+              "further-readings/telemetry",
+              "further-readings/comparison"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Upsonic AgentOS",
+        "groups": [
+          {
+            "group": "GET STARTED",
+            "icon": "https://mintlify-assets.b-cdn.net/compass-2.svg",
+            "pages": [
+              {
+                "group": "Installation",
+                "icon": "download",
+                "pages": [
+                  "agentos/get-started/installation/docker",
+                  "agentos/get-started/installation/kubernetes"
+                ]
+              },
+              "agentos/get-started/deploying-first-agent"
+            ]
+          },
+          {
+            "group": "CONCEPTS",
+            "icon": "https://mintlify-assets.b-cdn.net/star-2.svg",
+            "pages": [
+              "agentos/concepts/git-connection",
+              "agentos/concepts/llm-connection",
+              "agentos/concepts/agent",
+              "agentos/concepts/metrics",
+              "agentos/concepts/scheduling",
+              "agentos/concepts/alerts"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Universal Commerce Protocol (UCP)",
+        "groups": [
+          {
+            "group": "GET STARTED",
+            "icon": "https://mintlify-assets.b-cdn.net/compass-2.svg",
+            "pages": [
+              "ucp/index"
+            ]
+          },
+          {
+            "group": "Example Agent",
+            "pages": [
+              "ucp/example-agent"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "UPSONIC FRAMEWORK 101",
+            "icon": "forward-step",
+            "pages": [
+              "guides/1-create-a-task",
+              "guides/2-create-an-agent",
+              "guides/3-add-a-safety-engine",
+              "guides/4-add-a-tool",
+              "guides/5-add-an-mcp",
+              "guides/6-integrate-a-memory",
+              "guides/7-creating-a-team-of-agents"
+            ]
+          },
+          {
+            "group": "AgentOS",
+            "icon": "forward-step",
+            "pages": [
+              "guides/agentos_create_and_deploy_agent"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Agent",
+            "pages": [
+              "reference/agent/agent"
+            ]
+          },
+          {
+            "group": "Task",
+            "pages": [
+              "reference/task/task"
+            ]
+          },
+          {
+            "group": "Team",
+            "pages": [
+              "reference/team/team"
+            ]
+          },
+          {
+            "group": "Memory",
+            "pages": [
+              "reference/memory/memory"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Examples",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "examples/overview/introduction"
+            ]
+          },
+          {
+            "group": "Video Walkthroughs",
+            "pages": [
+              "examples/video-examples/find-agreement-links",
+              "examples/video-examples/find-example-product",
+              "examples/video-examples/classify-emails"
+            ]
+          },
+          {
+            "group": "Business & Sales",
+            "pages": [
+              "examples/business-sales/company_research_sales_strategy_agent",
+              "examples/business-sales/sales_offer_agent",
+              "examples/business-sales/find-sales-categories",
+              "examples/business-sales/find-company-website",
+              "examples/business-sales/extract-people",
+              "examples/business-sales/ai_lexicon",
+              "examples/business-sales/landing_page_generation",
+              "examples/business-sales/loan_covenant_monitoring"
+            ]
+          },
+          {
+            "group": "Document Analysis",
+            "pages": [
+              "examples/document-analysis/contract-analyzer",
+              "examples/document-analysis/document-analyzer"
+            ]
+          },
+          {
+            "group": "Code & Development",
+            "pages": [
+              "examples/code-development/groq-code-review-agent",
+              "examples/code-development/git-changelog-writer"
+            ]
+          },
+          {
+            "group": "Autonomous Agents",
+            "pages": [
+              "examples/autonomous-agents/devops-telegram-bot",
+              "examples/autonomous-agents/expense-tracker-bot",
+              "examples/autonomous-agents/operations-analyst"
+            ]
+          },
+          {
+            "group": "Integration Examples",
+            "pages": [
+              "examples/integration-examples/firecrawl-agent"
+            ]
+          },
+          {
+            "group": "Model Integrations",
+            "pages": [
+              "examples/model-integrations/nvidia_agent",
+              "examples/model-integrations/ollama_agent"
+            ]
+          },
+          {
+            "group": "Safety & Compliance",
+            "pages": [
+              "examples/safety-compliance/safety_engine_with_safeguard_llm_models",
+              "examples/safety-compliance/crypto-block"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Integrations",
+        "groups": [
+          {
+            "group": "All Integrations",
+            "pages": [
+              "integrations/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Community",
+        "groups": [
+          {
+            "group": "Community",
+            "pages": [
+              "community"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Changelog",
+        "groups": [
+          {
+            "group": "Updates",
+            "pages": [
+              "changelog"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "/logo/logo_name.png",
+    "dark": "/logo/logo_name_dark.png"
+  },
+  "appearance": {
+    "default": "dark",
+    "strict": false
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "AgentOS",
+        "href": "https://upsonic.ai/",
+        "external": true
+      }
+    ],
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/Upsonic/Upsonic"
+    }
+  },
+  "interaction": {
+    "drilldown": true
+  },
+  "footer": {
+    "socials": {
+      "discord": "https://discord.gg/7648R8JahY",
+      "x": "https://x.com/UpsonicAI",
+      "github": "https://github.com/Upsonic",
+      "linkedin": "https://www.linkedin.com/company/getupsonic/"
+    }
+  },
+  "integrations": {
+    "gtm": {
+      "tagId": "GTM-MQ8VVXSB"
+    }
+  }
 }

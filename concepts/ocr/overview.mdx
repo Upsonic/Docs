@@ -55,12 +55,16 @@ The OCR system follows a layered processing pipeline:
 
 | Engine | Best for | Docs |
 |--------|----------|------|
-| `EasyOCREngine` | Multi-language support, 80+ languages | [EasyOCR](/concepts/ocr/providers/easyocr) |
-| `RapidOCREngine` | Speed and lightweight deployment | [RapidOCR](/concepts/ocr/providers/rapidocr) |
-| `TesseractOCREngine` | Traditional OCR, 100+ languages | [Tesseract](/concepts/ocr/providers/tesseract) |
-| `DeepSeekOCREngine` | Batch processing with vLLM | [DeepSeek OCR](/concepts/ocr/providers/deepseek-ocr) |
-| `DeepSeekOllamaOCREngine` | Local processing via Ollama | [DeepSeek Ollama](/concepts/ocr/providers/deepseek-ocr-ollama) |
-| `PaddleOCREngine` | General OCR (PP-OCRv5) | [PaddleOCR](/concepts/ocr/providers/paddleocr) |
+| `EasyOCREngine` | Multi-language support, 80+ languages | [EasyOCR](/integrations/ocr-engines/easyocr) |
+| `RapidOCREngine` | Speed and lightweight deployment | [RapidOCR](/integrations/ocr-engines/rapidocr) |
+| `TesseractOCREngine` | Traditional OCR, 100+ languages | [Tesseract](/integrations/ocr-engines/tesseract) |
+| `DeepSeekOCREngine` | Batch processing with vLLM | [DeepSeek OCR](/integrations/ocr-engines/deepseek-ocr) |
+| `DeepSeekOllamaOCREngine` | Local processing via Ollama | [DeepSeek Ollama](/integrations/ocr-engines/deepseek-ocr-ollama) |
+| `PaddleOCREngine` | General OCR (PP-OCRv5) | [PaddleOCR](/integrations/ocr-engines/paddleocr) |
+
+<Card title="Browse All OCR Engine Integrations" icon="scanner-image" href="/integrations/overview#ocr-engines" horizontal>
+  See all 6 supported OCR engines with setup guides, configuration options, and examples.
+</Card>
 
 ## Async Usage
 
@@ -85,7 +89,7 @@ asyncio.run(process())
 
 - [Architecture](/concepts/ocr/architecture) - Understanding the layered OCR pipeline
 - [OCR Attributes](/concepts/ocr/attributes) - Comprehensive guide to all OCR configuration options
-- [OCR Providers](/concepts/ocr/providers/easyocr) - Configure EasyOCR, RapidOCR, Tesseract, PaddleOCR, and DeepSeek OCR
+- [OCR Engines](/integrations/overview#ocr-engines) - Configure EasyOCR, RapidOCR, Tesseract, PaddleOCR, and DeepSeek OCR
 - [Advanced Features](/concepts/ocr/advanced-features) - Advanced preprocessing, async, and timeout options
 - [Metrics and Performance](/concepts/ocr/metrics-and-performance) - Monitor and optimize OCR performance
 - [Basic OCR Example](/concepts/ocr/examples/basic-ocr-example) - Get started with OCR integration
