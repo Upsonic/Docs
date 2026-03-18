@@ -1,0 +1,231 @@
+---
+title: "Apify Restaurant Scout"
+description: "Use Upsonic's Agent with ApifyTools to search Google Maps for restaurants and food spots using natural language queries, then save the results as Markdown."
+tag: "new"
+---
+
+This example shows how to build a **restaurant discovery agent** using Upsonic's **Agent** with the built-in **ApifyTools**. Ask it anything like *"cheap falafel in Kadıköy"* or *"vegan brunch in Cihangir"* and it searches Google Maps via Apify, interprets the results, and saves a curated list to Markdown.
+
+<iframe
+  width="100%"
+  style={{ aspectRatio: "16/9", borderRadius: "8px" }}
+  src="https://www.youtube.com/embed/LPtZDQlLie8"
+  title="Apify Restaurant Scout — Upsonic Demo"
+  frameBorder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+/>
+
+## Overview
+
+The agent has three components:
+
+1. **Agent** — LLM-driven agent that orchestrates the search and formats results
+2. **ApifyTools** — Built-in Upsonic toolkit wrapping the Apify API; registers the `compass/crawler-google-places` Actor as a callable tool and automatically exposes its full input schema to the agent
+3. **Task** — Natural language query describing what and where to find
+
+## Project Structure
+
+```
+apify_google_maps_restaurant_scout/
+├── main.py              # Agent setup and task definition
+├── example_results.md   # Sample output — see what the agent produces
+├── requirements.txt     # Python dependencies
+├── .env.example         # API key template
+└── README.md
+```
+
+### Environment Variables
+
+<Tip>
+  **Get your free Apify API key** — [Sign up at console.apify.com](https://console.apify.com), navigate to **Settings → Integrations**, and copy your Personal API token. No credit card required to get started.
+</Tip>
+
+```bash
+# Required: Apify API token — https://console.apify.com
+APIFY_API_KEY=apify_api_your-token-here
+
+# Required: LLM provider key (example uses Anthropic Claude)
+ANTHROPIC_API_KEY=your-anthropic-key-here
+```
+
+## Installation
+
+```bash
+# With uv (recommended)
+uv venv && source .venv/bin/activate
+uv pip install -r requirements.txt
+
+# With pip
+python3 -m venv .venv && source .venv/bin/activate
+pip install upsonic[custom-tools] python-dotenv apify-client anthropic
+```
+
+## Complete Implementation
+
+### main.py
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.apify import ApifyTools
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+# ApifyTools registers the Google Maps crawler as a tool.
+# The agent automatically receives the Actor's full input schema,
+# so it knows exactly which parameters to pass based on the user's query.
+#
+# actor_defaults pre-sets config that never needs to change:
+#   - maxCrawledPlacesPerSearch: limit results to avoid token overflow
+#   - maxImages: skip images (not needed for text output)
+#   - outputFormats: return compact markdown instead of verbose JSON
+#
+# timeout=180.0 overrides the 30s default — the Actor takes ~60-90s to run.
+# max_retries=0 prevents parallel duplicate runs on timeout.
+agent = Agent(
+    "anthropic/claude-sonnet-4-5",
+    tools=[
+        ApifyTools(
+            actors=["compass/crawler-google-places"],
+            apify_api_token=os.getenv("APIFY_API_KEY"),
+            actor_defaults={
+                "compass/crawler-google-places": {
+                    "maxCrawledPlacesPerSearch": 10,
+                    "maxImages": 0,
+                    "outputFormats": ["markdown"],
+                }
+            },
+            timeout=180.0,
+            max_retries=0,
+        )
+    ],
+)
+
+task = Task("Tell me cheap and tasty falafel places in Kadıköy, Istanbul")
+agent.print_do(task)
+
+with open("results.md", "w") as f:
+    f.write(task.response)
+
+print("\nResults saved to results.md")
+```
+
+### requirements.txt
+
+```
+upsonic[custom-tools]
+python-dotenv
+apify-client
+anthropic
+```
+
+## How It Works
+
+| Step | What Happens |
+|------|-------------|
+| 1 | `agent.print_do(task)` sends the natural language query to the LLM |
+| 2 | The LLM calls `compass/crawler-google-places` via ApifyTools with the appropriate search parameters |
+| 3 | Apify crawls Google Maps and returns place details as compact Markdown |
+| 4 | The LLM interprets the results and formats a clean, readable response |
+| 5 | Output is printed to the terminal and saved to `results.md` |
+
+## Sample Output
+
+```
+## Best Cheap & Tasty Falafel Places in Kadıköy:
+
+### 1. Falafella ⭐ 4.3/5
+- Price: ₺1-200 (Very cheap!)
+- Address: Caferağa, Moda Cd. No:53A, Kadıköy
+- Hours: 11 AM - 2 AM (Late night on weekends!)
+- Why go: Most affordable option. Popular for falafel wraps. Vegan options available!
+
+### 2. Nohut Falafel & Humus ⭐ 4.8/5
+- Price: ₺200-400
+- Address: Osmanağa, Sakız Sk. No:22C, Kadıköy
+- Hours: 12 PM - 10 PM
+- Why go: Highest rated! Gluten-free and vegan. Famous for hummus and fresh ingredients.
+
+### 3. Jeni Falafel & Rolls ⭐ 4.4/5
+- Price: ₺200-400
+- Address: Suadiye, Hamiyet Yüceses Sk. No:19, Kadıköy
+- Hours: 12 PM - 9:30 PM
+- Why go: Known for homemade taste and fresh ingredients. Great wraps and portion sizes.
+```
+
+## Apify Actor Used
+
+| Actor | Purpose |
+|-------|---------|
+| `compass/crawler-google-places` | Searches Google Maps and returns place details including name, address, rating, price level, and reviews |
+
+`ApifyTools` fetches the Actor's input schema automatically so the agent always knows which parameters to pass. See the [Upsonic Apify integration docs](/concepts/tools/scraping-tools/apify) for full configuration options.
+
+## Customization
+
+### Change the query
+
+Edit the `Task` in `main.py`:
+
+```python
+task = Task("Best rooftop bars in Beyoğlu, Istanbul")
+```
+
+### Swap the Actor
+
+The Google Maps Actor is one of thousands available on the [Apify Store](https://apify.com/store). Change the `actors` field to use any other Actor:
+
+```python
+ApifyTools(
+    actors=["apify/instagram-scraper"],
+    actor_defaults={
+        "apify/instagram-scraper": {
+            "directUrls": ["https://www.instagram.com/some_account/"],
+        }
+    },
+    timeout=180.0,
+    max_retries=0,
+)
+```
+
+### Adjust result count
+
+```python
+"maxCrawledPlacesPerSearch": 5,   # Fewer results, faster run
+"maxCrawledPlacesPerSearch": 20,  # More results (watch token limits)
+```
+
+### Use a different model
+
+```python
+agent = Agent(
+    "openai/gpt-4o",   # or any other Upsonic-supported provider
+    tools=[...]
+)
+```
+
+## Key Features
+
+| Feature | Detail |
+|---------|--------|
+| Natural language queries | Ask in plain English — the agent handles query-to-parameters translation |
+| Auto schema discovery | `ApifyTools` fetches the Actor's input schema so the LLM always passes the right parameters |
+| Markdown output | Results are returned as compact Markdown, easy to read and save |
+| Model-agnostic | Swap `anthropic/claude-sonnet-4-5` for any Upsonic-supported provider |
+| Extensible | Swap the Actor to search Instagram, TripAdvisor, or thousands of other sources |
+
+## Notes
+
+<Warning>
+  Each run typically takes **60–90 seconds** as the Google Maps Actor needs time to crawl. Keep `maxCrawledPlacesPerSearch` at 10 or below — more results can exceed the model's context limit.
+</Warning>
+
+- Apify's free tier is sufficient for several searches
+- Output is saved as `results.md` in the current directory
+- Store API keys in `.env` — never hardcode them in source files
+
+## Repository
+
+View the full example: [Apify Restaurant Scout](https://github.com/Upsonic/Examples/tree/master/examples/web_search_and_scraping/apify_google_maps_restaurant_scout)
