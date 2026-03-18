@@ -5,6 +5,44 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 
 > Product updates, improvements, and bug fixes for Upsonic
 
+
+<Update label="Mar 18, 2026">
+  ## v0.74.0
+
+  [View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.74.0)
+
+  ## New Features
+
+  * **Apify tools (parameter support)**: Apify actor and run tools accept parameters so agents pass structured inputs to actors and runs.
+  * **Discord interface**: New Discord integration via `DiscordInterface`—Gateway WebSocket, per-user CHAT sessions, attachments, HITL via buttons, streaming edits, whitelist and typing options.
+  * **Skills integration**: Skills load from multiple sources and apply in agent runs as first-class context.
+
+  ## Improvements
+
+  * **PgVector provider (identifier safety)**: Schema and table names are validated (alphanumeric and underscores) and DDL uses quoted identifiers, hardening against unsafe identifiers when collection names come from config or agents.
+
+  ## Bug Fixes
+
+  * **MCP `call_tool` (streamable-HTTP / SSE)**: Tool calls failed because streamable-HTTP/SSE return a `(read, write, session_id)` tuple like stdio, not a session object—aligned with `connect` so TaskGroup errors no longer occur on every tool call.
+  * **MCP tool results (`EmbeddedResource`)**: `AnyUrl` on embedded resource URIs broke JSON serialization; URIs are normalized with `str()`.
+  * **MCP smoke tests**: Smoke tests updated for the streamable-HTTP/SSE `call_tool` behavior.
+
+  ## New Contributors
+
+  * [@RinZ27](https://github.com/RinZ27) made their first contribution in [#541](https://github.com/Upsonic/Upsonic/pull/541)
+  * [@Jimgitsit](https://github.com/Jimgitsit) made their first contribution in [#550](https://github.com/Upsonic/Upsonic/pull/550)
+
+  **Full Changelog:** [v0.73.2...v0.74.0](https://github.com/Upsonic/Upsonic/compare/v0.73.2...v0.74.0)
+
+  ### Pull Requests
+
+  * vectordb: hardening pgvector provider against potential SQL injection: [RinZ27](https://github.com/RinZ27) in [#541](https://github.com/Upsonic/Upsonic/pull/541)
+  * fix: MCP call_tool fails for streamable-http and SSE transports: [Jimgitsit](https://github.com/Jimgitsit) in [#550](https://github.com/Upsonic/Upsonic/pull/550)
+  * feat: parameter support for apify tools: [DoganK01](https://github.com/DoganK01) in [#547](https://github.com/Upsonic/Upsonic/pull/547)
+</Update>
+
+
+
 <Update label="Mar 13, 2026">
 
 ## v0.73.2

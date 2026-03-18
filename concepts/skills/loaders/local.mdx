@@ -1,0 +1,162 @@
+---
+title: "LocalSkills"
+description: "Load skills from local filesystem directories"
+sidebarTitle: "LocalSkills"
+---
+
+## Overview
+
+`LocalSkills` loads skills from a local directory. Each subdirectory containing a `SKILL.md` file is treated as a skill.
+
+## Usage with Agent
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, LocalSkills
+
+skills = Skills(loaders=[LocalSkills("./my-skills")])
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Code Reviewer",
+    role="Senior Developer",
+    goal="Review code for quality and best practices",
+    skills=skills,
+)
+
+task = Task(description="Review this Python function for potential bugs and suggest improvements.")
+result = agent.print_do(task)
+```
+
+## Usage with Task
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, LocalSkills
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Developer",
+    role="Software Engineer",
+    goal="Write and review code",
+)
+
+task = Task(
+    description="Analyze this module for performance bottlenecks.",
+    skills=Skills(loaders=[LocalSkills("./my-skills")]),
+)
+
+result = agent.print_do(task)
+```
+
+## Usage with Team
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.skills import Skills, LocalSkills
+
+analyst = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Code Analyst",
+    role="Code Analysis Expert",
+    goal="Analyze code for issues",
+)
+
+writer = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Report Writer",
+    role="Technical Writer",
+    goal="Write clear technical reports",
+)
+
+team = Team(
+    agents=[analyst, writer],
+    skills=Skills(loaders=[LocalSkills("./my-skills")]),
+    mode="coordinate",
+    model="anthropic/claude-sonnet-4-6",
+)
+
+task = Task(description="Review the authentication module and write a report on findings.")
+result = team.print_do(tasks=task)
+```
+
+## Directory Structure
+
+`LocalSkills` supports two patterns:
+
+### Multiple Skills Directory
+
+Point to a parent directory containing skill subdirectories:
+
+```
+my-skills/
+  code-review/
+    SKILL.md
+    scripts/
+      analyze.py
+    references/
+      style-guide.md
+    assets/
+      report-template.html
+  summarization/
+    SKILL.md
+    references/
+      templates.md
+```
+
+```python
+from upsonic.skills import Skills, LocalSkills
+
+# Loads both code-review and summarization
+skills = Skills(loaders=[LocalSkills("./my-skills")])
+```
+
+### Single Skill Directory
+
+Point directly to a skill folder that contains `SKILL.md`:
+
+```python
+from upsonic.skills import Skills, LocalSkills
+
+# Loads only the code-review skill
+skills = Skills(loaders=[LocalSkills("./my-skills/code-review")])
+```
+
+## Version Filtering
+
+Filter skills by semantic version constraints:
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, LocalSkills
+
+# Only load skills with version >= 1.0.0 and < 2.0.0
+skills = Skills(loaders=[
+    LocalSkills("./my-skills", version_constraint=">=1.0.0,<2.0.0")
+])
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Agent",
+    role="Assistant",
+    goal="Help with tasks",
+    skills=skills,
+)
+
+task = Task(description="Review this code using only stable skill versions.")
+result = agent.print_do(task)
+```
+
+Skills without a version field in their `SKILL.md` are included regardless of the constraint.
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `path` | `str` | — | Path to skill folder or directory of skill folders |
+| `validate` | `bool` | `True` | Validate skills against the spec on load |
+| `version_constraint` | `str` | `None` | Semantic version constraint (e.g. `">=1.0.0,<2.0.0"`) |
+
+<Tip>
+Set `validate=False` during development to skip strict validation checks while iterating on your skill definitions.
+</Tip>

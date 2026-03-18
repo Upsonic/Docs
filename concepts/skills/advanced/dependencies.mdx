@@ -1,0 +1,118 @@
+---
+title: "Dependencies"
+description: "Declare and validate inter-skill dependencies"
+sidebarTitle: "Dependencies"
+---
+
+## Overview
+
+Skills can declare dependencies on other skills. The Skills system validates these at load time — detecting missing dependencies and circular references.
+
+## Declaring Dependencies
+
+Add a `dependencies` list in your `SKILL.md` frontmatter:
+
+```yaml
+---
+name: advanced-review
+description: Advanced code review with data analysis
+dependencies:
+  - code-review
+  - data-analysis
+---
+
+# Advanced Review
+
+This skill builds on code-review and data-analysis skills...
+```
+
+## Validation Behavior
+
+### Default Mode (Warnings)
+
+By default, missing or circular dependencies produce warnings but don't block loading:
+
+```python
+from upsonic import Agent
+from upsonic.skills import Skills, LocalSkills
+
+skills = Skills(loaders=[LocalSkills("./my-skills")])
+# Logs: WARNING - Skill 'advanced-review' has missing dependencies: code-review
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Agent",
+    role="Reviewer",
+    goal="Review code",
+    skills=skills,
+)
+
+result = agent.print_do("Review this module for issues.")
+```
+
+### Strict Mode (Errors)
+
+Enable `strict_deps=True` to raise a `SkillValidationError` on dependency issues:
+
+```python
+from upsonic.skills import Skills, LocalSkills
+
+try:
+    skills = Skills(
+        loaders=[LocalSkills("./my-skills")],
+        strict_deps=True,
+    )
+except Exception as e:
+    print(f"Dependency error: {e}")
+```
+
+## Circular Dependencies
+
+The system uses DFS-based cycle detection. If skill A depends on B and B depends on A:
+
+- **Default mode**: Logs a warning with the cycle path
+- **Strict mode**: Raises `SkillValidationError` with cycle details
+
+## Inline Skills with Dependencies
+
+```python
+from upsonic import Agent
+from upsonic.skills import Skills, Skill, InlineSkills
+
+base_skill = Skill(
+    name="formatting",
+    description="Output formatting standards",
+    instructions="Use consistent formatting...",
+    source_path="",
+    scripts=[],
+    references=[],
+)
+
+advanced_skill = Skill(
+    name="report-writing",
+    description="Professional report writing",
+    instructions="Write professional reports following formatting standards...",
+    source_path="",
+    scripts=[],
+    references=[],
+    dependencies=["formatting"],
+)
+
+skills = Skills(loaders=[InlineSkills([base_skill, advanced_skill])])
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Report Writer",
+    role="Business Writer",
+    goal="Create professional reports",
+    skills=skills,
+)
+
+result = agent.print_do("Write a quarterly business report for Q4 2025.")
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `strict_deps` | `bool` | `False` | Raise errors instead of warnings for dependency issues |

@@ -1,0 +1,77 @@
+---
+title: "Skill Loaders"
+description: "Load skills from local files, GitHub, URLs, registries, and more"
+sidebarTitle: "Overview"
+---
+
+## Overview
+
+Skill loaders discover and load skills from various sources. Pass one or more loaders to `Skills()`:
+
+```python
+from upsonic.skills import Skills, LocalSkills, BuiltinSkills
+
+skills = Skills(loaders=[
+    BuiltinSkills(),
+    LocalSkills("./my-skills"),
+])
+```
+
+When multiple loaders provide a skill with the same name, **later loaders override earlier ones**.
+
+## Available Loaders
+
+<CardGroup cols={2}>
+  <Card title="LocalSkills" icon="folder" href="/concepts/skills/loaders/local">
+    Load skills from local filesystem directories. Supports single skill folders or parent directories with multiple skills.
+  </Card>
+  <Card title="BuiltinSkills" icon="box" href="/concepts/skills/loaders/builtin">
+    Use skills bundled with Upsonic — code-review, summarization, and data-analysis. No setup required.
+  </Card>
+  <Card title="InlineSkills" icon="code" href="/concepts/skills/loaders/inline">
+    Define skills programmatically in code using Skill objects — no filesystem needed.
+  </Card>
+  <Card title="GitHubSkills" icon="github" href="/concepts/skills/loaders/github">
+    Download skills from GitHub repositories. Supports private repos, branch selection, and local caching.
+  </Card>
+  <Card title="URLSkills" icon="link" href="/concepts/skills/loaders/url">
+    Load skills from remote zip or tar archives via HTTP. Supports custom headers for authentication.
+  </Card>
+</CardGroup>
+
+## Combining Loaders
+
+Mix and match loaders to layer skills — start with defaults, add shared skills, then apply project-specific overrides:
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, LocalSkills, BuiltinSkills, GitHubSkills
+
+skills = Skills(loaders=[
+    BuiltinSkills(),                                  # Base: built-in skills
+    GitHubSkills(repo="myorg/shared-skills"),          # Shared team skills
+    LocalSkills("./project-skills"),                   # Project overrides
+])
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="My Agent",
+    role="Development Assistant",
+    goal="Help with development tasks",
+    skills=skills,
+)
+
+task = Task(description="Analyze this code for quality issues and summarize the findings.")
+result = agent.print_do(task)
+```
+
+## Remote Loader Caching
+
+All remote loaders (`GitHubSkills`, `URLSkills`) cache downloads locally to avoid repeated network requests:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `cache_dir` | `str` | `~/.upsonic/skills_cache/` | Directory for cached downloads |
+| `cache_ttl` | `int` | `3600` | Cache TTL in seconds (1 hour) |
+| `validate` | `bool` | `True` | Validate skills on load |
+| `force_refresh` | `bool` | `False` | Bypass cache and re-download |

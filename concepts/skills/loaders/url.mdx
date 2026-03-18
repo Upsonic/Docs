@@ -1,0 +1,122 @@
+---
+title: "URLSkills"
+description: "Load skills from remote zip or tar archives"
+sidebarTitle: "URLSkills"
+---
+
+## Overview
+
+`URLSkills` downloads and extracts skills from a remote archive (`.tar.gz` or `.zip`). Downloads are cached locally.
+
+<Info>
+Requires `httpx`. Install with: `pip install httpx`
+</Info>
+
+## Usage with Agent
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, URLSkills
+
+skills = Skills(loaders=[
+    URLSkills(url="https://example.com/my-skills.tar.gz")
+])
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Agent",
+    role="Assistant",
+    goal="Assist with tasks using remote skills",
+    skills=skills,
+)
+
+task = Task(description="Analyze this data and summarize key findings.")
+result = agent.print_do(task)
+```
+
+## Usage with Task
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, URLSkills
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Agent",
+    role="Assistant",
+    goal="Help with tasks",
+)
+
+task = Task(
+    description="Follow the company coding standards to review this code.",
+    skills=Skills(loaders=[
+        URLSkills(
+            url="https://internal.company.com/skills/latest.zip",
+            headers={"Authorization": "Bearer your-token-here"},
+        )
+    ]),
+)
+
+result = agent.print_do(task)
+```
+
+## Usage with Team
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.skills import Skills, URLSkills
+
+reviewer = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Code Reviewer",
+    role="Senior Developer",
+    goal="Review code quality",
+)
+
+documenter = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Documenter",
+    role="Technical Writer",
+    goal="Write documentation for code changes",
+)
+
+team = Team(
+    agents=[reviewer, documenter],
+    skills=Skills(loaders=[
+        URLSkills(url="https://example.com/team-skills.tar.gz")
+    ]),
+    mode="coordinate",
+    model="anthropic/claude-sonnet-4-6",
+)
+
+task = Task(description="Review and document the new API endpoint changes.")
+result = team.print_do(tasks=task)
+```
+
+## Archive Format
+
+The archive should contain skill directories at the top level:
+
+```
+my-skills.tar.gz
+  code-review/
+    SKILL.md
+    scripts/
+    references/
+  summarization/
+    SKILL.md
+```
+
+Both `.tar.gz` and `.zip` formats are auto-detected.
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `url` | `str` | — | URL to the skill archive |
+| `headers` | `Dict[str, str]` | `None` | HTTP headers for the request |
+| `max_size` | `int` | `104857600` | Maximum download size in bytes (100 MB) |
+| `cache_dir` | `str` | `~/.upsonic/skills_cache/` | Local cache directory |
+| `cache_ttl` | `int` | `3600` | Cache TTL in seconds |
+| `validate` | `bool` | `True` | Validate skills on load |
+| `force_refresh` | `bool` | `False` | Bypass cache |

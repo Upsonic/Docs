@@ -1,0 +1,164 @@
+---
+title: "Skills"
+description: "Add reusable domain expertise to your agents with structured instructions, scripts, and references"
+sidebarTitle: "Overview"
+---
+
+## What Are Skills?
+
+Skills are self-contained packages of domain expertise that extend what your agents can do. Each skill provides:
+
+- **Instructions** — detailed guidance the agent follows (loaded from `SKILL.md`)
+- **Scripts** — executable code templates the agent can run or read
+- **References** — supporting documentation (style guides, API docs, cheatsheets)
+- **Assets** — supporting files like templates, fonts, and icons
+
+Agents discover skills progressively: they see summaries upfront and load full details on demand via tool calls — keeping context lean.
+
+## Quick Start
+
+### Skills on an Agent
+
+```python
+from upsonic import Agent
+from upsonic.skills import Skills, LocalSkills
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Code Reviewer",
+    role="Senior Developer",
+    goal="Review code for quality and best practices",
+    skills=Skills(loaders=[LocalSkills("./my-skills")]),
+)
+
+result = agent.print_do("Review this Python function for bugs and style issues.")
+```
+
+### Skills on a Task
+
+Attach skills to a specific task instead of the agent. The agent uses them only for that task.
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, BuiltinSkills
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Writer",
+    role="Content Writer",
+    goal="Create clear, engaging content",
+)
+
+task = Task(
+    description="Summarize this technical document in 3 bullet points.",
+    skills=Skills(loaders=[BuiltinSkills(skills=["summarization"])]),
+)
+
+result = agent.print_do(task)
+```
+
+### Skills on a Team
+
+Skills attached to a Team propagate to all member agents automatically. Each agent gets independent metrics.
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.skills import Skills, BuiltinSkills
+
+analyst = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Data Analyst",
+    role="Data Analysis Expert",
+    goal="Analyze data and extract insights",
+)
+
+writer = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Report Writer",
+    role="Business Report Specialist",
+    goal="Create professional summaries",
+)
+
+team = Team(
+    agents=[analyst, writer],
+    skills=Skills(loaders=[BuiltinSkills(skills=["data-analysis", "summarization"])]),
+    mode="coordinate",
+    model="anthropic/claude-sonnet-4-6",
+)
+
+task = Task(description="Analyze Q4 sales trends and write an executive summary.")
+result = team.print_do(tasks=task)
+```
+
+## How It Works
+
+When an agent runs with skills:
+
+1. **System prompt injection** — skill summaries (name, description, available scripts/references) are added to the agent's system prompt
+2. **Tool registration** — four tool functions are registered so the agent can access skill content on demand
+3. **Progressive loading** — the agent decides when to load full instructions, read references, or run scripts
+
+The four skill tools available to the agent:
+
+| Tool | Purpose |
+|------|---------|
+| `get_skill_instructions(skill_name)` | Load the full instructions for a skill |
+| `get_skill_reference(skill_name, reference_path)` | Read a specific reference document |
+| `get_skill_script(skill_name, script_path, execute)` | Read or execute a script |
+| `get_skill_asset(skill_name, asset_path)` | Read an asset file (template, font, icon) |
+
+<Info>
+When skills are on both Agent and Task, tool names are automatically prefixed (`task_get_skill_*`) to avoid collisions. The agent decides which scope to use.
+</Info>
+
+## Built-in Skills
+
+Upsonic ships with ready-to-use skills:
+
+| Skill | Description |
+|-------|-------------|
+| `code-review` | Structured code reviews with severity-classified feedback, security audits, and language-specific pattern detection |
+| `summarization` | Multi-format summarization (executive, technical, research, meeting, changelog) with templates |
+| `data-analysis` | Statistical data analysis with cleaning, exploration, visualization, and hypothesis testing |
+
+```python
+from upsonic.skills import Skills, BuiltinSkills
+
+# Load all built-in skills
+skills = Skills(loaders=[BuiltinSkills()])
+
+# Load specific ones
+skills = Skills(loaders=[BuiltinSkills(skills=["code-review"])])
+```
+
+## Skill Sources
+
+Load skills from multiple sources:
+
+| Loader | Source |
+|--------|--------|
+| `LocalSkills(path)` | Local filesystem directory |
+| `BuiltinSkills()` | Bundled with Upsonic |
+| `InlineSkills(skills)` | Programmatically defined `Skill` objects |
+| `GitHubSkills(repo)` | GitHub repository |
+| `URLSkills(url)` | Remote URL (zip/tar) |
+
+
+```python
+from upsonic.skills import Skills, LocalSkills, GitHubSkills, BuiltinSkills
+
+skills = Skills(loaders=[
+    BuiltinSkills(skills=["code-review"]),
+    LocalSkills("./company-skills"),
+    GitHubSkills(repo="myorg/shared-skills", branch="main"),
+])
+```
+
+Later loaders override earlier ones when skill names conflict.
+
+## Next Steps
+
+- [SKILL.md Format](/concepts/skills/skill-format) — how to create your own skills
+- [Loaders](/concepts/skills/loaders/overview) — all loader types and configuration
+- [Metrics & Monitoring](/concepts/skills/metrics) — track skill usage
+- [Advanced Features](/concepts/skills/advanced/overview) — caching, auto-selection, callbacks, policies

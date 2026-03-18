@@ -1,0 +1,66 @@
+---
+title: "Safety Policies"
+description: "Filter skill content with Upsonic's safety engine"
+sidebarTitle: "Safety Policies"
+---
+
+## Overview
+
+Integrate skills with Upsonic's safety engine to validate content against configured policies before it reaches the agent.
+
+## Usage
+
+```python
+from upsonic import Agent
+from upsonic.skills import Skills, LocalSkills
+
+skills = Skills(
+    loaders=[LocalSkills("./my-skills")],
+    policy=my_safety_policy,
+)
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Safe Agent",
+    role="Content Reviewer",
+    goal="Review content safely",
+    skills=skills,
+)
+
+result = agent.print_do("Process this content following safety guidelines.")
+```
+
+## Multiple Policies
+
+Pass a list of policies — all are checked:
+
+```python
+from upsonic.skills import Skills, LocalSkills
+
+skills = Skills(
+    loaders=[LocalSkills("./my-skills")],
+    policy=[content_policy, compliance_policy, privacy_policy],
+)
+```
+
+## How It Works
+
+When an agent accesses skill content (instructions or references), the content is checked against all configured policies:
+
+1. Each policy's `check()` method receives a `PolicyInput` with the content
+2. If any policy returns a result with `confidence > 0.7`, the content is blocked
+3. The agent receives an error message instead of the skill content
+
+```
+{"error": "Content blocked by policy: <reason>", "skill_name": "my-skill"}
+```
+
+<Info>
+Script execution results are not policy-checked — only skill instructions and reference document content pass through the safety engine.
+</Info>
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `policy` | policy or `List` | `None` | Safety policy or list of policies |

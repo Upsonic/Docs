@@ -1,0 +1,160 @@
+---
+title: "InlineSkills"
+description: "Define skills programmatically without filesystem directories"
+sidebarTitle: "InlineSkills"
+---
+
+## Overview
+
+`InlineSkills` lets you define skills directly in code using `Skill` objects — no filesystem structure needed.
+
+## Usage with Agent
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, Skill, InlineSkills
+
+json_skill = Skill(
+    name="json-formatting",
+    description="Format and validate JSON output",
+    instructions="Always return valid, pretty-printed JSON with 2-space indentation. Validate structure before returning.",
+    source_path="",
+    scripts=[],
+    references=[],
+)
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Data Formatter",
+    role="Data Processing Specialist",
+    goal="Format and structure data outputs",
+    skills=Skills(loaders=[InlineSkills([json_skill])]),
+)
+
+task = Task(description="Convert this CSV data to JSON: name,age\nAlice,30\nBob,25")
+result = agent.print_do(task)
+```
+
+## Multiple Inline Skills with Agent
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, Skill, InlineSkills
+
+skills_list = [
+    Skill(
+        name="step-by-step",
+        description="Break down complex problems into clear steps",
+        instructions="When solving problems, always break them into numbered steps. Show your reasoning at each step.",
+        source_path="",
+        scripts=[],
+        references=[],
+    ),
+    Skill(
+        name="code-examples",
+        description="Include runnable code examples in explanations",
+        instructions="When explaining concepts, always include at least one complete, runnable code example.",
+        source_path="",
+        scripts=[],
+        references=[],
+    ),
+]
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Teacher",
+    role="Programming Instructor",
+    goal="Teach programming concepts clearly",
+    skills=Skills(loaders=[InlineSkills(skills_list)]),
+)
+
+task = Task(description="Explain how Python decorators work.")
+result = agent.print_do(task)
+```
+
+## Usage with Task
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, Skill, InlineSkills
+
+review_skill = Skill(
+    name="security-review",
+    description="Review code for security vulnerabilities",
+    instructions="Focus on OWASP Top 10 vulnerabilities. Check for SQL injection, XSS, CSRF, and insecure deserialization.",
+    source_path="",
+    scripts=[],
+    references=[],
+)
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Security Agent",
+    role="Security Analyst",
+    goal="Identify security issues in code",
+)
+
+task = Task(
+    description="Review this login function for security vulnerabilities.",
+    skills=Skills(loaders=[InlineSkills([review_skill])]),
+)
+
+result = agent.print_do(task)
+```
+
+## Usage with Team
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.skills import Skills, Skill, InlineSkills
+
+skills_list = [
+    Skill(
+        name="data-analysis",
+        description="Analyze data and extract insights",
+        instructions="When analyzing data, identify trends, outliers, and key metrics. Present findings with supporting evidence.",
+        source_path="",
+        scripts=[],
+        references=[],
+    ),
+    Skill(
+        name="report-writing",
+        description="Write professional business reports",
+        instructions="Structure reports with executive summary, findings, and recommendations. Use clear, concise language.",
+        source_path="",
+        scripts=[],
+        references=[],
+    ),
+]
+
+analyst = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Analyst",
+    role="Data Analyst",
+    goal="Analyze data and find insights",
+)
+
+writer = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Writer",
+    role="Report Writer",
+    goal="Write clear business reports",
+)
+
+team = Team(
+    agents=[analyst, writer],
+    skills=Skills(loaders=[InlineSkills(skills_list)]),
+    mode="coordinate",
+    model="anthropic/claude-sonnet-4-6",
+)
+
+task = Task(description="Analyze the customer feedback data and write a summary report.")
+result = team.print_do(tasks=task)
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `skills` | `List[Skill]` | — | List of `Skill` objects to load |
+| `validate` | `bool` | `False` | Validate skill metadata on load |

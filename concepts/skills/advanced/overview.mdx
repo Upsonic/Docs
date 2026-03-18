@@ -1,0 +1,74 @@
+---
+title: "Advanced Features"
+description: "Caching, auto-selection, dependencies, callbacks, safety policies, and more"
+sidebarTitle: "Overview"
+---
+
+## Overview
+
+Beyond basic skill loading, the Skills system provides advanced features for production use:
+
+| Feature | Description |
+|---------|-------------|
+| [Caching](/concepts/skills/advanced/caching) | In-memory TTL cache for skill content |
+| [Auto-Selection](/concepts/skills/advanced/auto-selection) | Embedding-based skill relevance filtering |
+| [Dependencies](/concepts/skills/advanced/dependencies) | Declare and validate inter-skill dependencies |
+| [Versioning](/concepts/skills/advanced/versioning) | Semantic versioning and constraint filtering |
+| [Callbacks](/concepts/skills/advanced/callbacks) | Hook into skill load, reference, and script events |
+| [Safety Policies](/concepts/skills/advanced/safety) | Content filtering via the safety engine |
+| [Knowledge Base](/concepts/skills/advanced/knowledge-base) | Semantic search across skill references via RAG |
+
+## Skills Constructor Reference
+
+All advanced features are configured via the `Skills` constructor:
+
+```python
+from upsonic.skills import Skills, LocalSkills
+
+skills = Skills(
+    loaders=[LocalSkills("./my-skills")],     # Required — skill sources
+    strict_deps=False,                         # Raise on dependency issues
+    cache_ttl=300,                             # Cache TTL in seconds (None = disabled)
+    on_load=my_load_callback,                  # Callback on skill load
+    on_script_execute=my_script_callback,      # Callback on script execution
+    on_reference_access=my_ref_callback,       # Callback on reference access
+    auto_select=True,                          # Enable embedding-based selection
+    max_skills=5,                              # Max skills in system prompt
+    embedding_provider=my_provider,            # Provider for auto-select
+    policy=my_safety_policy,                   # Safety policy or list of policies
+)
+```
+
+## Merging Skills
+
+Combine multiple `Skills` instances into one:
+
+```python
+from upsonic.skills import Skills, LocalSkills, BuiltinSkills
+
+base = Skills(loaders=[BuiltinSkills()])
+custom = Skills(loaders=[LocalSkills("./custom")])
+
+merged = Skills.merge(base, custom)
+# Later instances override on name conflict
+```
+
+## Tool Binding
+
+Skills can declare which external tools they work best with:
+
+```yaml
+# In SKILL.md frontmatter
+allowed-tools:
+  - code_execution
+  - file_search
+```
+
+Access the union of allowed tools from all actively used skills:
+
+```python
+active_tools = skills.get_active_skill_tools()
+# Returns: {'code_execution', 'file_search'}
+```
+
+A skill becomes "active" when the agent calls `get_skill_instructions()` for it.

@@ -1,0 +1,185 @@
+---
+title: "SKILL.md Format"
+description: "Create custom skills with the SKILL.md file format"
+sidebarTitle: "SKILL.md Format"
+---
+
+## Directory Structure
+
+Each skill is a folder with a `SKILL.md` file and optional `scripts/`, `references/`, and `assets/` directories:
+
+```
+my-skill/
+  SKILL.md              # Required — instructions + metadata
+  scripts/              # Optional — executable scripts
+    analyze.py
+    lint.sh
+  references/           # Optional — supporting documentation
+    style-guide.md
+    api-reference.md
+  assets/               # Optional — templates, fonts, icons
+    report-template.html
+    logo.png
+```
+
+## SKILL.md Format
+
+`SKILL.md` uses YAML frontmatter for metadata followed by Markdown instructions:
+
+```markdown
+---
+name: code-review
+description: Code quality analysis with best practices enforcement
+version: "1.0.0"
+license: MIT
+compatibility: "python>=3.9"
+allowed-tools:
+  - code_execution
+  - file_search
+dependencies:
+  - summarization
+metadata:
+  author: Your Name
+  tags:
+    - code-quality
+    - review
+---
+
+# Code Review Skill
+
+You are an expert code reviewer. When reviewing code:
+
+1. Check for bugs, security issues, and performance problems
+2. Verify adherence to project coding standards
+3. Suggest improvements with concrete examples
+
+## When to Use Scripts
+
+Use `analyze.py` to run static analysis on the provided code.
+
+## Reference Materials
+
+Refer to `style-guide.md` for the project's coding standards.
+```
+
+## Frontmatter Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Unique skill identifier (kebab-case, no spaces or capitals) |
+| `description` | string | Yes | Short description (shown in skill summaries, max 1024 chars, no XML tags) |
+| `version` | string | No | Semantic version for version tracking |
+| `license` | string | No | License information |
+| `compatibility` | string | No | Runtime requirements (e.g. `"python>=3.9"`) |
+| `allowed-tools` | list | No | Tools this skill recommends using |
+| `dependencies` | list | No | Other skill names this skill depends on |
+| `metadata` | object | No | Arbitrary metadata (author, tags, etc.) |
+
+### Name Rules
+
+- Must be **kebab-case** (lowercase letters, digits, hyphens only)
+- Cannot start or end with a hyphen
+- Cannot contain consecutive hyphens (`--`)
+- Max 64 characters
+- Must match the folder name
+
+### Description Rules
+
+- Must be a non-empty string, max 1024 characters
+- Must not contain XML bracket characters (`<` or `>`)
+- Should describe **what** the skill does and **when** to use it
+
+## Instructions Body
+
+The Markdown body after the frontmatter is the **instructions** — this is what the agent reads when it calls `get_skill_instructions()`. Write it as if you're briefing a colleague:
+
+- Explain **when** and **how** to apply the skill
+- Reference available scripts and references by filename
+- Be specific about expected outputs and quality standards
+
+<Tip>
+Keep instructions focused. The agent loads them on demand, so concise and actionable guidance works better than lengthy explanations.
+</Tip>
+
+## Scripts
+
+Place executable files in `scripts/`. Agents can read script content or execute them:
+
+```python
+# Agent calls: get_skill_script("code-review", "analyze.py", execute=True)
+# Returns: {"stdout": "...", "stderr": "...", "returncode": 0}
+```
+
+Scripts run with the skill directory as the working directory. You can pass arguments and set a timeout:
+
+```python
+get_skill_script("code-review", "analyze.py", execute=True, args=["--strict"], timeout=60)
+```
+
+<Warning>
+Scripts execute on the host machine. Only include scripts you trust. The `timeout` parameter (default: 30s) prevents runaway processes.
+</Warning>
+
+## References
+
+Place documentation files in `references/`. Agents read them on demand:
+
+```python
+# Agent calls: get_skill_reference("code-review", "style-guide.md")
+# Returns: {"content": "...", "skill_name": "code-review", "reference_path": "style-guide.md"}
+```
+
+References are read-only documents — they are never executed.
+
+## Assets
+
+Place supporting files like templates, fonts, and icons in `assets/`. Agents read them on demand:
+
+```python
+# Agent calls: get_skill_asset("code-review", "report-template.html")
+# Returns: {"content": "...", "skill_name": "code-review", "asset_path": "report-template.html"}
+```
+
+Assets are read-only supporting files that complement the skill's instructions and scripts.
+
+## Loading from a Directory
+
+Point `LocalSkills` at a parent directory containing one or more skill folders:
+
+```
+skills-dir/
+  code-review/
+    SKILL.md
+    scripts/
+    references/
+    assets/
+  summarization/
+    SKILL.md
+    references/
+```
+
+```python
+from upsonic.skills import Skills, LocalSkills
+
+skills = Skills(loaders=[LocalSkills("./skills-dir")])
+# Loads both code-review and summarization
+```
+
+## Inline Skills
+
+For simple skills without files, use `InlineSkills`:
+
+```python
+from upsonic.skills import Skills, Skill, InlineSkills
+
+skill = Skill(
+    name="json-formatter",
+    description="Format and validate JSON output",
+    instructions="Always return valid, pretty-printed JSON with 2-space indentation.",
+    source_path="",
+    scripts=[],
+    references=[],
+)
+
+skills = Skills(loaders=[InlineSkills([skill])])
+```
