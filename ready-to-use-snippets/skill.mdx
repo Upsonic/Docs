@@ -1,0 +1,165 @@
+---
+title: "SKILL.md"
+sidebarTitle: "SKILL.md"
+description: "A ready-to-use SKILL.md template for creating custom skills"
+---
+
+The `SKILL.md` file defines your skill's identity, metadata, and instructions in a simple markdown file. Place it inside a **skill directory** and the agent will automatically load it when the skill is requested.
+
+## Where to Use
+
+You can use `SKILL.md` with:
+
+- [**LocalSkills**](/docs/skills/loaders/local) — Load from a local directory on disk
+- [**GitHubSkills**](/docs/skills/loaders/github) — Load from a GitHub repository
+- [**BuiltinSkills**](/docs/skills/loaders/builtin) — Built-in skills that ship with Upsonic
+
+## How It Works
+
+1. Create a folder named after your skill (kebab-case)
+2. Add a `SKILL.md` file with YAML frontmatter and Markdown instructions
+3. Optionally add `scripts/`, `references/`, and `assets/` directories
+4. Point a loader at the parent directory
+
+```python
+from upsonic import Agent
+from upsonic.skills import Skills, LocalSkills
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-5",
+    skills=Skills(loaders=[LocalSkills("./my-skills")])  # <- put skill folders here
+)
+```
+
+## Template
+
+Copy and customize this template for your use case:
+
+```markdown
+---
+name: api-integration
+description: Design and implement REST API integrations with proper error handling, retry logic, and authentication. Use when a user asks to integrate with an external API, build API clients, handle webhooks, or troubleshoot HTTP request issues. Trigger when user mentions "API", "REST", "HTTP client", "webhook", "endpoint", or asks about authentication flows like OAuth.
+version: "1.0.0"
+license: MIT
+compatibility: "python>=3.9"
+metadata:
+  author: Your Name
+  tags:
+    - api
+    - rest
+    - http
+    - integration
+---
+
+# API Integration Skill
+
+You are an expert at designing and building reliable API integrations. When helping with API work, prioritize reliability, proper error handling, and clean abstractions.
+
+## When to Offer This Workflow
+
+**Trigger conditions:**
+- User asks to integrate with an external API or service
+- User needs help building an HTTP client or wrapper
+- User is debugging API request/response issues
+- User asks about authentication (API keys, OAuth, JWT)
+- User needs to handle webhooks or callbacks
+
+**Initial approach:**
+Before writing code, understand:
+1. Which API are we integrating with? Is there official documentation?
+2. What authentication method does it use?
+3. What operations does the user need (read, write, both)?
+4. What error scenarios should we handle?
+
+## Integration Principles
+
+### 1. Always Use a Client Wrapper
+
+Never scatter raw HTTP calls throughout the codebase. Create a dedicated client class:
+
+    class PaymentAPIClient:
+        def __init__(self, api_key: str, base_url: str = "https://api.example.com/v1"):
+            self.base_url = base_url
+            self.session = httpx.Client(
+                base_url=base_url,
+                headers={"Authorization": f"Bearer {api_key}"},
+                timeout=30.0,
+            )
+
+        def create_charge(self, amount: int, currency: str) -> dict:
+            response = self.session.post("/charges", json={"amount": amount, "currency": currency})
+            response.raise_for_status()
+            return response.json()
+
+### 2. Implement Retry Logic
+
+Transient failures happen. Use exponential backoff for retryable status codes (429, 502, 503, 504):
+
+    import time
+
+    MAX_RETRIES = 3
+    RETRYABLE_CODES = {429, 502, 503, 504}
+
+    def request_with_retry(method, url, **kwargs):
+        for attempt in range(MAX_RETRIES):
+            response = method(url, **kwargs)
+            if response.status_code not in RETRYABLE_CODES:
+                return response
+            wait = 2 ** attempt
+            time.sleep(wait)
+        return response
+
+### 3. Handle Rate Limits
+
+Respect `Retry-After` headers. Log when rate-limited so the team can adjust usage patterns.
+
+### 4. Validate Responses
+
+Never trust API responses blindly:
+- Check status codes before parsing the body
+- Validate response schemas for critical operations
+- Handle unexpected fields gracefully (don't crash on extra keys)
+
+### 5. Keep Secrets Out of Code
+
+- Use environment variables for API keys
+- Never log full request bodies that might contain tokens
+- Mask sensitive fields in error messages
+
+## Error Handling
+
+Categorize errors into actionable groups:
+
+- **Client error (400, 422):** Fix the request — log the validation error details
+- **Auth error (401, 403):** Re-authenticate or check permissions
+- **Not found (404):** Handle gracefully — the resource may have been deleted
+- **Rate limit (429):** Back off and retry with `Retry-After` header
+- **Server error (500, 502, 503):** Retry with exponential backoff
+
+## Reference Materials
+
+- Load `authentication-patterns.md` for detailed examples of API key, OAuth 2.0, and JWT authentication flows
+- Load `error-catalog.md` for a comprehensive list of common API error patterns and their solutions
+
+## Output Format
+
+When building an integration, deliver:
+
+1. **Client class** with typed methods for each API operation
+2. **Error handling** with custom exception classes
+3. **Configuration** via environment variables or config objects
+4. **Usage example** showing how to initialize and call the client
+
+## Scripts
+
+- Use `test_connection.py` to verify API connectivity and authentication before building the full integration
+
+## Guidelines
+
+- **Prefer `httpx` over `requests`** for async support and HTTP/2
+- **Type-hint all return values** so callers know what to expect
+- **Log at appropriate levels**: DEBUG for request/response details, WARNING for retries, ERROR for failures
+- **Set timeouts on every request** — never use infinite timeouts
+- **Use pagination** when listing resources — never assume all results fit in one response
+- **Idempotency keys** for write operations to prevent duplicate actions on retry
+```
