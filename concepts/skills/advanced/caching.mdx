@@ -1,0 +1,64 @@
+---
+title: "Caching"
+description: "Cache skill content in memory to reduce repeated file reads"
+sidebarTitle: "Caching"
+---
+
+## Overview
+
+The Skills system provides an in-memory TTL cache for skill content. When enabled, skill instructions, references, and system prompt sections are cached to avoid re-reading files on every access.
+
+## Usage
+
+```python
+from upsonic import Agent
+from upsonic.skills import Skills, LocalSkills
+
+skills = Skills(
+    loaders=[LocalSkills("./my-skills")],
+    cache_ttl=300,  # Cache entries for 5 minutes
+)
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Agent",
+    role="Assistant",
+    goal="Help with tasks",
+    skills=skills,
+)
+
+# First call reads from disk, subsequent calls within 5 min use cache
+result = agent.print_do("Review this code.")
+result = agent.print_do("Now review this other code.")  # Uses cached skill data
+```
+
+## Force Refresh
+
+Call `reload()` to clear the cache and reload all skills from their loaders:
+
+```python
+from upsonic.skills import Skills, LocalSkills
+
+skills = Skills(
+    loaders=[LocalSkills("./my-skills")],
+    cache_ttl=600,
+)
+
+# After editing skill files on disk
+skills.reload()  # Clears cache, reloads from loaders
+```
+
+## What Gets Cached
+
+| Content | Cache Key |
+|---------|-----------|
+| Skill instructions | `instructions:{skill_name}` |
+| System prompt section | `system_prompt:{task_description}` |
+
+References and script content are not cached — they are read fresh each time since they may be large or change frequently.
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `cache_ttl` | `int` | `None` | Cache TTL in seconds. `None` disables caching. |

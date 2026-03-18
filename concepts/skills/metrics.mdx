@@ -1,0 +1,116 @@
+---
+title: "Metrics & Monitoring"
+description: "Track how agents use skills with built-in usage metrics"
+sidebarTitle: "Metrics"
+---
+
+## Overview
+
+Every `Skills` instance tracks usage metrics per skill automatically. Metrics help you understand which skills agents use, how often, and how much content they load.
+
+## Accessing Metrics
+
+### From an Agent
+
+```python
+from upsonic import Agent
+from upsonic.skills import Skills, BuiltinSkills
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Reviewer",
+    role="Code Reviewer",
+    goal="Review code quality",
+    skills=Skills(loaders=[BuiltinSkills(skills=["code-review"])]),
+)
+
+result = agent.print_do("Review this function for bugs.")
+
+# Get metrics after execution
+metrics = agent.get_skill_metrics()
+print(metrics)
+# {'code-review': {'load_count': 1, 'reference_access_count': 0,
+#   'script_execution_count': 0, 'total_chars_loaded': 1234,
+#   'last_used_timestamp': 1710000000.0}}
+```
+
+### From a Task
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, BuiltinSkills
+
+task = Task(
+    description="Summarize this document.",
+    skills=Skills(loaders=[BuiltinSkills(skills=["summarization"])]),
+)
+
+agent = Agent(model="anthropic/claude-sonnet-4-6", name="Writer", role="Writer", goal="Write content")
+agent.print_do(task)
+
+metrics = task.get_skill_metrics()
+```
+
+### Directly from Skills
+
+```python
+from upsonic.skills import Skills, BuiltinSkills
+
+skills = Skills(loaders=[BuiltinSkills()])
+metrics = skills.get_metrics()
+
+for skill_name, m in metrics.items():
+    print(f"{skill_name}: {m.to_dict()}")
+```
+
+## SkillMetrics Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `load_count` | `int` | Times instructions were loaded |
+| `reference_access_count` | `int` | Times references were accessed |
+| `script_execution_count` | `int` | Times scripts were executed |
+| `total_chars_loaded` | `int` | Total characters loaded across all access types |
+| `last_used_timestamp` | `float` | Unix timestamp of last access |
+
+## Team Metrics
+
+When skills are attached to a Team, each agent gets an independent copy with its own metrics:
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.skills import Skills, BuiltinSkills
+
+agent_a = Agent(model="anthropic/claude-sonnet-4-6", name="Agent A", role="Analyst", goal="Analyze")
+agent_b = Agent(model="anthropic/claude-sonnet-4-6", name="Agent B", role="Writer", goal="Write")
+
+team = Team(
+    agents=[agent_a, agent_b],
+    skills=Skills(loaders=[BuiltinSkills()]),
+    mode="coordinate",
+    model="anthropic/claude-sonnet-4-6",
+)
+
+task = Task(description="Analyze data and write a report.")
+team.print_do(tasks=task)
+
+# Each agent has independent metrics
+print(agent_a.get_skill_metrics())
+print(agent_b.get_skill_metrics())
+```
+
+<Info>
+Team skill propagation uses `Skills.copy()` internally, so each agent's metrics are tracked independently — one agent's usage doesn't affect another's counts.
+</Info>
+
+## Serialization
+
+`SkillMetrics` supports `to_dict()` and `from_dict()` for serialization:
+
+```python
+from upsonic.skills import SkillMetrics
+
+m = SkillMetrics(load_count=3, reference_access_count=1)
+data = m.to_dict()
+restored = SkillMetrics.from_dict(data)
+```

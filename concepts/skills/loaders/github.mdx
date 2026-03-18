@@ -1,0 +1,199 @@
+---
+title: "GitHubSkills"
+description: "Load skills from GitHub repositories"
+sidebarTitle: "GitHubSkills"
+---
+
+## Overview
+
+`GitHubSkills` downloads skills from a GitHub repository via the GitHub API. Skills are cached locally to avoid repeated downloads.
+
+<Info>
+Requires `httpx`. Install with: `pip install httpx`
+</Info>
+
+## Usage with Agent
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, GitHubSkills
+
+skills = Skills(loaders=[
+    GitHubSkills(
+        repo="anthropics/skills",
+        branch="main",
+        path="skills/",
+    )
+])
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Team Agent",
+    role="Development Assistant",
+    goal="Help with development tasks using shared team skills",
+    skills=skills,
+)
+
+task = Task(description="Review this pull request for code quality issues.")
+result = agent.print_do(task)
+```
+
+## Load Specific Skills with Task
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, GitHubSkills
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Reviewer",
+    role="Code Reviewer",
+    goal="Review code quality",
+)
+
+task = Task(
+    description="Check this function for edge cases and missing tests.",
+    skills=Skills(loaders=[
+        GitHubSkills(
+            repo="anthropics/skills",
+            branch="main",
+            path="skills/",
+            skills=["claude-api", "pdf"],
+        )
+    ]),
+)
+
+result = agent.print_do(task)
+```
+
+## Usage with Team
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.skills import Skills, GitHubSkills
+
+backend_dev = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Backend Developer",
+    role="Backend Expert",
+    goal="Review backend code and APIs",
+)
+
+frontend_dev = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Frontend Developer",
+    role="Frontend Expert",
+    goal="Review frontend code and UI",
+)
+
+team = Team(
+    agents=[backend_dev, frontend_dev],
+    skills=Skills(loaders=[
+        GitHubSkills(
+            repo="anthropics/skills",
+            branch="main",
+            path="skills/",
+        )
+    ]),
+    mode="coordinate",
+    model="anthropic/claude-sonnet-4-6",
+)
+
+task = Task(description="Review the full stack changes in the user profile feature.")
+result = team.print_do(tasks=task)
+```
+
+## Authentication
+
+For private repositories, provide a GitHub token:
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, GitHubSkills
+
+# Option 1: Pass token directly
+skills = Skills(loaders=[
+    GitHubSkills(
+        repo="myorg/private-skills",
+        token="ghp_your_token_here",
+    )
+])
+
+# Option 2: Set environment variable (GITHUB_TOKEN or GH_TOKEN)
+# export GITHUB_TOKEN=ghp_your_token_here
+skills = Skills(loaders=[
+    GitHubSkills(repo="myorg/private-skills")
+])
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Agent",
+    role="Assistant",
+    goal="Help with tasks",
+    skills=skills,
+)
+
+task = Task(description="Use the private skills to review this code.")
+result = agent.print_do(task)
+```
+
+## Repository Structure
+
+Your GitHub repository should contain skill folders under the specified `path`:
+
+```
+skills-library/
+  skills/
+    code-review/
+      SKILL.md
+      scripts/
+      references/
+    summarization/
+      SKILL.md
+      references/
+```
+
+## Cache Control
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, GitHubSkills
+
+skills = Skills(loaders=[
+    GitHubSkills(
+        repo="anthropics/skills",
+        cache_dir="/tmp/skill-cache",   # Custom cache directory
+        cache_ttl=7200,                  # Cache for 2 hours
+        force_refresh=True,              # Bypass cache, always re-download
+    )
+])
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Agent",
+    role="Assistant",
+    goal="Help with tasks",
+    skills=skills,
+)
+
+task = Task(description="Use the latest skills to analyze this code.")
+result = agent.print_do(task)
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `repo` | `str` | — | Repository in `owner/name` format |
+| `branch` | `str` | `"main"` | Git branch to fetch |
+| `path` | `str` | `"skills/"` | Path within repo containing skills |
+| `token` | `str` | `None` | GitHub API token. Falls back to `GITHUB_TOKEN` / `GH_TOKEN` env vars |
+| `skills` | `List[str]` | `None` | Specific skill names to include |
+| `cache_dir` | `str` | `~/.upsonic/skills_cache/` | Local cache directory |
+| `cache_ttl` | `int` | `3600` | Cache TTL in seconds |
+| `validate` | `bool` | `True` | Validate skills on load |
+| `force_refresh` | `bool` | `False` | Bypass cache |
+
+<Warning>
+Maximum download size is 100 MB. Large repositories should use the `skills` parameter to select only needed skills.
+</Warning>

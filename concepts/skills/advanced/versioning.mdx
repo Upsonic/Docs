@@ -1,0 +1,88 @@
+---
+title: "Versioning"
+description: "Track skill versions and filter by semantic version constraints"
+sidebarTitle: "Versioning"
+---
+
+## Overview
+
+Skills support semantic versioning (`MAJOR.MINOR.PATCH`). You can track versions in skill metadata and filter skills by version constraints when loading.
+
+## Setting a Version
+
+Add `version` to your `SKILL.md` metadata:
+
+```yaml
+---
+name: code-review
+description: Code quality analysis
+metadata:
+  version: "2.1.0"
+  author: Team
+---
+```
+
+Or in inline skills:
+
+```python
+from upsonic.skills import Skill
+
+skill = Skill(
+    name="code-review",
+    description="Code quality analysis",
+    instructions="Review code for quality...",
+    source_path="",
+    scripts=[],
+    references=[],
+    version="2.1.0",
+)
+```
+
+## Duplicate Resolution
+
+When multiple loaders provide a skill with the same name, the later one overrides with a version warning:
+
+```
+WARNING: Duplicate skill name 'code-review' (version 1.0.0 -> 2.1.0), overwriting
+```
+
+## Version Constraints
+
+Filter skills by version using `LocalSkills`'s `version_constraint` parameter:
+
+```python
+from upsonic import Agent
+from upsonic.skills import Skills, LocalSkills
+
+# Only load skills with version >= 1.0.0 and < 2.0.0
+skills = Skills(loaders=[
+    LocalSkills("./my-skills", version_constraint=">=1.0.0,<2.0.0")
+])
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Agent",
+    role="Assistant",
+    goal="Help with tasks",
+    skills=skills,
+)
+
+result = agent.print_do("Review this code.")
+```
+
+## Constraint Syntax
+
+Constraints use comma-separated segments. All segments must be satisfied:
+
+| Constraint | Meaning |
+|-----------|---------|
+| `>=1.0.0` | Version 1.0.0 or higher |
+| `<2.0.0` | Below version 2.0.0 |
+| `==1.2.3` | Exactly version 1.2.3 |
+| `!=1.0.0` | Any version except 1.0.0 |
+| `>=1.0.0,<2.0.0` | Between 1.0.0 (inclusive) and 2.0.0 (exclusive) |
+| `>=1.0,!=1.5.0` | 1.0+ but not 1.5.0 |
+
+<Info>
+Skills without a version field are always included, even when a constraint is specified.
+</Info>

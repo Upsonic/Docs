@@ -1,0 +1,71 @@
+---
+title: "Callbacks"
+description: "Hook into skill usage events for logging and monitoring"
+sidebarTitle: "Callbacks"
+---
+
+## Overview
+
+Register callback functions to be notified when agents interact with skills. Useful for logging, analytics, and custom monitoring.
+
+## Available Callbacks
+
+| Callback | Triggered When | Arguments |
+|----------|---------------|-----------|
+| `on_load` | Agent loads a skill's instructions | `skill_name: str, description: str` |
+| `on_script_execute` | Agent executes a skill script | `skill_name: str, script_path: str, returncode: int` |
+| `on_reference_access` | Agent reads a skill reference | `skill_name: str, reference_path: str` |
+
+## Usage
+
+```python
+from upsonic import Agent
+from upsonic.skills import Skills, LocalSkills
+
+
+def on_skill_loaded(skill_name: str, description: str):
+    print(f"[SKILL LOADED] {skill_name}: {description}")
+
+
+def on_script_executed(skill_name: str, script_path: str, returncode: int):
+    print(f"[SCRIPT RUN] {skill_name}/{script_path} -> exit code {returncode}")
+
+
+def on_reference_accessed(skill_name: str, reference_path: str):
+    print(f"[REFERENCE READ] {skill_name}/{reference_path}")
+
+
+skills = Skills(
+    loaders=[LocalSkills("./my-skills")],
+    on_load=on_skill_loaded,
+    on_script_execute=on_script_executed,
+    on_reference_access=on_reference_accessed,
+)
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Agent",
+    role="Developer Assistant",
+    goal="Assist with development tasks",
+    skills=skills,
+)
+
+result = agent.print_do("Review this code using the code-review skill.")
+# Output:
+# [SKILL LOADED] code-review: Code quality analysis and best practices
+# [REFERENCE READ] code-review/style-guide.md
+```
+
+## Error Handling
+
+Callback exceptions are caught and logged as warnings — they never interrupt the agent's execution:
+
+```python
+def buggy_callback(skill_name: str, description: str):
+    raise ValueError("oops")
+
+skills = Skills(
+    loaders=[LocalSkills("./my-skills")],
+    on_load=buggy_callback,  # Logs warning, doesn't crash
+)
+```

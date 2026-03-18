@@ -1,0 +1,110 @@
+---
+title: "Knowledge Base Integration"
+description: "Semantic search across all skill references using RAG"
+sidebarTitle: "Knowledge Base"
+---
+
+## Overview
+
+Connect skills with Upsonic's `KnowledgeBase` to enable semantic search across all skill reference documents. Pass the `KnowledgeBase` instance via `context=[kb]` on the `Task` so the agent can query reference documents at runtime.
+
+## Usage
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.skills import Skills, LocalSkills
+from upsonic.embeddings import GeminiEmbedding, GeminiEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup embedding provider (uses GOOGLE_API_KEY env var)
+embedding = GeminiEmbedding(GeminiEmbeddingConfig())
+
+# Setup vector database (embedded mode — no external server needed)
+config = ChromaConfig(
+    collection_name="skill_references",
+    vector_size=3072,  # Gemini default dimension
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db"),
+)
+vectordb = ChromaProvider(config)
+
+# Create knowledge base from skill reference documents
+kb = KnowledgeBase(
+    sources=["./my-skills"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+)
+
+# Create skills
+skills = Skills(
+    loaders=[LocalSkills("./my-skills")],
+)
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Research Agent",
+    role="Research Specialist",
+    goal="Find and synthesize information from skill references",
+    skills=skills,
+)
+
+# Pass the knowledge base via context on the Task
+task = Task(
+    description="Find best practices for error handling across all our skill references.",
+    context=[kb],
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Using KnowledgeBase as a Tool
+
+You can also pass the `KnowledgeBase` via `tools=[kb]` on the `Task`. This registers the KB as a searchable tool that the agent can actively query during execution:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.skills import Skills, LocalSkills
+from upsonic.embeddings import GeminiEmbedding, GeminiEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = GeminiEmbedding(GeminiEmbeddingConfig())
+config = ChromaConfig(
+    collection_name="skill_references",
+    vector_size=3072,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db"),
+)
+vectordb = ChromaProvider(config)
+
+kb = KnowledgeBase(
+    sources=["./my-skills"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+)
+
+skills = Skills(
+    loaders=[LocalSkills("./my-skills")],
+)
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Research Agent",
+    role="Research Specialist",
+    goal="Find and synthesize information from skill references",
+    skills=skills,
+)
+
+# Pass the knowledge base as a tool — agent can search it on demand
+task = Task(
+    description="Find best practices for error handling across all our skill references.",
+    tools=[kb],
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## How It Works
+
+- **`context=[kb]`** — The KB content is injected into the task context before execution. The agent receives it as background information.
+- **`tools=[kb]`** — The KB is registered as a callable tool. The agent can actively search it during execution to find relevant documents on demand.
+

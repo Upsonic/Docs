@@ -1,0 +1,135 @@
+---
+title: "BuiltinSkills"
+description: "Use skills bundled with Upsonic — no setup required"
+sidebarTitle: "BuiltinSkills"
+---
+
+## Overview
+
+`BuiltinSkills` loads skills that ship with Upsonic. No paths or downloads needed.
+
+## Available Built-in Skills
+
+| Skill | Description |
+|-------|-------------|
+| `code-review` | Structured code reviews with severity-classified feedback, security audits, and language-specific pattern detection. Includes OWASP Top 10 reference and severity guide. |
+| `summarization` | Multi-format summarization (executive, technical, research, meeting, changelog) with ready-to-use templates. |
+| `data-analysis` | Statistical data analysis with cleaning, exploration, visualization, and hypothesis testing. Includes a data profiling script and statistical tests guide. |
+
+## Usage with Agent
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, BuiltinSkills
+
+skills = Skills(loaders=[BuiltinSkills()])
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Assistant",
+    role="General Purpose Assistant",
+    goal="Help with various tasks using built-in expertise",
+    skills=skills,
+)
+
+task = Task(description="Review this code for bugs and suggest improvements.")
+result = agent.print_do(task)
+```
+
+## Load Specific Skills with Task
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, BuiltinSkills
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Reviewer",
+    role="Code Reviewer",
+    goal="Review and summarize code changes",
+)
+
+task = Task(
+    description="Summarize the key changes in this pull request.",
+    skills=Skills(loaders=[BuiltinSkills(skills=["code-review", "summarization"])]),
+)
+
+result = agent.print_do(task)
+```
+
+## Usage with Team
+
+```python
+from upsonic import Agent, Task, Team
+from upsonic.skills import Skills, BuiltinSkills
+
+analyst = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Data Analyst",
+    role="Data Analysis Expert",
+    goal="Analyze data and extract insights",
+)
+
+writer = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Report Writer",
+    role="Business Report Specialist",
+    goal="Create professional summaries",
+)
+
+team = Team(
+    agents=[analyst, writer],
+    skills=Skills(loaders=[BuiltinSkills(skills=["data-analysis", "summarization"])]),
+    mode="coordinate",
+    model="anthropic/claude-sonnet-4-6",
+)
+
+task = Task(description="Analyze Q4 sales data and write an executive summary.")
+result = team.print_do(tasks=task)
+```
+
+## List Available Skills
+
+```python
+from upsonic.skills import BuiltinSkills
+
+loader = BuiltinSkills()
+print(loader.available_skills())
+# ['code-review', 'data-analysis', 'summarization']
+```
+
+## Combining with Other Loaders
+
+Use built-in skills as a base and override with your own:
+
+```python
+from upsonic import Agent, Task
+from upsonic.skills import Skills, BuiltinSkills, LocalSkills
+
+skills = Skills(loaders=[
+    BuiltinSkills(),                    # Base skills
+    LocalSkills("./my-custom-skills"),  # Your overrides
+])
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="My Agent",
+    role="Developer Assistant",
+    goal="Assist with development tasks",
+    skills=skills,
+)
+
+task = Task(description="Analyze this dataset and produce a summary report.")
+result = agent.print_do(task)
+```
+
+<Info>
+If a custom skill has the same name as a built-in (e.g. `code-review`), the custom version overrides the built-in since later loaders take precedence.
+</Info>
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `skills` | `List[str]` | `None` | Skill names to load. Loads all if `None`. |
+| `validate` | `bool` | `False` | Validate on load. Built-ins are pre-validated. |

@@ -1,0 +1,55 @@
+---
+title: "Auto-Selection"
+description: "Automatically select the most relevant skills for each task using embeddings"
+sidebarTitle: "Auto-Selection"
+---
+
+## Overview
+
+When you have many skills loaded, auto-selection uses embedding similarity to pick only the most relevant ones for each task. This keeps the agent's system prompt lean and focused.
+
+## Usage
+
+```python
+from upsonic import Agent
+from upsonic.skills import Skills, LocalSkills
+
+skills = Skills(
+    loaders=[LocalSkills("./many-skills")],  # Directory with 20+ skills
+    auto_select=True,
+    max_skills=5,
+    embedding_provider=my_embedding_provider,
+)
+
+agent = Agent(
+    model="anthropic/claude-sonnet-4-6",
+    name="Agent",
+    role="Versatile Assistant",
+    goal="Handle diverse tasks with the right expertise",
+    skills=skills,
+)
+
+# Only the 5 most relevant skills appear in the system prompt
+result = agent.print_do("Analyze the sales data from Q4.")
+```
+
+## How It Works
+
+1. Skill descriptions and the task description are converted to embedding vectors
+2. Cosine similarity is computed between each skill's description and the task
+3. The top `max_skills` skills are included in the system prompt
+
+Without auto-select, **all** loaded skills appear in the system prompt regardless of relevance.
+
+
+<Info>
+If auto-select fails (e.g. embedding provider error), it falls back to returning the first `max_skills` skills in load order.
+</Info>
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `auto_select` | `bool` | `False` | Enable embedding-based skill selection |
+| `max_skills` | `int` | `5` | Maximum skills to include in system prompt |
+| `embedding_provider` | object | `None` | Provider with `embed_texts()` method |
