@@ -1,0 +1,62 @@
+---
+title: Clanker
+sidebarTitle: Clanker
+description: Yeah, we actually did this.
+hideToc: false
+---
+
+## Clanker
+
+You know what a Clanker is. If you don't, go open TikTok for 5 minutes and come back.
+
+We saw the meme. We liked it. We shipped it. That's the whole story.
+
+`Clanker` is `Agent`. Same class. Same everything. Just a better name tbh.
+
+## Use It
+
+```python
+from upsonic import Clanker, Task
+
+clanker = Clanker("openai/gpt-4o", name="My First Clanker")
+
+task = Task("Tell me a joke about robots.")
+result = clanker.do(task)
+```
+
+Congrats, you just built a Clanker.
+
+## It Does Everything Agent Does
+
+Because it **is** Agent. Memory, tools, safety, streaming — all of it. Just vibes.
+
+```python
+from upsonic import Clanker, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.in_memory import InMemoryStorage
+
+memory = Memory(storage=InMemoryStorage())
+
+clanker = Clanker(
+    "anthropic/claude-sonnet-4-5",
+    name="Enterprise Clanker",
+    memory=memory,
+    company_name="Acme Corp",
+    company_objective="World domination through superior AI agents",
+)
+
+task = Task("Draft a strategic plan for Q3.")
+result = clanker.print_do(task)
+```
+
+<Tip>
+`Agent` for the boardroom. `Clanker` for the real ones.
+</Tip>
+
+## Source Code
+
+```python
+Clanker = Agent
+```
+
+One line. They cooked, we shipped.
