@@ -28,6 +28,8 @@ Every `agent.do()` or `agent.print_do()` (including async versions) call is auto
 
 ### Minimal — Keys from Environment
 
+<Tabs>
+  <Tab title="Agent">
 ```python
 from upsonic import Agent, Task
 from upsonic.integrations.langfuse import Langfuse
@@ -40,6 +42,22 @@ agent.print_do(task)
 
 langfuse.shutdown()
 ```
+  </Tab>
+  <Tab title="AutonomousAgent">
+```python
+from upsonic import AutonomousAgent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = AutonomousAgent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+task = Task(description="What is 2 + 2?")
+agent.print_do(task)
+
+langfuse.shutdown()
+```
+  </Tab>
+</Tabs>
 
 <Frame>
   <img src="../../../../artifacts/Langfuse_tracing.png" alt="Langfuse trace overview with input, output, and duration" />
@@ -51,6 +69,8 @@ langfuse.shutdown()
 
 ### Full Configuration with Session & User Tracking
 
+<Tabs>
+  <Tab title="Agent">
 ```python
 from upsonic import Agent, Task
 from upsonic.integrations.langfuse import Langfuse
@@ -82,6 +102,41 @@ agent.print_do(task)
 
 langfuse.shutdown()
 ```
+  </Tab>
+  <Tab title="AutonomousAgent">
+```python
+from upsonic import AutonomousAgent, Task
+from upsonic.integrations.langfuse import Langfuse
+from upsonic.tools import tool
+
+@tool
+def get_weather(city: str) -> str:
+    """Get the current weather for a city."""
+    return f"Sunny in {city}, 22°C"
+
+langfuse = Langfuse(
+    public_key="pk-lf-abc123",
+    secret_key="sk-lf-xyz789",
+    region="us",                  # "eu" (default) or "us"
+    service_name="my-agent",
+    include_content=True,         # include prompts/responses (default)
+)
+
+agent = AutonomousAgent(
+    "anthropic/claude-sonnet-4-6",
+    instrument=langfuse,
+    session_id="chat-session-001",
+    user_id="user@example.com",
+    tools=[get_weather],
+)
+
+task = Task(description="What is the weather in Paris?")
+agent.print_do(task)
+
+langfuse.shutdown()
+```
+  </Tab>
+</Tabs>
 
 <Frame>
   <img src="../../../../artifacts/Langfuse_tools.png" alt="Langfuse trace with session grouping and tool call spans" />
@@ -98,6 +153,8 @@ When you pass `langfuse` to `AccuracyEvaluator`, evaluation results are automati
 2. Linked to the agent's **trace** via a **dataset run item**
 3. **Scored** on the trace with the evaluation result
 
+<Tabs>
+  <Tab title="Agent">
 ```python
 import asyncio
 from upsonic import Agent, Task
@@ -124,6 +181,36 @@ print(f"Score: {result.average_score}/10")
 
 langfuse.shutdown()
 ```
+  </Tab>
+  <Tab title="AutonomousAgent">
+```python
+import asyncio
+from upsonic import AutonomousAgent, Task
+from upsonic.integrations.langfuse import Langfuse
+from upsonic.eval import AccuracyEvaluator
+
+langfuse = Langfuse()
+
+agent = AutonomousAgent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+judge = AutonomousAgent("anthropic/claude-sonnet-4-6")
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=agent,
+    query="What is the capital of France?",
+    expected_output="Paris",
+    langfuse=langfuse,
+    langfuse_dataset_name="my-eval-dataset",  # optional, default: "accuracy-eval"
+    langfuse_run_name="run-v1",               # optional, default: auto-generated
+)
+
+result = asyncio.run(evaluator.run())
+print(f"Score: {result.average_score}/10")
+
+langfuse.shutdown()
+```
+  </Tab>
+</Tabs>
 
 <Frame>
   <img src="../../../../artifacts/Langfuse_dataset_1.png" alt="Langfuse dataset items and structure" />
@@ -141,6 +228,8 @@ langfuse.shutdown()
 
 Run the same query multiple times to get statistical confidence:
 
+<Tabs>
+  <Tab title="Agent">
 ```python
 import asyncio
 from upsonic import Agent
@@ -167,6 +256,36 @@ print(f"Iterations: {len(result.evaluation_scores)}")
 
 langfuse.shutdown()
 ```
+  </Tab>
+  <Tab title="AutonomousAgent">
+```python
+import asyncio
+from upsonic import AutonomousAgent
+from upsonic.integrations.langfuse import Langfuse
+from upsonic.eval import AccuracyEvaluator
+
+langfuse = Langfuse()
+agent = AutonomousAgent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+judge = AutonomousAgent("anthropic/claude-sonnet-4-6")
+
+evaluator = AccuracyEvaluator(
+    judge_agent=judge,
+    agent_under_test=agent,
+    query="What is 10 + 5? Reply with just the number.",
+    expected_output="15",
+    num_iterations=3,
+    langfuse=langfuse,
+    langfuse_dataset_name="math-eval",
+)
+
+result = asyncio.run(evaluator.run())
+print(f"Average score: {result.average_score}/10")
+print(f"Iterations: {len(result.evaluation_scores)}")
+
+langfuse.shutdown()
+```
+  </Tab>
+</Tabs>
 
 <Frame>
   <img src="../../../../artifacts/Langfuse_accuracy_eval_score.png" alt="Langfuse trace showing accuracy_eval_score on the trace" />
