@@ -1,0 +1,134 @@
+---
+title: "Score Configs"
+description: "Define validation rules for Langfuse scores — ranges, categories, and descriptions"
+---
+
+## Score Configs
+
+Define validation rules for scores (ranges, categories, descriptions).
+
+### Create and Use Score Configs
+
+<Tabs>
+  <Tab title="Agent">
+```python
+import os
+import time
+from upsonic import Agent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+# Create configs
+numeric_config = langfuse.create_score_config(
+    "quality", "NUMERIC",
+    min_value=0, max_value=1,
+    description="Overall quality score between 0 and 1",
+)
+print(f"Numeric config ID: {numeric_config['id']}")
+
+categorical_config = langfuse.create_score_config(
+    "sentiment", "CATEGORICAL",
+    categories=[
+        {"label": "positive", "value": 1},
+        {"label": "neutral", "value": 0},
+        {"label": "negative", "value": -1},
+    ],
+)
+print(f"Categorical config ID: {categorical_config['id']}")
+
+boolean_config = langfuse.create_score_config("factual", "BOOLEAN")
+print(f"Boolean config ID: {boolean_config['id']}")
+
+# Run agent and score with config validation
+result = agent.do("What is 2 + 2?", return_output=True)
+trace_id = result.trace_id
+time.sleep(8)
+
+validated_score = langfuse.score(trace_id, "quality", 0.8, config_id=numeric_config["id"])
+print(f"Validated score: {validated_score}")
+
+langfuse.shutdown()
+```
+  </Tab>
+  <Tab title="AutonomousAgent">
+```python
+import os
+import time
+from upsonic import AutonomousAgent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = AutonomousAgent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+# Create configs
+numeric_config = langfuse.create_score_config(
+    "quality", "NUMERIC",
+    min_value=0, max_value=1,
+    description="Overall quality score between 0 and 1",
+)
+print(f"Numeric config ID: {numeric_config['id']}")
+
+categorical_config = langfuse.create_score_config(
+    "sentiment", "CATEGORICAL",
+    categories=[
+        {"label": "positive", "value": 1},
+        {"label": "neutral", "value": 0},
+        {"label": "negative", "value": -1},
+    ],
+)
+print(f"Categorical config ID: {categorical_config['id']}")
+
+boolean_config = langfuse.create_score_config("factual", "BOOLEAN")
+print(f"Boolean config ID: {boolean_config['id']}")
+
+# Run agent and score with config validation
+result = agent.do("What is 2 + 2?", return_output=True)
+trace_id = result.trace_id
+time.sleep(8)
+
+validated_score = langfuse.score(trace_id, "quality", 0.8, config_id=numeric_config["id"])
+print(f"Validated score: {validated_score}")
+
+langfuse.shutdown()
+```
+  </Tab>
+</Tabs>
+
+
+### List, Get, Update Configs
+
+```python
+import os
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+
+# List all configs
+all_configs = langfuse.get_score_configs()
+print(f"Total configs: {all_configs['meta']['totalItems']}")
+
+# Get a single config by ID
+if all_configs["data"]:
+    config_id = all_configs["data"][0]["id"]
+    config = langfuse.get_score_config(config_id)
+    print(f"Config: {config['name']} ({config['dataType']})")
+
+    # Update config
+    updated = langfuse.update_score_config(
+        config_id,
+        description="Updated description",
+    )
+    print(f"Updated: {updated['description']}")
+
+    # Archive
+    langfuse.update_score_config(config_id, is_archived=True)
+    print("Archived")
+
+    # Unarchive
+    langfuse.update_score_config(config_id, is_archived=False)
+    print("Unarchived")
+
+langfuse.shutdown()
+```
