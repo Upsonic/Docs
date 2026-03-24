@@ -369,18 +369,21 @@ langfuse.shutdown()
 
 For direct access to Langfuse's scoring, datasets, and annotation queue APIs, see the Advanced guides:
 
-- [Scores](/tracing/integrations/langfuse/advanced/scores) — Add numeric, boolean, or categorical scores to traces
-- [Score Configs](/tracing/integrations/langfuse/advanced/score-configs) — Define validation rules for scores
-- [Datasets](/tracing/integrations/langfuse/advanced/datasets) — Create datasets, add items, and link traces
-- [Annotation Queues](/tracing/integrations/langfuse/advanced/annotation-queues) — Create review queues for human evaluation
-- [Update Trace](/tracing/integrations/langfuse/advanced/update-trace) — Override trace output or metadata after a run
+- [Scores](/concepts/tracing/integrations/langfuse/advanced/scores) — Add numeric, boolean, or categorical scores to traces
+- [Score Configs](/concepts/tracing/integrations/langfuse/advanced/score-configs) — Define validation rules for scores
+- [Datasets](/concepts/tracing/integrations/langfuse/advanced/datasets) — Create datasets, add items, and link traces
+- [Annotation Queues](/concepts/tracing/integrations/langfuse/advanced/annotation-queues) — Create review queues for human evaluation
+- [Update Trace](/concepts/tracing/integrations/langfuse/advanced/update-trace) — Override trace output or metadata after a run
 
 ---
 
 ## `langfuse.shutdown()`
 
 <Info>
-**Why call `langfuse.shutdown()`?** Langfuse sends traces asynchronously in the background. If your script exits before the internal buffer is flushed, some traces may be lost. Calling `langfuse.shutdown()` ensures all pending traces are sent to the Langfuse server before the process terminates. Always place it at the end of your script or in a `finally` block for long-running applications.
+**Why call `langfuse.shutdown()`?** Langfuse sends traces via a `BatchSpanProcessor` that buffers spans and exports them every **5 seconds** by default. When you call `langfuse.shutdown()`, it forces all buffered spans to be flushed to Langfuse before shutting down the provider.
+
+By default `flush_on_exit=True` registers a Python `atexit` handler that calls `shutdown()` automatically when the process exits. However, calling it explicitly at the end of your script is recommended for short-lived scripts because `atexit` handlers can be skipped in edge cases (e.g., `SIGKILL`, `os._exit()`).
+
 </Info>
 
 ---
