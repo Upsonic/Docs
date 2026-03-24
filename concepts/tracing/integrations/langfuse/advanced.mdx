@@ -49,7 +49,9 @@ langfuse.score(
 langfuse.shutdown()
 ```
 
-{/* Screenshot: Langfuse trace detail showing scores */}
+<Frame>
+  <img src="../../../../artifacts/Langfuse_detailed_scores.png" alt="Langfuse trace detail with numeric, boolean, and categorical scores" />
+</Frame>
 
 ### Upsert a Score
 
@@ -94,7 +96,7 @@ trace_id = result.trace_id
 time.sleep(8)
 
 langfuse.score(trace_id, "quality", 0.95)
-time.sleep(2)
+time.sleep(10)  # Langfuse ingestion is eventually consistent; allow enough time before querying by trace_id
 
 # By trace
 scores = langfuse.get_scores(trace_id=trace_id)
@@ -185,7 +187,6 @@ print(f"Validated score: {validated_score}")
 langfuse.shutdown()
 ```
 
-{/* Screenshot: Langfuse Score Configs page */}
 
 ### List, Get, Update Configs
 
@@ -281,7 +282,13 @@ print(f"Trace {trace_id} linked to dataset item and scored")
 langfuse.shutdown()
 ```
 
-{/* Screenshot: Langfuse Datasets page showing items and run results */}
+<Frame>
+  <img src="../../../../artifacts/Langfuse_advnaced_dataset_overview.png" alt="Langfuse datasets overview with items and runs" />
+</Frame>
+
+<Frame>
+  <img src="../../../../artifacts/Langfuse_advanced_dataset_detailed.png" alt="Langfuse dataset detail with items and run results" />
+</Frame>
 
 ### List and Get Datasets
 
@@ -409,7 +416,13 @@ print(f"Completed items: {completed['meta']['totalItems']}")
 langfuse.shutdown()
 ```
 
-{/* Screenshot: Langfuse Annotation Queue page */}
+<Frame>
+  <img src="../../../../artifacts/Langfuse_annotation_overview.png" alt="Langfuse annotation queues overview" />
+</Frame>
+
+<Frame>
+  <img src="../../../../artifacts/Langfuse_annotation_detailed.png" alt="Langfuse annotation queue item detail" />
+</Frame>
 
 ### List and Get Queues
 
