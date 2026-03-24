@@ -1,5 +1,5 @@
 ---
-title: "Langfuse"
+title: "Overview"
 description: "Send agent traces to Langfuse for LLM observability, cost tracking, and prompt analytics"
 ---
 
@@ -43,7 +43,13 @@ agent.print_do(task)
 langfuse.shutdown()
 ```
 
-{/* Screenshot: Langfuse trace detail showing input, output, duration */}
+<Frame>
+  <img src="../../../../artifacts/Langfuse_tracing.png" alt="Langfuse trace overview with input, output, and duration" />
+</Frame>
+
+<Frame>
+  <img src="../../../../artifacts/Langfuse_tracing_detailed.png" alt="Langfuse trace detail view with spans and metadata" />
+</Frame>
 
 ### Full Configuration with Session & User Tracking
 
@@ -79,7 +85,9 @@ agent.print_do(task)
 langfuse.shutdown()
 ```
 
-{/* Screenshot: Langfuse trace with session grouping and tool calls */}
+<Frame>
+  <img src="../../../../artifacts/Langfuse_tools.png" alt="Langfuse trace with session grouping and tool call spans" />
+</Frame>
 
 ---
 
@@ -119,7 +127,17 @@ print(f"Score: {result.average_score}/10")
 langfuse.shutdown()
 ```
 
-{/* Screenshot: Langfuse Datasets page showing dataset items and run results */}
+<Frame>
+  <img src="../../../../artifacts/Langfuse_dataset_1.png" alt="Langfuse dataset items and structure" />
+</Frame>
+
+<Frame>
+  <img src="../../../../artifacts/Langfuse_dataset_2.png" alt="Langfuse dataset run linked to traces" />
+</Frame>
+
+<Frame>
+  <img src="../../../../artifacts/Langfuse_dataset_3.png" alt="Langfuse dataset run results and scores" />
+</Frame>
 
 ### AccuracyEvaluator with Multiple Iterations
 
@@ -152,7 +170,9 @@ print(f"Iterations: {len(result.evaluation_scores)}")
 langfuse.shutdown()
 ```
 
-{/* Screenshot: Langfuse trace with accuracy_eval_score */}
+<Frame>
+  <img src="../../../../artifacts/Langfuse_accuracy_eval_score.png" alt="Langfuse trace showing accuracy_eval_score on the trace" />
+</Frame>
 
 ### AccuracyEvaluator Parameters
 
