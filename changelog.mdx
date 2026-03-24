@@ -6,6 +6,35 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 > Product updates, improvements, and bug fixes for Upsonic
 
 
+<Update label="Mar 24, 2026">
+	## v0.74.2
+
+	[View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/tag/v0.74.2)
+
+	## New Features
+
+	- **Skills safety policies**: Optional safety-engine policies for skill content (prompt injection, secret leak, and code injection) that run when skills are validated, with structured logging and Rich panels for pass/block visibility.
+
+	## Improvements
+
+	- **Execution timing and metrics**: Clearer reporting of total duration, model time, tool time, paused time, and framework overhead, aligned with usage metadata and OpenTelemetry-style attributes where applicable.
+	- **Agent pipeline / message construction**: Former monolithic message build work is split into focused steps (system prompt, context, user input, assembly) so ordering and observability match the rest of the pipeline.
+	- **Streaming parity**: Build-related steps that were missing from the streaming path are now included so streamed runs expose the same step progression as non-streaming runs.
+
+	## Bug Fixes
+
+	- **Total duration tracking**: Fixed incorrect total-duration aggregation so end-to-end timing matches actual wall-clock behavior.
+	- **Metric setting**: Corrected how run-level metrics are set and propagated so dashboards and traces show consistent values.
+	- **Unit tests**: Adjusted tests that incorrectly depended on API keys so they run reliably in CI without live credentials.
+
+	**Full Changelog:** [v0.74.1…v0.74.2](https://github.com/Upsonic/Upsonic/compare/v0.74.1...v0.74.2)
+
+	### Pull Requests
+
+	- refactor: metric setting fix, safety policies for skills: [DoganK01](https://github.com/DoganK01) in [#552](https://github.com/Upsonic/Upsonic/pull/552)
+</Update>
+
+
 <Update label="Mar 18, 2026">
   ## v0.74.1
 
