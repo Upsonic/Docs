@@ -60,11 +60,11 @@ langfuse.shutdown()
   </Tab>
 </Tabs>
 
-<Frame>
-  <img src="../../../../artifacts/Langfuse_tracing.png" alt="Langfuse trace overview with input, output, and duration" />
+<Frame caption="Langfuse trace overview with input, output, and other metrics">
+  <img src="../../../../artifacts/Langfuse_tracing.png" alt="Langfuse trace overview with input, output, and other metrics" />
 </Frame>
 
-<Frame>
+<Frame caption="Langfuse trace detail view with spans and metadata">
   <img src="../../../../artifacts/Langfuse_tracing_detailed.png" alt="Langfuse trace detail view with spans and metadata" />
 </Frame>
 
@@ -139,13 +139,75 @@ langfuse.shutdown()
   </Tab>
 </Tabs>
 
-<Frame>
-  <img src="../../../../artifacts/Langfuse_tools.png" alt="Langfuse trace with session grouping and tool call spans" />
+<Frame caption="Langfuse trace with tool call spans">
+  <img src="../../../../artifacts/Langfuse_tools.png" alt="Langfuse trace with tool call spans" />
+</Frame>
+
+<Frame caption="Langfuse session grouping view">
+  <img src="../../../../artifacts/Langfuse_session.png" alt="Langfuse session grouping view" />
+</Frame>
+
+<Frame caption="Langfuse user ID tracking on traces">
+  <img src="../../../../artifacts/Langfuse_user_id.png" alt="Langfuse user ID tracking on traces" />
 </Frame>
 
 ---
 
+## Autonomous Agent Example
+
+Autonomous agents make their own decisions about which tools to call and in what order — there is no predefined workflow. This makes tracing especially important: you need full visibility into every decision the agent made, which tools it invoked, and what results it got back. Langfuse gives you that observability out of the box.
+
+Here is a real-world example — an expense tracker bot that reads receipt images autonomously:
+
+```python
+"""
+Receipt Tracker — Autonomous Agent Example
+
+Drop receipt images (PNG, JPG) or PDFs into workspace/receipts/ and run this script.
+The agent reads each receipt, extracts the expense details, logs them, and reports
+your monthly spending summary.
+"""
+
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+
+from tools import ocr_extract_text
+
+load_dotenv()
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    tools=[ocr_extract_text],
+    workspace=os.path.join(os.path.dirname(__file__), "workspace"),
+    instrument=langfuse,
+)
+
+task = Task("Save my receipts from the receipts/ folder and tell me my monthly expenses. DO NOT USE run_python to execute any code. COMMAND! USE BOTH read_file AND ocr_extract_text TOOLS!")
+
+if __name__ == "__main__":
+    agent.print_do(task)
+    langfuse.shutdown()
+```
+
+<Note>
+If you want to see the full project with OCR tools, workspace setup, and sample receipts, check out the complete example: [Expense Tracker Bot](/examples/autonomous-agents/expense-tracker-bot).
+</Note>
+
+---
+
 ## Usage with Evaluation
+
+### What is AccuracyEvaluator?
+
+`AccuracyEvaluator` measures how well your agent's output matches an expected answer. It uses a separate **judge agent** to score the agent-under-test on a scale of 0–10. You can run multiple iterations for statistical confidence. When connected to Langfuse, each evaluation is automatically logged as a dataset item, linked to the agent's trace, and scored — giving you a complete audit trail of your agent's accuracy over time.
+
+<Note>
+For a deep dive into accuracy evaluation concepts, configuration options, and best practices, see the [AccuracyEval Introduction](/concepts/evals/usage/accuracy/introduction).
+</Note>
 
 ### AccuracyEvaluator with Langfuse Datasets
 
@@ -213,15 +275,15 @@ langfuse.shutdown()
   </Tab>
 </Tabs>
 
-<Frame>
+<Frame caption="Langfuse dataset items and structure">
   <img src="../../../../artifacts/Langfuse_dataset_1.png" alt="Langfuse dataset items and structure" />
 </Frame>
 
-<Frame>
+<Frame caption="Langfuse dataset run linked to traces">
   <img src="../../../../artifacts/Langfuse_dataset_2.png" alt="Langfuse dataset run linked to traces" />
 </Frame>
 
-<Frame>
+<Frame caption="Langfuse dataset run results and scores">
   <img src="../../../../artifacts/Langfuse_dataset_3.png" alt="Langfuse dataset run results and scores" />
 </Frame>
 
@@ -288,8 +350,8 @@ langfuse.shutdown()
   </Tab>
 </Tabs>
 
-<Frame>
-  <img src="../../../../artifacts/Langfuse_accuracy_eval_score.png" alt="Langfuse trace showing accuracy_eval_score on the trace" />
+<Frame caption="Langfuse trace showing accuracy_eval_score">
+  <img src="../../../../artifacts/Langfuse_accuracy_eval_score.png" alt="Langfuse trace showing accuracy_eval_score" />
 </Frame>
 
 ### AccuracyEvaluator Parameters
@@ -305,7 +367,21 @@ langfuse.shutdown()
 
 ## Advanced APIs
 
-For direct access to Langfuse's scoring, datasets, and annotation queue APIs, see the [Advanced Langfuse Guide](/tracing/integrations/langfuse/advanced).
+For direct access to Langfuse's scoring, datasets, and annotation queue APIs, see the Advanced guides:
+
+- [Scores](/tracing/integrations/langfuse/advanced/scores) — Add numeric, boolean, or categorical scores to traces
+- [Score Configs](/tracing/integrations/langfuse/advanced/score-configs) — Define validation rules for scores
+- [Datasets](/tracing/integrations/langfuse/advanced/datasets) — Create datasets, add items, and link traces
+- [Annotation Queues](/tracing/integrations/langfuse/advanced/annotation-queues) — Create review queues for human evaluation
+- [Update Trace](/tracing/integrations/langfuse/advanced/update-trace) — Override trace output or metadata after a run
+
+---
+
+## `langfuse.shutdown()`
+
+<Info>
+**Why call `langfuse.shutdown()`?** Langfuse sends traces asynchronously in the background. If your script exits before the internal buffer is flushed, some traces may be lost. Calling `langfuse.shutdown()` ensures all pending traces are sent to the Langfuse server before the process terminates. Always place it at the end of your script or in a `finally` block for long-running applications.
+</Info>
 
 ---
 

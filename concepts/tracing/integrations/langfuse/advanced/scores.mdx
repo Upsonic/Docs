@@ -1,0 +1,231 @@
+---
+title: "Scores"
+description: "Add numeric, boolean, or categorical scores to any Langfuse trace"
+---
+
+## Scores
+
+Add numeric, boolean, or categorical scores to any trace.
+
+### Create Scores
+
+```python
+import os
+import time
+import uuid
+from upsonic import Agent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+# Run the agent and get the trace ID
+result = agent.do("What is the weather in Paris?", return_output=True)
+trace_id = result.trace_id
+time.sleep(8)  # wait for trace ingestion
+
+# Numeric score (0-1)
+langfuse.score(trace_id, "quality", 0.95)
+
+# Boolean score
+langfuse.score(trace_id, "factual", 1, data_type="BOOLEAN", comment="Correct answer")
+
+# Categorical score
+langfuse.score(trace_id, "sentiment", "positive", data_type="CATEGORICAL")
+
+# Score with all parameters
+score_id = str(uuid.uuid4())
+langfuse.score(
+    trace_id,
+    "completeness",
+    0.9,
+    data_type="NUMERIC",
+    score_id=score_id,
+    metadata={"reviewer": "dogan", "round": 1},
+    environment="production",
+    comment="Thorough answer",
+)
+
+langfuse.shutdown()
+```
+
+<Frame caption="Langfuse trace detail with numeric, boolean, and categorical scores">
+  <img src="../../../../../artifacts/Langfuse_detailed_scores.png" alt="Langfuse trace detail with numeric, boolean, and categorical scores" />
+</Frame>
+
+### Upsert a Score
+
+Pass the same `score_id` to update an existing score:
+
+<Tabs>
+  <Tab title="Agent">
+```python
+import os
+import time
+import uuid
+from upsonic import Agent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+result = agent.do("What is 2 + 2?", return_output=True)
+trace_id = result.trace_id
+time.sleep(8)
+
+score_id = str(uuid.uuid4())
+langfuse.score(trace_id, "completeness", 0.9, score_id=score_id, comment="First review")
+
+# Update the same score by passing the same score_id
+langfuse.score(trace_id, "completeness", 0.75, score_id=score_id, comment="Revised after re-read")
+
+langfuse.shutdown()
+```
+  </Tab>
+  <Tab title="AutonomousAgent">
+```python
+import os
+import time
+import uuid
+from upsonic import AutonomousAgent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = AutonomousAgent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+result = agent.do("What is 2 + 2?", return_output=True)
+trace_id = result.trace_id
+time.sleep(8)
+
+score_id = str(uuid.uuid4())
+langfuse.score(trace_id, "completeness", 0.9, score_id=score_id, comment="First review")
+
+# Update the same score by passing the same score_id
+langfuse.score(trace_id, "completeness", 0.75, score_id=score_id, comment="Revised after re-read")
+
+langfuse.shutdown()
+```
+  </Tab>
+</Tabs>
+
+### Query Scores
+
+<Tabs>
+  <Tab title="Agent">
+```python
+import os
+import time
+from upsonic import Agent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+result = agent.do("Hello!", return_output=True)
+trace_id = result.trace_id
+time.sleep(8)
+
+langfuse.score(trace_id, "quality", 0.95)
+time.sleep(10)  # Langfuse ingestion is eventually consistent; allow enough time before querying by trace_id
+
+# By trace
+scores = langfuse.get_scores(trace_id=trace_id)
+print(f"Scores for trace: {len(scores['data'])}")
+
+# By name and date
+quality_scores = langfuse.get_scores(name="quality", from_timestamp="2026-03-01T00:00:00Z")
+
+# By source and limit
+api_scores = langfuse.get_scores(source="API", limit=5)
+
+# By data type
+bool_scores = langfuse.get_scores(data_type="BOOLEAN", name="factual")
+
+langfuse.shutdown()
+```
+  </Tab>
+  <Tab title="AutonomousAgent">
+```python
+import os
+import time
+from upsonic import AutonomousAgent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = AutonomousAgent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+result = agent.do("Hello!", return_output=True)
+trace_id = result.trace_id
+time.sleep(8)
+
+langfuse.score(trace_id, "quality", 0.95)
+time.sleep(10)  # Langfuse ingestion is eventually consistent; allow enough time before querying by trace_id
+
+# By trace
+scores = langfuse.get_scores(trace_id=trace_id)
+print(f"Scores for trace: {len(scores['data'])}")
+
+# By name and date
+quality_scores = langfuse.get_scores(name="quality", from_timestamp="2026-03-01T00:00:00Z")
+
+# By source and limit
+api_scores = langfuse.get_scores(source="API", limit=5)
+
+# By data type
+bool_scores = langfuse.get_scores(data_type="BOOLEAN", name="factual")
+
+langfuse.shutdown()
+```
+  </Tab>
+</Tabs>
+
+### Delete a Score
+
+<Tabs>
+  <Tab title="Agent">
+```python
+import os
+import time
+from upsonic import Agent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+result = agent.do("Hello!", return_output=True)
+trace_id = result.trace_id
+time.sleep(8)
+
+score = langfuse.score(trace_id, "quality", 0.5)
+time.sleep(2)
+
+langfuse.delete_score(score["id"])
+print("Score deleted")
+
+langfuse.shutdown()
+```
+  </Tab>
+  <Tab title="AutonomousAgent">
+```python
+import os
+import time
+from upsonic import AutonomousAgent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = AutonomousAgent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+result = agent.do("Hello!", return_output=True)
+trace_id = result.trace_id
+time.sleep(8)
+
+score = langfuse.score(trace_id, "quality", 0.5)
+time.sleep(2)
+
+langfuse.delete_score(score["id"])
+print("Score deleted")
+
+langfuse.shutdown()
+```
+  </Tab>
+</Tabs>

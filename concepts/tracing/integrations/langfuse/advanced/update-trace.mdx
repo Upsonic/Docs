@@ -1,0 +1,57 @@
+---
+title: "Update Trace"
+description: "Override Langfuse trace output or metadata after the agent run"
+---
+
+## Update Trace
+
+Override trace output or metadata after the run:
+
+<Tabs>
+  <Tab title="Agent">
+```python
+import os
+import time
+from upsonic import Agent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = Agent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+result = agent.do("What is 2 + 2?", return_output=True)
+trace_id = result.trace_id
+time.sleep(8)
+
+langfuse.update_trace(
+    trace_id,
+    output="Custom output text",
+)
+print(f"Trace {trace_id} updated")
+
+langfuse.shutdown()
+```
+  </Tab>
+  <Tab title="AutonomousAgent">
+```python
+import os
+import time
+from upsonic import AutonomousAgent, Task
+from upsonic.integrations.langfuse import Langfuse
+
+langfuse = Langfuse()
+agent = AutonomousAgent("anthropic/claude-sonnet-4-6", instrument=langfuse)
+
+result = agent.do("What is 2 + 2?", return_output=True)
+trace_id = result.trace_id
+time.sleep(8)
+
+langfuse.update_trace(
+    trace_id,
+    output="Custom output text",
+)
+print(f"Trace {trace_id} updated")
+
+langfuse.shutdown()
+```
+  </Tab>
+</Tabs>
