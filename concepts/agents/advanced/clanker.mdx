@@ -1,0 +1,72 @@
+---
+title: Clanker
+sidebarTitle: Clanker
+description: We heard the internet was calling AI agents "Clankers" — so we made it official.
+hideToc: false
+---
+
+## What is a "Clanker"?
+
+If you've been anywhere on the internet in 2025, you've probably heard the term **"Clanker."** It started as Star Wars slang — clone troopers used it as a derogatory nickname for battle droids in *The Clone Wars*. The word is onomatopoeia: the clanking sound of metal droids marching into battle.
+
+Fast forward to 2025, and the term went absolutely viral. TikTok, Reddit, Instagram — hundreds of millions of views. People started using "Clanker" as a catch-all slang for AI systems, chatbots, robots, and anything automated that used to be done by humans. Some use it with genuine frustration, some use it as playful mockery, and some proudly call themselves "Clanker lovers." It even reached the U.S. Senate floor during AI regulation debates.
+
+In short: **Clanker = AI agent**, in internet speak.
+
+## So We Made It Official
+
+We saw the meme. We liked it. We leaned into it.
+
+In Upsonic, `Clanker` is a first-class alias for the `Agent` class. Same class, same powers, same everything — just with a name that has a bit more internet energy. If you want to define all your AI agents as **Clankers**, go for it.
+
+No new features. No breaking changes. Just vibes.
+
+## Usage
+
+```python
+from upsonic import Clanker, Task
+
+clanker = Clanker("openai/gpt-4o", name="My First Clanker")
+
+task = Task("Tell me a joke about robots.")
+result = clanker.do(task)
+```
+
+Every parameter, every method, every advanced feature that works on `Agent` works on `Clanker` — because it **is** `Agent`.
+
+## Full Example
+
+Memory, tools, safety policies, reflection, streaming — all of it works exactly the same way.
+
+```python
+  from upsonic import Clanker, Task                                                                                                            
+  from upsonic.storage.memory import Memory                                                                                                    
+  from upsonic.storage.in_memory import InMemoryStorage
+                                                                                                                                               
+  memory = Memory(storage=InMemoryStorage())                                                                                                   
+   
+  clanker = Clanker(                                                                                                                           
+      "anthropic/claude-sonnet-4-5",                                  
+      name="Enterprise Clanker",
+      memory=memory,
+      company_name="Acme Corp",
+      company_objective="World domination through superior AI agents",
+  )                                                                                                                                            
+   
+  task = Task("Draft a strategic plan for Q3.")                                                                                                
+  result = clanker.print_do(task)   
+```
+
+<Tip>
+You can mix and match — use `Agent` for serious business logic and `Clanker` for the ones with personality. They're completely interchangeable.
+</Tip>
+
+## Under the Hood
+
+For the curious, the entire implementation is:
+
+```python
+Clanker = Agent
+```
+
+That's the whole thing. One line. The internet gave AI agents a nickname, and we thought it deserved a spot in the codebase.
