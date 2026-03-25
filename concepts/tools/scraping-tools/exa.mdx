@@ -1,0 +1,172 @@
+---
+title: "ExaTools"
+description: "Web search, content retrieval, similar page discovery, and Q&A with citations via Exa API. Inherits ToolKit."
+---
+
+## Overview
+
+**ExaTools** extends **ToolKit** and uses the [Exa](https://exa.ai) API for neural/keyword web search, clean content extraction from URLs, semantic similarity discovery, and LLM-generated answers with citations.
+
+<Info>
+**ToolKit:** ExaTools inherits from [ToolKit](/concepts/tools/custom-tools/creating-toolkit). You get all base behavior (e.g. `include_tools`, `exclude_tools`, `timeout`, `use_async`). See [Creating ToolKit](/concepts/tools/custom-tools/creating-toolkit) for the full API.
+</Info>
+
+<Info>
+**Required:** Set **`EXA_API_KEY`** (env or `.env`). Get your key from the [Exa Dashboard](https://dashboard.exa.ai). Install: `pip install exa-py`.
+</Info>
+
+**Tools (4):** `search`, `get_contents`, `find_similar`, `answer`. Use **ToolKit**'s `exclude_tools` / `include_tools` to limit which tools the agent sees.
+
+---
+
+## Examples
+
+### Basic Search
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.exa import ExaTools
+
+agent = Agent(model="anthropic/claude-sonnet-4-6", tools=[ExaTools()])
+task = Task(description="Search the web for 'latest AI agent frameworks' and summarize the top 3 results.")
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+### Get Contents from URLs
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.exa import ExaTools
+
+agent = Agent(model="anthropic/claude-sonnet-4-6", tools=[ExaTools()])
+task = Task(
+    description="Fetch the content of https://docs.exa.ai/reference/getting-started "
+    "and summarize the main features of Exa."
+)
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+### Find Similar Pages
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.exa import ExaTools
+
+agent = Agent(model="anthropic/claude-sonnet-4-6", tools=[ExaTools()])
+task = Task(
+    description="Find pages similar to https://github.com/anthropics/anthropic-sdk-python "
+    "and list their titles and URLs."
+)
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+### Answer with Citations
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.exa import ExaTools
+
+agent = Agent(model="anthropic/claude-sonnet-4-6", tools=[ExaTools()])
+task = Task(description="Use the answer tool to answer: 'What is Exa AI and what does it do?'")
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+### Custom Configuration
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.exa import ExaTools
+
+tools = ExaTools(
+    default_num_results=5,
+    default_search_type="neural",
+    default_highlights=True,
+    default_summary=True,
+    default_text=False,
+    exclude_tools=["find_similar"],
+    timeout=60.0,
+)
+agent = Agent(model="anthropic/claude-sonnet-4-6", tools=[tools])
+task = Task(description="Search for 'Upsonic AI agent framework' and give me a summary of each result.")
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+### Multi-Tool Chain (Search + Get Contents)
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.exa import ExaTools
+
+agent = Agent(model="anthropic/claude-sonnet-4-6", tools=[ExaTools(default_num_results=3)])
+task = Task(
+    description="Search for 'FastAPI tutorial', then fetch the content of the top result "
+    "and summarize it in one paragraph."
+)
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | from env `EXA_API_KEY` | Exa API key. |
+| `default_num_results` | `int` | `10` | Default number of results for search and find_similar. |
+| `default_search_type` | `str` | `"auto"` | Default search type: `"auto"`, `"neural"`, or `"keyword"`. |
+| `default_text` | `bool` | `True` | Include full text content in results by default. |
+| `default_highlights` | `bool` | `False` | Include highlight snippets in results by default (token-efficient). |
+| `default_summary` | `bool` | `False` | Include LLM-generated summaries in results by default. |
+
+---
+
+
+## Search Types
+
+| Type | Best For | Speed |
+|------|----------|-------|
+| `"auto"` | Most queries — balanced relevance and speed | ~1 second |
+| `"neural"` | Semantic/conceptual queries | ~1 second |
+| `"keyword"` | Exact keyword matching | Fastest |
+
+<Tip>
+Use `"auto"` for most queries. It automatically picks the best search strategy.
+</Tip>
+
+## Content Options
+
+Choose the right content type for your use case:
+
+| Option | Best For | Token Usage |
+|--------|----------|-------------|
+| **text** | Full content extraction, RAG pipelines | Higher |
+| **highlights** | Key excerpts, summaries, Q&A | Lower (~10x reduction) |
+| **summary** | Quick overviews per result | Moderate |
+
+<Warning>
+Using `text=True` without `max_characters` can return large amounts of content, increasing token usage and cost. Set `max_characters` to limit output size, or use `highlights=True` for token-efficient snippets.
+</Warning>
+
+
+## Resources
+
+- [Exa Documentation](https://docs.exa.ai)
+- [Exa Dashboard — API Keys](https://dashboard.exa.ai)
+- [Exa API Status](https://status.exa.ai)
+- [exa-py Python SDK](https://pypi.org/project/exa-py/)
