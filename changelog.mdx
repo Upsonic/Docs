@@ -6,6 +6,35 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 > Product updates, improvements, and bug fixes for Upsonic
 
 
+<Update label="Mar 30, 2026">
+  ## v0.74.3
+
+  [View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.74.3)
+
+  ## New Features:
+
+  - **Exa web search toolkit**: Agents can use Exa for neural and keyword web search, URL content retrieval, similar-page discovery, and LLM-oriented answers with citations via `ExaTools`.
+  - **E2B sandbox toolkit**: Agents can run Python, JavaScript, Java, R, and Bash in isolated E2B cloud sandboxes with file transfer, shell commands, package installs, and lifecycle controls via `E2BTools`.
+  - **Daytona sandbox toolkit**: Agents can execute code and manage files, Git workflows, and sandbox lifecycle in Daytona cloud environments via `DaytonaTools`.
+
+  ## Improvements:
+
+  - **User policy coverage**: Safety policies now evaluate all configured input sources (task description, context, system prompt, chat history, and tool outputs where scoped), not only the task description, so sanitization matches policy scope consistently.
+  - **OCR engine initialization**: OCR providers use thread-safe lazy initialization so concurrent callers share a single reader instance instead of racing during first load.
+
+  ## Bug Fixes:
+
+  - **OCR duplicate downloads**: Parallel or repeated initialization of OCR engines could trigger redundant model downloads; locking ensures the engine is created once per provider.
+
+  **Full Changelog address:** [v0.74.2...v0.74.3](https://github.com/Upsonic/Upsonic/compare/v0.74.2...v0.74.3)
+
+  ### Pull Requests:
+
+  - fix: add threading for initializing ocr engines preventing multiple download: [DoganK01](https://github.com/DoganK01) in [#557](https://github.com/Upsonic/Upsonic/pull/557)
+</Update>
+
+
+
 <Update label="Mar 24, 2026">
 	## v0.74.2
 
