@@ -1,0 +1,180 @@
+---
+title: "DaytonaTools"
+description: "Secure cloud sandbox for code execution, shell commands, file operations, and git via Daytona. Inherits ToolKit."
+---
+
+## Overview
+
+**DaytonaTools** extends **ToolKit** and uses [Daytona](https://www.daytona.io) cloud sandboxes for running code, shell commands, managing files, and git operations in an isolated environment. Supports Python, TypeScript, and JavaScript.
+
+<Info>
+**ToolKit:** DaytonaTools inherits from [ToolKit](/concepts/tools/custom-tools/creating-toolkit). You get all base behavior (e.g. `include_tools`, `exclude_tools`, `timeout`, `use_async`). See [Creating ToolKit](/concepts/tools/custom-tools/creating-toolkit) for the full API.
+</Info>
+
+<Info>
+**Required:** Set **`DAYTONA_API_KEY`** (env or `.env`). Install: `pip install daytona`.
+</Info>
+
+**Tools (11):** `daytona_run_code`, `daytona_run_command`, `daytona_install_packages`, `daytona_create_file`, `daytona_read_file`, `daytona_list_files`, `daytona_delete_file`, `daytona_search_files`, `daytona_git_clone`, `daytona_get_sandbox_info`, `daytona_shutdown_sandbox`. Use **ToolKit**'s `exclude_tools` / `include_tools` to limit which tools the agent sees.
+
+<Note>
+All tools are prefixed with `daytona_` (e.g. `daytona_run_code`, `daytona_create_file`) to avoid name collisions with local filesystem tools or other sandbox toolkits when used alongside **AutonomousAgent**.
+</Note>
+
+---
+
+## Examples
+
+### Basic: Agent with Daytona
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.daytona import DaytonaTools
+
+agent = Agent(model="openai/gpt-4o", tools=[DaytonaTools()])
+task = Task(description="Write a Python function to check if a number is prime, then test it with 17 and 20.")
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+### AutonomousAgent: Local Filesystem + Remote Sandbox
+
+The most powerful pattern: the agent edits files locally in the workspace, but all code execution happens in a secure remote sandbox.
+
+```python
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.custom_tools.daytona import DaytonaTools
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    enable_filesystem=True,   # local: write_file, edit_file, read_file, etc.
+    enable_shell=False,       # disable local shell execution
+    tools=[DaytonaTools()],   # remote: daytona_run_code, daytona_run_command, daytona_install_packages, daytona_git_clone
+)
+
+task = Task(description="Read main.py, then run it in the sandbox and fix any errors.")
+result = agent.print_do(task)
+```
+
+| Capability | Where it runs | Tools |
+|---|---|---|
+| File write/edit/delete | Local workspace (sandboxed) | `write_file`, `edit_file`, `delete_file`, `move_file`, `copy_file` |
+| File read/search | Local workspace (sandboxed) | `read_file`, `list_files`, `search_files`, `grep_files` |
+| Code execution | Remote Daytona sandbox | `daytona_run_code` (Python/TypeScript/JavaScript) |
+| Shell commands | Remote Daytona sandbox | `daytona_run_command` |
+| Package install | Remote Daytona sandbox | `daytona_install_packages` |
+| Sandbox file ops | Remote Daytona sandbox | `daytona_create_file`, `daytona_read_file`, `daytona_list_files`, `daytona_delete_file` |
+| Content search | Remote Daytona sandbox | `daytona_search_files` |
+| Git operations | Remote Daytona sandbox | `daytona_git_clone` |
+
+---
+
+### Advanced: Custom Configuration
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.daytona import DaytonaTools
+
+tools = DaytonaTools(
+    auto_stop_interval=120,                # 2-hour auto-stop
+    sandbox_language="python",             # default language for code execution
+    env_vars={"MY_API_KEY": "sk-..."},     # env vars available in sandbox
+    labels={"project": "demo"},            # metadata labels
+    exclude_tools=["daytona_shutdown_sandbox"],  # prevent agent from killing sandbox
+)
+
+agent = Agent(model="anthropic/claude-sonnet-4-6", tools=[tools])
+task = Task(description="Install pandas and matplotlib, then create a bar chart of sales data.")
+result = agent.print_do(task)
+```
+
+---
+
+### Connect to an Existing Sandbox
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.daytona import DaytonaTools
+
+# Connect to a previously created sandbox instead of creating a new one
+tools = DaytonaTools(sandbox_id="my-existing-sandbox-id")
+
+agent = Agent(model="openai/gpt-4o", tools=[tools])
+task = Task(description="Check what files exist in the sandbox and run any Python scripts.")
+result = agent.print_do(task)
+```
+
+---
+
+### Git Clone + Run
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.daytona import DaytonaTools
+
+agent = Agent(model="openai/gpt-4o", tools=[DaytonaTools()])
+
+task = Task(
+    description=(
+        "Clone the repo https://github.com/example/project into /home/daytona/project, "
+        "install its dependencies, then run the test suite."
+    )
+)
+result = agent.print_do(task)
+```
+
+---
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | from env `DAYTONA_API_KEY` | Daytona API key. |
+| `api_url` | `str \| None` | from env `DAYTONA_API_URL` | Daytona API URL. Defaults to `https://app.daytona.io/api`. |
+| `target` | `str \| None` | from env `DAYTONA_TARGET` | Target region for sandbox deployment. |
+| `organization_id` | `str \| None` | `None` | Organization ID for multi-org setups. |
+| `sandbox_id` | `str \| None` | `None` | Connect to an existing sandbox instead of creating a new one. |
+| `sandbox_language` | `str \| None` | `"python"` | Default code language: `python`, `typescript`, or `javascript`. |
+| `os_user` | `str \| None` | `None` | OS user for sandbox commands. |
+| `env_vars` | `dict \| None` | `None` | Environment variables to set in the sandbox. |
+| `labels` | `dict \| None` | `{}` | Labels to attach to the sandbox for organization. |
+| `auto_stop_interval` | `int \| None` | `60` | Minutes of inactivity before auto-stop. Set `0` to disable. |
+| `timeout` | `int` | `300` | Sandbox creation/start timeout in seconds. |
+
+---
+
+## Tools Reference
+
+### Code Execution
+
+| Tool | Description |
+|------|-------------|
+| `daytona_run_code` | Execute code in the sandbox. Supports `python`, `typescript`, `javascript`. Returns output and exit code. |
+| `daytona_run_command` | Run a shell command in the sandbox. Returns output and exit code. |
+| `daytona_install_packages` | Install packages via pip (Python) or npm (JavaScript/TypeScript). |
+
+### File Operations
+
+| Tool | Description |
+|------|-------------|
+| `daytona_create_file` | Create or overwrite a file in the sandbox. Auto-creates parent directories. |
+| `daytona_read_file` | Read a text file from the sandbox. |
+| `daytona_list_files` | List files and directories with metadata (name, type, size, permissions). |
+| `daytona_delete_file` | Delete a file or directory (recursive for directories). |
+| `daytona_search_files` | Search for content within files using grep-like pattern matching. |
+
+### Git Operations
+
+| Tool | Description |
+|------|-------------|
+| `daytona_git_clone` | Clone a Git repository into the sandbox. Supports branch selection. |
+
+### Sandbox Management
+
+| Tool | Description |
+|------|-------------|
+| `daytona_get_sandbox_info` | Get sandbox status: sandbox_id, state, CPU, memory, disk, labels. |
+| `daytona_shutdown_sandbox` | Stop and delete the sandbox, releasing all resources. |

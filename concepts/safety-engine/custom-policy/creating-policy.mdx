@@ -10,27 +10,91 @@ Combine your custom rule and action into a complete policy:
 ```python
 from upsonic.safety_engine.base import Policy
 
-# Create the policy
 company_security_policy = Policy(
     name="Company Security Policy",
     description="Protects confidential company information",
     rule=CompanySecretRule(),
     action=CompanySecretAction(),
-    language="auto"  # Auto-detect user language
+    language="auto"
 )
 
-# Use with your agent
 from upsonic import Agent, Task
 
 agent = Agent(
-    model="anthropic/claude-sonnet-4-5",
+    model="anthropic/claude-sonnet-4-6",
     name="Company Assistant",
-    user_policy=company_security_policy
+    user_policy=company_security_policy,
+    debug=True
 )
 
 task = Task("Tell me about Project Zeus")
-result = agent.do(task)
-# Blocked if confidential content detected
+result = agent.print_do(task)
+```
+
+## Policy Scope
+
+Control which parts of the input are subject to policy enforcement using scope parameters. When not specified, all scopes default to `True`.
+
+| Parameter | What it Controls | Default |
+|---|---|---|
+| `apply_to_description` | Task description text | `True` |
+| `apply_to_context` | Task context | `True` |
+| `apply_to_system_prompt` | Agent system prompt | `True` |
+| `apply_to_chat_history` | Chat history from memory | `True` |
+| `apply_to_tool_outputs` | Tool return values | `True` |
+
+```python
+from upsonic.safety_engine.base import Policy
+from upsonic.safety_engine.policies.pii_policies import PIIRule, PIIAnonymizeAction
+
+scoped_policy = Policy(
+    name="PII Anonymize - Selective",
+    description="Only anonymize PII in description and context",
+    rule=PIIRule(),
+    action=PIIAnonymizeAction(),
+    apply_to_description=True,
+    apply_to_context=True,
+    apply_to_system_prompt=False,
+    apply_to_chat_history=False,
+    apply_to_tool_outputs=True,
+)
+```
+
+### Scope Resolution Priority
+
+Scope flags are resolved with **Policy > Task > Agent** priority:
+
+1. If the `Policy` sets a scope flag (e.g., `apply_to_description=False`), that value is used
+2. Otherwise, if the `Task` sets the flag (e.g., `policy_apply_to_description=False`), that value is used
+3. Otherwise, the `Agent` default is used (e.g., `user_policy_apply_to_description=True`)
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.base import Policy
+from upsonic.safety_engine.policies.pii_policies import PIIRule, PIIAnonymizeAction
+
+policy = Policy(
+    name="PII Policy",
+    description="PII anonymization",
+    rule=PIIRule(),
+    action=PIIAnonymizeAction(),
+    apply_to_system_prompt=False,  # Policy-level: skip system prompt
+)
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    system_prompt="User email: john.doe@example.com",  # NOT anonymized
+    user_policy=policy,
+    user_policy_apply_to_description=True,  # Agent-level default,
+    debug=True
+)
+
+task = Task(
+    description="My email is john.doe@example.com",  # Anonymized
+    policy_apply_to_context=False,  # Task-level: skip context
+)
+
+result = agent.print_do(task)
 ```
 
 ## Advanced Policy Configuration
@@ -38,19 +102,17 @@ result = agent.do(task)
 You can specify different LLM models for different operations:
 
 ```python
-# Using model strings
 advanced_policy = Policy(
     name="Advanced Security Policy",
     description="Uses different models for different tasks",
     rule=SmartConfidentialRule(),
     action=SmartSecretAction(),
     language="auto",
-    language_identify_model="gpt-3.5-turbo",  # Language detection
-    base_model="gpt-3.5-turbo",               # General operations
-    text_finder_model="gpt-4"                 # Content detection
+    language_identify_model="gpt-3.5-turbo",
+    base_model="gpt-3.5-turbo",
+    text_finder_model="gpt-4"
 )
 
-# Or using LLM providers directly
 from upsonic.safety_engine.llm import UpsonicLLMProvider
 
 language_llm = UpsonicLLMProvider(
@@ -75,18 +137,17 @@ advanced_policy_2 = Policy(
 ```python
 from upsonic import Agent, Task
 
-# Apply policy to both input and output
 agent = Agent(
-    model="anthropic/claude-sonnet-4-5",
+    model="anthropic/claude-sonnet-4-6",
     name="Secure Assistant",
-    user_policy=company_security_policy,    # Filter input
-    agent_policy=company_security_policy    # Filter output
+    user_policy=company_security_policy,
+    agent_policy=company_security_policy,
+    debug=True
 )
 
-# Test it
 try:
     task = Task("What's the status of Project Zeus?")
-    result = agent.do(task)
+    result = agent.print_do(task)
     print(result)
 except Exception as e:
     print(f"Blocked: {e}")
@@ -102,16 +163,51 @@ Tool safety policies validate tools at two stages:
 ```python
 from upsonic import Agent, Task
 
-# Apply tool safety policies
 agent = Agent(
-    model="anthropic/claude-sonnet-4-5",
-    tool_policy_pre=company_security_policy,   # Validate at registration
-    tool_policy_post=company_security_policy  # Validate before execution
+    model="anthropic/claude-sonnet-4-6",
+    tool_policy_pre=company_security_policy,
+    tool_policy_post=company_security_policy,
+    debug=True
 )
 
-# Harmful tools will be blocked at registration or execution
 task = Task("Delete all files", tools=[harmful_tool])
-result = agent.do(task)  # Blocked if tool violates policy
+result = agent.print_do(task)
+```
+
+## Streaming Support
+
+Custom policies work seamlessly with streaming. For `Anonymize` actions, de-anonymization happens token-by-token in real-time:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.base import Policy
+from upsonic.safety_engine.policies.pii_policies import PIIRule, PIIAnonymizeAction
+
+async def main():
+    policy = Policy(
+        name="Scoped PII",
+        description="PII anonymization with scoping",
+        rule=PIIRule(),
+        action=PIIAnonymizeAction(),
+        apply_to_description=True,
+        apply_to_system_prompt=False,
+    )
+
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        user_policy=policy,
+        debug=True,
+    )
+
+    task = Task(description="My email is john.doe@example.com. What is my email?")
+
+    # Pure text streaming
+    async for text in agent.astream(task):
+        print(text, end="", flush=True)
+    print()
+
+asyncio.run(main())
 ```
 
 ## Async Support
@@ -123,12 +219,13 @@ import asyncio
 from upsonic import Agent, Task
 
 agent = Agent(
-    model="anthropic/claude-sonnet-4-5",
-    user_policy=company_security_policy
+    model="anthropic/claude-sonnet-4-6",
+    user_policy=company_security_policy,
+    debug=True
 )
 
 async def main():
-    result = await agent.do_async(Task("Confidential query"))
+    result = await agent.print_do_async(Task("Confidential query"))
     print(result)
 
 asyncio.run(main())
@@ -144,7 +241,6 @@ from upsonic.safety_engine.base import RuleBase, ActionBase, Policy
 from upsonic.safety_engine.models import PolicyInput, RuleOutput, PolicyOutput
 import re
 
-# 1. Define the rule
 class ProjectCodeRule(RuleBase):
     name = "Project Code Rule"
     description = "Detects internal project codes"
@@ -172,7 +268,6 @@ class ProjectCodeRule(RuleBase):
             triggered_keywords=matches
         )
 
-# 2. Define the action
 class ProjectCodeAction(ActionBase):
     name = "Project Code Action"
     description = "Redacts project codes"
@@ -183,23 +278,23 @@ class ProjectCodeAction(ActionBase):
             return self.replace_triggered_keywords("[PROJECT-CODE]")
         return self.allow_content()
 
-# 3. Create the policy
 project_policy = Policy(
     name="Project Code Policy",
     description="Protects internal project codes",
     rule=ProjectCodeRule(),
-    action=ProjectCodeAction()
+    action=ProjectCodeAction(),
+    apply_to_description=True,
+    apply_to_context=True,
+    apply_to_system_prompt=False,
 )
 
-# 4. Use with agent
 agent = Agent(
-    model="anthropic/claude-sonnet-4-5",
-    agent_policy=project_policy
+    model="anthropic/claude-sonnet-4-6",
+    agent_policy=project_policy,
+    debug=True
 )
 
-# Test
 task = Task("The issue is in ABC-1234 and XYZ-5678")
-result = agent.do(task)
+result = agent.print_do(task)
 print(result)
-# Output: "The issue is in [PROJECT-CODE] and [PROJECT-CODE]"
 ```

@@ -20,34 +20,200 @@ PII policies are critical for protecting personal identifiable information and e
 - **Protects against identity theft**: Prevents sensitive personal information from being exposed or used maliciously
 - **Ensures privacy compliance**: Helps maintain compliance with GDPR, CCPA, and other data protection regulations
 
-## Usage
+## Anonymize (Unique Random Placeholders)
+
+`PIIAnonymizePolicy` replaces detected PII with unique random placeholders. The original values are restored in the agent's response — the LLM never sees real data, but you get fully functional results:
 
 ```python
+# --- Policy (before LLM): PIIRule finds PII; PIIAnonymizeAction substitutes unique random tokens; map stores fake→real.
+# --- Anonymize placeholders are illustrative and change each run; shape (letters/digits) follows the original.
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
 
-# Create agent with PII anonymization
 agent = Agent(
-    "anthropic/claude-sonnet-4-5",
-    user_policy=PIIAnonymizePolicy,  # Prevents data leak to LLM Providers
-    debug=True  # Enable debug to see policy application
+    "anthropic/claude-sonnet-4-6",
+    user_policy=PIIAnonymizePolicy,
+    debug=True
 )
 
-# User input with PII
+# Original (your task.description — what you typed):
+#   "My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
+# Anonymized (what the provider / model receives for that field):
+#   "My email is k8w.xqz@lmno.pqrs and phone is 827-391-6402. What are my email and phone?"
+# If the model echoes placeholders, raw model output might look like:
+#   "Your email is k8w.xqz@lmno.pqrs and your phone is 827-391-6402."
+# De-anonymized (what print_do prints and returns — what the user sees):
+#   "Your email is john.doe@example.com and your phone is 555-1234."
 task = Task(
     description="My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
 )
 
-# Execute with automatic anonymization and de-anonymization
-# What happens under the hood:
-# 1. Input: "My email is john.doe@example.com and phone is 555-1234..."
-# 2. Anonymized (sent to LLM): "My email is EMAIL_1 and phone is PHONE_1..."
-# 3. LLM Response: "Your email is EMAIL_1 and phone is PHONE_1"
-# 4. De-anonymized (returned to you): "Your email is john.doe@example.com and phone is 555-1234"
-#
-# Result: Sensitive data never reaches the cloud, but you get fully functional results!
-result = agent.do(task)
-print(result)  # Returns: "Your email is john.doe@example.com and phone is 555-1234"
+result = agent.print_do(task)
+print(result)
+```
+
+### Streaming with Anonymize
+
+Anonymized content is de-anonymized token-by-token in real-time during streaming:
+
+```python
+# Policy: Same as sync — description anonymized once before stream; map fixed for the run.
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
+
+async def main():
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        user_policy=PIIAnonymizePolicy,
+        debug=True,
+    )
+
+    # Original: "My email is john.doe@example.com. What is my email?"
+    # Anonymized to provider: "My email is k8w.xqz@lmno.pqrs. What is my email?"
+    task = Task(
+        description="My email is john.doe@example.com. What is my email?"
+    )
+
+    # Model streams tokens of the fake email; each chunk is de-anonymized before print.
+    # De-anonymized stream (what the user sees in the terminal), full line example:
+    #   "Your email is john.doe@example.com."
+    async for text in agent.astream(task):
+        print(text, end="", flush=True)
+    print()
+
+asyncio.run(main())
+```
+
+### Async with Anonymize
+
+```python
+# Policy: Anonymize before LLM; same map semantics as print_do.
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
+
+async def main():
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        user_policy=PIIAnonymizePolicy,
+        debug=True,
+    )
+
+    # Original: "My email is john.doe@example.com. What is my email?"
+    # Anonymized to provider: "My email is k8w.xqz@lmno.pqrs. What is my email?"
+    task = Task(
+        description="My email is john.doe@example.com. What is my email?"
+    )
+
+    # De-anonymize: when the run ends, assistant text is restored.
+    # De-anonymized (user sees in print + in result), example:
+    #   "Your email is john.doe@example.com."
+    result = await agent.print_do_async(task)
+    print(result)
+
+asyncio.run(main())
+```
+
+## Replace (Fixed Placeholder)
+
+`PIIReplacePolicy` replaces detected PII with a fixed `[PII_REDACTED]` placeholder. Unlike anonymize, all detected values share the same placeholder — but original values are still restored in the final response:
+
+```python
+# Policy: PIIRule detects PII; every match becomes the same fixed tag; map still enables restore for the user.
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.pii_policies import PIIReplacePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=PIIReplacePolicy,
+    debug=True
+)
+
+# Original: "My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
+# Anonymized to provider: "My email is [PII_REDACTED] and phone is [PII_REDACTED]. What are my email and phone?"
+# Example model output (placeholders only): "Your email is [PII_REDACTED] and your phone is [PII_REDACTED]."
+# De-anonymized (print/result — user sees): "Your email is john.doe@example.com and your phone is 555-1234."
+task = Task(
+    description="My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
+)
+
+result = agent.print_do(task)
+print(result)
+```
+
+## Policy Scope
+
+Control which parts of the input are sanitized:
+
+```python
+# Policy: Only apply_to_* True fields are anonymized; others reach the LLM unchanged.
+from upsonic import Agent, Task
+from upsonic.safety_engine.base import Policy
+from upsonic.safety_engine.policies.pii_policies import PIIRule, PIIAnonymizeAction
+
+policy = Policy(
+    name="PII Anonymize - Description Only",
+    description="Only anonymize PII in task description",
+    rule=PIIRule(),
+    action=PIIAnonymizeAction(),
+    apply_to_description=True,
+    apply_to_context=False,
+    apply_to_system_prompt=False,
+    apply_to_chat_history=False,
+    apply_to_tool_outputs=False,
+)
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    system_prompt="User's email is john.doe@example.com",
+    user_policy=policy,
+    debug=True
+)
+
+task = Task(
+    description="My email is john.doe@example.com. What is my email?"
+)
+
+# Original description: "My email is john.doe@example.com. What is my email?"
+# Anonymized description to provider: "My email is k8w.xqz@lmno.pqrs. What is my email?"
+# System prompt to provider (NOT anonymized): still "User's email is john.doe@example.com"
+# De-anonymized assistant text (user sees from print_do): real email in the answer, e.g. "Your email is john.doe@example.com."
+result = agent.print_do(task)
+print(result)
+```
+
+## With Tools
+
+PII policies also protect sensitive data in tool interactions:
+
+```python
+# Policy: Prebuilt policy anonymizes task text and tool return text before the LLM reads them; one merged map.
+from upsonic import Agent, Task
+from upsonic.tools import tool
+from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
+
+@tool
+def lookup_contact(name: str) -> str:
+    """Look up contact information for a person."""
+    return "Contact info: email is john.doe@example.com, phone is 555-123-4567"
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=PIIAnonymizePolicy,
+    debug=True
+)
+
+task = Task(
+    description="Look up contact info for John Doe using the lookup_contact tool.",
+    tools=[lookup_contact],
+)
+
+# Original tool return (Python): "Contact info: email is john.doe@example.com, phone is 555-123-4567"
+# Anonymized in chat history for the model: "Contact info: email is k8w.xqz@lmno.pqrs, phone is 827-391-6407"
+# De-anonymized final assistant message (user sees): "Contact info: email is john.doe@example.com, phone is 555-123-4567" (or equivalent with real values)
+result = agent.print_do(task)
+print(result)
 ```
 
 ## Available Variants
@@ -55,7 +221,7 @@ print(result)  # Returns: "Your email is john.doe@example.com and phone is 555-1
 - `PIIBlockPolicy`: Blocks any content with PII
 - `PIIBlockPolicy_LLM`: LLM-powered block messages
 - `PIIBlockPolicy_LLM_Finder`: LLM detection for better accuracy
-- `PIIAnonymizePolicy`: Anonymizes PII with unique replacements
-- `PIIReplacePolicy`: Replaces PII with `[PII_REDACTED]`
+- `PIIAnonymizePolicy`: Anonymizes PII with unique random replacements
+- `PIIReplacePolicy`: Replaces PII with `[PII_REDACTED]` (fixed placeholder)
 - `PIIRaiseExceptionPolicy`: Raises DisallowedOperation exception
 - `PIIRaiseExceptionPolicy_LLM`: LLM-generated exception messages

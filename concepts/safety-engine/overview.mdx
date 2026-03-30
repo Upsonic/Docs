@@ -9,28 +9,42 @@ tag: "NEW"
 
 ## Overview
 
-Safety Engine provides content filtering and policy enforcement for AI agents. It controls what goes into agents (user input) and what comes out (agent responses) by applying policies that detect and handle sensitive content.
+Safety Engine provides content filtering and policy enforcement for AI agents. It controls what goes into agents (user input, system prompt, context, chat history) and what comes out (agent responses, tool outputs) by applying policies that detect and handle sensitive content. Policies work seamlessly with both synchronous, asynchronous, and streaming execution modes.
 
 ## Why you Should Use Safety Policies
 
 Safety policies are essential for protecting sensitive information and ensuring compliance with your organization's security and privacy requirements. When you send data to LLM providers, that data may be used for training, stored in logs, or processed in ways that could expose sensitive information. Safety policies act as a critical first line of defense by:
 
 - **Preventing Data Leaks**: Stop sensitive information like PII, financial data, or confidential business information from being sent to LLM providers
-- **Ensuring Compliance**: Meet regulatory requirements (GDPR, HIPAA, etc.) by automatically detecting and handling sensitive content
+- **Ensuring Compliance**: Meet regulatory requirements (GDPR, HIPAA, PCI DSS, etc.) by automatically detecting and handling sensitive content
 - **Enforcing Company Policies**: Automatically apply your organization's content safety rules across all agent interactions
 - **Maintaining Control**: Track and monitor what content is being filtered, giving you visibility into safety policy enforcement
 - **LLM-Agnostic Protection**: Once created, your policies work with any LLM provider, ensuring consistent safety regardless of the underlying model
 
 ## Key Features
 
-- **Policy Points**: You can use three different points to put your policies
-    - User Inputs
+- **Policy Points**: Apply policies at different stages of the agent pipeline
+    - User Inputs (description, context, system prompt, chat history)
     - Agent Outputs
-    - Tool Interactions
-- **Pre-built Policies**: Ready-to-use policies for PII, adult content, hate speech, profanity, etc.
+    - Tool Interactions (pre-registration and post-execution)
+- **Policy Scope**: Fine-grained control over which parts of the input get sanitized (`apply_to_description`, `apply_to_context`, `apply_to_system_prompt`, `apply_to_chat_history`, `apply_to_tool_outputs`)
+- **Pre-built Policies**: Ready-to-use policies for PII, financial data, medical info, phone numbers, adult content, hate speech, profanity, and more
 - **Custom Policies**: Create your own rules and actions
-- **Pre-built Action Types**: Block, anonymize, replace, or raise exceptions
+- **Action Types**: Block, anonymize (unique random placeholders), replace (fixed placeholders), or raise exceptions
+- **Streaming Support**: Full policy support in both event-based and pure text streaming modes with real-time de-anonymization
+- **Async Support**: All policies work with `print_do`, `print_do_async`, `stream`, and `astream` methods
 - **Multi-language Support**: Automatically adapts to user's language
+
+## How Anonymization Works
+
+When you use an **Anonymize** action (like `PIIAnonymizePolicy`), the Safety Engine performs a fully reversible transformation:
+
+1. **Detection**: The rule scans your input for sensitive content (emails, phone numbers, etc.)
+2. **Anonymization**: Detected values are replaced with unique random placeholders before sending to the LLM
+3. **LLM Processing**: The LLM receives and processes only the anonymized content — your real data never leaves your environment
+4. **De-anonymization**: The agent's response is mapped back to the original values before returning to you
+
+This works transparently across all execution modes — including streaming, where tokens are buffered and de-anonymized in real-time.
 
 ## Example
 
@@ -38,28 +52,70 @@ Safety policies are essential for protecting sensitive information and ensuring 
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
 
-# Create agent with PII anonymization
 agent = Agent(
-    "anthropic/claude-sonnet-4-5",
-    user_policy=PIIAnonymizePolicy,  # Prevents data leak to LLM Providers
-    debug=True  # Enable debug to see policy application
+    "anthropic/claude-sonnet-4-6",
+    user_policy=PIIAnonymizePolicy,
+    debug=True
 )
 
-# User input with PII
 task = Task(
     description="My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
 )
 
-# Execute with automatic anonymization and de-anonymization
-# What happens under the hood:
-# 1. Input: "My email is john.doe@example.com and phone is 555-1234..."
-# 2. Anonymized (sent to LLM): "My email is EMAIL_1 and phone is PHONE_1..."
-# 3. LLM Response: "Your email is EMAIL_1 and phone is PHONE_1"
-# 4. De-anonymized (returned to you): "Your email is john.doe@example.com and phone is 555-1234"
-# 
-# Result: Sensitive data never reaches the cloud, but you get fully functional results!
-result = agent.do(task)
-print(result)  # Returns: "Your email is john.doe@example.com and phone is 555-1234"
+result = agent.print_do(task)
+print(result)  # "Your email is john.doe@example.com and phone is 555-1234"
+```
+
+### Streaming
+
+Policies work seamlessly with streaming — de-anonymization happens token-by-token in real-time:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
+
+async def main():
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        user_policy=PIIAnonymizePolicy,
+    debug=True
+    )
+
+    task = Task(
+        description="My email is john.doe@example.com. What is my email?"
+    )
+
+    # Pure text streaming — yields str chunks with de-anonymized content
+    async for text in agent.astream(task):
+        print(text, end="", flush=True)
+    print()
+
+asyncio.run(main())
+```
+
+### Async
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
+
+async def main():
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        user_policy=PIIAnonymizePolicy,
+    debug=True
+    )
+
+    task = Task(
+        description="My email is john.doe@example.com. What is my email?"
+    )
+
+    result = await agent.print_do_async(task)
+    print(result)
+
+asyncio.run(main())
 ```
 
 ## Navigation
@@ -69,3 +125,4 @@ print(result)  # Returns: "Your email is john.doe@example.com and phone is 555-1
 - [Custom Policy](/concepts/safety-engine/custom-policy/creating-policy) - Create your own safety policies with custom rules and actions
 - [Creating Rules](/concepts/safety-engine/custom-policy/creating-rule) - Define custom detection rules for content filtering
 - [Creating Actions](/concepts/safety-engine/custom-policy/creating-action) - Configure actions for policy violations
+- [Policy Feedback Loop](/concepts/safety-engine/policy-feedback-loop) - LLM-driven feedback for policy violations with retry capabilities

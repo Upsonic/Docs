@@ -16,9 +16,10 @@ from upsonic import Agent, Task
 from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
 
 agent = Agent(
-    "anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6",
     user_policy=CryptoBlockPolicy,
     user_policy_feedback=True,
+    debug=True
 )
 
 task = Task(
@@ -26,8 +27,7 @@ task = Task(
 )
 
 result = agent.print_do(task)
-print("Result:", result)
-# Instead of a hard block, user receives helpful feedback explaining the restriction
+print(result)
 ```
 
 ## Agent Policy Feedback
@@ -39,10 +39,10 @@ from upsonic import Agent, Task
 from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
 
 agent = Agent(
-    "anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6",
     agent_policy=CryptoBlockPolicy,
     agent_policy_feedback=True,
-    agent_policy_feedback_loop=3,  # Allow up to 3 retries
+    agent_policy_feedback_loop=3,
     debug=True
 )
 
@@ -50,12 +50,44 @@ task = Task(
     description="Write a comprehensive guide about all investment types: stocks, bonds, real estate, cryptocurrency, and commodities"
 )
 
-# Since only agent_policy is set (not user_policy), the input is NOT checked.
-# What happens under the hood:
-# 1. Agent generates a guide including "Cryptocurrency: Bitcoin, Ethereum..."
-# 2. Crypto policy detects violation on OUTPUT → feedback sent back to agent
-# 3. Agent retries without crypto section → only stocks, bonds, real estate, commodities
-# 4. Crypto policy passes → compliant output returned
 result = agent.print_do(task)
-print("Result:", result)
+print(result)
+```
+
+## How it Works
+
+1. Agent generates a response (e.g., a guide including cryptocurrency section)
+2. Agent policy detects a violation in the output
+3. Feedback is sent back to the agent explaining the violation
+4. Agent retries, generating a compliant response (e.g., guide without cryptocurrency)
+5. Agent policy passes — compliant output is returned
+
+The `agent_policy_feedback_loop` parameter controls how many retry attempts are allowed before the agent gives up.
+
+## Async Support
+
+Policy feedback loops work with async execution:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.crypto_policies import CryptoBlockPolicy
+
+async def main():
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        agent_policy=CryptoBlockPolicy,
+        agent_policy_feedback=True,
+        agent_policy_feedback_loop=3,
+        debug=True,
+    )
+
+    task = Task(
+        description="Write a guide about investment types including crypto"
+    )
+
+    result = await agent.print_do_async(task)
+    print(result)
+
+asyncio.run(main())
 ```

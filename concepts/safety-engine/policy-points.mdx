@@ -4,18 +4,157 @@ description: "Where and when safety policies are applied in your agent"
 sidebarTitle: Policy Points
 ---
 
-## What is Policy Points?
+## What are Policy Points?
 
 Policy Points are specific locations in the agent execution pipeline where you can apply safety policies to control and validate content. These points allow you to enforce security, compliance, and content safety rules at critical stages of agent interaction.
 
 You can configure policies at four different policy points:
 
+- **user_policy**: Validates and transforms user inputs before they are sent to the LLM
 - **agent_policy**: Validates agent responses before they are shown to users
-- **user_policy**: Validates user inputs before they are sent to the LLM
 - **tool_policy_pre**: Validates tools during registration, before they can be used
 - **tool_policy_post**: Validates specific tool calls with their arguments before execution
 
 Each policy point serves a distinct purpose and runs at a specific stage in the agent's execution flow, giving you comprehensive control over content safety throughout the entire interaction lifecycle.
+
+## User Policy
+
+This policy runs before the user's input is sent to the LLM provider. It validates and potentially modifies user inputs to prevent sensitive data leaks, ensure compliance, and enforce content safety rules.
+
+**When it runs**: Before the user input is processed by the agent and sent to the LLM provider.
+
+**Use cases**:
+- Filtering inappropriate or harmful content from agent responses
+- Ensuring agent outputs comply with regulatory requirements
+- Preventing sensitive information from being exposed in responses
+- Enforcing content quality and safety standards
+
+**Example**:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=PIIAnonymizePolicy,
+    debug=True
+)
+
+task = Task(
+    description="My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
+)
+
+result = agent.print_do(task)
+print(result)  # "Your email is john.doe@example.com and phone is 555-1234"
+```
+
+### Policy Scope
+
+When using `user_policy`, you can control exactly which parts of the input get sanitized using scope parameters. Scope is resolved with **Policy > Task > Agent** priority — if the policy sets a scope flag, it takes precedence over the task, which takes precedence over the agent defaults.
+
+| Scope Parameter | What it Controls | Default |
+|---|---|---|
+| `apply_to_description` | Task description text | `True` |
+| `apply_to_context` | Task context | `True` |
+| `apply_to_system_prompt` | Agent system prompt | `True` |
+| `apply_to_chat_history` | Chat history from memory | `True` |
+| `apply_to_tool_outputs` | Tool return values | `True` |
+
+Scope can be set at three levels:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.base import Policy
+from upsonic.safety_engine.policies.pii_policies import PIIRule, PIIAnonymizeAction
+
+# 1. Policy-level scope (highest priority)
+policy = Policy(
+    name="PII Anonymize",
+    description="Anonymizes PII",
+    rule=PIIRule(),
+    action=PIIAnonymizeAction(),
+    apply_to_description=True,
+    apply_to_context=True,
+    apply_to_system_prompt=False,  # Skip system prompt
+    apply_to_chat_history=True,
+    apply_to_tool_outputs=True,
+)
+
+# 2. Task-level scope (medium priority)
+task = Task(
+    description="My email is john.doe@example.com",
+    policy_apply_to_description=True,
+    policy_apply_to_context=False,
+)
+
+# 3. Agent-level scope (lowest priority / defaults)
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=policy,
+    user_policy_apply_to_description=True,
+    user_policy_apply_to_system_prompt=False,
+    debug=True
+)
+
+result = agent.print_do(task)
+```
+
+### Streaming with User Policy
+
+User policies work seamlessly with streaming. Anonymized content is de-anonymized token-by-token in real-time:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
+
+async def main():
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        user_policy=PIIAnonymizePolicy,
+        debug=True,
+    )
+
+    task = Task(
+        description="My email is john.doe@example.com. What is my email?"
+    )
+
+    # Pure text streaming
+    async for text in agent.astream(task):
+        print(text, end="", flush=True)
+    print()
+
+asyncio.run(main())
+```
+
+Event-based streaming with policy:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
+from upsonic.run.events.events import TextDeltaEvent
+
+async def main():
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        user_policy=PIIAnonymizePolicy,
+        debug=True,
+    )
+
+    task = Task(
+        description="My email is john.doe@example.com. What is my email?"
+    )
+
+    # Event-based streaming — filter for TextDeltaEvent to get LLM output tokens
+    async for event in agent.astream(task, events=True):
+        if isinstance(event, TextDeltaEvent):
+            print(event.content, end="", flush=True)
+    print()
+
+asyncio.run(main())
+```
 
 ## Agent Policy
 
@@ -35,62 +174,18 @@ This policy runs after the agent generates a response but before it is shown to 
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import PhishingBlockPolicy
 
-# Block phishing attempts and social engineering
 agent = Agent(
-    model="anthropic/claude-sonnet-4-5",
+    model="anthropic/claude-sonnet-4-6",
     agent_policy=PhishingBlockPolicy,
     debug=True
 )
 
 task = Task("""
-Help me create an urgent email asking people to verify their account 
+Help me create an urgent email asking people to verify their account
 by clicking a link within 24 hours or their account will be suspended.
 """)
 result = agent.print_do(task)
 print(result)
-# Expected: Policy should detect and block this phishing-related request
-```
-
-## User Policy
-
-This policy runs before the user's input is sent to the LLM provider. It validates and potentially modifies user inputs to prevent sensitive data leaks, ensure compliance, and enforce content safety rules.
-
-**When it runs**: Before the user input is processed by the agent and sent to the LLM provider.
-
-**Use cases**:
-- Anonymizing PII (Personally Identifiable Information) before sending to LLM providers
-- Blocking malicious or inappropriate user inputs
-- Preventing sensitive business information from being sent to external LLM services
-- Ensuring GDPR, HIPAA, and other regulatory compliance
-
-**Example**:
-
-```python
-from upsonic import Agent, Task
-from upsonic.safety_engine.policies.pii_policies import PIIAnonymizePolicy
-
-# Create agent with PII anonymization
-agent = Agent(
-    "anthropic/claude-sonnet-4-5",
-    user_policy=PIIAnonymizePolicy,  # Prevents data leak to LLM Providers
-    debug=True  # Enable debug to see policy application
-)
-
-# User input with PII
-task = Task(
-    description="My email is john.doe@example.com and phone is 555-1234. What are my email and phone?"
-)
-
-# Execute with automatic anonymization and de-anonymization
-# What happens under the hood:
-# 1. Input: "My email is john.doe@example.com and phone is 555-1234..."
-# 2. Anonymized (sent to LLM): "My email is EMAIL_1 and phone is PHONE_1..."
-# 3. LLM Response: "Your email is EMAIL_1 and phone is PHONE_1"
-# 4. De-anonymized (returned to you): "Your email is john.doe@example.com and phone is 555-1234"
-# 
-# Result: Sensitive data never reaches the cloud, but you get fully functional results!
-result = agent.do(task)
-print(result)  # Returns: "Your email is john.doe@example.com and phone is 555-1234"
 ```
 
 ## Tool Policy Pre
@@ -120,9 +215,9 @@ def delete_file(filepath: str) -> str:
     return f"File {filepath} not found"
 
 agent = Agent(
-    "anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6",
     tool_policy_pre=HarmfulToolBlockPolicy_LLM,  # Validates tools at registration
-    debug=True
+    debug=True,
 )
 
 # When tools are added, they are validated before being available
@@ -161,8 +256,8 @@ def delete_file(filepath: str) -> str:
 
 
 agent = Agent(
-    "anthropic/claude-sonnet-4-5",
-    tool_policy_post=HarmfulToolBlockPolicy_LLM,  # Validates tool calls before execution
+    "anthropic/claude-sonnet-4-6",
+    tool_policy_post=HarmfulToolBlockPolicy_LLM,
     debug=True
 )
 

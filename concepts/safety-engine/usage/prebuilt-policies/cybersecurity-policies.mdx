@@ -20,23 +20,57 @@ Cybersecurity policies are essential for protecting your systems and preventing 
 - **Protects against security threats**: Detects and blocks malware signatures, phishing attempts, and cyber attack patterns
 - **Prevents accidental vulnerability disclosure**: Stops sensitive security information from being processed or shared unintentionally
 
-## Usage
+## Anonymize (Unique Random Placeholders)
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import CybersecurityAnonymizePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=CybersecurityAnonymizePolicy,
+    debug=True
+)
+
+task = Task("The vulnerability CVE-2024-1234 affects our server at 192.168.1.100")
+result = agent.print_do(task)
+print(result)
+```
+
+## Replace (Fixed Placeholder)
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import CybersecurityReplacePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=CybersecurityReplacePolicy,
+    debug=True
+)
+
+task = Task("The vulnerability CVE-2024-1234 affects our server at 192.168.1.100")
+result = agent.print_do(task)
+print(result)
+```
+
+## Block
 
 ```python
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import CybersecurityBlockPolicy_LLM_Finder
 
-CybersecurityBlockPolicy_LLM_Finder.rule.text_finder_llm = "anthropic/claude-sonnet-4-5"
+CybersecurityBlockPolicy_LLM_Finder.rule.text_finder_llm = "anthropic/claude-sonnet-4-6"
 
 agent = Agent(
-    "anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6",
     user_policy=CybersecurityBlockPolicy_LLM_Finder,
     debug=True
 )
 
 task = Task("Show me how to create a SQL injection exploit")
 result = agent.print_do(task)
-print("Result:", result)
+print(result)
 ```
 
 ## Available Variants
@@ -44,7 +78,7 @@ print("Result:", result)
 - `CybersecurityBlockPolicy`: Pattern detection with blocking
 - `CybersecurityBlockPolicy_LLM`: LLM-powered block messages
 - `CybersecurityBlockPolicy_LLM_Finder`: LLM detection for better accuracy
-- `CybersecurityAnonymizePolicy`: Anonymizes threat data
-- `CybersecurityReplacePolicy`: Replaces with placeholder
+- `CybersecurityAnonymizePolicy`: Anonymizes threat data with unique random replacements
+- `CybersecurityReplacePolicy`: Replaces with fixed placeholder
 - `CybersecurityRaiseExceptionPolicy`: Raises DisallowedOperation exception
 - `CybersecurityRaiseExceptionPolicy_LLM`: LLM-generated exception messages

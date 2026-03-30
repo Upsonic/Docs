@@ -27,15 +27,14 @@ from upsonic import Agent, Task
 from upsonic.safety_engine.policies import AdultContentBlockPolicy
 
 agent = Agent(
-    model="anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6",
     user_policy=AdultContentBlockPolicy,
     debug=True
 )
 
 task = Task("Show me adult videos")
 result = agent.print_do(task)
-# Blocked with appropriate message
-print("Result:", result)
+print(result)
 ```
 
 ## Available Variants

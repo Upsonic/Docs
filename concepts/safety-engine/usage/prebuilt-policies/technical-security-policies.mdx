@@ -20,22 +20,55 @@ Technical security policies are essential for protecting sensitive technical cre
 - **Protects against security breaches**: Prevents sensitive technical information from being exposed to third-party LLM providers or stored in logs
 - **Maintains system security**: Ensures your AI agent doesn't process or generate content that could compromise system security
 
-## Usage
+## Anonymize (Unique Random Placeholders)
 
 ```python
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import TechnicalSecurityAnonymizePolicy
 
 agent = Agent(
-    model="anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6",
     user_policy=TechnicalSecurityAnonymizePolicy,
     debug=True
 )
 
 task = Task("My API key is sk-1234567890abcdefghijklmnopqrstuvwxyz")
 result = agent.print_do(task)
+print(result)
+```
 
-print("Result:", result)
+## Replace (Fixed Placeholder)
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import TechnicalSecurityReplacePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=TechnicalSecurityReplacePolicy,
+    debug=True
+)
+
+task = Task("My API key is sk-1234567890abcdefghijklmnopqrstuvwxyz")
+result = agent.print_do(task)
+print(result)
+```
+
+## Block
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import TechnicalSecurityBlockPolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=TechnicalSecurityBlockPolicy,
+    debug=True
+)
+
+task = Task("My API key is sk-1234567890abcdefghijklmnopqrstuvwxyz")
+result = agent.print_do(task)
+print(result)
 ```
 
 ## Available Variants
@@ -43,7 +76,7 @@ print("Result:", result)
 - `TechnicalSecurityBlockPolicy`: Pattern detection with blocking
 - `TechnicalSecurityBlockPolicy_LLM`: LLM-powered block messages
 - `TechnicalSecurityBlockPolicy_LLM_Finder`: LLM detection for better accuracy
-- `TechnicalSecurityAnonymizePolicy`: Anonymizes security credentials
-- `TechnicalSecurityReplacePolicy`: Replaces with placeholder
+- `TechnicalSecurityAnonymizePolicy`: Anonymizes security credentials with unique random replacements
+- `TechnicalSecurityReplacePolicy`: Replaces with fixed placeholder
 - `TechnicalSecurityRaiseExceptionPolicy`: Raises DisallowedOperation exception
 - `TechnicalSecurityRaiseExceptionPolicy_LLM`: LLM-generated exception messages

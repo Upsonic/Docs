@@ -20,38 +20,80 @@ Phone number policies are essential for protecting user privacy and preventing p
 - **Protects user privacy**: Prevents phone numbers from being exposed to third-party LLM providers or stored in training data
 - **Reduces spam and harassment risk**: Anonymizes phone numbers to prevent them from being used for unwanted communications
 
-## Usage
+## Anonymize (Unique Random Placeholders)
+
+`AnonymizePhoneNumbersPolicy` replaces detected phone numbers with unique random placeholders. Original values are restored in the agent's response:
 
 ```python
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies.phone_policies import AnonymizePhoneNumbersPolicy
 
-# Create agent with phone number anonymization
 agent = Agent(
-    "anthropic/claude-sonnet-4-5",
-    user_policy=AnonymizePhoneNumbersPolicy,  # Prevents phone numbers from leaking to LLM Providers
-    debug=True  # Enable debug to see policy application
+    "anthropic/claude-sonnet-4-6",
+    user_policy=AnonymizePhoneNumbersPolicy,
+    debug=True
 )
 
-# User input with phone number
 task = Task(
     description="My Number is: +1-555-123-4567. Tell me what is my number."
 )
 
-# Execute with automatic anonymization and de-anonymization
-# What happens under the hood:
-# 1. Input: "My Number is: +1-555-123-4567. Tell me what is my number."
-# 2. Anonymized (sent to LLM): "My Number is: PHONE_1. Tell me what is my number."
-# 3. LLM Response: "Your number is PHONE_1"
-# 4. De-anonymized (returned to you): "Your number is +1-555-123-4567"
-#
-# Result: Phone number never reaches the cloud, but you get fully functional results!
-result = agent.do(task)
-print(result)  # Returns: "Your number is +1-555-123-4567"
+result = agent.print_do(task)
+print(result)  # "Your number is +1-555-123-4567"
+```
+
+## Streaming
+
+Phone number policies work with streaming — anonymized phone numbers are de-anonymized token-by-token in real-time:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.phone_policies import AnonymizePhoneNumbersPolicy
+
+async def main():
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        user_policy=AnonymizePhoneNumbersPolicy,
+        debug=True,
+    )
+
+    task = Task(
+        description="My Number is: +1-555-123-4567. Tell me what is my number."
+    )
+
+    async for text in agent.astream(task):
+        print(text, end="", flush=True)
+    print()
+
+asyncio.run(main())
+```
+
+## Async
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies.phone_policies import AnonymizePhoneNumbersPolicy
+
+async def main():
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        user_policy=AnonymizePhoneNumbersPolicy,
+        debug=True,
+    )
+
+    task = Task(
+        description="My Number is: +1-555-123-4567. Tell me what is my number."
+    )
+
+    result = await agent.print_do_async(task)
+    print(result)  # "Your number is +1-555-123-4567"
+
+asyncio.run(main())
 ```
 
 ## Available Variants
 
-- `AnonymizePhoneNumbersPolicy`: Pattern-based detection and anonymization
+- `AnonymizePhoneNumbersPolicy`: Pattern-based detection and anonymization with unique random replacements
 - `AnonymizePhoneNumbersPolicy_LLM_Finder`: LLM-powered detection for better accuracy
-

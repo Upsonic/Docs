@@ -20,24 +20,57 @@ Insider threat policies are critical for protecting organizations from internal 
 - **Protects intellectual property and trade secrets**: Detects and blocks attempts to steal or share proprietary information, preventing IP theft
 - **Maintains organizational security posture**: Ensures your AI agent doesn't process content that could reveal security vulnerabilities or facilitate insider threats
 
-## Usage
+## Anonymize (Unique Random Placeholders)
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import InsiderThreatAnonymizePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=InsiderThreatAnonymizePolicy,
+    debug=True
+)
+
+task = Task("I need to download all company databases before I leave")
+result = agent.print_do(task)
+print(result)
+```
+
+## Replace (Fixed Placeholder)
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import InsiderThreatReplacePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=InsiderThreatReplacePolicy,
+    debug=True
+)
+
+task = Task("I need to download all company databases before I leave")
+result = agent.print_do(task)
+print(result)
+```
+
+## Block
 
 ```python
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import InsiderThreatBlockPolicy_LLM_Finder
 
-InsiderThreatBlockPolicy_LLM_Finder.rule.text_finder_llm = "anthropic/claude-sonnet-4-5"
+InsiderThreatBlockPolicy_LLM_Finder.rule.text_finder_llm = "anthropic/claude-sonnet-4-6"
 
 agent = Agent(
-    "anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6",
     user_policy=InsiderThreatBlockPolicy_LLM_Finder,
-    debug=True,
+    debug=True
 )
 
 task = Task("I need to download all company databases before I leave")
 result = agent.print_do(task)
-# Blocked with appropriate message
-print("Result:", result)
+print(result)
 ```
 
 ## Available Variants
@@ -45,7 +78,7 @@ print("Result:", result)
 - `InsiderThreatBlockPolicy`: Pattern detection with blocking
 - `InsiderThreatBlockPolicy_LLM`: LLM-powered block messages
 - `InsiderThreatBlockPolicy_LLM_Finder`: LLM detection for better accuracy
-- `InsiderThreatAnonymizePolicy`: Anonymizes threat indicators
-- `InsiderThreatReplacePolicy`: Replaces with placeholder
+- `InsiderThreatAnonymizePolicy`: Anonymizes threat indicators with unique random replacements
+- `InsiderThreatReplacePolicy`: Replaces with fixed placeholder
 - `InsiderThreatRaiseExceptionPolicy`: Raises DisallowedOperation exception
 - `InsiderThreatRaiseExceptionPolicy_LLM`: LLM-generated exception messages

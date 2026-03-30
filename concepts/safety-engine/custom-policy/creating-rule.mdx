@@ -13,29 +13,22 @@ from upsonic.safety_engine.models import PolicyInput, RuleOutput
 from typing import Optional, Dict, Any
 
 class MyCustomRule(RuleBase):
-    """Rule description"""
-
     name = "My Custom Rule"
     description = "Detects specific content in text"
-    language = "en"  # Default language
+    language = "en"
 
     def __init__(self, options: Optional[Dict[str, Any]] = None):
         super().__init__(options)
-        # Initialize your detection logic
         self.keywords = ["keyword1", "keyword2"]
 
     def process(self, policy_input: PolicyInput) -> RuleOutput:
-        """Process the input and return detection results"""
-        # Combine input texts
         combined_text = " ".join(policy_input.input_texts or []).lower()
 
-        # Find matches
         triggered = []
         for keyword in self.keywords:
             if keyword in combined_text:
                 triggered.append(keyword)
 
-        # Return result
         if not triggered:
             return RuleOutput(
                 confidence=0.0,
@@ -51,6 +44,17 @@ class MyCustomRule(RuleBase):
         )
 ```
 
+## RuleOutput Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `confidence` | `float` | Detection confidence between 0.0 and 1.0 |
+| `content_type` | `str` | Category label (e.g., `"SAFE"`, `"PII"`, `"CONFIDENTIAL"`) |
+| `details` | `str` | Human-readable description of what was detected |
+| `triggered_keywords` | `Optional[List[str]]` | List of matched keywords/values to be passed to the action |
+
+The `triggered_keywords` list is important — it tells the action (e.g., `replace_triggered_keywords` or `anonymize_triggered_keywords`) which exact strings to transform.
+
 ## Example Rule
 
 Here's a complete example of a custom rule that detects company-specific confidential terms:
@@ -62,8 +66,6 @@ from upsonic.safety_engine.models import PolicyInput, RuleOutput
 from typing import Optional, Dict, Any
 
 class CompanySecretRule(RuleBase):
-    """Detects company confidential information"""
-
     name = "Company Secret Rule"
     description = "Detects confidential company terms and code names"
     language = "en"
@@ -71,39 +73,32 @@ class CompanySecretRule(RuleBase):
     def __init__(self, options: Optional[Dict[str, Any]] = None):
         super().__init__(options)
 
-        # Confidential keywords
         self.secret_keywords = [
             "project zeus", "alpha build", "confidential",
             "internal only", "trade secret", "proprietary"
         ]
 
-        # Confidential patterns
         self.secret_patterns = [
-            r'\b(?:project|operation)\s+[A-Z][a-z]+\b',  # Project names
-            r'\b[A-Z]{3}-\d{4}\b',  # Internal codes like ABC-1234
+            r'\b(?:project|operation)\s+[A-Z][a-z]+\b',
+            r'\b[A-Z]{3}-\d{4}\b',
         ]
 
-        # Allow custom keywords from options
         if options and "keywords" in options:
             self.secret_keywords.extend(options["keywords"])
 
     def process(self, policy_input: PolicyInput) -> RuleOutput:
-        """Process input for confidential content"""
         combined_text = " ".join(policy_input.input_texts or [])
 
-        # Find keyword matches
         triggered_keywords = []
         for keyword in self.secret_keywords:
             pattern = r'\b' + re.escape(keyword) + r'\b'
             if re.search(pattern, combined_text, re.IGNORECASE):
                 triggered_keywords.append(keyword)
 
-        # Find pattern matches
         for pattern in self.secret_patterns:
             matches = re.findall(pattern, combined_text)
             triggered_keywords.extend(matches)
 
-        # Calculate confidence
         if not triggered_keywords:
             return RuleOutput(
                 confidence=0.0,
@@ -121,14 +116,16 @@ class CompanySecretRule(RuleBase):
         )
 ```
 
+<Warning>
+When using regex patterns with capturing groups `(...)`, use **non-capturing groups** `(?:...)` instead. Capturing groups cause `re.findall` to return only the captured group content (which may be empty), rather than the full match. This can lead to empty strings being passed to the action as triggered keywords.
+</Warning>
+
 ## Using LLM in Rules
 
 For more intelligent detection, you can use LLM-powered content finding:
 
 ```python
 class SmartConfidentialRule(RuleBase):
-    """LLM-powered confidential content detection"""
-
     name = "Smart Confidential Rule"
     description = "Uses LLM to detect confidential content with context"
     language = "en"
@@ -137,16 +134,13 @@ class SmartConfidentialRule(RuleBase):
         super().__init__(options, text_finder_llm)
 
     def process(self, policy_input: PolicyInput) -> RuleOutput:
-        """Process using LLM for better accuracy"""
         if not self.text_finder_llm:
-            # Fallback to keyword detection if no LLM
             return RuleOutput(
                 confidence=0.0,
                 content_type="SAFE",
                 details="LLM not available"
             )
 
-        # Use built-in LLM helper
         triggered = self._llm_find_keywords_with_input(
             "confidential company information",
             policy_input
