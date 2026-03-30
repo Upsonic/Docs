@@ -26,19 +26,17 @@ Sensitive social policies are crucial for maintaining an inclusive and respectfu
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import SensitiveSocialBlockPolicy_LLM_Finder
 
-SensitiveSocialBlockPolicy_LLM_Finder.rule.text_finder_llm = "anthropic/claude-sonnet-4-5"
+SensitiveSocialBlockPolicy_LLM_Finder.rule.text_finder_llm = "anthropic/claude-sonnet-4-6"
 
 agent = Agent(
-    "anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6",
     user_policy=SensitiveSocialBlockPolicy_LLM_Finder,
     debug=True
 )
 
 task = Task("Inappropriate hate speech content")
-result = agent.print_do(task),
-# Blocked with appropriate message
-print("Result:", result)
-
+result = agent.print_do(task)
+print(result)
 ```
 
 ## Available Variants

@@ -12,31 +12,78 @@ from upsonic.safety_engine.base import ActionBase
 from upsonic.safety_engine.models import RuleOutput, PolicyOutput
 
 class MyCustomAction(ActionBase):
-    """Action description"""
-
     name = "My Custom Action"
     description = "Handles detected content"
     language = "en"
 
     def action(self, rule_result: RuleOutput) -> PolicyOutput:
-        """Execute action based on rule result"""
-        # Check confidence threshold
         if rule_result.confidence < 0.5:
             return self.allow_content()
 
-        # Take appropriate action
         return self.raise_block_error("Content blocked")
 ```
 
 ## Available Action Methods
 
-- `allow_content()`: Let content pass through
-- `raise_block_error(message)`: Block with a message
-- `replace_triggered_keywords(replacement)`: Replace keywords with text
-- `anonymize_triggered_keywords()`: Anonymize with random values
-- `raise_exception(message)`: Raise DisallowedOperation exception
-- `llm_raise_block_error(reason)`: Generate block message with LLM
-- `llm_raise_exception(reason)`: Generate exception with LLM
+### Content Flow
+
+- `allow_content()` / `allow_content_async()`: Let content pass through unchanged
+- `raise_block_error(message)` / `raise_block_error_async(message)`: Block with a message
+- `raise_exception(message)`: Raise `DisallowedOperation` exception
+
+### Content Transformation
+
+- `replace_triggered_keywords(replacement)` / `replace_triggered_keywords_async(replacement)`: Replace detected keywords with a fixed placeholder string (all values share the same placeholder)
+- `anonymize_triggered_keywords()` / `anonymize_triggered_keywords_async()`: Replace detected keywords with unique random values that preserve format (each value gets a distinct placeholder)
+
+### LLM-Powered
+
+- `llm_raise_block_error(reason)` / `llm_raise_block_error_async(reason)`: Generate contextual block message using LLM
+- `llm_raise_exception(reason)` / `llm_raise_exception_async(reason)`: Generate exception message using LLM
+
+## Anonymize vs Replace
+
+Both methods are **reversible** — the original values are automatically restored in the agent's final response. The difference is in what the LLM sees during processing:
+
+### `anonymize_triggered_keywords()` — Random Placeholders
+
+Replaces sensitive data with random characters while preserving format. Digits become random digits, letters become random letters. Each detected value gets a **unique** replacement, so the LLM can distinguish between different pieces of sensitive data.
+
+```python
+class PIIAnonymizeAction(ActionBase):
+    name = "PII Anonymize"
+    description = "Anonymizes PII with reversible random values"
+    language = "en"
+
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        if rule_result.confidence >= 0.5:
+            return self.anonymize_triggered_keywords()
+        return self.allow_content()
+```
+
+The LLM sees: `"Your email is xhkw.abc@defghij.klm and phone is 382-947-1056"`
+
+This is ideal when you need the LLM to reason about the structure of the data (e.g., distinguish between different values) without seeing real content.
+
+### `replace_triggered_keywords(replacement)` — Fixed Placeholders
+
+Replaces sensitive data with a fixed placeholder string. All detected values get the **same** replacement, making the content more opaque to the LLM.
+
+```python
+class PIIReplaceAction(ActionBase):
+    name = "PII Replace"
+    description = "Replaces PII with fixed placeholder"
+    language = "en"
+
+    def action(self, rule_result: RuleOutput) -> PolicyOutput:
+        if rule_result.confidence >= 0.5:
+            return self.replace_triggered_keywords("[PII_REDACTED]")
+        return self.allow_content()
+```
+
+The LLM sees: `"Your email is [PII_REDACTED] and phone is [PII_REDACTED]"`
+
+This is ideal when you want maximum opacity — the LLM cannot infer anything about the format or structure of the sensitive data.
 
 ## Example Action
 
@@ -47,24 +94,17 @@ from upsonic.safety_engine.base import ActionBase
 from upsonic.safety_engine.models import RuleOutput, PolicyOutput
 
 class CompanySecretAction(ActionBase):
-    """Handles company confidential content"""
-
     name = "Company Secret Action"
     description = "Blocks or redacts confidential company information"
     language = "en"
 
     def action(self, rule_result: RuleOutput) -> PolicyOutput:
-        """Execute action for confidential content"""
-
-        # Allow if low confidence
         if rule_result.confidence < 0.3:
             return self.allow_content()
 
-        # Medium confidence: Redact keywords
         if rule_result.confidence < 0.7:
             return self.replace_triggered_keywords("[REDACTED]")
 
-        # High confidence: Block completely
         block_message = (
             "This content has been blocked because it contains "
             "confidential company information. Please remove any "
@@ -79,19 +119,14 @@ For context-aware messages, use LLM-powered action methods:
 
 ```python
 class SmartSecretAction(ActionBase):
-    """LLM-powered action for confidential content"""
-
     name = "Smart Secret Action"
     description = "Uses LLM to generate contextual messages"
     language = "en"
 
     def action(self, rule_result: RuleOutput) -> PolicyOutput:
-        """Execute LLM-powered action"""
-
         if rule_result.confidence < 0.5:
             return self.allow_content()
 
-        # Generate contextual block message using LLM
         reason = (
             f"Content contains confidential information: "
             f"{rule_result.details}"

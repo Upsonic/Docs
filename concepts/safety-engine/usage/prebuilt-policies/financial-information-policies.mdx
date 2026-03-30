@@ -20,22 +20,86 @@ Financial information policies are essential for protecting sensitive financial 
 - **Protects against identity theft**: Prevents Social Security Numbers and other identity information from being exposed or processed
 - **Ensures PCI DSS compliance**: Helps maintain compliance with Payment Card Industry Data Security Standard requirements
 
-## Usage
+## Anonymize (Unique Random Placeholders)
+
+`FinancialInfoAnonymizePolicy` replaces detected financial data with unique random placeholders. Original values are restored in the agent's response:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import FinancialInfoAnonymizePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=FinancialInfoAnonymizePolicy,
+    debug=True
+)
+
+task = Task("My credit card is 4532-1234-5678-9010. What is my card number?")
+result = agent.print_do(task)
+print(result)  # Credit card number is de-anonymized in the response
+```
+
+## Replace (Fixed Placeholder)
+
+`FinancialInfoReplacePolicy` replaces detected financial data with `[FINANCIAL_INFO_REDACTED]`. All detected values share the same placeholder — original values are still restored in the final response:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import FinancialInfoReplacePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=FinancialInfoReplacePolicy,
+    debug=True
+)
+
+task = Task("My credit card is 4532-1234-5678-9010")
+result = agent.print_do(task)
+print(result)  # Financial data replaced with [FINANCIAL_INFO_REDACTED]
+```
+
+## Block
+
+`FinancialInfoBlockPolicy` blocks any content containing financial information:
 
 ```python
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import FinancialInfoBlockPolicy
 
 agent = Agent(
-    model="anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6",
     user_policy=FinancialInfoBlockPolicy,
     debug=True
 )
 
 task = Task("My credit card is 4532-1234-5678-9010")
 result = agent.print_do(task)
+print(result)
+```
 
-print("Result:", result)
+## Streaming
+
+Financial policies work with streaming — anonymized financial data is de-anonymized in real-time:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import FinancialInfoAnonymizePolicy
+
+async def main():
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        user_policy=FinancialInfoAnonymizePolicy,
+        debug=True,
+    )
+
+    task = Task("My credit card is 4532-1234-5678-9010. What is my card number?")
+
+    async for text in agent.astream(task):
+        print(text, end="", flush=True)
+    print()
+
+asyncio.run(main())
 ```
 
 ## Available Variants
@@ -43,8 +107,7 @@ print("Result:", result)
 - `FinancialInfoBlockPolicy`: Pattern detection with blocking
 - `FinancialInfoBlockPolicy_LLM`: LLM-powered block messages
 - `FinancialInfoBlockPolicy_LLM_Finder`: LLM detection for better accuracy
-- `FinancialInfoAnonymizePolicy`: Anonymizes financial data
-- `FinancialInfoReplacePolicy`: Replaces with `[FINANCIAL_INFO_REDACTED]`
+- `FinancialInfoAnonymizePolicy`: Anonymizes financial data with unique random replacements
+- `FinancialInfoReplacePolicy`: Replaces with `[FINANCIAL_INFO_REDACTED]` (fixed placeholder)
 - `FinancialInfoRaiseExceptionPolicy`: Raises DisallowedOperation exception
 - `FinancialInfoRaiseExceptionPolicy_LLM`: LLM-generated exception messages
-

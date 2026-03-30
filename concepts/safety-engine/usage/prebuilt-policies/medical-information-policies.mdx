@@ -20,21 +20,85 @@ Medical information policies are crucial for ensuring HIPAA compliance and prote
 - **Ensures HIPAA compliance**: Helps maintain compliance with Health Insurance Portability and Accountability Act requirements, avoiding severe penalties
 - **Protects patient privacy**: Prevents sensitive medical information from being exposed to third-party LLM providers, protecting patient confidentiality
 
-## Usage
+## Anonymize (Unique Random Placeholders)
+
+`MedicalInfoAnonymizePolicy` replaces detected medical data with unique random placeholders. Original values are restored in the agent's response:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import MedicalInfoAnonymizePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=MedicalInfoAnonymizePolicy,
+    debug=True
+)
+
+task = Task("Patient John Doe has diabetes and takes metformin 500mg. Summarize the patient info.")
+result = agent.print_do(task)
+print(result)  # Medical terms are de-anonymized in the response
+```
+
+## Replace (Fixed Placeholder)
+
+`MedicalInfoReplacePolicy` replaces detected medical data with `[MEDICAL_INFO_REDACTED]`. All detected values share the same placeholder — original values are still restored in the final response:
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import MedicalInfoReplacePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=MedicalInfoReplacePolicy,
+    debug=True
+)
+
+task = Task("Patient John Doe has diabetes and takes metformin 500mg.")
+result = agent.print_do(task)
+print(result)  # Medical info replaced with [MEDICAL_INFO_REDACTED]
+```
+
+## Block
+
+`MedicalInfoBlockPolicy` blocks any content containing medical information:
 
 ```python
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import MedicalInfoBlockPolicy
 
-# Zero tolerance for PHI
 agent = Agent(
-    model="anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6",
     user_policy=MedicalInfoBlockPolicy,
     debug=True
 )
 
-
 result = agent.print_do(Task("Patient John Doe has diabetes. Explain the disease"))
+print(result)
+```
+
+## Streaming
+
+Medical policies work with streaming — anonymized medical data is de-anonymized in real-time:
+
+```python
+import asyncio
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import MedicalInfoAnonymizePolicy
+
+async def main():
+    agent = Agent(
+        "anthropic/claude-sonnet-4-6",
+        user_policy=MedicalInfoAnonymizePolicy,
+        debug=True,
+    )
+
+    task = Task("Patient John Doe has diabetes and takes metformin. Summarize the patient info.")
+
+    async for text in agent.astream(task):
+        print(text, end="", flush=True)
+    print()
+
+asyncio.run(main())
 ```
 
 ## Available Variants
@@ -42,7 +106,7 @@ result = agent.print_do(Task("Patient John Doe has diabetes. Explain the disease
 - `MedicalInfoBlockPolicy`: Pattern detection with blocking
 - `MedicalInfoBlockPolicy_LLM`: LLM-powered block messages
 - `MedicalInfoBlockPolicy_LLM_Finder`: LLM detection for better accuracy
-- `MedicalInfoAnonymizePolicy`: Anonymizes medical data
-- `MedicalInfoReplacePolicy`: Replaces with `[MEDICAL_INFO_REDACTED]`
+- `MedicalInfoAnonymizePolicy`: Anonymizes medical data with unique random replacements
+- `MedicalInfoReplacePolicy`: Replaces with `[MEDICAL_INFO_REDACTED]` (fixed placeholder)
 - `MedicalInfoRaiseExceptionPolicy`: Raises DisallowedOperation exception
 - `MedicalInfoRaiseExceptionPolicy_LLM`: LLM-generated exception messages

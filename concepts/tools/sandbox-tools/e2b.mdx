@@ -1,0 +1,154 @@
+---
+title: "E2BTools"
+description: "Secure cloud sandbox for code execution, shell commands, and file operations via E2B. Inherits ToolKit."
+---
+
+## Overview
+
+**E2BTools** extends **ToolKit** and uses the [E2B](https://e2b.dev) cloud sandbox for running code, shell commands, and managing files in an isolated environment. Supports Python, JavaScript, Java, R, and Bash.
+
+<Info>
+**ToolKit:** E2BTools inherits from [ToolKit](/concepts/tools/custom-tools/creating-toolkit). You get all base behavior (e.g. `include_tools`, `exclude_tools`, `timeout`, `use_async`). See [Creating ToolKit](/concepts/tools/custom-tools/creating-toolkit) for the full API.
+</Info>
+
+<Info>
+**Required:** Set **`E2B_API_KEY`** (env or `.env`). Install: `uv pip install e2b-code-interpreter`.
+</Info>
+
+**Tools (10):** `e2b_run_code`, `e2b_run_command`, `e2b_install_packages`, `e2b_upload_file`, `e2b_download_file`, `e2b_list_files`, `e2b_write_file`, `e2b_read_file`, `e2b_get_sandbox_info`, `e2b_shutdown_sandbox`. Use **ToolKit**'s `exclude_tools` / `include_tools` to limit which tools the agent sees.
+
+<Note>
+All tools are prefixed with `e2b_` (e.g. `e2b_run_code`, `e2b_write_file`) to avoid name collisions with local filesystem tools or other sandbox toolkits when used alongside **AutonomousAgent**.
+</Note>
+
+---
+
+## Examples
+
+### Basic: Agent with E2B
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.e2b import E2BTools
+
+agent = Agent(model="openai/gpt-4o", tools=[E2BTools()])
+task = Task(description="Write a Python function to check if a number is prime, then test it with 17 and 20.")
+result = agent.print_do(task)
+print(result)
+```
+
+---
+
+### AutonomousAgent: Local Filesystem + Remote Sandbox
+
+The most powerful pattern: the agent edits files locally in the workspace, but all code execution happens in a secure remote sandbox.
+
+```python
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.custom_tools.e2b import E2BTools
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    workspace="/path/to/project",
+    enable_filesystem=True,   # local: write_file, edit_file, read_file, etc.
+    enable_shell=False,       # disable local shell execution
+    tools=[E2BTools()],       # remote: e2b_run_code, e2b_run_command, e2b_install_packages
+)
+
+task = Task(description="Read main.py, then run it in the sandbox and fix any errors.")
+result = agent.print_do(task)
+```
+
+| Capability | Where it runs | Tools |
+|---|---|---|
+| File write/edit/delete | Local workspace (sandboxed) | `write_file`, `edit_file`, `delete_file`, `move_file`, `copy_file` |
+| File read/search | Local workspace (sandboxed) | `read_file`, `list_files`, `search_files`, `grep_files` |
+| Code execution | Remote E2B sandbox | `e2b_run_code` (Python/JS/Java/R/Bash) |
+| Shell commands | Remote E2B sandbox | `e2b_run_command` |
+| Package install | Remote E2B sandbox | `e2b_install_packages` |
+| Sandbox file ops | Remote E2B sandbox | `e2b_write_file`, `e2b_read_file`, `e2b_list_files` |
+| File transfer | Local <-> Remote | `e2b_upload_file`, `e2b_download_file` |
+
+---
+
+### Advanced: Custom Sandbox Options
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.e2b import E2BTools
+
+tools = E2BTools(
+    timeout=600,                          # 10-minute sandbox lifetime
+    sandbox_options={
+        "envs": {"MY_API_KEY": "sk-..."},  # env vars available in sandbox
+        "metadata": {"project": "demo"},
+    },
+    exclude_tools=["e2b_shutdown_sandbox"],  # prevent agent from killing sandbox
+)
+
+agent = Agent(model="anthropic/claude-sonnet-4-6", tools=[tools])
+task = Task(description="Install pandas and matplotlib, then create a bar chart of sales data.")
+result = agent.print_do(task)
+```
+
+---
+
+### Multi-language Code Execution
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.custom_tools.e2b import E2BTools
+
+agent = Agent(model="openai/gpt-4o", tools=[E2BTools()])
+
+# Python
+task = Task(description="Use e2b_run_code with language='python' to compute factorial of 20.")
+agent.print_do(task)
+
+# JavaScript
+task = Task(description="Use e2b_run_code with language='javascript' to sort [5,3,8,1] and print the result.")
+agent.print_do(task)
+
+# Bash
+task = Task(description="Use e2b_run_code with language='bash' to list all environment variables.")
+agent.print_do(task)
+```
+
+---
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | from env `E2B_API_KEY` | E2B API key. |
+| `timeout` | `int` | `300` | Sandbox lifetime in seconds. Max 86400 (Pro) or 3600 (Hobby). |
+| `sandbox_options` | `dict \| None` | `None` | Additional options for `Sandbox.create()` (e.g. `template`, `envs`, `metadata`). |
+
+---
+
+## Tools Reference
+
+### Code Execution
+
+| Tool | Description |
+|------|-------------|
+| `e2b_run_code` | Execute code in the sandbox. Supports `python`, `javascript`, `java`, `r`, `bash`. Returns logs, results, errors, and generated images. |
+| `e2b_run_command` | Run a shell command in the sandbox. Returns stdout, stderr, and exit code. |
+| `e2b_install_packages` | Install packages via pip (Python) or npm (JavaScript). |
+
+### Sandbox File Operations
+
+| Tool | Description |
+|------|-------------|
+| `e2b_write_file` | Write text content to a file in the sandbox. |
+| `e2b_read_file` | Read a text file from the sandbox. |
+| `e2b_list_files` | List files and directories in the sandbox. |
+| `e2b_upload_file` | Upload a local file to the sandbox. |
+| `e2b_download_file` | Download a file from the sandbox to the local system. |
+
+### Sandbox Management
+
+| Tool | Description |
+|------|-------------|
+| `e2b_get_sandbox_info` | Get sandbox status: sandbox_id, template_id, started_at, end_at. |
+| `e2b_shutdown_sandbox` | Kill the sandbox and release resources. |

@@ -20,20 +20,55 @@ Legal information policies are essential for protecting attorney-client privileg
 - **Protects attorney-client privilege**: Ensures confidential legal communications and privileged information are not exposed to third-party LLM providers
 - **Maintains legal confidentiality**: Prevents trade secrets, settlement agreements, and sensitive business data from being processed or shared
 
-## Usage
+## Anonymize (Unique Random Placeholders)
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import LegalInfoAnonymizePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=LegalInfoAnonymizePolicy,
+    debug=True
+)
+
+task = Task("Case number 2024-CV-12345 involves attorney-client privileged information")
+result = agent.print_do(task)
+print(result)
+```
+
+## Replace (Fixed Placeholder)
+
+```python
+from upsonic import Agent, Task
+from upsonic.safety_engine.policies import LegalInfoReplacePolicy
+
+agent = Agent(
+    "anthropic/claude-sonnet-4-6",
+    user_policy=LegalInfoReplacePolicy,
+    debug=True
+)
+
+task = Task("Case number 2024-CV-12345 involves attorney-client privileged information")
+result = agent.print_do(task)
+print(result)
+```
+
+## Block
 
 ```python
 from upsonic import Agent, Task
 from upsonic.safety_engine.policies import LegalInfoBlockPolicy
 
 agent = Agent(
-    model="anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6",
     user_policy=LegalInfoBlockPolicy,
     debug=True
 )
 
 task = Task("Case number 2024-CV-12345 involves attorney-client privileged information")
 result = agent.print_do(task)
+print(result)
 ```
 
 ## Available Variants
@@ -41,7 +76,7 @@ result = agent.print_do(task)
 - `LegalInfoBlockPolicy`: Pattern detection with blocking
 - `LegalInfoBlockPolicy_LLM`: LLM-powered block messages
 - `LegalInfoBlockPolicy_LLM_Finder`: LLM detection for better accuracy
-- `LegalInfoAnonymizePolicy`: Anonymizes legal data
-- `LegalInfoReplacePolicy`: Replaces with placeholder
+- `LegalInfoAnonymizePolicy`: Anonymizes legal data with unique random replacements
+- `LegalInfoReplacePolicy`: Replaces with fixed placeholder
 - `LegalInfoRaiseExceptionPolicy`: Raises DisallowedOperation exception
 - `LegalInfoRaiseExceptionPolicy_LLM`: LLM-generated exception messages
