@@ -7,6 +7,13 @@ description: "Learn about users and build comprehensive profiles"
 
 User Analysis Memory extracts user traits from conversations and builds persistent profiles. This enables personalization across sessions and adaptive agent behavior.
 
+## Save vs Load
+
+| Flag | Purpose |
+|------|---------|
+| `user_analysis_memory` | **Save**: Analyze conversations and persist user profiles |
+| `load_user_analysis_memory` | **Load**: Inject user profile into subsequent runs (defaults to `user_analysis_memory`) |
+
 ## Basic Usage
 
 ```python
@@ -21,7 +28,7 @@ memory = Memory(
     session_id="session_001",
     user_id="user_abc",
     user_analysis_memory=True,
-    model="anthropic/claude-sonnet-4-5"  # Required for trait extraction
+    model="anthropic/claude-sonnet-4-5"
 )
 
 agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
@@ -29,6 +36,34 @@ agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 result1 = agent.do(Task("I'm a data scientist with 5 years of ML experience"))
 result2 = agent.do(Task("What do you know about me?"))
 print(result2)  # "You're a data scientist with 5 years of ML experience"
+```
+
+## Standalone Usage
+
+User analysis memory works without full session memory. The agent saves and loads
+user profiles independently:
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="profiles.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_abc",
+    full_session_memory=False,     # No raw history
+    user_analysis_memory=True,     # Save user profile
+    model="anthropic/claude-sonnet-4-5"
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+
+result1 = agent.do(Task("I'm Alice, a Python developer who prefers dark mode"))
+result2 = agent.do(Task("What do you know about me?"))
+print(result2)  # Recalls user profile without raw history
 ```
 
 ## Custom Profile Schema
@@ -126,6 +161,31 @@ result = agent2.do(Task("Remind me what you know about me"))
 print(result)  # "You're John, you run a bakery in Seattle"
 ```
 
+## Save-Only Mode
+
+Save profiles for analytics without injecting them into the agent's context:
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="analytics.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_789",
+    user_analysis_memory=True,          # Save profiles
+    load_user_analysis_memory=False,    # Don't inject into context
+    model="anthropic/claude-sonnet-4-5"
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+result = agent.do(Task("I also speak Spanish and French"))
+print(result)
+```
+
 ## Update Modes
 
 | Mode | Behavior |
@@ -140,7 +200,6 @@ from upsonic.storage.sqlite import SqliteStorage
 
 storage = SqliteStorage(db_file="modes.db")
 
-# Update mode: accumulates traits
 memory = Memory(
     storage=storage,
     session_id="session_001",
@@ -159,7 +218,8 @@ print(result)
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `user_analysis_memory` | `bool` | `False` | Enable user profiling |
+| `user_analysis_memory` | `bool` | `False` | Save user profiles |
+| `load_user_analysis_memory` | `bool \| None` | `None` | Inject profiles into runs (defaults to `user_analysis_memory`) |
 | `user_id` | `str` | auto-generated | User identifier |
 | `model` | `str \| Model` | (required) | Model for trait extraction |
 | `user_profile_schema` | `BaseModel \| None` | `None` | Custom profile schema |

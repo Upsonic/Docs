@@ -41,8 +41,8 @@ async def main():
 
     agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
-    result1 = await agent.ado(Task("My name is Alice"))
-    result2 = await agent.ado(Task("What's my name?"))
+    result1 = await agent.do_async(Task("My name is Alice"))
+    result2 = await agent.do_async(Task("What's my name?"))
     print(result2)  # "Your name is Alice"
 
 asyncio.run(main())

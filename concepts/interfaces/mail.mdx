@@ -1,0 +1,339 @@
+---
+title: "Mail (SMTP/IMAP)"
+sidebarTitle: "Mail"
+description: "Host agents as email assistants using any mail provider"
+---
+
+Use the Mail interface to serve Agents via standard SMTP/IMAP email. It mounts API routes on a FastAPI app and enables automated email processing, replies, and full inbox management. Works with any mail provider (Gmail, Outlook, Yahoo, Zoho, self-hosted, etc.).
+
+## Installation
+
+Install the Mail interface dependencies:
+
+```bash
+uv pip install "upsonic[mail-interface]"
+```
+
+## Setup
+
+Configuration via constructor parameters or environment variables:
+
+| Env Variable | Description |
+| ------------ | ----------- |
+| `MAIL_SMTP_HOST` | SMTP server hostname |
+| `MAIL_SMTP_PORT` | SMTP server port (default: 587) |
+| `MAIL_IMAP_HOST` | IMAP server hostname |
+| `MAIL_IMAP_PORT` | IMAP server port (default: 993) |
+| `MAIL_USERNAME` | Email account username |
+| `MAIL_PASSWORD` | Email account password (or app password) |
+| `MAIL_USE_SSL` | Use SSL for SMTP instead of STARTTLS (default: false) |
+| `MAIL_API_SECRET` | Secret token for API endpoint protection (optional) |
+
+<Note>
+
+  The interface uses a pull-based model - you trigger email checks via the `/mail/check` endpoint (or use heartbeat auto-poll), and the agent processes unread emails.
+
+</Note>
+
+### Common Provider Settings
+
+| Provider | SMTP Host | SMTP Port | IMAP Host | IMAP Port |
+| -------- | --------- | --------- | --------- | --------- |
+| Gmail | smtp.gmail.com | 587 | imap.gmail.com | 993 |
+| Outlook | smtp.office365.com | 587 | outlook.office365.com | 993 |
+| Yahoo | smtp.mail.yahoo.com | 587 | imap.mail.yahoo.com | 993 |
+| Zoho | smtp.zoho.com | 587 | imap.zoho.com | 993 |
+
+<Warning>
+
+  Most providers require an **App Password** (not your regular password) when using SMTP/IMAP. For Gmail, enable 2-Step Verification first, then generate an App Password at [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords). For Gmail, you also need to enable IMAP in Settings > Forwarding and POP/IMAP.
+
+</Warning>
+
+## Operating Modes
+
+* **TASK** (default) -- Each email is processed as an independent task; no conversation history. The agent decides to reply or ignore. Best for classification, auto-responders, one-off processing.
+* **CHAT** -- Emails from the same sender share a conversation session. The agent remembers context from previous emails. Best for support threads and ongoing conversations.
+
+## Reset Command (CHAT mode only)
+
+In CHAT mode, senders can clear their conversation by sending an email with the reset command in the body (e.g. `/reset`). Configure it with `reset_command`; set to `None` to disable.
+
+If the agent has a `workspace` configured, the reset command will also trigger a dynamic greeting message based on the workspace configuration. See [Workspace](/concepts/agents/advanced/workspace) for details.
+
+## Heartbeat (Auto-Poll)
+
+When used with an `AutonomousAgent` that has `heartbeat=True`, the interface automatically polls the IMAP mailbox for new emails on a configurable interval. No need to manually trigger `/mail/check`.
+
+```python
+from upsonic import AutonomousAgent
+from upsonic.interfaces import InterfaceManager, MailInterface
+
+agent = AutonomousAgent(
+    model="openai/gpt-4o",
+    name="EmailBot",
+    heartbeat=True,
+    heartbeat_period=5,  # Check every 5 minutes
+    heartbeat_message="Check for new emails and process them.",
+)
+
+mail = MailInterface(
+    agent=agent,
+    smtp_host="smtp.gmail.com",
+    smtp_port=587,
+    imap_host="imap.gmail.com",
+    imap_port=993,
+    username="bot@gmail.com",
+    password="your-app-password",
+    mode="task",
+)
+
+manager = InterfaceManager(interfaces=[mail])
+
+if __name__ == "__main__":
+    manager.serve(host="0.0.0.0", port=8000)
+```
+
+## Access Control (Whitelist)
+
+Pass `allowed_emails` (list of email addresses). Only emails from those senders are processed; others are silently skipped and marked as read. Omit `allowed_emails` (or set `None`) to allow all senders.
+
+## Attachments
+
+The Mail interface fully supports attachments in both directions:
+
+* **Incoming**: Attachments on received emails are downloaded to temporary files and passed to the agent via `Task(context=...)`. Temp files are cleaned up automatically after processing.
+* **Outgoing**: The agent can send emails with file attachments using the `send_email_with_attachments` and `send_reply_with_attachments` tools.
+
+## Multiple Recipients
+
+The `send_email` tool supports sending to multiple recipients with CC and BCC:
+
+```python
+mail_tools.send_email(
+    to=["alice@example.com", "bob@example.com"],
+    subject="Team Update",
+    body="Hello team!",
+    cc="manager@example.com",
+    bcc=["audit@example.com"],
+)
+```
+
+## Event Deduplication
+
+The interface automatically prevents processing the same email twice within a 5-minute window. This protects against rapid consecutive calls to `/mail/check`.
+
+## Example Usage
+
+Create an agent, expose it with the `MailInterface`, and serve via `InterfaceManager`. Example with **TASK** mode, API secret, and whitelist:
+
+```python
+import os
+from upsonic import Agent
+from upsonic.interfaces import InterfaceManager, MailInterface, InterfaceMode
+
+agent = Agent(
+    model="openai/gpt-4o",
+    name="EmailAssistant",
+)
+
+mail = MailInterface(
+    agent=agent,
+    smtp_host="smtp.gmail.com",
+    smtp_port=587,
+    imap_host="imap.gmail.com",
+    imap_port=993,
+    username="mybot@gmail.com",
+    password=os.getenv("MAIL_PASSWORD"),
+    api_secret=os.getenv("MAIL_API_SECRET"),
+    mode=InterfaceMode.TASK,
+    reset_command="/reset",
+    allowed_emails=["trusted@example.com", "support@mycompany.com"],
+)
+
+manager = InterfaceManager(interfaces=[mail])
+
+if __name__ == "__main__":
+    manager.serve(host="0.0.0.0", port=8000, reload=False)
+```
+
+### CHAT Mode Example
+
+```python
+mail = MailInterface(
+    agent=agent,
+    smtp_host="smtp.gmail.com",
+    smtp_port=587,
+    imap_host="imap.gmail.com",
+    imap_port=993,
+    username="mybot@gmail.com",
+    password=os.getenv("MAIL_PASSWORD"),
+    mode=InterfaceMode.CHAT,
+    reset_command="/reset",
+)
+```
+
+In CHAT mode, each sender gets their own conversation session. The agent remembers previous exchanges. Send `/reset` in an email body to start fresh.
+
+## Core Components
+
+* `MailInterface` (interface): Wraps an Upsonic `Agent` for SMTP/IMAP email via FastAPI.
+
+* `MailTools` (toolkit): Provides 17 agent-facing tools for email operations (send, receive, search, flag, delete, move, attachments).
+
+* `InterfaceManager.serve`: Serves the FastAPI app using Uvicorn.
+
+## `MailInterface` Interface
+
+Main entry point for Upsonic Mail applications.
+
+### Initialization Parameters
+
+| Parameter | Type | Default | Description |
+| --------- | ---- | ------- | ----------- |
+| `agent` | `Agent` | Required | Upsonic `Agent` instance. |
+| `name` | `str` | `"Mail"` | Interface name. |
+| `smtp_host` | `Optional[str]` | `None` | SMTP server hostname (or `MAIL_SMTP_HOST`). |
+| `smtp_port` | `Optional[int]` | `None` | SMTP server port (or `MAIL_SMTP_PORT`, default: 587). |
+| `imap_host` | `Optional[str]` | `None` | IMAP server hostname (or `MAIL_IMAP_HOST`). |
+| `imap_port` | `Optional[int]` | `None` | IMAP server port (or `MAIL_IMAP_PORT`, default: 993). |
+| `username` | `Optional[str]` | `None` | Email account username (or `MAIL_USERNAME`). |
+| `password` | `Optional[str]` | `None` | Email account password (or `MAIL_PASSWORD`). |
+| `use_ssl` | `bool` | `False` | Use SSL for SMTP instead of STARTTLS. |
+| `from_address` | `Optional[str]` | `None` | Sender address (defaults to `username`). |
+| `api_secret` | `Optional[str]` | `None` | Secret token for API authentication (or `MAIL_API_SECRET`). |
+| `mode` | `Union[InterfaceMode, str]` | `InterfaceMode.TASK` | `TASK` or `CHAT`. |
+| `reset_command` | `Optional[str]` | `"/reset"` | Text in email body that resets chat session (CHAT mode). Set `None` to disable. |
+| `storage` | `Optional[Storage]` | `None` | Storage backend for chat sessions (CHAT mode). |
+| `allowed_emails` | `Optional[List[str]]` | `None` | Whitelist of sender emails; only these are processed. `None` = allow all. |
+| `mailbox` | `str` | `"INBOX"` | IMAP mailbox/folder to poll. |
+
+### Key Methods
+
+| Method | Parameters | Return Type | Description |
+| ------ | ---------- | ----------- | ----------- |
+| `attach_routes` | None | `APIRouter` | Returns the FastAPI router and attaches all endpoints. |
+| `check_and_process_emails` | `count: int = 10` | `CheckEmailsResponse` | Trigger email check and processing. |
+| `is_email_allowed` | `sender: str` | `bool` | Whether the sender is in the whitelist (or whitelist disabled). |
+| `health_check` | None | `Dict` | Returns interface health status with IMAP connectivity check. |
+
+## Endpoints
+
+Mounted under the `/mail` prefix. All endpoints require the `X-Upsonic-Mail-Secret` header if `api_secret` is configured.
+
+### `POST /mail/check`
+
+* Triggers a check for unread emails and processes them through the agent.
+
+* Query parameter: `count` (default: 10) - maximum number of emails to process.
+
+* In TASK mode: agent decides to reply or ignore each email.
+
+* In CHAT mode: emails are routed to per-sender conversation sessions.
+
+* Returns: `200 CheckEmailsResponse` with `status`, `processed_count`, and `email_uids`.
+
+```bash
+curl -X POST http://localhost:8000/mail/check \
+  -H "X-Upsonic-Mail-Secret: your-secret"
+```
+
+### `GET /mail/inbox`
+
+* Lists the most recent emails (read and unread).
+
+* Query parameters: `count` (default: 20, max: 100), `mailbox` (default: INBOX).
+
+* Returns: `200 EmailListResponse` with `count` and `emails` array.
+
+### `GET /mail/unread`
+
+* Lists unread emails only.
+
+* Query parameters: `count` (default: 20, max: 100), `mailbox` (default: INBOX).
+
+* Returns: `200 EmailListResponse` with `count` and `emails` array.
+
+### `POST /mail/send`
+
+* Sends a new email.
+
+* Request body: `to` (string or array), `subject`, `body`, `cc` (optional), `bcc` (optional), `html` (optional boolean).
+
+* Supports single and multiple recipients.
+
+* Returns: `200 {"status": "success", "message": "..."}`.
+
+```bash
+curl -X POST http://localhost:8000/mail/send \
+  -H "X-Upsonic-Mail-Secret: your-secret" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": ["alice@example.com", "bob@example.com"],
+    "subject": "Hello",
+    "body": "Hello from Upsonic!",
+    "cc": "manager@example.com"
+  }'
+```
+
+### `POST /mail/search`
+
+* Searches emails using IMAP search criteria.
+
+* Request body: `query` (IMAP search string), `count` (default: 10), `mailbox` (default: INBOX).
+
+* Returns: `200 EmailListResponse` with matching emails.
+
+```bash
+curl -X POST http://localhost:8000/mail/search \
+  -H "X-Upsonic-Mail-Secret: your-secret" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "FROM \"user@example.com\"", "count": 5}'
+```
+
+### `GET /mail/folders`
+
+* Lists all available mailboxes/folders on the IMAP server.
+
+* Returns: `200 {"status": "success", "folders": [...]}`.
+
+### `GET /mail/status`
+
+* Gets the status of a mailbox (total, unseen, recent message counts).
+
+* Query parameter: `mailbox` (default: INBOX).
+
+* Returns: `200 MailboxStatusResponse` with `mailbox`, `total`, `unseen`, `recent`.
+
+### `POST /mail/{uid}/read`
+
+* Marks an email as read by its UID.
+
+* Query parameter: `mailbox` (default: INBOX).
+
+* Returns: `200 {"status": "success", "uid": "...", "action": "marked_read"}`.
+
+### `POST /mail/{uid}/unread`
+
+* Marks an email as unread by its UID.
+
+* Returns: `200 {"status": "success", "uid": "...", "action": "marked_unread"}`.
+
+### `POST /mail/{uid}/delete`
+
+* Deletes an email by its UID.
+
+* Returns: `200 {"status": "success", "uid": "...", "action": "deleted"}`.
+
+### `POST /mail/{uid}/move`
+
+* Moves an email to a different mailbox/folder.
+
+* Query parameter: `destination` (required), `source` (default: INBOX).
+
+* Returns: `200 {"status": "success", "uid": "...", "action": "moved", "destination": "..."}`.
+
+### `GET /mail/health`
+
+* Health/status of the interface including IMAP connectivity check.
+

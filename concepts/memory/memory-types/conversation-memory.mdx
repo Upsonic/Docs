@@ -7,6 +7,15 @@ description: "Store complete chat history for maintaining context"
 
 Conversation Memory persists the complete chat history for a session, enabling agents to reference previous messages and maintain context across interactions.
 
+## Save vs Load
+
+| Flag | Purpose |
+|------|---------|
+| `full_session_memory` | **Save**: Persist raw messages to storage |
+| `load_full_session_memory` | **Load**: Inject message history into subsequent runs (defaults to `full_session_memory`) |
+
+You can save history without injecting it — useful when pairing with summary memory to reduce token usage while keeping a full audit trail.
+
 ## Basic Usage
 
 ```python
@@ -27,6 +36,33 @@ agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 result1 = agent.do(Task("My name is Alice"))
 result2 = agent.do(Task("What's my name?"))
 print(result2)  # "Your name is Alice"
+```
+
+## Save-Only Mode
+
+Save full history for auditing but don't inject it into context:
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="audit.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=True,         # Save raw history
+    load_full_session_memory=False,   # Don't inject into context
+    summary_memory=True,              # Use summary for context instead
+    load_summary_memory=True,
+    model="anthropic/claude-sonnet-4-5"
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+
+result = agent.do(Task("Continue our discussion"))
+print(result)
 ```
 
 ## With Message Limiting
@@ -88,7 +124,8 @@ print(result2)  # Can reference previous tool results
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `full_session_memory` | `bool` | `False` | Enable conversation history |
+| `full_session_memory` | `bool` | `False` | Save conversation history |
+| `load_full_session_memory` | `bool \| None` | `None` | Inject history into runs (defaults to `full_session_memory`) |
 | `session_id` | `str` | auto-generated | Session identifier |
 | `num_last_messages` | `int \| None` | `None` | Limit to last N turns |
 | `feed_tool_call_results` | `bool` | `False` | Include tool outputs |

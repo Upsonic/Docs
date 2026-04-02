@@ -8,7 +8,7 @@ description: "Select the appropriate memory types for your use case"
 | Memory Type | Purpose | When to Use |
 |-------------|---------|-------------|
 | **Conversation Memory** | Full chat history | Multi-turn conversations, detailed context |
-| **Summary Memory** | Condensed summaries | Long sessions |
+| **Summary Memory** | Condensed summaries | Long sessions, cost-efficient recall |
 | **User Analysis Memory** | User profiles | Personalization, cross-session learning |
 
 ## Decision Guide
@@ -37,9 +37,38 @@ result2 = agent.do(Task("I ordered it last week"))
 print(result2)  # Agent remembers order context
 ```
 
-### Summary Memory
+### Summary Memory Only
 
-Best for: Long sessions, cost-conscious, overview needed
+Best for: Long sessions where raw history is unnecessary, cost-conscious
+
+Summary memory works independently — no need to enable full session memory.
+The agent recalls key facts through a generated summary instead of raw messages.
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="notes.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="notes_001",
+    full_session_memory=False,  # No raw history
+    summary_memory=True,        # Summary generated and injected
+    model="anthropic/claude-sonnet-4-5"
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+
+result1 = agent.do(Task("The project deadline is next Friday"))
+result2 = agent.do(Task("When is the deadline?"))
+print(result2)  # Recalls via summary
+```
+
+### Conversation + Summary
+
+Best for: Long conversations with detailed context needed
 
 ```python
 from upsonic import Agent, Task
@@ -51,12 +80,12 @@ storage = SqliteStorage(db_file="meetings.db")
 memory = Memory(
     storage=storage,
     session_id="meeting_001",
-    full_session_memory=True
+    full_session_memory=True,
     summary_memory=True,
-    model="anthropic/claude-sonnet-4-5"  # Required for summaries
+    model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result1 = agent.do(Task("Let's discuss Q1 revenue targets"))
 result2 = agent.do(Task("Now let's cover hiring plans"))
@@ -83,15 +112,15 @@ memory = Memory(
     model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("I'm a backend developer who prefers Python"))
 print(result)  # Agent learns about user
 ```
 
-### Conversation + Summary
+### Conversation + Summary (Save-Only History)
 
-Best for: Long conversations with detailed context needed
+Best for: Long conversations where you want full history in storage for auditing but only inject summaries to save tokens
 
 ```python
 from upsonic import Agent, Task
@@ -103,13 +132,15 @@ storage = SqliteStorage(db_file="tutoring.db")
 memory = Memory(
     storage=storage,
     session_id="lesson_001",
-    full_session_memory=True,
-    summary_memory=True,
-    num_last_messages=20,  # Keep last 20 turns + summary
+    full_session_memory=True,         # Save full history
+    summary_memory=True,              # Save summaries
+    load_full_session_memory=False,   # Don't inject raw history
+    load_summary_memory=True,         # Inject summary only
+    num_last_messages=20,
     model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("Let's continue learning Python functions"))
 print(result)
@@ -137,11 +168,41 @@ memory = Memory(
     model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result1 = agent.do(Task("Hi! I'm a data scientist learning about LLMs"))
 result2 = agent.do(Task("What recommendations do you have for me?"))
 print(result2)  # Personalized based on user profile
+```
+
+### Token-Efficient Full Setup
+
+Best for: Production systems that need full data persistence but minimal token usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="production.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    full_session_memory=True,          # Save everything
+    summary_memory=True,
+    user_analysis_memory=True,
+    load_full_session_memory=False,    # Don't inject raw history
+    load_summary_memory=True,          # Inject summary instead
+    load_user_analysis_memory=True,    # Inject user profile
+    model="anthropic/claude-sonnet-4-5"
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+
+result = agent.do(Task("Continue where we left off"))
+print(result)
 ```
 
 ## Use Case Examples
@@ -152,5 +213,6 @@ print(result2)  # Personalized based on user profile
 | Meeting Notes | `summary_memory=True` |
 | Personal Assistant | All three memory types |
 | Quick Q&A | `full_session_memory=True` only |
-| Learning Platform | `full_session_memory=True`, `summary_memory=True`, `user_analysis_memory=True` |
+| Learning Platform | All three memory types |
 | Code Assistant | `full_session_memory=True`, `feed_tool_call_results=True` |
+| High-Volume Production | All three save flags `True`, `load_full_session_memory=False`, `load_summary_memory=True` |

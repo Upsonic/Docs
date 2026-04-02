@@ -61,7 +61,6 @@ from upsonic import Agent, Task
 from upsonic.storage.memory import Memory
 from upsonic.storage.sqlite import SqliteStorage
 
-# Same storage instance or connection to same db file
 storage = SqliteStorage(db_file="./support.db")
 
 # New session, same customer
@@ -76,9 +75,41 @@ memory = Memory(
 
 agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
-# Agent knows customer from previous sessions
+# Agent knows customer from previous sessions via user profile
 result = agent.do(Task("Hello, I'm back. What did we discuss before?"))
 print(result)
+```
+
+## Token-Efficient Mode
+
+Save everything but only inject summaries and user profiles to reduce token usage:
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="./efficient_support.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="support_003",
+    user_id="customer_123",
+    full_session_memory=True,          # Save raw history
+    summary_memory=True,               # Save summaries
+    user_analysis_memory=True,         # Save user profiles
+    load_full_session_memory=False,    # Don't inject raw history
+    load_summary_memory=True,          # Inject summary only
+    load_user_analysis_memory=True,    # Inject user profile
+    model="anthropic/claude-sonnet-4-5"
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+
+result1 = agent.do(Task("I need help with billing"))
+result2 = agent.do(Task("The charge was for $49.99 on March 15"))
+result3 = agent.do(Task("What was the amount I mentioned?"))
+print(result3)  # Recalls via summary, full history saved in storage
 ```
 
 ## Async Usage
@@ -91,7 +122,7 @@ from upsonic.storage.sqlite import SqliteStorage
 
 async def main():
     storage = SqliteStorage(db_file="./async_support.db")
-    
+
     memory = Memory(
         storage=storage,
         session_id="async_001",
@@ -100,13 +131,12 @@ async def main():
         summary_memory=True,
         model="anthropic/claude-sonnet-4-5"
     )
-    
+
     agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
-    
-    # Async execution
+
     result1 = await agent.do_async(Task("My order hasn't arrived"))
     result2 = await agent.do_async(Task("It's been 5 days"))
-    
+
     print("Final response:", result2)
 
 asyncio.run(main())
@@ -133,7 +163,8 @@ asyncio.run(main())
 
 ## Key Takeaways
 
-1. **Same storage, different sessions** - User profile persists
-2. **Memory is automatic** - Just attach to agent, no manual saving
+1. **Same storage, different sessions** - User profile persists across sessions
+2. **Memory is automatic** - Just attach to agent, no manual saving needed
 3. **Summary + History** - Use both for best context/cost balance
-4. **Sync and async** - Both `do()` and `do_async()` work with memory
+4. **Save/Load separation** - Save everything, inject only what's needed
+5. **Sync and async** - Both `do()` and `do_async()` work with memory

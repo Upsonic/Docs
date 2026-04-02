@@ -5,9 +5,19 @@ description: "Maintain evolving conversation summaries for cost efficiency"
 
 ## Overview
 
-Summary Memory generates and maintains an evolving summary of key conversation points.
+Summary Memory generates and maintains an evolving summary of key conversation points. It works both alongside conversation memory and independently.
 
-## Basic Usage
+## Save vs Load
+
+| Flag | Purpose |
+|------|---------|
+| `summary_memory` | **Save**: Generate and persist session summaries |
+| `load_summary_memory` | **Load**: Inject summary into subsequent runs (defaults to `summary_memory`) |
+
+## Standalone Usage
+
+Summary memory works without full session memory. The agent recalls context through
+generated summaries instead of raw message history:
 
 ```python
 from upsonic import Agent, Task
@@ -19,17 +29,16 @@ storage = SqliteStorage(db_file="summaries.db")
 memory = Memory(
     storage=storage,
     session_id="session_001",
-    full_session_memory=True
-    summary_memory=True,
-    model="anthropic/claude-sonnet-4-5"  # Required for summary generation
+    full_session_memory=False,  # No raw history
+    summary_memory=True,        # Summary generated after each run
+    model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
-result1 = agent.do(Task("Let's discuss Python web frameworks"))
-result2 = agent.do(Task("How does Django compare to Flask?"))
-result3 = agent.do(Task("What have we discussed so far?"))
-print(result3)  # Uses summary for context
+result1 = agent.do(Task("My name is Alice and I work on project Falcon"))
+result2 = agent.do(Task("What project am I working on?"))
+print(result2)  # Recalls via summary
 ```
 
 ## Combined with Conversation Memory
@@ -52,23 +61,53 @@ memory = Memory(
     model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("Continue our database optimization discussion"))
 print(result)
 ```
 
+## Save History, Load Summary Only
+
+Save full history for auditing but only inject the summary to reduce token usage:
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="efficient.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=True,         # Save raw history
+    summary_memory=True,              # Save summaries
+    load_full_session_memory=False,   # Don't inject raw history
+    load_summary_memory=True,         # Inject summary only
+    model="anthropic/claude-sonnet-4-5"
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+
+result1 = agent.do(Task("Let's discuss Python web frameworks"))
+result2 = agent.do(Task("How does Django compare to Flask?"))
+result3 = agent.do(Task("What have we discussed so far?"))
+print(result3)  # Uses summary for context, full history saved in storage
+```
+
 ## How It Works
 
-1. After each completed run, the session summary is updated
+1. After each completed run, the session summary is updated by a sub-agent
 2. Summary includes key points, user preferences, and topics discussed
-3. Summary is injected as context for subsequent interactions
-4. Older message history can be replaced by summary to reduce costs
+3. Summary is injected as context for subsequent interactions (when `load_summary_memory` is enabled)
+4. Works independently of `full_session_memory` — can be the sole source of recall
 
 ## Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `summary_memory` | `bool` | `False` | Enable summary generation |
+| `summary_memory` | `bool` | `False` | Save and generate summaries |
+| `load_summary_memory` | `bool \| None` | `None` | Inject summary into runs (defaults to `summary_memory`) |
 | `session_id` | `str` | auto-generated | Session identifier |
 | `model` | `str \| Model` | (required) | Model for generating summaries |
