@@ -6,6 +6,38 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 > Product updates, improvements, and bug fixes for Upsonic
 
 
+
+<Update label="Apr 2, 2026">
+  ## v0.74.4
+
+  [View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.74.4)
+
+  ## New Features:
+
+  - **Mail Interface**: A full-featured SMTP/IMAP-based mail interface that enables agents to send, receive, and process emails with attachment handling, whitelist-based access control, and heartbeat auto-poll. Works with any standard mail provider including Gmail, Outlook, Yahoo, Zoho, and self-hosted servers.
+
+  ## Improvements:
+
+  - **Memory flags separation**: Save and load memory flags have been separated, giving more granular control over agent memory persistence behavior.
+  - **VectorDB flags separation**: Setup and query vectordb flags have been separated, allowing independent control over vector database initialization and querying.
+  - **KnowledgeBase query default**: `query_knowledge_base` is now set to `True` by default, enabling knowledge base querying out of the box without explicit configuration.
+  - **PromptLayer threading**: Fixed a threading issue in PromptLayer integration to prevent race conditions during concurrent agent operations.
+  - **StreamableHTTPClientParams auth**: Added `auth` attribute to `StreamableHTTPClientParams`, enabling authentication support for streamable HTTP MCP connections.
+
+  ## Bug Fixes:
+
+  - **Command injection in `check_command_exists` (CWE-78)**: Replaced unsafe `subprocess.run` shell invocation with `shutil.which()` to prevent arbitrary command execution via shell metacharacters.
+  - **Profanity policy implementation**: Corrected the profanity policy logic in the safety engine to ensure proper content filtering and policy enforcement.
+
+  **Full Changelog address:** [v0.74.3...v0.74.4](https://github.com/Upsonic/Upsonic/compare/v0.74.3...v0.74.4)
+
+  ### Pull Requests:
+
+  - fix: prevent command injection in check_command_exists (CWE-78): [spidershield-contrib](https://github.com/spidershield-contrib) in [#559](https://github.com/Upsonic/Upsonic/pull/559)
+  - feat: mail interface: [DoganK01](https://github.com/DoganK01) in [#560](https://github.com/Upsonic/Upsonic/pull/560)
+</Update>
+
+
 <Update label="Mar 30, 2026">
   ## v0.74.3
 
