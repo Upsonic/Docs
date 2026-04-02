@@ -9,6 +9,8 @@ hideToc: true
 
 Memory enables agents to remember conversations and learn about users across sessions. It maintains chat history, generates summaries, and builds user profiles for personalized interactions.
 
+Memory separates **saving** from **loading**: save flags control what is persisted to storage, while load flags control what is injected into subsequent runs. This allows fine-grained control — for example, saving full chat history while only injecting summaries to reduce token usage.
+
 ## Installation
 
 Memory requires a storage backend to persist data. Choose the storage option that fits your deployment needs.
@@ -36,6 +38,7 @@ Memory requires a storage backend to persist data. Choose the storage option tha
 - **Conversation History**: Persist complete chat history across sessions
 - **Session Summaries**: Auto-generate condensed conversation summaries
 - **User Profiles**: Extract and learn user traits from interactions
+- **Save/Load Separation**: Independently control what is saved vs. what is injected into context
 - **Multiple Storage Backends**: SQLite, Redis, PostgreSQL, MongoDB, or in-memory
 - **Sync & Async Support**: Both synchronous and asynchronous storage operations
 - **HITL Checkpointing**: Automatic checkpoint saving for Human-in-the-Loop resumption
@@ -47,29 +50,49 @@ from upsonic import Agent, Task
 from upsonic.storage.memory import Memory
 from upsonic.storage.sqlite import SqliteStorage
 
-# Create storage backend
 storage = SqliteStorage(db_file="memory.db")
 
-# Create memory with desired features
 memory = Memory(
     storage=storage,
     session_id="session_001",
     user_id="user_123",
-    full_session_memory=True,    # Enable chat history
-    summary_memory=True,         # Enable summaries
-    user_analysis_memory=True,   # Enable user profiles
-    model="anthropic/claude-sonnet-4-5"        # Required for summaries & user analysis
+    full_session_memory=True,    # Save chat history
+    summary_memory=True,         # Save summaries
+    user_analysis_memory=True,   # Save user profiles
+    model="anthropic/claude-sonnet-4-5"
 )
 
-# Attach memory to agent
 agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
-# First interaction
 result1 = agent.do(Task("My name is Alice and I'm a Python developer"))
 
-# Second interaction - agent remembers context
 result2 = agent.do(Task("What's my name and expertise?"))
 print(result2)  # Alice, Python developer
+```
+
+## Save vs Load Flags
+
+Each memory type has a **save** flag and a **load** flag. By default, the load flag mirrors the save flag.
+
+| Save Flag | Load Flag | Purpose |
+|-----------|-----------|---------|
+| `full_session_memory` | `load_full_session_memory` | Chat history |
+| `summary_memory` | `load_summary_memory` | Session summaries |
+| `user_analysis_memory` | `load_user_analysis_memory` | User profiles |
+
+```python
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    full_session_memory=True,         # Save full chat history
+    summary_memory=True,              # Save summaries
+    user_analysis_memory=True,        # Save user profiles
+    load_full_session_memory=False,   # Don't inject raw history
+    load_summary_memory=True,         # Inject summary only
+    load_user_analysis_memory=True,   # Inject user profile
+    model="anthropic/claude-sonnet-4-5"
+)
 ```
 
 ## Memory Types

@@ -1,0 +1,133 @@
+---
+title: "Query Control"
+description: "Control whether KnowledgeBase context is injected into the agent via query_knowledge_base"
+---
+
+## Overview
+
+By default, when you pass a `KnowledgeBase` as `context` to a `Task`, the knowledge base is **set up** (documents are indexed) **and queried** automatically (`query_knowledge_base=True`). To disable automatic RAG retrieval, set `query_knowledge_base=False` on the Task.
+
+This gives you fine-grained control over when the agent receives knowledge base context, letting you:
+- Disable RAG retrieval for specific tasks that don't need it
+- Index documents once and query selectively across different tasks
+- Mix knowledge-base-aware and knowledge-base-free tasks using the same agent
+
+## Usage
+
+### Default Behavior (Query Enabled)
+
+By default, `query_knowledge_base=True` retrieves relevant chunks and injects them into the agent's context:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+loader = PdfLoader(PdfLoaderConfig())
+
+kb = KnowledgeBase(
+    sources=["company_handbook.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader]
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+
+# RAG context IS injected — agent sees relevant document chunks
+task = Task(
+    description="What is the vacation policy?",
+    context=[kb],
+    query_knowledge_base=True
+)
+
+result = agent.do(task)
+print(result)
+```
+
+### Disabling Knowledge Base Query
+
+Set `query_knowledge_base=False` to skip querying. The knowledge base is still set up but the agent will not receive any RAG context:
+
+```python
+# RAG context is NOT injected — KB is indexed but not queried
+task = Task(
+    description="Write a creative story about space travel",
+    context=[kb],
+    query_knowledge_base=False
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Selective Querying Across Tasks
+
+A common pattern is to set up one knowledge base and use it across multiple tasks, querying it only when needed:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="docs_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./kb_db")
+))
+loader = PdfLoader(PdfLoaderConfig())
+
+kb = KnowledgeBase(
+    sources=["product_docs/"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader]
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+
+# Task 1: Needs KB context
+task_with_rag = Task(
+    description="Summarize the product specifications",
+    context=[kb],
+    query_knowledge_base=True
+)
+
+# Task 2: Does NOT need KB context
+task_without_rag = Task(
+    description="Draft a marketing tagline for our product",
+    context=[kb],
+    query_knowledge_base=False
+)
+
+result1 = agent.do(task_with_rag)   # Uses RAG context
+result2 = agent.do(task_without_rag) # No RAG context
+```
+
+## Combining with Vector Search Parameters
+
+When `query_knowledge_base=True`, you can fine-tune the retrieval using vector search parameters on the same Task:
+
+```python
+task = Task(
+    description="What are the compliance requirements?",
+    context=[kb],
+    query_knowledge_base=True,
+    vector_search_top_k=10,
+    vector_search_similarity_threshold=0.75
+)
+```
+
+See the [Advanced](/concepts/knowledgebase/advanced) page for more details on vector search parameters.
+

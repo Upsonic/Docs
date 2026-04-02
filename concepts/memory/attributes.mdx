@@ -5,14 +5,33 @@ description: "Configuration options for the Memory class"
 
 ## Memory Class Parameters
 
+### Save Flags
+
+Control what is persisted to storage after each run.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `full_session_memory` | `bool` | `False` | Persist complete chat history to storage |
+| `summary_memory` | `bool` | `False` | Generate and persist session summaries |
+| `user_analysis_memory` | `bool` | `False` | Analyze and persist user trait profiles |
+
+### Load Flags
+
+Control what is injected into subsequent runs as context. Each defaults to its corresponding save flag.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `load_full_session_memory` | `bool \| None` | `None` | Inject chat history into runs (defaults to `full_session_memory`) |
+| `load_summary_memory` | `bool \| None` | `None` | Inject session summary into runs (defaults to `summary_memory`) |
+| `load_user_analysis_memory` | `bool \| None` | `None` | Inject user profile into runs (defaults to `user_analysis_memory`) |
+
+### General Parameters
+
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `storage` | `Storage` | (required) | Storage backend for persistence |
 | `session_id` | `str \| None` | `None` | Session identifier (auto-generated if not provided) |
 | `user_id` | `str \| None` | `None` | User identifier (auto-generated if not provided) |
-| `full_session_memory` | `bool` | `False` | Enable complete chat history persistence |
-| `summary_memory` | `bool` | `False` | Enable automatic session summaries |
-| `user_analysis_memory` | `bool` | `False` | Enable user trait extraction |
 | `num_last_messages` | `int \| None` | `None` | Limit history to last N message turns |
 | `model` | `str \| Model \| None` | `None` | Model for summaries/user analysis |
 | `user_profile_schema` | `BaseModel \| None` | `None` | Custom Pydantic model for user profiles |
@@ -41,10 +60,68 @@ memory = Memory(
     model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("Hello! I'm learning Python"))
 print(result)
+```
+
+## Save/Load Separation
+
+Save everything to storage but only inject summaries and user profiles into subsequent runs.
+This reduces token usage while preserving full history for auditing or debugging.
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="efficient.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    full_session_memory=True,         # Save raw chat history
+    summary_memory=True,              # Save summaries
+    user_analysis_memory=True,        # Save user profiles
+    load_full_session_memory=False,   # Don't inject raw history into context
+    load_summary_memory=True,         # Inject summary instead
+    load_user_analysis_memory=True,   # Inject user profile
+    model="anthropic/claude-sonnet-4-5"
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+
+result1 = agent.do(Task("My name is Alice, I work on ML pipelines"))
+result2 = agent.do(Task("What do you know about me?"))
+print(result2)  # Recalls via summary + user profile, not raw history
+```
+
+## Summary-Only Mode
+
+Use summaries without persisting full chat history:
+
+```python
+from upsonic import Agent, Task
+from upsonic.storage.memory import Memory
+from upsonic.storage.sqlite import SqliteStorage
+
+storage = SqliteStorage(db_file="summary_only.db")
+
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    full_session_memory=False,  # No raw history saved
+    summary_memory=True,        # Only summaries are saved and injected
+    model="anthropic/claude-sonnet-4-5"
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+
+result1 = agent.do(Task("The project deadline is next Friday"))
+result2 = agent.do(Task("When is the deadline?"))
+print(result2)  # Recalls via summary
 ```
 
 ## Message Limiting
@@ -99,7 +176,7 @@ memory = Memory(
     model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("I'm John from Acme Corp, working as a data engineer"))
 print(result)
@@ -121,7 +198,6 @@ from upsonic.storage.sqlite import SqliteStorage
 
 storage = SqliteStorage(db_file="profiles.db")
 
-# Update mode - accumulates traits over time
 memory = Memory(
     storage=storage,
     session_id="session_001",
@@ -131,7 +207,7 @@ memory = Memory(
     model="anthropic/claude-sonnet-4-5"
 )
 
-agent = Agent("anthropic/claude-sonnet-4-6", memory=memory)
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
 
 result = agent.do(Task("I prefer dark mode and use vim"))
 print(result)
