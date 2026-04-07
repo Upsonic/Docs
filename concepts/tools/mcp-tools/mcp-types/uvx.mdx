@@ -1,0 +1,86 @@
+---
+title: "UVX"
+description: "Python-based MCP servers using the uvx package runner"
+---
+
+## Overview
+
+Python-based MCP servers using the uvx package runner.
+
+## Usage
+
+```python
+from upsonic import Task, Agent
+from upsonic.tools.mcp import MCPHandler
+
+# UVX-based MCP server (Python-based, no installation needed)
+db_handler = MCPHandler(
+    command="uvx mcp-server-sqlite --db-path /tmp/test.db",
+    timeout_seconds=60
+)
+
+# Create task
+task = Task(
+    description="Create a 'users' table with id, name, and email columns. Insert 3 sample users and then query all users.",
+    tools=[db_handler]
+)
+
+# Create agent
+agent = Agent(
+    name="Data Fetcher",
+    model="anthropic/claude-sonnet-4-5"
+)
+
+# Execute
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+## Parameters
+
+- `command` (str): The command string including "uvx" and package name with arguments
+- `env` (Dict[str, str]): Environment variables (optional)
+- `timeout_seconds` (int): Connection timeout in seconds (default: 5)
+- `tool_name_prefix` (str): Optional prefix to add to all tool names (prevents collisions)
+
+## Using Tool Name Prefix
+
+When using multiple MCP servers with the same tools, add a `tool_name_prefix` to prevent collisions:
+
+```python
+from upsonic import Task, Agent
+from upsonic.tools.mcp import MCPHandler
+
+# Two SQLite servers for different databases
+users_handler = MCPHandler(
+    command="uvx mcp-server-sqlite --db-path /tmp/users.db",
+    tool_name_prefix="users_db",
+    timeout_seconds=60
+)
+
+orders_handler = MCPHandler(
+    command="uvx mcp-server-sqlite --db-path /tmp/orders.db",
+    tool_name_prefix="orders_db",
+    timeout_seconds=60
+)
+
+task = Task(
+    description="""
+    Use 'users_db_*' tools to work with the users database.
+    Use 'orders_db_*' tools to work with the orders database.
+    Create tables in both and insert sample data.
+    """,
+    tools=[users_handler, orders_handler]
+)
+
+agent = Agent(name="Multi-DB Agent", model="anthropic/claude-sonnet-4-5")
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+## Characteristics
+
+- Python-based MCP servers
+- Automatic dependency management
+- No manual installation required
+- Isolated execution environment
