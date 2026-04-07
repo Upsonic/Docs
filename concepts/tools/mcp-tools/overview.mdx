@@ -27,44 +27,9 @@ MCP creates a bridge between your AI agents and external tool servers:
 **MCP Security:** Only connect to MCP servers you trust. Stdio servers run arbitrary processes on your machine; do not use commands or config from untrusted sources.
 </Warning>
 
-## Three Ways to Use MCP
+## Two Ways to Use MCP
 
-### 1. Class-Based
-
-```python
-from upsonic import Agent, Task
-
-class DatabaseMCP:
-    command = "uvx"
-    args = ["mcp-server-sqlite", "--db-path", "/tmp/test_mcp_v7.db"]
-
-agent = Agent(
-    name="Legacy MCP Agent",
-    role="Database operations specialist using legacy MCP class",
-    goal="Demonstrate backward compatibility with class-based MCP",
-    tool_call_limit=10
-)
-
-task = Task(
-    description="""
-    Create a 'products' table with columns: 
-    - id (integer primary key)
-    - name (text)
-    - price (real)
-    - category (text)
-    - stock (integer)
-    
-    Insert 5 sample products with different categories (electronics, books, clothing).
-    Then query and show all products sorted by price.
-    """,
-    tools=[DatabaseMCP]
-)
-
-result = agent.print_do(task)
-print("Result:", result)
-```
-
-### 2. MCPHandler Class
+### 1. MCPHandler (Single Server)
 
 ```python
 from upsonic import Agent, Task
@@ -84,7 +49,7 @@ result = agent.print_do(task)
 print("Result:", result)
 ```
 
-### 3. MultiMCPHandler Class (Multiple Servers)
+### 2. MultiMCPHandler (Multiple Servers)
 
 ```python
 from upsonic import Agent, Task
@@ -126,7 +91,6 @@ Discover available MCP servers:
 
 ## Navigation
 
-- [MCPHandler](/concepts/tools/mcp-tools/mcp-handler) - Use MCPHandler class for single server
+- [MCPHandler](/concepts/tools/mcp-tools/mcp-handler) - Use MCPHandler for single server
 - [MultiMCPHandler](/concepts/tools/mcp-tools/multi-mcp-handler) - Use MultiMCPHandler for multiple servers
-- [MCP Types](/concepts/tools/mcp-tools/mcp-types/docker) - Configure Docker, NPX, SSE, and UVX-based MCP servers
-- [Advanced Features](/concepts/tools/mcp-tools/advanced/authentication) - Configure authentication for MCP servers
+- [Authentication](/concepts/tools/mcp-tools/authentication) - Configure authentication for MCP servers

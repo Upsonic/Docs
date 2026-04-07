@@ -11,7 +11,7 @@ Custom tools support comprehensive configuration through the `@tool` decorator:
 |-----------|------|---------|-------------|
 | `requires_confirmation` | bool | `False` | Require user confirmation before execution |
 | `requires_user_input` | bool | `False` | Prompt user for input during execution |
-| `user_input_fields` | List[str] \| None | `None` | Specify which fields require user input |
+| `user_input_fields` | List[str] | `[]` | Specify which fields require user input |
 | `external_execution` | bool | `False` | Mark tool for external execution |
 | `show_result` | bool | `False` | Display output to user instead of sending to LLM |
 | `stop_after_tool_call` | bool | `False` | Terminate agent run after tool execution |
@@ -20,11 +20,13 @@ Custom tools support comprehensive configuration through the `@tool` decorator:
 | `cache_dir` | str \| None | `None` | Directory for cache storage |
 | `cache_ttl` | int \| None | `None` | Cache time-to-live in seconds |
 | `tool_hooks` | ToolHooks \| None | `None` | Before/after execution hooks |
-| `max_retries` | int | `0` | Maximum retry attempts |
-| `timeout` | int \| None | `None` | Execution timeout in seconds |
-| `strict` | bool | `False` | Enforce strict JSON schema validation |
+| `max_retries` | int | `5` | Maximum retry attempts |
+| `timeout` | float \| None | `30.0` | Execution timeout in seconds |
+| `strict` | bool \| None | `None` | Enforce strict JSON schema validation |
 | `docstring_format` | str | `"auto"` | Docstring parsing format: 'google', 'numpy', 'sphinx', 'auto' |
-| `require_parameter_descriptions` | bool | `True` | Require descriptions for all parameters in docstring |
+| `require_parameter_descriptions` | bool | `False` | Require descriptions for all parameters in docstring |
+| `instructions` | str \| None | `None` | Instructions for the LLM on how to use this tool, injected into the system prompt |
+| `add_instructions` | bool | `False` | If True, the tool's instructions will be appended to the agent's system prompt |
 
 ## Example Usage
 

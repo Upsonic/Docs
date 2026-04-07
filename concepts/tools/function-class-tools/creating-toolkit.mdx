@@ -291,6 +291,55 @@ result = agent.print_do(task)
 agent.remove_tools(toolkit)
 ```
 
+## Toolkit-Level Instructions
+
+Inject custom guidance into the agent's system prompt that applies to all tools in the toolkit. The LLM sees these instructions before making any tool calls.
+
+```python
+from typing import Any
+from upsonic import Agent, Task
+from upsonic.tools import tool, ToolKit
+
+class PaymentToolKit(ToolKit):
+    def __init__(self, **kwargs: Any):
+        super().__init__(
+            instructions="Always validate the amount is positive before calling any payment tool. Never process payments above $10,000 without confirmation.",
+            add_instructions=True,
+            **kwargs
+        )
+
+    @tool
+    def charge(self, amount: float, currency: str = "USD") -> str:
+        """
+        Charge a payment.
+
+        Args:
+            amount: Amount to charge
+            currency: Currency code
+
+        Returns:
+            Transaction ID
+        """
+        return f"txn_{amount}_{currency}"
+
+    @tool
+    def refund(self, transaction_id: str) -> str:
+        """
+        Refund a transaction.
+
+        Args:
+            transaction_id: ID of the transaction to refund
+
+        Returns:
+            Refund confirmation
+        """
+        return f"refunded_{transaction_id}"
+
+agent = Agent(model="anthropic/claude-sonnet-4-6", name="Payment Agent")
+task = Task(description="Charge $49.99 in EUR", tools=[PaymentToolKit()])
+result = agent.print_do(task)
+```
+
 ## Parameter Reference
 
 | Parameter                        | Type         | Effect                                                       |
@@ -298,6 +347,8 @@ agent.remove_tools(toolkit)
 | `include_tools`                  | `list[str]`  | Adds named methods to the tool set (additive)                |
 | `exclude_tools`                  | `list[str]`  | Removes named methods (always wins)                          |
 | `use_async`                      | `bool`       | Registers all public async methods, drops all sync           |
+| `instructions`                   | `str`        | Instructions for the LLM, injected into the system prompt    |
+| `add_instructions`               | `bool`       | If True, toolkit instructions are appended to system prompt  |
 | `timeout`                        | `float`      | Execution timeout in seconds                                 |
 | `max_retries`                    | `int`        | Maximum retry attempts on failure                            |
 | `requires_confirmation`          | `bool`       | Pause for user confirmation before execution                 |

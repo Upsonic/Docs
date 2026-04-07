@@ -1,0 +1,68 @@
+---
+title: "Instructions"
+description: "Inject custom instructions into the agent's system prompt for a tool"
+---
+
+## Overview
+
+The `instructions` and `add_instructions` attributes allow you to inject custom guidance into the agent's system prompt, telling the LLM exactly how to use a specific tool. This is useful when a tool has non-obvious usage patterns, constraints, or required workflows.
+
+## Usage
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools import tool
+
+@tool(
+    instructions="Always call this tool with ISO 8601 date format (YYYY-MM-DD). Never pass natural language dates.",
+    add_instructions=True
+)
+def fetch_report(date: str) -> str:
+    """
+    Fetch a daily report for the given date.
+
+    Args:
+        date: Date in ISO 8601 format (YYYY-MM-DD)
+
+    Returns:
+        Report content as string
+    """
+    return f"Report for {date}: All systems operational."
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="Get the report for January 15th, 2025",
+    tools=[fetch_report]
+)
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+## Parameters
+
+- `instructions` (str | None): Instructions text for the LLM on how to use this tool. Injected into the system prompt when `add_instructions` is True. Default: `None`
+- `add_instructions` (bool): If True, the tool's `instructions` will be appended to the agent's system prompt. Default: `False`
+
+## How It Works
+
+When `add_instructions=True` and `instructions` is set:
+
+1. The framework collects instructions from all tools registered on the agent
+2. Each tool's instructions are injected into the agent's system prompt with the tool name as context
+3. The LLM sees these instructions before making any tool calls
+
+## Automatic Instructions
+
+Some tool configurations automatically set instructions when not explicitly provided:
+
+- **`requires_confirmation=True`**: Auto-generates instructions telling the LLM to call the tool directly without asking the user for confirmation in text
+- **`requires_user_input=True`**: Auto-generates instructions telling the LLM to call the tool without providing the user-input fields
+
+You can override these by providing your own `instructions` text.
+
+## When to Use
+
+- Tool has specific input format requirements (dates, IDs, encodings)
+- Tool should only be called under certain conditions
+- Tool has a required sequence of operations
+- Default auto-generated instructions need customization
