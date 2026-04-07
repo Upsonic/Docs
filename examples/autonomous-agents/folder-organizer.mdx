@@ -1,0 +1,140 @@
+---
+title: "Folder Organizer"
+sidebarTitle: "🎬 Folder Organizer"
+description: "An autonomous agent that semantically reorganizes any messy folder into a clean, navigable structure — using only a one-line task and a skill file."
+---
+
+An autonomous agent that semantically reorganizes any messy folder into a clean, navigable structure. Drop your files into `workspace/unorganized_folder/`, run the agent, and get a logically grouped hierarchy back. No hardcoded sorting rules — the agent reads the `folder_organization` skill and reasons about what goes where based on file names, types, and context.
+
+<iframe src="https://www.youtube.com/embed/_bwTZE_es5s" title="YouTube video player" frameborder="0" className="w-full aspect-video rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen />
+
+## Overview
+
+The setup has two parts:
+
+1. **AutonomousAgent** with a workspace directory
+2. **Workspace files** (`AGENTS.md`, `skills/folder_organization/SKILL.md`) that define how the agent classifies and moves files
+
+The agent has no custom tools and no hardcoded logic. It reads the skill, surveys the folder with `tree`, plans a structure, moves files, and writes a log — entirely on its own.
+
+## Project Structure
+
+```
+folder_organizer/
+├── main.py                              # Agent setup and task
+├── requirements.txt                     # Python dependencies
+├── .env.example                         # Template for .env
+│
+└── workspace/
+    ├── AGENTS.md                        # Agent behavior and skill index
+    ├── unorganized_folder/              # Drop your messy files here
+    │   └── REORGANIZATION_LOG.md        # Created after the agent runs
+    └── skills/
+        └── folder_organization/
+            └── SKILL.md                 # How the agent categorizes files
+```
+
+### Environment Variables
+
+```bash
+ANTHROPIC_API_KEY=your-api-key
+```
+
+## Installation
+
+```bash
+cd examples/autonomous_agents/folder_organizer
+uv venv && source .venv/bin/activate
+uv pip install -r requirements.txt
+```
+
+## Usage
+
+1. Drop your files into `workspace/unorganized_folder/`
+2. Run the agent:
+
+```bash
+uv run main.py
+```
+
+The agent surveys the folder, classifies each file semantically, moves them into a structured hierarchy, and writes a log.
+
+## How It Works
+
+| Step | What happens |
+|------|-------------|
+| **Survey** | Agent runs `tree` on the target folder to map all files |
+| **Classify** | Groups files by semantic category using name, extension, and context |
+| **Move** | Executes all moves into the new structure |
+| **Log** | Writes `REORGANIZATION_LOG.md` with every `original path → new path` move |
+
+<Info>
+The agent never deletes files — only moves them. Duplicates are kept together, not resolved.
+</Info>
+
+## Complete Implementation
+
+### main.py
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+
+load_dotenv()
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    workspace=os.path.join(os.path.dirname(__file__), "workspace"),
+)
+
+classification_task = Task("Organize the unorganized_folder.")
+
+if __name__ == "__main__":
+    agent.print_do(classification_task)
+```
+
+One task, one line. No custom tools, no system prompt, no sorting logic in code.
+
+## Workspace: SKILL.md
+
+The agent's behavior is fully defined in `workspace/skills/folder_organization/SKILL.md`. It specifies:
+
+- **Categories**: `photos/`, `videos/`, `audio/`, `documents/official/`, `design/`, `code/<project>/`, `archives/`, `projects/<name>/`
+- **Classification rules**: infer purpose from name, extension, and folder context
+- **Move rules**: never delete, keep related files together, prefer semantic names
+- **Log format**: every move recorded as `original path → new path`
+
+Change the skill file to change the agent's behavior — no code changes needed.
+
+### Example output structure
+
+```
+unorganized_folder/
+├── photos/
+│   ├── IMG_4665.JPEG
+│   └── YDXJ0387.JPG
+├── videos/
+│   ├── raw/
+│   │   └── YDXJ0406.MP4
+│   └── edited/
+│       └── part_3_edited.mov
+├── audio/
+│   └── track.wav
+├── documents/
+│   ├── official/
+│   │   └── invoice.pdf
+│   └── notes.docx
+├── design/
+│   └── logo.svg
+├── code/
+│   └── queue-api/
+│       └── push_call_into_queue.py
+├── archives/
+│   └── backup.zip
+└── REORGANIZATION_LOG.md
+```
+
+## Repository
+
+View the full example: [Folder Organizer](https://github.com/Upsonic/Examples/tree/master/examples/autonomous_agents/folder_organizer)
