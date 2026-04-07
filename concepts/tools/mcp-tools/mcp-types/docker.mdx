@@ -11,25 +11,21 @@ Docker container-based MCP servers for maximum isolation.
 
 ```python
 from upsonic import Task, Agent
+from upsonic.tools.mcp import MCPHandler
 
 # Docker-based MCP server
-class DatabaseMCP:
-    command = "docker"
-    args = [
-        "run",
-        "--rm",
-        "-i",
-        "--network", "host",
-        "your-mcp-server-image:latest"
-    ]
-    env = {
+docker_handler = MCPHandler(
+    command="docker run --rm -i --network host your-mcp-server-image:latest",
+    env={
         "DATABASE_URL": "postgresql://localhost/mydb"
-    }
+    },
+    timeout_seconds=60
+)
 
 # Create task
 task = Task(
     description="Connect to the PostgreSQL database container, query the latest 100 transactions, and analyze them for potential anomalies.",
-    tools=[DatabaseMCP]
+    tools=[docker_handler]
 )
 
 # Create agent
@@ -45,9 +41,9 @@ print("Result:", result)
 
 ## Parameters
 
-- `command` (str): The command to run ("docker")
-- `args` (List[str]): Docker run arguments including image name
+- `command` (str): The command string including "docker run" and image name with arguments
 - `env` (Dict[str, str]): Environment variables to pass to container
+- `timeout_seconds` (int): Connection timeout in seconds (default: 5)
 - `tool_name_prefix` (str): Optional prefix to add to all tool names (prevents collisions)
 
 ## Using Tool Name Prefix
@@ -55,17 +51,21 @@ print("Result:", result)
 Add a `tool_name_prefix` when using multiple Docker-based MCP servers:
 
 ```python
-class ProductionDB:
-    command = "docker"
-    args = ["run", "--rm", "-i", "postgres-mcp:latest"]
-    env = {"DATABASE_URL": "postgresql://prod-server/db"}
-    tool_name_prefix = "prod_db"  # Tools become: prod_db_query, etc.
+from upsonic.tools.mcp import MCPHandler
 
-class StagingDB:
-    command = "docker"
-    args = ["run", "--rm", "-i", "postgres-mcp:latest"]
-    env = {"DATABASE_URL": "postgresql://staging-server/db"}
-    tool_name_prefix = "staging_db"  # Tools become: staging_db_query, etc.
+prod_handler = MCPHandler(
+    command="docker run --rm -i postgres-mcp:latest",
+    env={"DATABASE_URL": "postgresql://prod-server/db"},
+    tool_name_prefix="prod_db",
+    timeout_seconds=60
+)
+
+staging_handler = MCPHandler(
+    command="docker run --rm -i postgres-mcp:latest",
+    env={"DATABASE_URL": "postgresql://staging-server/db"},
+    tool_name_prefix="staging_db",
+    timeout_seconds=60
+)
 ```
 
 ## Requirements

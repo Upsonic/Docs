@@ -248,120 +248,44 @@
                 "icon": "wrench",
                 "pages": [
                   "concepts/tools/overview",
+                  "concepts/tools/tool-locations",
                   {
-                    "group": "Usage",
+                    "group": "Function & Class Tools",
                     "pages": [
-                      "concepts/tools/tool-locations",
+                      "concepts/tools/function-class-tools/overview",
+                      "concepts/tools/function-class-tools/creating-function-tool",
+                      "concepts/tools/function-class-tools/creating-class-tool",
+                      "concepts/tools/function-class-tools/creating-toolkit",
+                      "concepts/tools/function-class-tools/attributes",
                       {
-                        "group": "Custom Tool Creation",
+                        "group": "Advanced",
                         "pages": [
-                          "concepts/tools/custom-tools/overview",
-                          "concepts/tools/custom-tools/attributes",
-                          "concepts/tools/custom-tools/creating-function-tool",
-                          "concepts/tools/custom-tools/creating-class-tool",
-                          "concepts/tools/custom-tools/creating-toolkit",
                           {
                             "group": "Behavior & Control",
                             "pages": [
-                              "concepts/tools/custom-tools/tool-configurations/required-confirmation",
-                              "concepts/tools/custom-tools/tool-configurations/requires-user-input",
-                              "concepts/tools/custom-tools/tool-configurations/user-input-fields",
-                              "concepts/tools/custom-tools/tool-configurations/external-execution",
-                              "concepts/tools/custom-tools/tool-configurations/show-result",
-                              "concepts/tools/custom-tools/tool-configurations/stop-after-tool-call"
+                              "concepts/tools/function-class-tools/advanced/behavior-control/required-confirmation",
+                              "concepts/tools/function-class-tools/advanced/behavior-control/requires-user-input",
+                              "concepts/tools/function-class-tools/advanced/behavior-control/user-input-fields",
+                              "concepts/tools/function-class-tools/advanced/behavior-control/external-execution",
+                              "concepts/tools/function-class-tools/advanced/behavior-control/show-result",
+                              "concepts/tools/function-class-tools/advanced/behavior-control/stop-after-tool-call",
+                              "concepts/tools/function-class-tools/advanced/behavior-control/instructions"
                             ]
                           },
                           {
                             "group": "Performance",
                             "pages": [
-                              "concepts/tools/custom-tools/tool-configurations/sequential-parallel-run",
-                              "concepts/tools/custom-tools/tool-configurations/caching",
-                              "concepts/tools/custom-tools/tool-configurations/timeout",
-                              "concepts/tools/custom-tools/tool-configurations/tool-hooks"
+                              "concepts/tools/function-class-tools/advanced/performance/sequential-parallel-run",
+                              "concepts/tools/function-class-tools/advanced/performance/caching",
+                              "concepts/tools/function-class-tools/advanced/performance/timeout",
+                              "concepts/tools/function-class-tools/advanced/performance/tool-hooks"
                             ]
                           },
                           {
                             "group": "Schema & Validation",
                             "pages": [
-                              "concepts/tools/custom-tools/tool-configurations/strict",
-                              "concepts/tools/custom-tools/tool-configurations/docstring-format"
-                            ]
-                          }
-                        ]
-                      }
-                    ],
-                    "collapsed": false
-                  },
-                  {
-                    "group": "Integrations",
-                    "pages": [
-                      {
-                        "group": "MCP Tools",
-                        "pages": [
-                          "concepts/tools/mcp-tools/overview",
-                          "concepts/tools/mcp-tools/mcp-handler",
-                          "concepts/tools/mcp-tools/multi-mcp-handler",
-                          {
-                            "group": "Server Types",
-                            "pages": [
-                              "concepts/tools/mcp-tools/mcp-types/sse-server",
-                              "concepts/tools/mcp-tools/mcp-types/npx-based",
-                              "concepts/tools/mcp-tools/mcp-types/uvx",
-                              "concepts/tools/mcp-tools/mcp-types/docker"
-                            ]
-                          },
-                          {
-                            "group": "Security",
-                            "pages": [
-                              "concepts/tools/mcp-tools/advanced/authentication"
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "group": "Ready-to-Use Tools",
-                        "pages": [
-                          {
-                            "group": "Search Tools",
-                            "pages": [
-                              "concepts/tools/search-tools/duckduckgo",
-                              "concepts/tools/search-tools/bochasearch",
-                              "concepts/tools/search-tools/tavily"
-                            ]
-                          },
-                          {
-                            "group": "Data Tools",
-                            "pages": [
-                              "concepts/tools/data-tools/yfinance"
-                            ]
-                          },
-                          {
-                            "group": "Scraping Tools",
-                            "pages": [
-                              "concepts/tools/scraping-tools/apify",
-                              "concepts/tools/scraping-tools/exa",
-                              "concepts/tools/scraping-tools/firecrawl"
-                            ]
-                          },
-                          {
-                            "group": "Sandbox Tools",
-                            "pages": [
-                              "concepts/tools/sandbox-tools/daytona",
-                              "concepts/tools/sandbox-tools/e2b"
-                            ]
-                          },
-                          {
-                            "group": "Model Provider Tools",
-                            "pages": [
-                              "concepts/tools/model-provider-tools/supported-providers",
-                              "concepts/tools/model-provider-tools/web-search-tool",
-                              "concepts/tools/model-provider-tools/web-search-user-location",
-                              "concepts/tools/model-provider-tools/web-fetch-tool",
-                              "concepts/tools/model-provider-tools/file-search-tool",
-                              "concepts/tools/model-provider-tools/code-execution-tool",
-                              "concepts/tools/model-provider-tools/url-context-tool",
-                              "concepts/tools/model-provider-tools/mcp-server-tool",
-                              "concepts/tools/model-provider-tools/image-generation-tool"
+                              "concepts/tools/function-class-tools/advanced/schema-validation/strict",
+                              "concepts/tools/function-class-tools/advanced/schema-validation/docstring-format"
                             ]
                           }
                         ]
@@ -369,10 +293,66 @@
                     ]
                   },
                   {
+                    "group": "MCP Tools",
+                    "pages": [
+                      "concepts/tools/mcp-tools/mcp-handler",
+                      "concepts/tools/mcp-tools/multi-mcp-handler",
+                      "concepts/tools/mcp-tools/authentication"
+                    ]
+                  },
+                  {
+                    "group": "Ready-to-Use Tools",
+                    "pages": [
+                      {
+                        "group": "Search Tools",
+                        "pages": [
+                          "concepts/tools/search-tools/duckduckgo",
+                          "concepts/tools/search-tools/bochasearch",
+                          "concepts/tools/search-tools/tavily"
+                        ]
+                      },
+                      {
+                        "group": "Data Tools",
+                        "pages": [
+                          "concepts/tools/data-tools/yfinance"
+                        ]
+                      },
+                      {
+                        "group": "Scraping Tools",
+                        "pages": [
+                          "concepts/tools/scraping-tools/apify",
+                          "concepts/tools/scraping-tools/exa",
+                          "concepts/tools/scraping-tools/firecrawl"
+                        ]
+                      },
+                      {
+                        "group": "Sandbox Tools",
+                        "pages": [
+                          "concepts/tools/sandbox-tools/daytona",
+                          "concepts/tools/sandbox-tools/e2b"
+                        ]
+                      },
+                      {
+                        "group": "Model Provider Tools",
+                        "pages": [
+                          "concepts/tools/model-provider-tools/supported-providers",
+                          "concepts/tools/model-provider-tools/web-search-tool",
+                          "concepts/tools/model-provider-tools/web-search-user-location",
+                          "concepts/tools/model-provider-tools/web-fetch-tool",
+                          "concepts/tools/model-provider-tools/file-search-tool",
+                          "concepts/tools/model-provider-tools/code-execution-tool",
+                          "concepts/tools/model-provider-tools/url-context-tool",
+                          "concepts/tools/model-provider-tools/mcp-server-tool",
+                          "concepts/tools/model-provider-tools/image-generation-tool"
+                        ]
+                      }
+                    ]
+                  },
+                  {
                     "group": "Advanced",
                     "pages": [
-                      "concepts/tools/custom-tools/advanced/combining-multiple-tools",
-                      "concepts/tools/custom-tools/advanced/agent-as-tool",
+                      "concepts/tools/advanced/combining-multiple-tools",
+                      "concepts/tools/advanced/agent-as-tool",
                       "concepts/tools/advanced/adding-tools",
                       "concepts/tools/advanced/removing-tools"
                     ]

@@ -11,16 +11,18 @@ Python-based MCP servers using the uvx package runner.
 
 ```python
 from upsonic import Task, Agent
+from upsonic.tools.mcp import MCPHandler
 
 # UVX-based MCP server (Python-based, no installation needed)
-class DatabaseMCP:
-    command = "uvx"
-    args = ["mcp-server-sqlite", "--db-path", "/tmp/test_mcp_v7.db"]
+db_handler = MCPHandler(
+    command="uvx mcp-server-sqlite --db-path /tmp/test.db",
+    timeout_seconds=60
+)
 
 # Create task
 task = Task(
     description="Create a 'users' table with id, name, and email columns. Insert 3 sample users and then query all users.",
-    tools=[DatabaseMCP]
+    tools=[db_handler]
 )
 
 # Create agent
@@ -36,8 +38,9 @@ print("Result:", result)
 
 ## Parameters
 
-- `command` (str): The command to run ("uvx")
-- `args` (List[str]): Arguments including package name
+- `command` (str): The command string including "uvx" and package name with arguments
+- `env` (Dict[str, str]): Environment variables (optional)
+- `timeout_seconds` (int): Connection timeout in seconds (default: 5)
 - `tool_name_prefix` (str): Optional prefix to add to all tool names (prevents collisions)
 
 ## Using Tool Name Prefix
@@ -46,17 +49,20 @@ When using multiple MCP servers with the same tools, add a `tool_name_prefix` to
 
 ```python
 from upsonic import Task, Agent
+from upsonic.tools.mcp import MCPHandler
 
 # Two SQLite servers for different databases
-class UsersDB:
-    command = "uvx"
-    args = ["mcp-server-sqlite", "--db-path", "/tmp/users.db"]
-    tool_name_prefix = "users_db"  # Tools become: users_db_create_table, etc.
+users_handler = MCPHandler(
+    command="uvx mcp-server-sqlite --db-path /tmp/users.db",
+    tool_name_prefix="users_db",
+    timeout_seconds=60
+)
 
-class OrdersDB:
-    command = "uvx"
-    args = ["mcp-server-sqlite", "--db-path", "/tmp/orders.db"]
-    tool_name_prefix = "orders_db"  # Tools become: orders_db_create_table, etc.
+orders_handler = MCPHandler(
+    command="uvx mcp-server-sqlite --db-path /tmp/orders.db",
+    tool_name_prefix="orders_db",
+    timeout_seconds=60
+)
 
 task = Task(
     description="""
@@ -64,7 +70,7 @@ task = Task(
     Use 'orders_db_*' tools to work with the orders database.
     Create tables in both and insert sample data.
     """,
-    tools=[UsersDB, OrdersDB]
+    tools=[users_handler, orders_handler]
 )
 
 agent = Agent(name="Multi-DB Agent", model="anthropic/claude-sonnet-4-5")

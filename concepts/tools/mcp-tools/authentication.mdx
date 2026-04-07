@@ -11,37 +11,41 @@ Configure authentication for MCP servers that require credentials.
 
 ```python
 from upsonic import Task, Agent
+from upsonic.tools.mcp import MCPHandler
 
 # MCP server with authentication
-class AuthenticatedMCP:
-    command = "npx"
-    args = ["-y", "@company/private-mcp-server"]
-    env = {
+auth_handler = MCPHandler(
+    command="npx -y @company/private-mcp-server",
+    env={
         "API_KEY": "your_api_key_here",
         "API_SECRET": "your_api_secret_here",
         "AUTH_TOKEN": "bearer_token_here"
-    }
+    },
+    timeout_seconds=60
+)
 
 # Multiple servers with different auth
-class GitHubMCP:
-    command = "npx"
-    args = ["-y", "@modelcontextprotocol/server-github"]
-    env = {
+github_handler = MCPHandler(
+    command="npx -y @modelcontextprotocol/server-github",
+    env={
         "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxx"
-    }
+    },
+    timeout_seconds=60
+)
 
-class SlackMCP:
-    command = "uvx"
-    args = ["mcp-server-slack"]
-    env = {
+slack_handler = MCPHandler(
+    command="uvx mcp-server-slack",
+    env={
         "SLACK_BOT_TOKEN": "xoxb-xxxxx",
         "SLACK_TEAM_ID": "T1234567"
-    }
+    },
+    timeout_seconds=60
+)
 
 # Create task with authenticated tools
 task = Task(
     description="Fetch the latest open issues from the repository 'my-project/repo' using the GitHub tool, then send a summary of these issues to the '#dev-team' channel on Slack.",
-    tools=[GitHubMCP, SlackMCP]
+    tools=[github_handler, slack_handler]
 )
 
 # Create agent
@@ -57,9 +61,12 @@ print("Result:", result)
 
 ## Parameters
 
+- `command` (str): Command string to run MCP server
+- `url` (str): URL for SSE or Streamable HTTP transport
 - `env` (Dict[str, str]): Dictionary of environment variables for authentication
   - Common keys: `API_KEY`, `API_SECRET`, `AUTH_TOKEN`, `ACCESS_TOKEN`
   - Service-specific keys: `GITHUB_PERSONAL_ACCESS_TOKEN`, `SLACK_BOT_TOKEN`, etc.
+- `timeout_seconds` (int): Connection timeout in seconds (default: 5)
 
 ## Best Practices
 
@@ -74,19 +81,21 @@ print("Result:", result)
 ```python
 import os
 from upsonic import Task, Agent
+from upsonic.tools.mcp import MCPHandler
 
 # Load from environment
-class SecureMCP:
-    command = "npx"
-    args = ["-y", "@company/mcp-server"]
-    env = {
+secure_handler = MCPHandler(
+    command="npx -y @company/mcp-server",
+    env={
         "API_KEY": os.getenv("MCP_API_KEY"),
         "API_SECRET": os.getenv("MCP_API_SECRET")
-    }
+    },
+    timeout_seconds=60
+)
 
 task = Task(
     description="Connect to the secure company MCP server and retrieve the latest confidential report.",
-    tools=[SecureMCP]
+    tools=[secure_handler]
 )
 
 agent = Agent(name="Secure Agent", model="anthropic/claude-sonnet-4-5")
@@ -98,16 +107,17 @@ print("Result:", result)
 
 ```python
 from upsonic import Task, Agent
+from upsonic.tools.mcp import MCPHandler
 
-# SSE server with authentication headers
-class AuthenticatedSSE:
-    url = "https://mcp-server.com/sse"
-    # Note: Authentication for SSE typically handled server-side
-    # Pass credentials via URL parameters or configure server-side
+# SSE server with authentication
+sse_handler = MCPHandler(
+    url="https://mcp-server.com/sse",
+    timeout_seconds=60
+)
 
 task = Task(
     description="Connect to the real-time SSE MCP server and listen for the latest status updates.",
-    tools=[AuthenticatedSSE]
+    tools=[sse_handler]
 )
 
 agent = Agent(name="SSE Agent", model="anthropic/claude-sonnet-4-5")
