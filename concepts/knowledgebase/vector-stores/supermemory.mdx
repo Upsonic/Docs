@@ -1,0 +1,152 @@
+---
+title: "SuperMemory"
+description: "Using SuperMemory as a vector database provider"
+---
+
+## Overview
+
+SuperMemory is a managed memory API that handles embedding, chunking, and indexing internally. Unlike traditional vector databases, you send raw text and SuperMemory takes care of vectorization and semantic search. This makes it a zero-configuration knowledge retrieval layer — no embedding provider setup required.
+
+**Provider Class:** `SuperMemoryProvider`  
+**Config Class:** `SuperMemoryConfig`
+
+## Install
+
+<Note>
+  Install the SuperMemory optional dependency group:
+
+```bash
+  uv pip install "upsonic[supermemory]"
+```
+</Note>
+
+## Key Differences from Traditional Vector DBs
+
+- **No embedding provider needed.** SuperMemory embeds text internally, so you do not pass an `embedding_provider` to `KnowledgeBase`.
+- **No `vector_size` to configure.** The config defaults to `0` because vectors are managed server-side.
+- **No dense (raw-vector) search.** Only `full_text` and `hybrid` search modes are supported.
+- **Container tags instead of collections.** The `collection_name` maps to a SuperMemory `container_tag` for organizing memories.
+
+## Examples
+
+### Basic Usage with KnowledgeBase
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.vectordb import SuperMemoryProvider, SuperMemoryConfig
+
+# Setup SuperMemory — no embedding provider needed
+config = SuperMemoryConfig(
+    collection_name="my_kb",
+    api_key="sm_your_api_key_here",
+)
+vectordb = SuperMemoryProvider(config)
+
+# Create knowledge base
+kb = KnowledgeBase(
+    sources=["document.pdf", "data/"],
+    vectordb=vectordb,
+)
+
+# Use with Agent
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What are the main topics in the documents?",
+    context=[kb],
+)
+result = agent.do(task)
+print(result)
+```
+
+### Using Environment Variable for API Key
+
+Set `SUPERMEMORY_API_KEY` in your environment or `.env` file, then omit `api_key` from the config:
+
+```python
+from upsonic.vectordb import SuperMemoryProvider, SuperMemoryConfig
+
+config = SuperMemoryConfig(collection_name="my_kb")
+vectordb = SuperMemoryProvider(config)
+```
+
+### Custom Search Settings
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.vectordb import SuperMemoryProvider, SuperMemoryConfig
+
+config = SuperMemoryConfig(
+    collection_name="research_docs",
+    container_tag="research_v2",
+    search_mode="memories",
+    threshold=0.3,
+    rerank=True,
+    batch_delay=0.5,
+)
+vectordb = SuperMemoryProvider(config)
+
+# Create knowledge base
+kb = KnowledgeBase(
+    sources=["document.pdf", "data/"],
+    vectordb=vectordb,
+)
+
+# Use with Agent
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What are the main topics in the documents?",
+    context=[kb],
+)
+result = agent.do(task)
+print(result)
+```
+
+## Parameters
+
+### Base Parameters (from BaseVectorDBConfig)
+
+| Parameter | Type | Description | Default | Required |
+|-----------|------|-------------|---------|----------|
+| `collection_name` | `str` | Name of the collection (also used as default `container_tag`) | `"default_collection"` | No |
+| `vector_size` | `int` | Dimension of vectors (unused, kept for interface compatibility) | `0` | No |
+| `distance_metric` | `DistanceMetric` | Similarity metric (`COSINE`, `EUCLIDEAN`, `DOT_PRODUCT`) | `COSINE` | No |
+| `recreate_if_exists` | `bool` | Recreate collection if it exists | `False` | No |
+| `default_top_k` | `int` | Default number of results | `10` | No |
+| `default_similarity_threshold` | `Optional[float]` | Minimum similarity score (0.0-1.0) | `None` | No |
+| `dense_search_enabled` | `bool` | Enable dense vector search | `False` | No |
+| `full_text_search_enabled` | `bool` | Enable full-text search | `True` | No |
+| `hybrid_search_enabled` | `bool` | Enable hybrid search | `True` | No |
+| `default_hybrid_alpha` | `float` | Default alpha for hybrid search (0.0-1.0) | `0.5` | No |
+| `default_fusion_method` | `Literal['rrf', 'weighted']` | Default fusion method for hybrid search | `'weighted'` | No |
+| `provider_name` | `Optional[str]` | Provider name | `None` | No |
+| `provider_description` | `Optional[str]` | Provider description | `None` | No |
+| `provider_id` | `Optional[str]` | Provider ID | `None` | No |
+| `default_metadata` | `Optional[Dict[str, Any]]` | Default metadata for all records | `None` | No |
+| `auto_generate_content_id` | `bool` | Auto-generate content IDs | `True` | No |
+| `indexed_fields` | `Optional[List[Union[str, Dict[str, Any]]]]` | Fields to index for filtering | `None` | No |
+
+### SuperMemory-Specific Parameters
+
+| Parameter | Type | Description | Default | Required |
+|-----------|------|-------------|---------|----------|
+| `api_key` | `Optional[SecretStr]` | SuperMemory API key. Falls back to `SUPERMEMORY_API_KEY` env var | `None` | No |
+| `container_tag` | `Optional[str]` | Tag for grouping memories. Defaults to `collection_name` | `None` | No |
+| `search_mode` | `Literal['hybrid', 'memories']` | Search mode: `hybrid` combines vector + keyword, `memories` uses memory-level retrieval | `'hybrid'` | No |
+| `threshold` | `float` | Minimum similarity threshold for search results (0.0-1.0) | `0.5` | No |
+| `rerank` | `bool` | Enable server-side reranking of search results | `False` | No |
+| `max_retries` | `int` | Maximum number of API request retries | `2` | No |
+| `timeout` | `float` | API request timeout in seconds | `60.0` | No |
+| `batch_delay` | `float` | Delay in seconds between individual upsert calls (rate-limit protection) | `0.1` | No |
+
+## Search Modes
+
+SuperMemory supports two search modes, configured via the `search_mode` parameter:
+
+| Mode | Description |
+|------|-------------|
+| `hybrid` | Combines vector similarity with keyword matching for best overall relevance. **Default and recommended.** |
+| `memories` | Retrieves at the memory level, suited for full-text and contextual recall. Used internally for `full_text_search`. |
+
+<Note>
+  Dense (raw-vector) search is **not supported** because SuperMemory manages its own embeddings. Calling `dense_search` returns an empty list.
+</Note>

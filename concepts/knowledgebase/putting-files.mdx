@@ -1,0 +1,202 @@
+---
+title: "Putting Files"
+description: "How to add documents to your KnowledgeBase"
+---
+
+## Overview
+
+KnowledgeBase accepts multiple types of sources: individual files, directories, or direct string content. It automatically detects file types and uses appropriate loaders.
+
+## Installation
+
+To add files to your KnowledgeBase, you'll need a vector database provider and document loaders for the file types you want to process.
+
+<Note>
+  **Example: Setting up for PDF files with Chroma**
+
+  To process PDF files and store them in ChromaDB:
+
+  ```bash
+  uv pip install "upsonic[chroma]"
+  uv pip install "upsonic[pdf-loader]"
+  ```
+
+  Or install both at once:
+
+  ```bash
+  uv pip install "upsonic[chroma,pdf-loader]"
+  ```
+
+  **What you need:**
+  - A vector database provider (e.g., `chroma`, `qdrant`, `milvus`, `weaviate`, `pinecone`, `faiss`, or `pgvector`)
+  - Document loaders for your file types (e.g., `pdf-loader`, `docx-loader`, `csv-loader`, `markdown-loader`, `html-loader`, `json-loader`, `xml-loader`, `yaml-loader`, `text-loader`)
+
+  The examples below use Chroma and PDF loader, but you can use any combination of supported providers and loaders. See [Vector Stores](/integrations/vector-stores/chroma) and [Document Loaders](/integrations/document-loaders/pypdf) for all options.
+</Note>
+
+## Examples
+
+### Single File
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+
+# Setup embedding provider
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+
+# Setup vector database
+config = ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+)
+vectordb = ChromaProvider(config)
+
+# Setup PDF loader
+loader = PdfLoader(PdfLoaderConfig())
+
+# Create knowledge base
+kb = KnowledgeBase(
+    sources="document.pdf",
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader]
+)
+
+# Use with Agent
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What was the total revenue in Q3 2024 according to the report?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+### Multiple Files
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
+
+# Create knowledge base with multiple sources
+kb = KnowledgeBase(
+    sources=["doc1.pdf", "doc2.md", "doc3.docx"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Use with Agent
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What are the three main conclusions drawn from the A/B testing results?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+### Directory
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
+
+# Setup PDF loader
+loader = PdfLoader(PdfLoaderConfig())
+
+# Create knowledge base from directory
+kb = KnowledgeBase(
+    sources="data/",
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader]
+)
+
+# Use with Agent
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What are the dimensions and power requirements for the Model X unit?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+### Mixed Sources
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+
+# Setup dependencies
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+))
+
+# Setup PDF loader
+loader = PdfLoader(PdfLoaderConfig())
+
+# Create knowledge base with mixed sources
+kb = KnowledgeBase(
+    sources=["doc1.pdf", "data/", "This is direct content text."],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader]
+)
+
+# Use with Agent
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="Find the warranty terms for the battery component in the text",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Supported File Types
+
+- **PDF**: `.pdf` (PyPDF, PDFPlumber, PyMuPDF)
+- **Markdown**: `.md`, `.markdown`
+- **Documents**: `.docx`
+- **Spreadsheets**: `.csv`
+- **Data**: `.json`, `.jsonl`, `.xml`, `.yaml`, `.yml`
+- **Code**: `.py`, `.js`, `.ts`, `.java`, `.c`, `.cpp`, `.h`, `.cs`, `.go`, `.rs`, `.php`, `.rb`
+- **Web**: `.html`, `.htm`, `.xhtml`, `.css`
+- **Text**: `.txt`, `.log`, `.rst`
+

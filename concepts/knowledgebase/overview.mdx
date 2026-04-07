@@ -1,0 +1,112 @@
+---
+title: "KnowledgeBase"
+sidebarTitle: "Overview"
+description: "Build intelligent RAG systems with vector databases"
+hideToc: true
+---
+
+## Overview
+
+KnowledgeBase enables you to build Retrieval-Augmented Generation (RAG) systems by automatically processing documents, creating embeddings, and storing them in vector databases. It integrates seamlessly with Agent and Task to provide relevant context for AI-powered queries.
+
+## Key Features
+
+- **Automatic Processing**: Loads documents, chunks text, creates embeddings, and stores in vector databases
+- **Multiple Formats**: Supports PDFs, Markdown, DOCX, CSV, JSON, HTML, and more
+- **Intelligent Chunking**: Auto-detects optimal text splitting strategies
+- **Flexible Storage**: Works with Chroma, Milvus, Qdrant, Pinecone, Weaviate, FAISS, and PGVector
+- **Hybrid Search**: Combines dense vector search with full-text search for better results
+- **Tool Integration**: Can be used as a tool, allowing agents to actively search and retrieve information
+
+## Installation
+
+To use KnowledgeBase, you'll need to install the required dependencies for your chosen vector database, document loaders, and embedding providers.
+
+<Note>
+  **Example: Setting up KnowledgeBase with Chroma**
+
+  For a complete RAG setup using Chroma as the vector database, PDF loader, and OpenAI embeddings:
+
+  ```bash
+  uv pip install "upsonic[chroma]"
+  uv pip install "upsonic[pdf-loader]"
+  uv pip install "upsonic[embeddings]"
+  ```
+
+  **What each optional group provides:**
+  - `[chroma]` - ChromaDB vector database client
+  - `[pdf-loader]` - PDF document loader (PyPDF)
+  - `[embeddings]` - Embedding providers (OpenAI, Anthropic, etc.)
+
+  For other vector databases, replace `chroma` with `qdrant`, `milvus`, `weaviate`, `pinecone`, `faiss`, or `pgvector`. For other loaders, see the [Loaders documentation](/integrations/document-loaders/pypdf).
+</Note>
+
+## Example
+
+Create a KnowledgeBase from documents and use it with an Agent:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+
+# Setup embedding provider
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+
+# Setup vector database
+config = ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+)
+vectordb = ChromaProvider(config)
+
+# Setup PDF loader
+loader = PdfLoader(PdfLoaderConfig())
+
+# Create knowledge base
+kb = KnowledgeBase(
+    sources=["document.pdf", "data/"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader]
+)
+
+# Use with Agent
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What are the main topics in the documents?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Integrations
+
+KnowledgeBase supports a rich ecosystem of integrations for vector stores, embedding providers, document loaders, and text splitters.
+
+<CardGroup cols={2}>
+  <Card title="Vector Stores" icon="database" href="/integrations/overview#vector-stores">
+    Chroma, Qdrant, Pinecone, Milvus, PGVector, FAISS, Weaviate, SuperMemory
+  </Card>
+  <Card title="Embedding Providers" icon="layer-group" href="/integrations/overview#embedding-providers">
+    OpenAI, Azure, Google, AWS Bedrock, HuggingFace, FastEmbed, Ollama
+  </Card>
+  <Card title="Document Loaders" icon="file-import" href="/integrations/overview#document-loaders">
+    PDF, DOCX, CSV, JSON, Markdown, HTML, XML, YAML, Text & more
+  </Card>
+  <Card title="Text Splitters" icon="scissors" href="/integrations/overview#text-splitters">
+    Recursive, Semantic, Agentic, Character, Markdown, HTML, JSON, Python
+  </Card>
+</CardGroup>
+
+## Navigation
+
+- [Attributes](/concepts/knowledgebase/attributes) - Configuration options for KnowledgeBase
+- [Putting Files](/concepts/knowledgebase/putting-files) - How to add documents to your knowledge base
+- [Using as Tool](/concepts/knowledgebase/using-as-tool) - Use KnowledgeBase as a tool in Agent or Task
+
