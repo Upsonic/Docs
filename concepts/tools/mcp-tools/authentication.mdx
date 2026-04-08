@@ -105,22 +105,57 @@ print("Result:", result)
 
 ## SSE Server Authentication
 
+Use `SSEClientParams` to pass authentication headers to an SSE MCP server:
+
 ```python
 from upsonic import Task, Agent
-from upsonic.tools.mcp import MCPHandler
+from upsonic.tools.mcp import MCPHandler, SSEClientParams
 
-# SSE server with authentication
 sse_handler = MCPHandler(
-    url="https://mcp-server.com/sse",
+    server_params=SSEClientParams(
+        url="https://mcp-server.com/sse",
+        headers={"Authorization": "Bearer your-api-token"},
+        timeout=10,
+        sse_read_timeout=120
+    ),
     timeout_seconds=60
 )
 
 task = Task(
-    description="Connect to the real-time SSE MCP server and listen for the latest status updates.",
+    description="Connect to the authenticated SSE MCP server and retrieve the latest status updates.",
     tools=[sse_handler]
 )
 
 agent = Agent(name="SSE Agent", model="anthropic/claude-sonnet-4-5")
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+## Streamable HTTP Authentication
+
+Use `StreamableHTTPClientParams` to pass authentication headers to a Streamable HTTP MCP server:
+
+```python
+from datetime import timedelta
+from upsonic import Task, Agent
+from upsonic.tools.mcp import MCPHandler, StreamableHTTPClientParams
+
+http_handler = MCPHandler(
+    server_params=StreamableHTTPClientParams(
+        url="https://mcp-server.com/mcp",
+        headers={"Authorization": "Bearer your-api-token"},
+        timeout=timedelta(seconds=30),
+        sse_read_timeout=timedelta(seconds=120)
+    ),
+    timeout_seconds=60
+)
+
+task = Task(
+    description="Connect to the authenticated HTTP MCP server and retrieve the latest data.",
+    tools=[http_handler]
+)
+
+agent = Agent(name="HTTP Agent", model="anthropic/claude-sonnet-4-5")
 result = agent.print_do(task)
 print("Result:", result)
 ```

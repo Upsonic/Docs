@@ -113,6 +113,251 @@ print("Result:", result)
 - **Error Handling**: Graceful error handling with proper cleanup
 - **Tool Filtering**: Include or exclude specific tools
 
+## MCP Types
+
+MCPHandler supports every MCP transport type. Below are real-world examples for each.
+
+### Stdio: UVX Command
+
+The simplest way to run a Python-based MCP server. Pass a command string and MCPHandler handles the rest.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+
+mcp_handler = MCPHandler(
+    command="uvx mcp-server-fetch",
+    timeout_seconds=30
+)
+
+agent = Agent(
+    name="Web Fetcher",
+    role="Web content retrieval specialist",
+    goal="Fetch and summarize web content using MCP fetch tools",
+    tool_call_limit=5
+)
+
+task = Task(
+    description="Fetch the content of https://httpbin.org/get and summarize the JSON response.",
+    tools=[mcp_handler]
+)
+
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+### Stdio: NPX Command
+
+Run Node.js-based MCP servers with `npx`. This example uses the official filesystem server.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+
+mcp_handler = MCPHandler(
+    command="npx -y @modelcontextprotocol/server-filesystem /tmp",
+    timeout_seconds=30
+)
+
+agent = Agent(
+    name="File Manager",
+    role="File system operations specialist",
+    goal="Manage files and directories",
+    tool_call_limit=5
+)
+
+task = Task(
+    description="List the allowed directories, then list the contents of the first allowed directory.",
+    tools=[mcp_handler]
+)
+
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+### Stdio: StdioServerParameters
+
+For full control over the subprocess, pass `StdioServerParameters` directly. Useful when you need custom environment variables.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+from mcp.client.stdio import StdioServerParameters
+
+mcp_handler = MCPHandler(
+    server_params=StdioServerParameters(
+        command="uvx",
+        args=["mcp-server-fetch"],
+        env=None
+    ),
+    timeout_seconds=30
+)
+
+agent = Agent(
+    name="API Tester",
+    role="API testing and validation specialist",
+    goal="Test API endpoints and report results",
+    tool_call_limit=5
+)
+
+task = Task(
+    description="Fetch https://httpbin.org/headers and tell me what User-Agent header was sent.",
+    tools=[mcp_handler]
+)
+
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+### SSE: URL Shorthand
+
+Connect to a remote MCP server over Server-Sent Events. Pass the SSE endpoint URL and set `transport="sse"`.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+
+mcp_handler = MCPHandler(
+    url="https://my-mcp-server.example.com/sse",
+    transport="sse",
+    timeout_seconds=30
+)
+
+agent = Agent(
+    name="Remote SSE Agent",
+    role="Remote tool execution via SSE",
+    goal="Execute tools on the remote MCP server",
+    tool_call_limit=5
+)
+
+task = Task(
+    description="Use the available tools to complete the task.",
+    tools=[mcp_handler]
+)
+
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+### SSE: SSEClientParams
+
+For authenticated SSE connections with custom headers and timeout control.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler, SSEClientParams
+
+mcp_handler = MCPHandler(
+    server_params=SSEClientParams(
+        url="https://my-mcp-server.example.com/sse",
+        headers={"Authorization": "Bearer your-api-token"},
+        timeout=10,
+        sse_read_timeout=120
+    ),
+    timeout_seconds=30
+)
+
+agent = Agent(
+    name="Auth SSE Agent",
+    role="Authenticated remote tool execution",
+    goal="Execute tools on the authenticated MCP server",
+    tool_call_limit=5
+)
+
+task = Task(
+    description="Use the available tools to complete the task.",
+    tools=[mcp_handler]
+)
+
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+**SSEClientParams fields:**
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `url` | `str` | required | SSE endpoint URL |
+| `headers` | `Dict[str, Any]` | `None` | Custom HTTP headers (e.g. auth tokens) |
+| `timeout` | `float` | `5` | Connection timeout in seconds |
+| `sse_read_timeout` | `float` | `300` | SSE stream read timeout in seconds |
+
+### Streamable HTTP: URL Shorthand
+
+Connect to a remote MCP server using the Streamable HTTP transport. This is the newest MCP transport and is stateless by design.
+
+```python
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler
+
+mcp_handler = MCPHandler(
+    url="https://my-mcp-server.example.com/mcp",
+    transport="streamable-http",
+    timeout_seconds=30
+)
+
+agent = Agent(
+    name="HTTP Agent",
+    role="Remote tool execution via Streamable HTTP",
+    goal="Execute tools on the remote MCP server",
+    tool_call_limit=5
+)
+
+task = Task(
+    description="Use the available tools to complete the task.",
+    tools=[mcp_handler]
+)
+
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+### Streamable HTTP: StreamableHTTPClientParams
+
+For authenticated connections with custom headers, timeouts, and HTTP auth.
+
+```python
+from datetime import timedelta
+from upsonic import Agent, Task
+from upsonic.tools.mcp import MCPHandler, StreamableHTTPClientParams
+
+mcp_handler = MCPHandler(
+    server_params=StreamableHTTPClientParams(
+        url="https://my-mcp-server.example.com/mcp",
+        headers={"Authorization": "Bearer your-api-token"},
+        timeout=timedelta(seconds=30),
+        sse_read_timeout=timedelta(seconds=120)
+    ),
+    timeout_seconds=30
+)
+
+agent = Agent(
+    name="Auth HTTP Agent",
+    role="Authenticated remote tool execution",
+    goal="Execute tools on the authenticated MCP server",
+    tool_call_limit=5
+)
+
+task = Task(
+    description="Use the available tools to complete the task.",
+    tools=[mcp_handler]
+)
+
+result = agent.print_do(task)
+print("Result:", result)
+```
+
+**StreamableHTTPClientParams fields:**
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `url` | `str` | required | Streamable HTTP endpoint URL |
+| `headers` | `Dict[str, Any]` | `None` | Custom HTTP headers (e.g. auth tokens) |
+| `timeout` | `timedelta` | `30s` | Request timeout |
+| `sse_read_timeout` | `timedelta` | `5min` | SSE stream read timeout |
+| `terminate_on_close` | `bool` | `None` | Terminate server session on close |
+| `auth` | `httpx.Auth` | `None` | httpx authentication handler |
+
 ## Example with Structured Output
 
 ```python
@@ -231,4 +476,3 @@ The `tool_name_prefix` is especially useful when:
 - Want automatic resource cleanup
 - Need tool filtering capabilities
 - Need to prevent tool name collisions with `tool_name_prefix`
-

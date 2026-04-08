@@ -16,11 +16,13 @@ from upsonic.tools.mcp import MCPHandler
 # SSE-based MCP servers
 fetch_handler = MCPHandler(
     url="https://your-mcp-server.com/sse",
+    transport="sse",
     timeout_seconds=60
 )
 
 search_handler = MCPHandler(
     url="https://search-mcp-server.com/sse",
+    transport="sse",
     timeout_seconds=60
 )
 
@@ -44,6 +46,7 @@ print("Result:", result)
 ## Parameters
 
 - `url` (str): The SSE endpoint URL of the MCP server
+- `transport` (str): Must be `"sse"` when using `url`
 - `timeout_seconds` (int): Connection timeout in seconds (default: 5)
 - `tool_name_prefix` (str): Optional prefix to add to all tool names (prevents collisions)
 
@@ -56,12 +59,14 @@ from upsonic.tools.mcp import MCPHandler
 
 fetch_handler = MCPHandler(
     url="https://fetch-mcp.example.com/sse",
+    transport="sse",
     tool_name_prefix="fetch",
     timeout_seconds=60
 )
 
 search_handler = MCPHandler(
     url="https://search-mcp.example.com/sse",
+    transport="sse",
     tool_name_prefix="search",
     timeout_seconds=60
 )
