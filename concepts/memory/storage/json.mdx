@@ -38,7 +38,8 @@ print(result2)  # "Your name is Bob"
 ```
 memory_data/
 ├── upsonic_sessions.json
-└── upsonic_user_memories.json
+├── upsonic_user_memories.json
+└── upsonic_knowledge.json   # created when used with KnowledgeBase
 ```
 
 ## Parameters
@@ -48,6 +49,7 @@ memory_data/
 | `db_path` | `str \| None` | `"./upsonic_json_db"` | Directory for JSON files |
 | `session_table` | `str \| None` | `"upsonic_sessions"` | Session JSON file name (without .json) |
 | `user_memory_table` | `str \| None` | `"upsonic_user_memories"` | User memory JSON file name (without .json) |
+| `knowledge_table` | `str \| None` | `"upsonic_knowledge"` | Knowledge registry JSON file name (without .json, used by KnowledgeBase) |
 | `id` | `str \| None` | auto-generated | Storage instance ID |
 
 ## Storage Type

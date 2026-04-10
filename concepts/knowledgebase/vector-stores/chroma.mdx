@@ -24,11 +24,11 @@ ChromaDB is an open-source vector database designed for embedding search and sim
 
 ```python
 from upsonic import Agent, Task, KnowledgeBase
-from upsonic.embeddings.openai_provider import OpenAIEmbeddingProvider
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode, HNSWIndexConfig
 
 # Setup embedding provider
-embedding = OpenAIEmbeddingProvider(api_key="your-api-key")
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
 
 # Embedded mode (local file storage)
 config = ChromaConfig(
@@ -76,7 +76,6 @@ result = agent.do(task)
 | `provider_description` | `Optional[str]` | Provider description | `None` | No |
 | `provider_id` | `Optional[str]` | Provider ID | `None` | No |
 | `default_metadata` | `Optional[Dict[str, Any]]` | Default metadata for all records | `None` | No |
-| `auto_generate_content_id` | `bool` | Auto-generate content IDs | `True` | No |
 | `indexed_fields` | `Optional[List[Union[str, Dict[str, Any]]]]` | Fields to index for filtering | `None` | No |
 
 ### Chroma-Specific Parameters

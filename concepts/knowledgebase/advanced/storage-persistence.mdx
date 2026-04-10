@@ -1,0 +1,132 @@
+---
+title: "Storage Persistence"
+description: "Persist knowledge base document metadata to a storage backend"
+---
+
+## Overview
+
+By default, KnowledgeBase stores document chunks only in the vector database. When you pass a `storage` backend, KnowledgeBase also writes a **document registry** — a relational record of every document it has processed, including metadata, content hashes, chunk counts, and processing status.
+
+This is useful when you need to:
+
+- **Track which documents are indexed** across restarts without querying the vector database
+- **Share a storage backend** between Memory and KnowledgeBase for a unified persistence layer
+- **Audit document lifecycle** — see when documents were added, their status, and source paths
+- **Enable source removal by document ID** — storage lets `remove_document()` look up the original file path and clean up `sources`
+
+## Quick Start
+
+Pass any Upsonic storage backend as the `storage` parameter:
+
+```python
+from upsonic import KnowledgeBase
+from upsonic.storage.sqlite import SqliteStorage
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Reuse the same storage you use for Memory, or create a dedicated one
+storage = SqliteStorage(db_file="app.db")
+
+kb = KnowledgeBase(
+    sources=["docs/"],
+    vectordb=ChromaProvider(ChromaConfig(
+        collection_name="my_kb",
+        vector_size=1536,
+        connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+    )),
+    embedding_provider=OpenAIEmbedding(OpenAIEmbeddingConfig()),
+    storage=storage,  # enables document registry persistence
+)
+
+kb.setup()
+```
+
+After `setup()`, every processed document is recorded in the storage's **knowledge table** (`upsonic_knowledge` by default). When you call `add_source()`, `add_text()`, or `remove_document()`, the registry is updated automatically.
+
+## What Gets Persisted
+
+Each processed document creates a row in the knowledge table:
+
+| Field | Description |
+|-------|-------------|
+| `id` | Document ID (content-based hash) |
+| `name` | Human-readable document name |
+| `type` | File extension (e.g., `pdf`, `md`) |
+| `size` | File size in bytes |
+| `knowledge_base_id` | ID of the parent KnowledgeBase |
+| `content_hash` | MD5 hash of document content for deduplication |
+| `chunk_count` | Number of chunks created from this document |
+| `source` | Original file path |
+| `status` | Processing status (`indexed`, `failed`) |
+| `metadata` | Full document metadata as JSON |
+| `created_at` | Timestamp of first indexing |
+| `updated_at` | Timestamp of last update |
+
+See [Storage Tables](/integrations/memory-storage/storage-tables) for the full schema.
+
+## Supported Backends
+
+Any Upsonic storage backend works — the same ones used for Memory:
+
+| Backend | Example |
+|---------|---------|
+| `SqliteStorage` | `SqliteStorage(db_file="app.db")` |
+| `PostgresStorage` | `PostgresStorage(db_url="postgresql://...")` |
+| `RedisStorage` | `RedisStorage(db_url="redis://...")` |
+| `MongoStorage` | `MongoStorage(db_url="mongodb://...")` |
+| `JSONStorage` | `JSONStorage(db_path="./data")` |
+| `InMemoryStorage` | `InMemoryStorage()` |
+| `Mem0Storage` | `Mem0Storage(api_key="...")` |
+
+Async storage backends (`AsyncSqliteStorage`, `AsyncPostgresStorage`, `AsyncMongoStorage`, `AsyncMem0Storage`) are also supported.
+
+## Sharing Storage with Memory
+
+You can use the same storage instance for both Memory and KnowledgeBase. Each system writes to its own tables:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.storage.sqlite import SqliteStorage
+from upsonic.storage.memory import Memory
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# Single storage for everything
+storage = SqliteStorage(db_file="app.db")
+
+# KnowledgeBase uses the knowledge table
+kb = KnowledgeBase(
+    sources=["docs/"],
+    vectordb=ChromaProvider(ChromaConfig(
+        collection_name="my_kb",
+        vector_size=1536,
+        connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db")
+    )),
+    embedding_provider=OpenAIEmbedding(OpenAIEmbeddingConfig()),
+    storage=storage,
+)
+
+# Memory uses the sessions and user_memory tables
+memory = Memory(
+    storage=storage,
+    session_id="session_001",
+    user_id="user_123",
+    full_session_memory=True,
+    model="anthropic/claude-sonnet-4-5"
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5", memory=memory)
+task = Task("Summarize the documentation", context=[kb])
+result = agent.do(task)
+```
+
+## Custom Table Name
+
+Override the default knowledge table name via the storage constructor:
+
+```python
+storage = SqliteStorage(
+    db_file="app.db",
+    knowledge_table="my_custom_knowledge_table"
+)
+```

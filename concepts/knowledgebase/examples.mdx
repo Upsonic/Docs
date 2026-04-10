@@ -5,48 +5,7 @@ description: "Practical examples using KnowledgeBase with Agent and Task"
 
 ## Overview
 
-This page provides practical, runnable examples demonstrating how to use KnowledgeBase with Agent and Task in various scenarios.
-
-## Basic RAG Query
-
-Query a knowledge base with a simple question:
-
-```python
-from upsonic import Agent, Task, KnowledgeBase
-from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
-from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
-from upsonic.loaders.pdf import PdfLoader
-from upsonic.loaders.config import PdfLoaderConfig
-
-# Setup components
-embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
-vectordb = ChromaProvider(ChromaConfig(
-    collection_name="example_kb",
-    vector_size=1536,
-    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
-))
-
-# Setup PDF loader
-loader = PdfLoader(PdfLoaderConfig())
-
-# Create knowledge base
-kb = KnowledgeBase(
-    sources=["document.pdf"],
-    embedding_provider=embedding,
-    vectordb=vectordb,
-    loaders=[loader]
-)
-
-# Query with Agent
-agent = Agent("anthropic/claude-sonnet-4-5")
-task = Task(
-    description="What are the main topics in the document?",
-    context=[kb]
-)
-
-result = agent.do(task)
-print(result)
-```
+This page provides practical examples for common KnowledgeBase patterns. For a step-by-step first setup, see the [Getting Started](/concepts/knowledgebase/basic-rag-example) guide.
 
 ## Multiple Documents
 
@@ -83,14 +42,12 @@ print(result)
 
 ## Directory Processing
 
-Process all files in a directory:
+Process all supported files in a directory:
 
 ```python
 from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
-from upsonic.loaders.pdf import PdfLoader
-from upsonic.loaders.config import PdfLoaderConfig
 
 embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
 vectordb = ChromaProvider(ChromaConfig(
@@ -99,14 +56,10 @@ vectordb = ChromaProvider(ChromaConfig(
     connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./kb_db")
 ))
 
-# Setup loader for directory processing
-loader = PdfLoader(PdfLoaderConfig())
-
 kb = KnowledgeBase(
     sources=["data/"],  # Processes all supported files in directory
     embedding_provider=embedding,
-    vectordb=vectordb,
-    loaders=[loader]
+    vectordb=vectordb
 )
 
 agent = Agent("anthropic/claude-sonnet-4-5")
@@ -121,7 +74,7 @@ print(result)
 
 ## Custom Loaders and Splitters
 
-Use specific loaders and splitters for better control:
+Use specific loaders and splitters for precise control over document processing:
 
 ```python
 from upsonic import Agent, Task, KnowledgeBase
@@ -131,7 +84,6 @@ from upsonic.text_splitter.recursive import RecursiveChunker, RecursiveChunkingC
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
 
-# Setup custom components
 loader = PdfLoader(PdfLoaderConfig())
 splitter = RecursiveChunker(RecursiveChunkingConfig(
     chunk_size=512,
@@ -163,9 +115,9 @@ result = agent.do(task)
 print(result)
 ```
 
-## Indexed Processing
+## Indexed Processing (Per-Source Loaders)
 
-Use different loaders and splitters for different sources:
+Use different loaders and splitters for different sources by matching them by index:
 
 ```python
 from upsonic import Agent, Task, KnowledgeBase
@@ -218,17 +170,64 @@ result = agent.do(task)
 print(result)
 ```
 
+<Warning>
+  When using multiple loaders/splitters, the count must match the number of file sources. String content sources don't need loaders.
+</Warning>
+
+## Multiple Knowledge Bases
+
+Query multiple knowledge bases in a single task using `name` and `description` so the agent can distinguish them:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+
+kb1 = KnowledgeBase(
+    sources=["technical_docs/"],
+    embedding_provider=embedding,
+    vectordb=ChromaProvider(ChromaConfig(
+        collection_name="tech_kb",
+        vector_size=1536,
+        connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+    )),
+    name="technical_docs",
+    description="Technical API documentation and architecture specs"
+)
+
+kb2 = KnowledgeBase(
+    sources=["user_guides/"],
+    embedding_provider=embedding,
+    vectordb=ChromaProvider(ChromaConfig(
+        collection_name="guides_kb",
+        vector_size=1536,
+        connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+    )),
+    name="user_guides",
+    description="User guides, tutorials, and FAQs"
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="Compare technical documentation with user guides",
+    context=[kb1, kb2]
+)
+
+result = agent.do(task)
+print(result)
+```
+
 ## Async Usage
 
-Use async/await for better performance:
+Use async/await for better performance in async applications:
 
 ```python
 import asyncio
 from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
-from upsonic.loaders.pdf import PdfLoader
-from upsonic.loaders.config import PdfLoaderConfig
 
 async def main():
     embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
@@ -238,13 +237,10 @@ async def main():
         connection=ConnectionConfig(mode=Mode.IN_MEMORY)
     ))
 
-    loader = PdfLoader(PdfLoaderConfig())
-
     kb = KnowledgeBase(
         sources=["document.pdf"],
         embedding_provider=embedding,
-        vectordb=vectordb,
-        loaders=[loader]
+        vectordb=vectordb
     )
 
     agent = Agent("anthropic/claude-sonnet-4-5")
@@ -261,14 +257,12 @@ asyncio.run(main())
 
 ## Streaming Response
 
-Stream the agent's response while querying the knowledge base:
+Stream the agent's response for real-time output:
 
 ```python
 from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
-from upsonic.loaders.pdf import PdfLoader
-from upsonic.loaders.config import PdfLoaderConfig
 
 embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
 vectordb = ChromaProvider(ChromaConfig(
@@ -277,13 +271,10 @@ vectordb = ChromaProvider(ChromaConfig(
     connection=ConnectionConfig(mode=Mode.IN_MEMORY)
 ))
 
-loader = PdfLoader(PdfLoaderConfig())
-
 kb = KnowledgeBase(
     sources=["document.pdf"],
     embedding_provider=embedding,
-    vectordb=vectordb,
-    loaders=[loader]
+    vectordb=vectordb
 )
 
 agent = Agent("anthropic/claude-sonnet-4-5")
@@ -292,58 +283,70 @@ task = Task(
     context=[kb]
 )
 
-async with agent.stream(task) as result:
-    async for text_chunk in result.stream_output():
-        print(text_chunk, end='', flush=True)
-    print()
-
-final_output = result.get_final_output()
+# Synchronous streaming
+for text in agent.stream(task):
+    print(text, end='', flush=True)
+print()
 ```
 
-## Multiple Knowledge Bases
-
-Query multiple knowledge bases in a single task:
+### Async Streaming
 
 ```python
+import asyncio
 from upsonic import Agent, Task, KnowledgeBase
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
-from upsonic.loaders.pdf import PdfLoader
-from upsonic.loaders.config import PdfLoaderConfig
 
-embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
-loader = PdfLoader(PdfLoaderConfig())
-
-# Create multiple knowledge bases
-kb1 = KnowledgeBase(
-    sources=["technical_docs/"],
-    embedding_provider=embedding,
-    vectordb=ChromaProvider(ChromaConfig(
-        collection_name="tech_kb",
+async def main():
+    embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+    vectordb = ChromaProvider(ChromaConfig(
+        collection_name="async_stream_kb",
         vector_size=1536,
         connection=ConnectionConfig(mode=Mode.IN_MEMORY)
-    )),
-    loaders=[loader]
-)
+    ))
 
-kb2 = KnowledgeBase(
-    sources=["user_guides/"],
-    embedding_provider=embedding,
-    vectordb=ChromaProvider(ChromaConfig(
-        collection_name="guides_kb",
-        vector_size=1536,
-        connection=ConnectionConfig(mode=Mode.IN_MEMORY)
-    )),
-    loaders=[loader]
+    kb = KnowledgeBase(
+        sources=["document.pdf"],
+        embedding_provider=embedding,
+        vectordb=vectordb
+    )
+
+    agent = Agent("anthropic/claude-sonnet-4-5")
+    task = Task(
+        description="Explain the main concepts",
+        context=[kb]
+    )
+
+    async for text in agent.astream(task):
+        print(text, end='', flush=True)
+    print()
+
+asyncio.run(main())
+```
+
+## SuperMemory (Zero-Config RAG)
+
+SuperMemory handles embeddings internally — no embedding provider needed:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.vectordb import SuperMemoryProvider, SuperMemoryConfig
+
+vectordb = SuperMemoryProvider(SuperMemoryConfig(
+    collection_name="my_kb",
+    api_key="sm_your_api_key_here"
+))
+
+kb = KnowledgeBase(
+    sources=["document.pdf", "data/"],
+    vectordb=vectordb
 )
 
 agent = Agent("anthropic/claude-sonnet-4-5")
 task = Task(
-    description="Compare technical documentation with user guides",
-    context=[kb1, kb2]
+    description="What are the main topics in the documents?",
+    context=[kb]
 )
-
 result = agent.do(task)
 print(result)
 ```
-

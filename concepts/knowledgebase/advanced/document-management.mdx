@@ -1,0 +1,262 @@
+---
+title: "Document Management"
+sidebarTitle: "Document Management"
+description: "Add, remove, refresh, and update documents dynamically"
+---
+
+## Overview
+
+KnowledgeBase supports full document lifecycle management after initial setup. You can add new sources, insert raw text, remove documents, refresh changed files, update metadata, and delete by filter — all without recreating the knowledge base.
+
+## Adding Sources Dynamically
+
+Use `add_source()` to add new files or directories to an existing knowledge base:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="dynamic_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./dynamic_db")
+))
+
+kb = KnowledgeBase(
+    sources=["initial_docs/"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Later, add more sources
+document_ids = kb.add_source("new_report.pdf")
+print(f"Added documents: {document_ids}")
+
+# Add with custom metadata
+document_ids = kb.add_source(
+    "quarterly_update.pdf",
+    metadata={"quarter": "Q4", "year": "2024", "department": "engineering"}
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What are the key findings from the quarterly update?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Adding Raw Text
+
+Use `add_text()` to insert text content directly:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="text_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./text_db")
+))
+
+kb = KnowledgeBase(
+    sources=["handbook.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Add text from an API response, database query, or user input
+doc_id = kb.add_text(
+    text="The board approved a 15% budget increase for R&D in fiscal year 2025.",
+    document_name="board_decision_2025",
+    metadata={"type": "decision", "date": "2025-01-10"}
+)
+print(f"Added document: {doc_id}")
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What budget decisions were made for 2025?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+<Tip>
+  `add_text()` is idempotent — if the same text content is added twice, the duplicate is automatically skipped based on content hash.
+</Tip>
+
+## Removing Documents
+
+Remove a document and all its chunks by document ID:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="remove_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./remove_db")
+))
+
+kb = KnowledgeBase(
+    sources=["docs/"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Add a document and get its ID
+doc_ids = kb.add_source("outdated_policy.pdf")
+
+# Later, remove it
+if doc_ids:
+    success = kb.remove_document(doc_ids[0])
+    print(f"Removed: {success}")
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What policies are currently active?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Deleting by Metadata Filter
+
+Delete all chunks matching a metadata filter — useful for bulk cleanup:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="filter_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./filter_db")
+))
+
+kb = KnowledgeBase(
+    sources=["docs/"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Remove all chunks from a specific document name
+success = kb.delete_by_filter({"document_name": "deprecated_guide.pdf"})
+print(f"Deleted by filter: {success}")
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="Summarize the current documentation",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Refreshing Changed Sources
+
+Re-scan all sources for changes and re-index modified documents:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="refresh_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./refresh_db")
+))
+
+kb = KnowledgeBase(
+    sources=["docs/"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# After files on disk have changed, refresh the index
+stats = kb.refresh()
+print(f"Refresh stats: {stats}")
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What are the latest changes in the documentation?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Updating Document Metadata
+
+Update metadata for all chunks of a specific document:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="metadata_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./metadata_db")
+))
+
+kb = KnowledgeBase(
+    sources=["contracts/"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Add a document
+doc_ids = kb.add_source("contract_draft.pdf")
+
+# Update its metadata (e.g., mark as approved)
+if doc_ids:
+    success = kb.update_document_metadata(
+        document_id=doc_ids[0],
+        metadata_updates={"status": "approved", "approved_by": "legal_team"}
+    )
+    print(f"Metadata updated: {success}")
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="Which contracts have been approved?",
+    context=[kb],
+    vector_search_filter={"status": "approved"}
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Method Reference
+
+| Method | Async Version | Description |
+|--------|---------------|-------------|
+| `add_source(source, loader, splitter, metadata)` | `aadd_source(...)` | Add file/directory source |
+| `add_text(text, metadata, document_name, splitter)` | `aadd_text(...)` | Add raw text content |
+| `remove_document(document_id)` | `aremove_document(...)` | Remove a document and all its chunks |
+| `delete_by_filter(metadata_filter)` | `adelete_by_filter(...)` | Delete chunks by metadata filter |
+| `refresh()` | `arefresh()` | Re-scan and re-index changed sources |
+| `update_document_metadata(document_id, metadata_updates)` | `aupdate_document_metadata(...)` | Update metadata for a document's chunks |

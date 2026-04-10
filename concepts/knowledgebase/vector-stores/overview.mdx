@@ -1,0 +1,110 @@
+---
+title: "Vector Stores"
+sidebarTitle: "Overview"
+description: "Choose and configure the right vector database for your KnowledgeBase"
+---
+
+## Overview
+
+Upsonic supports 8 vector database providers out of the box. Each provider shares a common configuration interface (`BaseVectorDBConfig`) while exposing provider-specific options for advanced tuning.
+
+All providers support **dense vector search**, **full-text search**, and **hybrid search** through a unified API — so you can switch providers without changing your application logic.
+
+## Provider Comparison
+
+| Provider | Deployment | Index Types | Hybrid Search | Best For |
+|----------|-----------|-------------|---------------|----------|
+| [Chroma](/concepts/knowledgebase/vector-stores/chroma) | Embedded, Local, Cloud | HNSW, Flat | Yes | Quick prototyping, embedded apps |
+| [FAISS](/concepts/knowledgebase/vector-stores/faiss) | Local file | HNSW, IVF, Flat | Yes | High-performance local search, large datasets |
+| [Qdrant](/concepts/knowledgebase/vector-stores/qdrant) | Embedded, Local, Cloud | HNSW, Flat | Yes | Production workloads, advanced filtering |
+| [Milvus](/concepts/knowledgebase/vector-stores/milvus) | Embedded (Lite), Local, Cloud | HNSW, IVF, Flat | Yes | Scalable production, distributed search |
+| [Pinecone](/concepts/knowledgebase/vector-stores/pinecone) | Cloud only | Managed | Yes | Fully managed, zero-ops production |
+| [Weaviate](/concepts/knowledgebase/vector-stores/weaviate) | Embedded, Local, Cloud | HNSW, Flat | Yes | Schema-based collections, AI modules |
+| [PGVector](/concepts/knowledgebase/vector-stores/pgvector) | PostgreSQL | HNSW, IVF | Yes | Existing PostgreSQL infrastructure |
+| [SuperMemory](/concepts/knowledgebase/vector-stores/supermemory) | Cloud (managed) | Managed | Yes | Zero-config RAG (no embedding provider needed) |
+
+## Quick Start
+
+Every provider follows the same pattern — swap the provider and config to switch vector databases:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+# 1. Create embedding provider
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+
+# 2. Configure and create vector database
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="my_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./db")
+))
+
+# 3. Create knowledge base with documents
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# 4. Query with Agent and Task
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What are the key points in the document?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Connection Modes
+
+Most providers support multiple connection modes via `ConnectionConfig`:
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `Mode.IN_MEMORY` | Ephemeral, no persistence | Testing, prototyping |
+| `Mode.EMBEDDED` | Local file storage | Development, single-node apps |
+| `Mode.LOCAL` | Connect to local server | Self-hosted deployments |
+| `Mode.CLOUD` | Connect to cloud service | Production, managed services |
+
+<Note>
+  Not all providers use `ConnectionConfig`. **FAISS** uses `db_path` directly, **Pinecone** uses `api_key` + `environment`, and **PGVector** uses `connection_string`. **SuperMemory** only requires an `api_key`. See each provider's page for details.
+</Note>
+
+## Shared Configuration
+
+All providers inherit these base parameters from `BaseVectorDBConfig`:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `collection_name` | `str` | `"default_collection"` | Name of the collection |
+| `vector_size` | `int` | (required) | Dimension of vectors (must match your embedding model) |
+| `distance_metric` | `DistanceMetric` | `COSINE` | Similarity metric: `COSINE`, `EUCLIDEAN`, or `DOT_PRODUCT` |
+| `recreate_if_exists` | `bool` | `False` | Recreate collection if it already exists |
+| `default_top_k` | `int` | `10` | Default number of results returned |
+| `default_similarity_threshold` | `float \| None` | `None` | Minimum similarity score (0.0-1.0) |
+| `dense_search_enabled` | `bool` | `True` | Enable dense vector search |
+| `full_text_search_enabled` | `bool` | `True` | Enable full-text search |
+| `hybrid_search_enabled` | `bool` | `True` | Enable hybrid search |
+| `default_hybrid_alpha` | `float` | `0.5` | Alpha for hybrid search blending (0.0 = full-text, 1.0 = dense) |
+| `default_fusion_method` | `str` | `'weighted'` | Fusion method: `'rrf'` or `'weighted'` |
+
+## Choosing a Provider
+
+**For prototyping and development:**
+- **Chroma** (embedded mode) or **FAISS** — zero infrastructure, fast iteration
+
+**For production with managed infrastructure:**
+- **Pinecone** — fully managed, auto-scaling, zero ops
+- **SuperMemory** — zero-config (handles embeddings too)
+
+**For production with self-hosted infrastructure:**
+- **Qdrant** or **Milvus** — feature-rich, scalable, battle-tested
+- **Weaviate** — if you need schema-based collections and AI modules
+
+**For existing PostgreSQL setups:**
+- **PGVector** — adds vector search to your existing database

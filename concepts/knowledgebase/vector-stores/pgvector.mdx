@@ -7,7 +7,7 @@ description: "Using PostgreSQL with pgvector extension as a vector database prov
 
 PGVector is a PostgreSQL extension that enables vector similarity search. It supports HNSW and IVFFlat indexes and integrates seamlessly with existing PostgreSQL infrastructure.
 
-**Provider Class:** `PgvectorProvider`  
+**Provider Class:** `PgVectorProvider`  
 **Config Class:** `PgVectorConfig`
 
 ## Install
@@ -24,12 +24,12 @@ PGVector is a PostgreSQL extension that enables vector similarity search. It sup
 
 ```python
 from upsonic import Agent, Task, KnowledgeBase
-from upsonic.embeddings.openai_provider import OpenAIEmbeddingProvider
-from upsonic.vectordb import PgvectorProvider, PgVectorConfig, HNSWIndexConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import PgVectorProvider, PgVectorConfig, HNSWIndexConfig
 from pydantic import SecretStr
 
 # Setup embedding provider
-embedding = OpenAIEmbeddingProvider(api_key="your-api-key")
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
 
 # Create PGVector configuration
 config = PgVectorConfig(
@@ -39,7 +39,7 @@ config = PgVectorConfig(
     schema_name="public",
     index=HNSWIndexConfig(m=16, ef_construction=200)
 )
-vectordb = PgvectorProvider(config)
+vectordb = PgVectorProvider(config)
 
 # Create knowledge base
 kb = KnowledgeBase(
@@ -78,7 +78,6 @@ result = agent.do(task)
 | `provider_description` | `Optional[str]` | Provider description | `None` | No |
 | `provider_id` | `Optional[str]` | Provider ID | `None` | No |
 | `default_metadata` | `Optional[Dict[str, Any]]` | Default metadata for all records | `None` | No |
-| `auto_generate_content_id` | `bool` | Auto-generate content IDs | `True` | No |
 | `indexed_fields` | `Optional[List[Union[str, Dict[str, Any]]]]` | Fields to index for filtering | `None` | No |
 
 ### PGVector-Specific Parameters
