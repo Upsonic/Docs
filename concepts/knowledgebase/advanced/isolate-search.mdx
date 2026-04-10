@@ -1,0 +1,133 @@
+---
+title: "Isolated Search"
+description: "Scope search results to a single KnowledgeBase when multiple KBs share one collection"
+---
+
+## Overview
+
+When multiple `KnowledgeBase` instances share the same vector database collection, `isolate_search` controls whether queries are scoped to only the documents belonging to that KnowledgeBase or whether they can return results from any document in the collection.
+
+| Value | Behavior |
+|-------|----------|
+| `True` (default) | Queries only return documents indexed by **this** KnowledgeBase |
+| `False` | Queries return documents from **all** KnowledgeBases in the shared collection |
+
+## How It Works
+
+When `isolate_search=True`:
+
+1. **During indexing** — every chunk is tagged with the KnowledgeBase's unique `knowledge_id` in the vector database metadata
+2. **During search** — a `knowledge_base_id` filter is automatically injected into every query, so only chunks belonging to this KnowledgeBase are returned
+
+When `isolate_search=False`, chunks are stored without a `knowledge_base_id` tag, and no filter is applied at query time.
+
+## Example: Two Isolated KnowledgeBases
+
+Two KnowledgeBases share the same Chroma collection but return only their own documents:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+
+# Both KBs point to the same collection
+def make_vectordb():
+    return ChromaProvider(ChromaConfig(
+        collection_name="company_docs",
+        vector_size=1536,
+        connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db"),
+    ))
+
+# KB for HR policies
+hr_kb = KnowledgeBase(
+    sources=["hr_handbook.pdf"],
+    vectordb=make_vectordb(),
+    embedding_provider=embedding,
+    name="hr_policies",
+    isolate_search=True,  # default — only returns HR docs
+)
+
+# KB for engineering docs
+eng_kb = KnowledgeBase(
+    sources=["engineering_wiki/"],
+    vectordb=make_vectordb(),
+    embedding_provider=embedding,
+    name="engineering_docs",
+    isolate_search=True,  # default — only returns engineering docs
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+
+# This query only searches HR documents
+hr_task = Task(
+    description="What is the PTO policy?",
+    context=[hr_kb],
+)
+print(agent.do(hr_task))
+
+# This query only searches engineering documents
+eng_task = Task(
+    description="How do we deploy to production?",
+    context=[eng_kb],
+)
+print(agent.do(eng_task))
+```
+
+With `isolate_search=True`, querying the HR KnowledgeBase about deployment will never return engineering docs, and vice versa — even though they share the same underlying collection.
+
+## Example: Shared Search Across KnowledgeBases
+
+Set `isolate_search=False` to allow queries to match documents from any KnowledgeBase in the collection:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+
+def make_vectordb():
+    return ChromaProvider(ChromaConfig(
+        collection_name="all_company_docs",
+        vector_size=1536,
+        connection=ConnectionConfig(mode=Mode.EMBEDDED, db_path="./chroma_db"),
+    ))
+
+# Multiple KBs sharing a collection with cross-KB search
+hr_kb = KnowledgeBase(
+    sources=["hr_handbook.pdf"],
+    vectordb=make_vectordb(),
+    embedding_provider=embedding,
+    name="hr_policies",
+    isolate_search=False,  # can search across all docs
+)
+
+eng_kb = KnowledgeBase(
+    sources=["engineering_wiki/"],
+    vectordb=make_vectordb(),
+    embedding_provider=embedding,
+    name="engineering_docs",
+    isolate_search=False,  # can search across all docs
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+
+# This query searches ALL documents in the collection
+task = Task(
+    description="What are the company policies around on-call rotations?",
+    context=[hr_kb],  # will find results from both HR and engineering docs
+)
+print(agent.do(task))
+```
+
+## When to Use Each Mode
+
+| Scenario | Recommended |
+|----------|-------------|
+| Multiple distinct knowledge domains in one collection | `isolate_search=True` |
+| Single KnowledgeBase per collection | Either (no difference) |
+| Global search across all documents | `isolate_search=False` |
+| Multi-tenant — each tenant's docs must be private | `isolate_search=True` |
+| Building a unified search over incrementally added sources | `isolate_search=False` |
