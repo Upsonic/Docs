@@ -1,0 +1,190 @@
+---
+title: "Google Calendar MCP Agent"
+description: "Build an autonomous agent that analyzes your calendar and generates schedule reports"
+sidebarTitle: "Google Calendar"
+---
+
+## Overview
+
+Build an autonomous agent that connects to Google Calendar, analyzes your schedule, and generates time-use reports — meeting load analysis, free slot summaries, and weekly schedule exports.
+
+<Info>
+This example uses [`@cocal/google-calendar-mcp`](https://www.npmjs.com/package/@cocal/google-calendar-mcp), a community-maintained MCP server — not an official Google product. Review the package source and permissions before granting access to your calendar data.
+</Info>
+
+## Prerequisites
+
+- A Google Cloud project with the [Calendar API enabled](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com)
+- OAuth 2.0 credentials (Desktop app type) downloaded as a JSON file
+- Node.js installed (for `npx`)
+
+## Setup
+
+### 1. Create OAuth Credentials
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com)
+2. Create a new project or select an existing one
+3. Enable the [Google Calendar API](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com)
+4. Go to **Credentials** → **Create Credentials** → **OAuth client ID**
+5. Select **Desktop app** as the application type
+6. Download the credentials JSON file
+7. Add your email as a test user under the [Audience screen](https://console.cloud.google.com/auth/audience)
+
+### 2. Place the Credentials File
+
+Save the downloaded OAuth credentials JSON file to a known path, for example:
+
+```bash
+mkdir -p ~/.config/google-calendar-mcp
+cp /path/to/downloaded-credentials.json ~/.config/google-calendar-mcp/credentials.json
+```
+
+### 3. Authenticate
+
+Run the authentication flow to generate access tokens:
+
+```bash
+export GOOGLE_OAUTH_CREDENTIALS="$HOME/.config/google-calendar-mcp/credentials.json"
+npx @cocal/google-calendar-mcp auth
+```
+
+This opens a browser window where you log in to Google and grant calendar access. The resulting auth tokens are saved automatically.
+
+<Warning>
+If your Google Cloud app is in **test mode** (the default), OAuth tokens expire after 7 days. You will need to re-run the auth command weekly.
+</Warning>
+
+### 4. Environment Variables
+
+```bash
+# .env
+ANTHROPIC_API_KEY=your-anthropic-key-here
+```
+
+## Installation
+
+```bash
+# With uv (recommended)
+uv pip install upsonic python-dotenv
+
+# With pip
+pip install upsonic python-dotenv
+```
+
+## Example: Weekly Time-Use Report
+
+The agent fetches all events for the current week and generates a time-use breakdown report.
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.mcp import MCPHandler
+
+load_dotenv()
+
+calendar_handler = MCPHandler(
+    command="npx -y @cocal/google-calendar-mcp",
+    env={
+        "GOOGLE_OAUTH_CREDENTIALS": os.path.expanduser(
+            "~/.config/google-calendar-mcp/credentials.json"
+        )
+    },
+    timeout_seconds=60
+)
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    workspace="./calendar-reports",
+    tools=[calendar_handler]
+)
+
+task = Task(
+    description="""
+    Analyze my calendar for the current week (Monday to Friday).
+
+    1. Fetch all events for each day
+    2. Categorize each event as: meeting, focus_time, 1on1, external, or other
+    3. Calculate hours spent in each category per day
+
+    Write the following files:
+    - 'weekly_schedule.csv' with columns: date, event_title, start_time,
+      end_time, duration_minutes, category, attendee_count
+    - 'time_use_report.md' with:
+      * Daily breakdown table (hours per category per day)
+      * Total meeting hours vs available focus time
+      * Busiest and lightest days
+      * Back-to-back meeting chains (3+ consecutive meetings)
+      * Recommendations for better time management
+    """
+)
+
+agent.print_do(task)
+```
+
+## Example: Availability Finder
+
+The agent analyzes your calendar and generates a free-slots document you can share with others for scheduling.
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.mcp import MCPHandler
+
+load_dotenv()
+
+calendar_handler = MCPHandler(
+    command="npx -y @cocal/google-calendar-mcp",
+    env={
+        "GOOGLE_OAUTH_CREDENTIALS": os.path.expanduser(
+            "~/.config/google-calendar-mcp/credentials.json"
+        )
+    },
+    timeout_seconds=60
+)
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    workspace="./calendar-reports",
+    tools=[calendar_handler]
+)
+
+task = Task(
+    description="""
+    Check my calendar for the next 5 business days and find all available
+    slots for a 45-minute meeting.
+
+    Constraints:
+    - Only between 9:00 AM and 5:00 PM
+    - Exclude 12:00 PM - 1:00 PM (lunch)
+    - Require at least 15 minutes buffer between meetings
+
+    Write 'available_slots.md' with:
+    - A clean, shareable list of available time slots grouped by day
+    - Total number of available slots
+    - A note about the timezone
+    """
+)
+
+agent.print_do(task)
+```
+
+## Available Tools
+
+Google Calendar MCP servers typically expose tools including:
+
+| Tool | Description |
+|------|-------------|
+| `list_events` | List events in a time range |
+| `create_event` | Create a new calendar event |
+| `update_event` | Update an existing event |
+| `delete_event` | Delete an event |
+| `get_freebusy` | Check free/busy status |
+
+## Security Notes
+
+- Use OAuth 2.0 with the minimum required scopes (`calendar.events`, `calendar.readonly`).
+- Never commit your OAuth credentials JSON or token files to version control.
+- Auth tokens grant access to your calendar — treat them like passwords.
+- If your app is in test mode, tokens expire after 7 days. Re-run `npx @cocal/google-calendar-mcp auth` to re-authenticate.
