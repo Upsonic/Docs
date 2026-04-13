@@ -1,0 +1,153 @@
+---
+title: "Stripe MCP Agent"
+description: "Build an autonomous agent that analyzes Stripe payment data and generates revenue reports"
+sidebarTitle: "Stripe"
+---
+
+## Overview
+
+Build an autonomous agent that connects to Stripe, pulls payment and subscription data, and generates revenue analytics — CSV exports, trend reports, and churn analysis — directly in your workspace.
+
+## Prerequisites
+
+- A [Stripe API Key](https://dashboard.stripe.com/apikeys) (use a **test mode** key for development)
+- Node.js installed (for `npx`)
+
+## Environment Variables
+
+```bash
+# .env
+STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxxxxx
+ANTHROPIC_API_KEY=your-anthropic-key-here
+```
+
+## Installation
+
+```bash
+# With uv (recommended)
+uv pip install upsonic python-dotenv
+
+# With pip
+pip install upsonic python-dotenv
+```
+
+## Example: Monthly Revenue Report
+
+The agent fetches payment data from Stripe and writes a revenue report with breakdowns by product, customer segment, and payment method.
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.mcp import MCPHandler
+
+load_dotenv()
+
+stripe_handler = MCPHandler(
+    command="npx -y @stripe/mcp --tools=all",
+    env={
+        "STRIPE_SECRET_KEY": os.getenv("STRIPE_SECRET_KEY")
+    },
+    timeout_seconds=60
+)
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    workspace="./revenue-reports",
+    tools=[stripe_handler]
+)
+
+task = Task(
+    description="""
+    Generate a monthly revenue report from Stripe data.
+
+    1. Fetch all successful payments from the last 30 days
+    2. Fetch all active subscriptions
+
+    Write the following files:
+    - 'payments.csv' with columns: date, customer_email, amount, currency,
+      product, payment_method
+    - 'revenue_report.md' with sections:
+      * Total Revenue (sum of all payments)
+      * Revenue by Product (table)
+      * Payment Method Distribution (card vs bank transfer vs other)
+      * Monthly Recurring Revenue (MRR) from active subscriptions
+      * Top 10 Customers by Spend
+    """
+)
+
+agent.print_do(task)
+```
+
+## Example: Subscription Churn Analysis
+
+The agent analyzes subscription data to identify churn patterns and exports the findings.
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.mcp import MCPHandler
+
+load_dotenv()
+
+stripe_handler = MCPHandler(
+    command="npx -y @stripe/mcp --tools=all",
+    env={
+        "STRIPE_SECRET_KEY": os.getenv("STRIPE_SECRET_KEY")
+    },
+    timeout_seconds=60
+)
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    workspace="./analytics",
+    tools=[stripe_handler]
+)
+
+task = Task(
+    description="""
+    Analyze subscription churn from Stripe data.
+
+    1. Fetch all subscriptions (active, canceled, and past_due)
+    2. For canceled subscriptions, note the cancellation date and plan
+
+    Write the following files:
+    - 'subscriptions.csv' with columns: customer_email, plan, status,
+      start_date, cancel_date, monthly_amount
+    - 'churn_analysis.md' with:
+      * Active vs Canceled vs Past Due counts
+      * Churn rate (canceled / total)
+      * Most churned plan (which plan loses the most subscribers)
+      * At-risk subscriptions (past_due) with customer details
+      * Recommendations for reducing churn
+    """
+)
+
+agent.print_do(task)
+```
+
+## Available Tools
+
+The Stripe MCP server exposes tools including:
+
+| Tool | Description |
+|------|-------------|
+| `list_customers` | List customers with optional filters |
+| `create_customer` | Create a new customer |
+| `list_payments` | List payment intents |
+| `create_payment_link` | Create a shareable payment link |
+| `list_subscriptions` | List subscriptions |
+| `list_products` | List available products |
+| `get_balance` | Get current account balance |
+
+<Warning>
+**Use test mode keys for development.** Never use live Stripe keys during development or testing. Test mode keys start with `sk_test_` and live keys start with `sk_live_`.
+</Warning>
+
+## Security Notes
+
+- Always use **test mode** API keys (`sk_test_...`) during development.
+- Use restricted API keys with only the permissions your agent needs.
+- Store your API key in `.env` — never hardcode it.
+- For production, restrict key permissions to read-only where possible.
