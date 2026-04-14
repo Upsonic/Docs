@@ -1,0 +1,117 @@
+---
+title: "Indexed Processing"
+sidebarTitle: "Indexed Processing"
+description: "Use different loaders and splitters for each source file"
+---
+
+## Overview
+
+When processing multiple sources, you can assign different loaders and splitters to each source by matching them by index. This gives you precise control over how each document type is processed.
+
+## Single Loader/Splitter (Shared)
+
+When you provide a single loader or splitter, it's shared across all sources:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.config import PdfLoaderConfig
+from upsonic.text_splitter.recursive import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="shared_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+loader = PdfLoader(PdfLoaderConfig())
+splitter = RecursiveChunker(RecursiveChunkingConfig(chunk_size=512))
+
+kb = KnowledgeBase(
+    sources=["doc1.pdf", "doc2.pdf", "doc3.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=[loader],       # Single loader shared across all sources
+    splitters=[splitter]    # Single splitter shared across all sources
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="List the safety precautions mentioned across all documents",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Multiple Loaders/Splitters (Indexed)
+
+Provide one loader and one splitter per source — matched by index position:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.loaders.pdf import PdfLoader
+from upsonic.loaders.markdown import MarkdownLoader
+from upsonic.loaders.config import PdfLoaderConfig, MarkdownLoaderConfig
+from upsonic.text_splitter.recursive import RecursiveChunker, RecursiveChunkingConfig
+from upsonic.text_splitter.semantic import SemanticChunker, SemanticChunkingConfig
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="indexed_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+# Index 0 → manual.pdf, Index 1 → guide.md
+loaders = [
+    PdfLoader(PdfLoaderConfig()),
+    MarkdownLoader(MarkdownLoaderConfig())
+]
+
+# Index 0 → small chunks for precise PDF retrieval
+# Index 1 → semantic chunking for Markdown prose
+splitters = [
+    RecursiveChunker(RecursiveChunkingConfig(chunk_size=512)),
+    SemanticChunker(SemanticChunkingConfig(
+        embedding_provider=embedding,
+        chunk_size=1024
+    ))
+]
+
+kb = KnowledgeBase(
+    sources=["manual.pdf", "guide.md"],
+    embedding_provider=embedding,
+    vectordb=vectordb,
+    loaders=loaders,
+    splitters=splitters
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What are the dependencies listed in the markdown guide versus the PDF manual?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## How Indexing Works
+
+```
+sources:    ["manual.pdf",  "guide.md",  "data.csv"]
+              ↓ index 0      ↓ index 1    ↓ index 2
+loaders:    [PdfLoader,     MdLoader,    CsvLoader]
+splitters:  [Recursive,     Semantic,    Recursive]
+```
+
+<Warning>
+  When using multiple loaders or splitters, the count **must match** the number of file sources. String content sources (direct text) don't need loaders — they are processed internally.
+</Warning>

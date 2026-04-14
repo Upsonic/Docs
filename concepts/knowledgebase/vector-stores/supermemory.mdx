@@ -122,7 +122,6 @@ print(result)
 | `provider_description` | `Optional[str]` | Provider description | `None` | No |
 | `provider_id` | `Optional[str]` | Provider ID | `None` | No |
 | `default_metadata` | `Optional[Dict[str, Any]]` | Default metadata for all records | `None` | No |
-| `auto_generate_content_id` | `bool` | Auto-generate content IDs | `True` | No |
 | `indexed_fields` | `Optional[List[Union[str, Dict[str, Any]]]]` | Fields to index for filtering | `None` | No |
 
 ### SuperMemory-Specific Parameters
@@ -137,6 +136,7 @@ print(result)
 | `max_retries` | `int` | Maximum number of API request retries | `2` | No |
 | `timeout` | `float` | API request timeout in seconds | `60.0` | No |
 | `batch_delay` | `float` | Delay in seconds between individual upsert calls (rate-limit protection) | `0.1` | No |
+| `index_delay` | `float` | Seconds to wait after upsert for async indexing to complete. SuperMemory indexes content asynchronously — this delay ensures content is searchable before queries run. Set to `0` to skip. | `7.0` | No |
 
 ## Search Modes
 

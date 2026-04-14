@@ -1,0 +1,206 @@
+---
+title: "Vector Search Tuning"
+sidebarTitle: "Search Tuning"
+description: "Fine-tune retrieval with per-Task vector search parameters"
+---
+
+## Overview
+
+When KnowledgeBase is used as context, you can fine-tune retrieval behavior directly on the `Task`. These parameters control how many results are returned, how they're ranked, and what minimum quality threshold to enforce.
+
+## Available Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `vector_search_top_k` | `int \| None` | `None` (uses provider default of 10) | Number of results to retrieve |
+| `vector_search_similarity_threshold` | `float \| None` | `None` | Minimum similarity score (0.0-1.0) — results below this are discarded |
+| `vector_search_alpha` | `float \| None` | `None` (uses provider default of 0.5) | Balance between dense and sparse search (0.0 = full-text only, 1.0 = dense only) |
+| `vector_search_fusion_method` | `str \| None` | `None` (uses provider default) | How to combine search results: `'rrf'` (Reciprocal Rank Fusion) or `'weighted'` |
+| `vector_search_filter` | `Dict \| None` | `None` | Metadata filter to scope results |
+
+## Controlling Result Count
+
+Increase `top_k` when you need comprehensive context, decrease it for focused answers:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="search_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["product_catalog.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+
+# Retrieve more results for a broad comparison
+task = Task(
+    description="Compare all available pricing tiers and their features",
+    context=[kb],
+    vector_search_top_k=20
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Setting Similarity Threshold
+
+Filter out low-quality matches by setting a minimum similarity score:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="threshold_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["technical_spec.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+
+# Only return highly relevant results
+task = Task(
+    description="What is the maximum throughput of the system?",
+    context=[kb],
+    vector_search_top_k=5,
+    vector_search_similarity_threshold=0.75
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Tuning Hybrid Search
+
+Control how dense vector search and full-text search are blended:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="hybrid_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["api_docs/"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+
+# Favor full-text search for exact keyword matches (alpha closer to 0)
+task = Task(
+    description="Find documentation about the 'X-Rate-Limit-Remaining' header",
+    context=[kb],
+    vector_search_alpha=0.2,
+    vector_search_fusion_method="rrf"
+)
+
+result = agent.do(task)
+print(result)
+```
+
+| Alpha Value | Behavior |
+|-------------|----------|
+| `0.0` | Pure full-text / keyword search |
+| `0.3` | Emphasis on keyword matches with some semantic understanding |
+| `0.5` | Equal blend of dense + full-text (default) |
+| `0.7` | Emphasis on semantic similarity |
+| `1.0` | Pure dense / semantic vector search |
+
+## Metadata Filtering
+
+Scope search to specific documents or categories using metadata filters:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="filter_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["contracts/", "invoices/"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+
+# Only search within a specific document
+task = Task(
+    description="What is the payment schedule?",
+    context=[kb],
+    vector_search_filter={"document_name": "contract_2024.pdf"}
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Combining Parameters
+
+All parameters can be combined for precise control:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="combined_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["compliance_docs/"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+
+task = Task(
+    description="What are the GDPR compliance requirements for data retention?",
+    context=[kb],
+    vector_search_top_k=10,
+    vector_search_similarity_threshold=0.7,
+    vector_search_alpha=0.6,
+    vector_search_fusion_method="weighted"
+)
+
+result = agent.do(task)
+print(result)
+```

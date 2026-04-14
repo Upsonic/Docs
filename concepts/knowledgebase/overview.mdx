@@ -13,14 +13,15 @@ KnowledgeBase enables you to build Retrieval-Augmented Generation (RAG) systems 
 
 - **Automatic Processing**: Loads documents, chunks text, creates embeddings, and stores in vector databases
 - **Multiple Formats**: Supports PDFs, Markdown, DOCX, CSV, JSON, HTML, and more
-- **Intelligent Chunking**: Auto-detects optimal text splitting strategies
-- **Flexible Storage**: Works with Chroma, Milvus, Qdrant, Pinecone, Weaviate, FAISS, and PGVector
+- **Intelligent Chunking**: Auto-detects optimal text splitting strategies based on file type and use case
+- **Flexible Storage**: Works with Chroma, Milvus, Qdrant, Pinecone, Weaviate, FAISS, PGVector, and SuperMemory
 - **Hybrid Search**: Combines dense vector search with full-text search for better results
 - **Tool Integration**: Can be used as a tool, allowing agents to actively search and retrieve information
+- **Named Knowledge Bases**: Use `name`, `description`, and `topics` to help agents intelligently route queries across multiple knowledge bases
 
 ## Installation
 
-To use KnowledgeBase, you'll need to install the required dependencies for your chosen vector database, document loaders, and embedding providers.
+To use KnowledgeBase, you'll need to install the required dependencies for your chosen vector database and (optionally) document loaders and embedding providers.
 
 <Note>
   **Example: Setting up KnowledgeBase with Chroma**
@@ -36,12 +37,16 @@ To use KnowledgeBase, you'll need to install the required dependencies for your 
   **What each optional group provides:**
   - `[chroma]` - ChromaDB vector database client
   - `[pdf-loader]` - PDF document loader (PyPDF)
-  - `[embeddings]` - Embedding providers (OpenAI, Anthropic, etc.)
+  - `[embeddings]` - Embedding providers (OpenAI, etc.)
 
-  For other vector databases, replace `chroma` with `qdrant`, `milvus`, `weaviate`, `pinecone`, `faiss`, or `pgvector`. For other loaders, see the [Loaders documentation](/integrations/document-loaders/pypdf).
+  For other vector databases, replace `chroma` with `qdrant`, `milvus`, `weaviate`, `pinecone`, `faiss`, `pgvector`, or `supermemory`. For other loaders, see the [Loaders documentation](/integrations/document-loaders/pypdf).
+
+  <Tip>
+    **SuperMemory** handles embeddings internally, so you don't need to install `[embeddings]` or pass an `embedding_provider` when using it.
+  </Tip>
 </Note>
 
-## Example
+## Quick Start
 
 Create a KnowledgeBase from documents and use it with an Agent:
 
@@ -90,7 +95,7 @@ print(result)
 KnowledgeBase supports a rich ecosystem of integrations for vector stores, embedding providers, document loaders, and text splitters.
 
 <CardGroup cols={2}>
-  <Card title="Vector Stores" icon="database" href="/integrations/overview#vector-stores">
+  <Card title="Vector Stores" icon="database" href="/concepts/knowledgebase/vector-stores">
     Chroma, Qdrant, Pinecone, Milvus, PGVector, FAISS, Weaviate, SuperMemory
   </Card>
   <Card title="Embedding Providers" icon="layer-group" href="/integrations/overview#embedding-providers">
@@ -106,7 +111,21 @@ KnowledgeBase supports a rich ecosystem of integrations for vector stores, embed
 
 ## Navigation
 
+- [Getting Started](/concepts/knowledgebase/basic-rag-example) - Build your first RAG system in 5 minutes
 - [Attributes](/concepts/knowledgebase/attributes) - Configuration options for KnowledgeBase
 - [Putting Files](/concepts/knowledgebase/putting-files) - How to add documents to your knowledge base
 - [Using as Tool](/concepts/knowledgebase/using-as-tool) - Use KnowledgeBase as a tool in Agent or Task
+- [Query Control](/concepts/knowledgebase/query-control) - Control when RAG context is injected
+- [Examples](/concepts/knowledgebase/examples) - Practical runnable examples
+- [Vector Stores](/concepts/knowledgebase/vector-stores) - Choose and configure your vector database
 
+### Advanced Features
+
+- [Auto-Detection](/concepts/knowledgebase/advanced/auto-detection) - Intelligent loader and splitter selection
+- [Indexed Processing](/concepts/knowledgebase/advanced/indexed-processing) - Per-source loaders and splitters
+- [Direct Content](/concepts/knowledgebase/advanced/direct-content) - Ingest raw text without files
+- [Vector Search Tuning](/concepts/knowledgebase/advanced/vector-search-params) - Fine-tune retrieval per Task
+- [Document Management](/concepts/knowledgebase/advanced/document-management) - Add, remove, refresh documents dynamically
+- [Health & Diagnostics](/concepts/knowledgebase/advanced/health-diagnostics) - Monitor and optimize your KnowledgeBase
+- [Storage Persistence](/concepts/knowledgebase/advanced/storage-persistence) - Persist document metadata to a storage backend
+- [Isolated Search](/concepts/knowledgebase/advanced/isolate-search) - Scope queries to a single KnowledgeBase in a shared collection

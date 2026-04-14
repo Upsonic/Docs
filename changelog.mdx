@@ -7,6 +7,43 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 
 
 
+<Update label="Apr 14, 2026">
+    ## v0.75.0
+
+    [View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.75.0)
+
+    ## New Features:
+    - KnowledgeBase State Machine: Added `KBState` enum state machine (`UNINITIALIZED → CONNECTED → INDEXED → CLOSED`) replacing boolean flags, with `RuntimeError` guards on invalid states for safer lifecycle management.
+    - KnowledgeBase Content Management APIs: New sync + async APIs including `aadd_source`, `aadd_text`, `aremove_document`, `arefresh`, `adelete_by_filter`, and `aupdate_document_metadata` for comprehensive document management.
+    - KnowledgeBase Storage Table: Added `KnowledgeRow` dataclass with full CRUD support across all 7 storage providers (SQLite, PostgreSQL, MongoDB, Redis, JSON, InMemory, Mem0) for document tracking and content-hash deduplication.
+    - Incremental Change Detection: KnowledgeBase now checks `doc_content_hash` in vectordb to skip unchanged documents and delete stale chunks before re-indexing edited documents.
+    - Isolated Search for KnowledgeBase: New `isolate_search` parameter (default `True`) auto-injects `knowledge_base_id` filter, allowing multiple KnowledgeBases to safely share one collection.
+
+    ## Improvements:
+    - VectorDB Payload Standardization: Enforced a strict, uniform payload contract across all 6 vector database providers (Qdrant, Milvus, Pgvector, Pinecone, Weaviate, Chroma), making `VectorSearchResult.payload` shape identical regardless of backend.
+    - KnowledgeBase Architecture Refactor: Dropped `ToolKit` inheritance in favor of `get_tools()` returning `FunctionTool.from_callable()`, added `build_context()`/`abuild_context()` for system-prompt generation, and auto-derived collection naming.
+    - VectorDB `aupsert` Validation: Added strict length validation on all per-item arrays with clear `ValueError` messages, and introduced `knowledge_base_ids` as a dedicated parameter across all 6 providers.
+
+    ## Bug Fixes:
+    - Fixed Autonomous Agent Print Default: Set the autonomous agent class `print` attribute to `True` as default so agent output is visible without manual configuration.
+    - Fixed MCP Streamable HTTP Client: Resolved issues with the MCP Streamable HTTP client connection handling.
+    - Fixed MCP Session Duplication: Fixed a bug where MCP sessions were being duplicated.
+    - Fixed Milvus Metadata Leak: `aupdate_metadata` no longer silently reverts user-specified fields to config defaults.
+    - Fixed Pgvector Delete Bug: Resolved dotted-path bug in `adelete_by_metadata` and fixed JSONB flattening in `_row_to_payload`.
+    - Fixed Qdrant Payload Flattening: Neutered `_flatten_payload` which was actively undoing the standardized payload contract on reads.
+    - Fixed VectorDB Standard Fields Drift: Corrected 3 stale hardcoded literals in Milvus and Weaviate that were missing `knowledge_base_id`, causing silent filter failures and missing scalar indexes.
+
+
+    Full Changelog: https://github.com/Upsonic/Upsonic/compare/v0.74.4...v0.75.0
+
+    ### Pull Requests:
+    - fix: set autonomous agent class print attribute True as default: [DoganK01](https://github.com/DoganK01) in [#565](https://github.com/Upsonic/Upsonic/pull/565)
+    - Rag refactors: [DoganK01](https://github.com/DoganK01) in [#566](https://github.com/Upsonic/Upsonic/pull/566)
+    - Version 0.75.0: [DoganK01](https://github.com/DoganK01) in [#567](https://github.com/Upsonic/Upsonic/pull/567)
+</Update>
+
+
+
 <Update label="Apr 2, 2026">
   ## v0.74.4
 

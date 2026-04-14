@@ -1,11 +1,20 @@
 ---
-title: "Basic RAG Example"
-description: "A complete example of building a RAG system with KnowledgeBase"
+title: "Getting Started"
+sidebarTitle: "Getting Started"
+description: "Build your first RAG system with KnowledgeBase in 5 minutes"
 ---
 
 ## Overview
 
-This guide demonstrates how to build a complete Retrieval-Augmented Generation (RAG) system using KnowledgeBase, Agent, and Task.
+This guide walks you through building a complete Retrieval-Augmented Generation (RAG) system step by step. By the end, your agent will answer questions using your own documents.
+
+## Prerequisites
+
+Install the required dependencies:
+
+```bash
+uv pip install "upsonic[chroma,pdf-loader,embeddings]"
+```
 
 ## Complete Example
 
@@ -42,25 +51,23 @@ kb = KnowledgeBase(
     loaders=[loader]
 )
 
-# Step 5: Create agent
+# Step 5: Create agent and task
 agent = Agent("anthropic/claude-sonnet-4-5")
-
-# Step 6: Create task with knowledge base context
 task = Task(
     description="What is the daily working hours policy described in the text?",
     context=[kb]
 )
 
-# Step 7: Execute and get results
+# Step 6: Execute and get results
 result = agent.do(task)
 print(result)
 ```
 
-## Step-by-Step Explanation
+## Step-by-Step Breakdown
 
-### 1. Setup Embedding Provider
+### 1. Embedding Provider
 
-The embedding provider converts text into vector representations for semantic search.
+The embedding provider converts text into vector representations for semantic search. The `vector_size` in your vector database config must match the embedding model's output dimension (1536 for `text-embedding-3-small`).
 
 ```python
 from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
@@ -70,9 +77,9 @@ embedding = OpenAIEmbedding(OpenAIEmbeddingConfig(
 ))
 ```
 
-### 2. Setup Vector Database
+### 2. Vector Database
 
-The vector database stores the embedded documents for fast similarity search.
+The vector database stores embedded document chunks for fast similarity search. Choose any [supported provider](/concepts/knowledgebase/vector-stores) — this example uses Chroma in embedded mode.
 
 ```python
 from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
@@ -87,9 +94,9 @@ vectordb = ChromaProvider(ChromaConfig(
 ))
 ```
 
-### 3. Create Knowledge Base
+### 3. Knowledge Base
 
-KnowledgeBase automatically processes documents, creates chunks, generates embeddings, and stores them.
+KnowledgeBase orchestrates the entire pipeline: it loads documents, chunks text, generates embeddings, and stores them.
 
 ```python
 from upsonic import KnowledgeBase
@@ -106,93 +113,38 @@ kb = KnowledgeBase(
 )
 ```
 
-### 4. Create Agent
+<Tip>
+  If you don't specify `loaders`, KnowledgeBase auto-detects the appropriate loader based on file extension. Explicit loaders give you more control over parsing behavior.
+</Tip>
 
-Create an agent that will use the knowledge base to answer questions.
+### 4. Agent + Task
+
+Pass the knowledge base as `context` to the Task. The agent automatically queries it for relevant chunks before generating a response.
 
 ```python
-from upsonic import Agent
+from upsonic import Agent, Task
 
 agent = Agent("anthropic/claude-sonnet-4-5")
-```
-
-### 5. Create Task with Context
-
-Pass the knowledge base as context to the task. The agent will automatically query it.
-
-```python
-from upsonic import Task
-
 task = Task(
     description="What is the main topic?",
     context=[kb]
 )
-```
-
-### 6. Execute Task
-
-Execute the task to get the answer with RAG context.
-
-```python
 result = agent.do(task)
-print(result)
-```
-
-## Async Version
-
-For better performance, use async/await:
-
-```python
-import asyncio
-from upsonic import Agent, Task, KnowledgeBase
-from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
-from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
-from upsonic.loaders.pdf import PdfLoader
-from upsonic.loaders.config import PdfLoaderConfig
-
-async def main():
-    embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
-    vectordb = ChromaProvider(ChromaConfig(
-        collection_name="my_rag_kb",
-        vector_size=1536,
-        connection=ConnectionConfig(mode=Mode.IN_MEMORY)
-    ))
-
-    loader = PdfLoader(PdfLoaderConfig())
-
-    kb = KnowledgeBase(
-        sources=["document.pdf"],
-        embedding_provider=embedding,
-        vectordb=vectordb,
-        loaders=[loader]
-    )
-
-    agent = Agent("anthropic/claude-sonnet-4-5")
-    task = Task(
-        description="What is the main topic?",
-        context=[kb]
-    )
-
-    result = await agent.do_async(task)
-    print(result)
-
-asyncio.run(main())
 ```
 
 ## What Happens Behind the Scenes
 
-1. **Document Loading**: KnowledgeBase detects the file type and loads the PDF
-2. **Text Chunking**: The document is split into smaller chunks for better retrieval
-3. **Embedding Generation**: Each chunk is converted to a vector embedding
-4. **Vector Storage**: Embeddings are stored in the vector database
-5. **Query Processing**: When you ask a question, it's embedded and matched against stored chunks
-6. **Context Retrieval**: The most relevant chunks are retrieved
-7. **Response Generation**: The agent uses the retrieved context to generate an answer
+1. **Document Loading** — KnowledgeBase detects the file type and loads the document
+2. **Text Chunking** — The document is split into smaller chunks optimized for retrieval
+3. **Embedding Generation** — Each chunk is converted to a vector embedding
+4. **Vector Storage** — Embeddings are stored in the vector database
+5. **Query Processing** — When the task runs, the description is embedded and matched against stored chunks
+6. **Context Injection** — The most relevant chunks are injected into the agent's context
+7. **Response Generation** — The agent uses the retrieved context to generate an answer
 
 ## Next Steps
 
-- Learn about [advanced features](/concepts/knowledgebase/advanced) like indexed processing
-- Explore [different examples](/concepts/knowledgebase/examples) for various use cases
-- Check [vector stores](/integrations/vector-stores/chroma) for other vector databases
-- See [embedding providers](/integrations/embedding-providers/openai) for other embedding models
-
+- [Examples](/concepts/knowledgebase/examples) — More patterns: async, streaming, multiple KBs, custom splitters
+- [Using as Tool](/concepts/knowledgebase/using-as-tool) — Let agents actively search the KB (instead of auto-injection)
+- [Vector Stores](/concepts/knowledgebase/vector-stores) — Compare and choose the right vector database
+- [Query Control](/concepts/knowledgebase/query-control) — Fine-tune when RAG context is injected

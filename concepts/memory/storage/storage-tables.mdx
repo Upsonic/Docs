@@ -1,13 +1,14 @@
 ---
 title: "Storage Tables"
-description: "What data is stored in the session and user memory tables"
+description: "What data is stored in the session, user memory, and knowledge tables"
 ---
 
 ## Overview
 
-The Memory system uses two primary tables/collections to persist data:
+The storage system uses the following tables/collections to persist data:
 - **Sessions Table**: Stores conversation history, summaries, runs, and metadata
 - **User Memory Table**: Stores user profiles and extracted traits
+- **Knowledge Table**: Stores document registry metadata for KnowledgeBase (when `storage` is passed to a KnowledgeBase)
 
 ## Sessions Table Schema
 
@@ -40,6 +41,29 @@ Stores user profiles and traits extracted from conversations.
 | `user_memory` | `json` | Extracted user traits and preferences |
 | `agent_id` | `string` | Agent that extracted these traits (optional) |
 | `team_id` | `string` | Team that extracted these traits (optional) |
+| `created_at` | `integer` | Unix timestamp of creation |
+| `updated_at` | `integer` | Unix timestamp of last update |
+
+
+## Knowledge Table Schema
+
+Stores document metadata for KnowledgeBase instances. Created automatically when a `storage` backend is passed to a `KnowledgeBase`. The default table name is `upsonic_knowledge`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Primary key, document ID (content-based hash) |
+| `name` | `string` | Human-readable document name |
+| `description` | `string` | Optional document description |
+| `metadata` | `json` | Full document metadata (file path, loader info, etc.) |
+| `type` | `string` | File extension (e.g., `pdf`, `md`, `csv`) |
+| `size` | `integer` | File size in bytes |
+| `knowledge_base_id` | `string` | ID of the parent KnowledgeBase |
+| `content_hash` | `string` | MD5 hash of document content for deduplication |
+| `chunk_count` | `integer` | Number of chunks created from this document |
+| `source` | `string` | Original file path or source identifier |
+| `status` | `string` | Processing status (`indexed`, `failed`) |
+| `status_message` | `string` | Optional status details (e.g., error message) |
+| `access_count` | `integer` | Number of times the document has been accessed |
 | `created_at` | `integer` | Unix timestamp of creation |
 | `updated_at` | `integer` | Unix timestamp of last update |
 

@@ -1,0 +1,145 @@
+---
+title: "Direct Content"
+sidebarTitle: "Direct Content"
+description: "Ingest raw text strings without files and mix with file sources"
+---
+
+## Overview
+
+KnowledgeBase can process raw text strings directly — no file on disk required. This is useful for ingesting API responses, user input, database records, or any text content you already have in memory.
+
+String content is automatically detected and doesn't need a loader.
+
+## String Content as Source
+
+Pass text strings directly in `sources`:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="text_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+company_policy = """
+Remote Work Policy:
+- Employees may work remotely up to 3 days per week.
+- Core hours are 10:00 AM to 3:00 PM in the employee's local timezone.
+- All remote workers must be available on Slack during core hours.
+- VPN is required when accessing company resources from home.
+- Equipment stipend of $1,000 per year is available for home office setup.
+"""
+
+kb = KnowledgeBase(
+    sources=[company_policy],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What is the equipment stipend for home office?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Mixed Sources (Files + Text)
+
+Combine file paths, directories, and string content in a single KnowledgeBase:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="mixed_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+changelog_text = """
+v2.5.0 Release Notes:
+- Added support for PostgreSQL 16
+- Fixed memory leak in connection pooling
+- Improved query performance by 40%
+- Deprecated legacy auth endpoints (removal in v3.0)
+"""
+
+kb = KnowledgeBase(
+    sources=[
+        "docs/architecture.md",           # File — needs loader
+        changelog_text,                     # String — no loader needed
+        "config/"                           # Directory — files inside need loaders
+    ],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What was improved in the latest release and how does it relate to the architecture?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## Adding Text After Setup
+
+Use `add_text()` to insert raw text into an already-initialized knowledge base:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.embeddings import OpenAIEmbedding, OpenAIEmbeddingConfig
+from upsonic.vectordb import ChromaProvider, ChromaConfig, ConnectionConfig, Mode
+
+embedding = OpenAIEmbedding(OpenAIEmbeddingConfig())
+vectordb = ChromaProvider(ChromaConfig(
+    collection_name="dynamic_kb",
+    vector_size=1536,
+    connection=ConnectionConfig(mode=Mode.IN_MEMORY)
+))
+
+kb = KnowledgeBase(
+    sources=["handbook.pdf"],
+    embedding_provider=embedding,
+    vectordb=vectordb
+)
+
+# Add text content after initial setup
+kb.add_text(
+    text="New policy: All meetings over 30 minutes require an agenda shared 24 hours in advance.",
+    document_name="meeting_policy_update",
+    metadata={"category": "policy", "effective_date": "2025-01-15"}
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What are the meeting policies?",
+    context=[kb]
+)
+
+result = agent.do(task)
+print(result)
+```
+
+## How Detection Works
+
+KnowledgeBase classifies a string as direct content (not a file path) when:
+- It contains newlines
+- It's longer than 200 characters
+- It has more than 5 words without file-like patterns
+- It doesn't match any file on disk
+
+This means short strings that look like file paths (e.g., `"report.pdf"`) are treated as file paths, while longer text blocks are treated as content.

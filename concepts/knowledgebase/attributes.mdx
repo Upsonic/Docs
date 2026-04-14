@@ -10,15 +10,19 @@ The KnowledgeBase system is configured through the `KnowledgeBase` class, which 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `sources` | `Union[str, Path, List[Union[str, Path]]]` | (required) | File paths, directory paths, or string content to process |
-| `embedding_provider` | `EmbeddingProvider` | (required) | Provider instance for creating vector embeddings |
 | `vectordb` | `BaseVectorDBProvider` | (required) | Vector database provider instance for storage |
+| `embedding_provider` | `EmbeddingProvider \| None` | `None` | Provider for creating vector embeddings. Optional for providers that handle their own embeddings (e.g., SuperMemory) |
 | `splitters` | `Union[BaseChunker, List[BaseChunker]] \| None` | `None` | Text chunking strategies (auto-detected if None) |
 | `loaders` | `Union[BaseLoader, List[BaseLoader]] \| None` | `None` | Document loaders for different file types (auto-detected if None) |
-| `name` | `str \| None` | `None` | Human-readable name for the knowledge base (auto-generated if None) |
+| `name` | `str \| None` | `None` | Human-readable name for the knowledge base (auto-generated if None). Used to derive tool names when registered as a tool |
+| `description` | `str \| None` | `None` | Description of the knowledge base content. Shown to agents when the KB is used as a tool, helping them decide when to search it |
+| `topics` | `List[str] \| None` | `None` | List of topics covered by the knowledge base. Included in tool descriptions for better agent routing |
 | `use_case` | `str` | `"rag_retrieval"` | Use case for chunking optimization |
 | `quality_preference` | `str` | `"balanced"` | Speed vs quality preference: `"fast"`, `"balanced"`, or `"quality"` |
 | `loader_config` | `Dict[str, Any] \| None` | `None` | Configuration options specifically for loaders |
 | `splitter_config` | `Dict[str, Any] \| None` | `None` | Configuration options specifically for splitters |
+| `isolate_search` | `bool` | `True` | When True, search queries are scoped to only documents in this knowledge base. When False, searches across all documents in the vector database collection |
+| `storage` | `Storage \| None` | `None` | Optional storage backend for persisting knowledge base state and metadata |
 
 ## Configuration Example
 
@@ -44,7 +48,9 @@ kb = KnowledgeBase(
     sources=["document.pdf", "data/"],
     embedding_provider=embedding,
     vectordb=vectordb,
-    name="my_custom_kb",
+    name="product_docs",
+    description="Product documentation including specs, guides, and FAQs",
+    topics=["product specs", "user guides", "troubleshooting"],
     use_case="rag_retrieval",
     quality_preference="balanced",
     loader_config={"chunk_size": 1000},
@@ -62,3 +68,29 @@ result = agent.do(task)
 print(result)
 ```
 
+## SuperMemory (No Embedding Provider)
+
+When using SuperMemory as your vector database, you don't need an embedding provider — SuperMemory handles embeddings internally:
+
+```python
+from upsonic import Agent, Task, KnowledgeBase
+from upsonic.vectordb import SuperMemoryProvider, SuperMemoryConfig
+
+# No embedding provider needed
+vectordb = SuperMemoryProvider(SuperMemoryConfig(
+    collection_name="my_kb",
+    api_key="sm_your_api_key_here"
+))
+
+kb = KnowledgeBase(
+    sources=["document.pdf"],
+    vectordb=vectordb
+)
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+task = Task(
+    description="What are the key points?",
+    context=[kb]
+)
+result = agent.do(task)
+```
