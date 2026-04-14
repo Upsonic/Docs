@@ -1,0 +1,171 @@
+---
+title: "Twitter (X) MCP Agent"
+description: "Build an autonomous agent that analyzes Twitter/X data and generates social media reports"
+sidebarTitle: "Twitter (X)"
+---
+
+## Overview
+
+Build an autonomous agent that connects to Twitter/X, collects social data — mentions, keyword trends, engagement metrics — and generates analytics reports in your workspace.
+
+<Info>
+This example uses [`@enescinar/twitter-mcp`](https://www.npmjs.com/package/@enescinar/twitter-mcp), a community-maintained MCP server — not an official Twitter/X product. Review the package source and permissions before providing your API credentials.
+</Info>
+
+## Prerequisites
+
+- A [Twitter Developer Account](https://developer.x.com/) with API access
+- API Key, API Secret, Access Token, and Access Token Secret from the [Developer Portal](https://developer.x.com/en/portal/dashboard)
+- Node.js installed (for `npx`)
+
+## Environment Variables
+
+```bash
+# .env
+TWITTER_API_KEY=your-api-key
+TWITTER_API_SECRET=your-api-secret
+TWITTER_ACCESS_TOKEN=your-access-token
+TWITTER_ACCESS_TOKEN_SECRET=your-access-token-secret
+ANTHROPIC_API_KEY=your-anthropic-key-here
+```
+
+<Tip>
+Get these credentials from the [Twitter Developer Portal](https://developer.x.com/en/portal/dashboard). Create a project and app, then generate your API keys and access tokens under the "Keys and tokens" tab.
+</Tip>
+
+## Installation
+
+```bash
+# With uv (recommended)
+uv pip install upsonic python-dotenv
+
+# With pip
+pip install upsonic python-dotenv
+```
+
+## Example: Brand Sentiment Report
+
+The agent searches for mentions of a brand or keyword, performs sentiment analysis, and generates a report with CSV data.
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.mcp import MCPHandler
+
+load_dotenv()
+
+twitter_handler = MCPHandler(
+    command="npx -y @enescinar/twitter-mcp",
+    env={
+        "API_KEY": os.getenv("TWITTER_API_KEY"),
+        "API_SECRET_KEY": os.getenv("TWITTER_API_SECRET"),
+        "ACCESS_TOKEN": os.getenv("TWITTER_ACCESS_TOKEN"),
+        "ACCESS_TOKEN_SECRET": os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+    },
+    timeout_seconds=60
+)
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    workspace="./social-reports",
+    tools=[twitter_handler]
+)
+
+task = Task(
+    description="""
+    Search Twitter for recent tweets mentioning "upsonic" or "AI agents"
+    from the last 7 days. Collect at least 50 tweets.
+
+    For each tweet, classify the sentiment as: positive, neutral, or negative.
+
+    Write the following files:
+    - 'tweets.csv' with columns: date, author, text, likes, retweets,
+      replies, sentiment
+    - 'sentiment_report.md' with:
+      * Total tweets analyzed
+      * Sentiment distribution (table with counts and percentages)
+      * Top 5 most engaging tweets (highest likes + retweets)
+      * Common themes in positive mentions
+      * Common complaints in negative mentions
+      * Key influencers (authors with highest follower counts)
+      * Recommendations for engagement strategy
+    """
+)
+
+agent.print_do(task)
+```
+
+## Example: Competitor Monitoring Dashboard
+
+The agent tracks multiple competitors and creates a comparative analysis report.
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.mcp import MCPHandler
+
+load_dotenv()
+
+twitter_handler = MCPHandler(
+    command="npx -y @enescinar/twitter-mcp",
+    env={
+        "API_KEY": os.getenv("TWITTER_API_KEY"),
+        "API_SECRET_KEY": os.getenv("TWITTER_API_SECRET"),
+        "ACCESS_TOKEN": os.getenv("TWITTER_ACCESS_TOKEN"),
+        "ACCESS_TOKEN_SECRET": os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+    },
+    timeout_seconds=60
+)
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    workspace="./social-reports",
+    tools=[twitter_handler]
+)
+
+task = Task(
+    description="""
+    Monitor Twitter activity for three AI agent frameworks:
+    "langchain", "crewai", and "upsonic".
+
+    For each framework, search recent tweets and collect:
+    - Tweet volume (number of mentions)
+    - Average engagement (likes + retweets per tweet)
+    - Overall sentiment
+
+    Write the following files:
+    - 'competitor_data.csv' with columns: framework, date, tweet_count,
+      avg_likes, avg_retweets, positive_pct, negative_pct
+    - 'competitor_report.md' with:
+      * Comparison table (volume, engagement, sentiment per framework)
+      * Share of voice analysis (% of total mentions)
+      * Notable tweets for each framework
+      * Trending topics per framework
+      * Competitive positioning insights
+    """
+)
+
+agent.print_do(task)
+```
+
+## Available Tools
+
+Twitter MCP servers typically expose tools including:
+
+| Tool | Description |
+|------|-------------|
+| `search_tweets` | Search for tweets by keyword or query |
+| `post_tweet` | Post a new tweet |
+| `get_user_tweets` | Get recent tweets from a user |
+| `get_mentions` | Get mentions of the authenticated user |
+| `reply_to_tweet` | Reply to a specific tweet |
+| `get_tweet` | Get details of a specific tweet |
+
+## Security Notes
+
+- Use a dedicated Twitter app with read-only permissions for analytics agents.
+- Store all API keys and tokens in `.env` — never hardcode them.
+- Twitter API has rate limits — set appropriate `tool_call_limit` to avoid hitting them.
+- Only grant write permissions if the agent needs to post or reply.

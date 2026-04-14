@@ -1,0 +1,148 @@
+---
+title: "GitHub MCP Agent"
+description: "Build an autonomous agent that analyzes GitHub repositories and generates reports using the GitHub MCP server"
+sidebarTitle: "GitHub"
+---
+
+## Overview
+
+Build an autonomous agent that connects to GitHub, analyzes repository data — issues, pull requests, commit activity — and generates structured reports in your workspace.
+
+## Prerequisites
+
+- A [GitHub Personal Access Token](https://github.com/settings/tokens) with appropriate scopes (`repo`, `issues`, `pull_requests`)
+- Node.js installed (for `npx`)
+
+## Environment Variables
+
+```bash
+# .env
+GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
+ANTHROPIC_API_KEY=your-anthropic-key-here
+```
+
+## Installation
+
+```bash
+# With uv (recommended)
+uv pip install upsonic python-dotenv
+
+# With pip
+pip install upsonic python-dotenv
+```
+
+## Example: Repository Issue Analysis
+
+The agent fetches open issues from a data science repository, categorizes them by label, and writes a summary report to the workspace.
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.mcp import MCPHandler
+
+load_dotenv()
+
+github_handler = MCPHandler(
+    command="npx -y @modelcontextprotocol/server-github",
+    env={
+        "GITHUB_PERSONAL_ACCESS_TOKEN": os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
+    },
+    timeout_seconds=60,
+)
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    workspace="./reports",
+)
+
+task = Task(
+    description="""
+    Fetch the open issues from 'pandas-dev/pandas' repository (per_page=10).
+    Categorize each issue by label (bug, enhancement, etc.) and write
+    a short summary report to 'pandas_issues_report.md'.
+    """,
+    tools=[github_handler],
+)
+
+agent.print_do(task)
+```
+
+**Generated output** in `./reports/pandas_issues_report.md`:
+
+```
+# Pandas Open Issues Report
+
+## Issue Summary
+Total issues analyzed: 10
+
+## By Category
+| Label       | Count |
+|-------------|-------|
+| Bug         | 4     |
+| Enhancement | 3     |
+| Docs        | 2     |
+| Regression  | 1     |
+
+## Issue Details
+| #     | Title                          | Labels      |
+|-------|--------------------------------|-------------|
+| 12345 | DataFrame.merge produces ...   | Bug         |
+| ...   | ...                            | ...         |
+```
+
+## Example: Compare Contributor Activity
+
+The agent fetches recent commits from a repository and summarizes contributor activity.
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.mcp import MCPHandler
+
+load_dotenv()
+
+github_handler = MCPHandler(
+    command="npx -y @modelcontextprotocol/server-github",
+    env={
+        "GITHUB_PERSONAL_ACCESS_TOKEN": os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
+    },
+    timeout_seconds=60,
+)
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    workspace="./reports",
+)
+
+task = Task(
+    description="""
+    Fetch the last 30 commits from 'scikit-learn/scikit-learn' and write
+    a contributor activity summary to 'sklearn_contributors.md' with
+    a table of authors ranked by commit count.
+    """,
+    tools=[github_handler],
+)
+
+agent.print_do(task)
+```
+
+## Available Tools
+
+The GitHub MCP server exposes tools including:
+
+| Tool | Description |
+|------|-------------|
+| `list_issues` | List issues in a repository |
+| `create_issue` | Create a new issue |
+| `get_pull_request` | Get PR details and diff |
+| `search_repositories` | Search for repositories |
+| `get_file_contents` | Read file contents from a repo |
+| `list_commits` | List recent commits |
+
+## Security Notes
+
+- Use a fine-grained personal access token with only the permissions your agent needs.
+- Store your token in `.env` — never hardcode it.
+- For production, use GitHub Apps with scoped installation tokens instead of personal access tokens.

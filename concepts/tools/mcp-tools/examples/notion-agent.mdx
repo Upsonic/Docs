@@ -1,0 +1,142 @@
+---
+title: "Notion MCP Agent"
+description: "Build an autonomous agent that syncs Notion databases into local reports and analysis files"
+sidebarTitle: "Notion"
+---
+
+## Overview
+
+Build an autonomous agent that connects to your Notion workspace, pulls data from databases and pages, and generates local analysis files — CSV exports, summary reports, and dashboards.
+
+## Prerequisites
+
+- A [Notion Integration Token](https://www.notion.so/my-integrations) with access to the pages/databases you want to use
+- Node.js installed (for `npx`)
+
+## Environment Variables
+
+```bash
+# .env
+OPENAPI_MCP_HEADERS='{"Authorization": "Bearer ntn_xxxxxxxxxxxxxxxxxxxx", "Notion-Version": "2022-06-28"}'
+ANTHROPIC_API_KEY=your-anthropic-key-here
+```
+
+## Installation
+
+```bash
+# With uv (recommended)
+uv pip install upsonic python-dotenv
+
+# With pip
+pip install upsonic python-dotenv
+```
+
+## Example: Export Project Tracker to CSV
+
+The agent queries a Notion database, extracts project data, and writes a structured CSV and summary report to the workspace.
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.mcp import MCPHandler
+
+load_dotenv()
+
+notion_handler = MCPHandler(
+    command="npx -y @notionhq/notion-mcp-server",
+    env={
+        "OPENAPI_MCP_HEADERS": os.getenv("OPENAPI_MCP_HEADERS")
+    },
+    timeout_seconds=60
+)
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    workspace="./exports",
+    tools=[notion_handler]
+)
+
+task = Task(
+    description="""
+    Search my Notion workspace for a database called "Project Tracker".
+    Query all entries and export the data.
+
+    1. Write a CSV file 'projects.csv' with columns:
+       project_name, status, owner, due_date, priority, completion_pct
+    2. Write a summary report 'project_summary.md' with:
+       - Total projects by status (table)
+       - Overdue projects (list with owner and days overdue)
+       - Completion distribution (how many at 0-25%, 25-50%, etc.)
+       - Top risks and recommendations
+    """
+)
+
+agent.print_do(task)
+```
+
+## Example: Meeting Notes Aggregator
+
+The agent searches for all meeting notes from the past week and creates a consolidated action items report.
+
+```python
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.mcp import MCPHandler
+
+load_dotenv()
+
+notion_handler = MCPHandler(
+    command="npx -y @notionhq/notion-mcp-server",
+    env={
+        "OPENAPI_MCP_HEADERS": os.getenv("OPENAPI_MCP_HEADERS")
+    },
+    timeout_seconds=60
+)
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-6",
+    workspace="./weekly-digest",
+    tools=[notion_handler]
+)
+
+task = Task(
+    description="""
+    Search my Notion workspace for all pages under "Meetings" that were
+    edited in the last 7 days.
+
+    For each meeting page, extract:
+    - Meeting title and date
+    - Attendees
+    - Action items (with assignee and deadline if available)
+
+    Write two files:
+    1. 'weekly_action_items.md' — all action items grouped by assignee,
+       sorted by deadline. Include a count per person.
+    2. 'meeting_log.csv' — one row per meeting with columns:
+       date, title, attendee_count, action_item_count
+    """
+)
+
+agent.print_do(task)
+```
+
+## Available Tools
+
+The Notion MCP server exposes tools including:
+
+| Tool | Description |
+|------|-------------|
+| `notion_search` | Search pages and databases |
+| `notion_query_database` | Query a database with filters and sorts |
+| `notion_create_page` | Create a new page |
+| `notion_update_page` | Update page properties |
+| `notion_get_page` | Retrieve a page and its content |
+| `notion_append_block_children` | Add content blocks to a page |
+
+## Security Notes
+
+- Create a dedicated Notion integration for your agent — don't reuse personal tokens.
+- Only share the specific pages and databases your agent needs access to via the integration settings.
+- Store your integration token in `.env` — never hardcode it.
