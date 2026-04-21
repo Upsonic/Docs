@@ -12,27 +12,27 @@ Applied Scientist is an autonomous agent that runs inside Jupyter notebooks. You
 
 A run moves through six fixed phases, in order. Each phase has a clear job and hands off a well-defined output to the next one.
 
-### Phase 0, Setup
+### Phase 0: Setup
 
 Prepares an isolated workspace for the experiment and copies the current notebook, data, and research paper into it without touching the originals. This lets all later phases operate on their own copies without putting production code at risk.
 
-### Phase 1, Analyze Current
+### Phase 1: Analyze Current
 
 Focuses on understanding how the existing baseline works: which model, preprocessing steps, and hyperparameters it uses, and what scores it achieves on which metrics. The goal is to clearly document the "other side" of the comparison before anything new is introduced.
 
-### Phase 2, Research
+### Phase 2: Research
 
 Reads the research paper and digests the proposed method: what it does, what it improves, its pros and cons, and its technical requirements. It also assesses whether the method is compatible with the current data and metrics, clarifying the implementation plan.
 
-### Phase 3, Benchmark
+### Phase 3: Benchmark
 
 Sets the ground rules for a fair comparison: decides which metrics will be measured on both sides and locks in the baseline values. Any metric missing from the baseline is flagged, forcing the new implementation to compute it too.
 
-### Phase 4, Implement
+### Phase 4: Implement
 
 Brings the paper's method to life in a new notebook using the same data, the same train/test split, and the same random seed as the baseline. It runs the notebook end-to-end and measures every metric defined in Phase 3. The aim is a comparable result, not a production-grade model.
 
-### Phase 5, Evaluate
+### Phase 5: Evaluate
 
 Places the baseline and the new method side by side and issues a verdict: better, worse, inconclusive, or failed. The decision is reported with concrete reasoning and recorded in a shared log so this experiment can be compared against others over time.
 
@@ -47,11 +47,9 @@ A question we hear a lot: *why use this instead of just doing the same thing in 
 | Workflow | Assembled case by case in the chat | Pre-tested, well-designed pipeline |
 | Environment | Outside the notebook | Runs directly inside Jupyter |
 
-## Running an Experiment
+## Install and Configure
 
-The steps below walk through a full run end to end. Each step maps to a cell in the companion demo notebook.
-
-### 1. Install and configure
+Install the Upsonic package and set the API key for the model you want the agent to use.
 
 ```python
 !pip install upsonic
@@ -62,7 +60,23 @@ import os
 os.environ["ANTHROPIC_API_KEY"] = "sk-ant-..."
 ```
 
-### 2. Create the agent
+## Requirements
+
+Before you launch a run, you need three things ready on disk. The agent does not generate these for you, you bring them in.
+
+| Requirement | What it is |
+|---|---|
+| Your current notebook | A working Jupyter notebook (`.ipynb`) that trains your baseline model end-to-end. This is the reference point every comparison is made against. |
+| Your current data location | Where the baseline data comes from. It can be a file path (CSV, Parquet, etc.), a folder, or a short description of an in-notebook loader (e.g. `"downloaded in notebook (ucimlrepo, id=2)"`). |
+| New research paper PDF | The paper describing the method you want to try against the baseline. Supplied as a path to a `.pdf` file. |
+
+You will also pick an `inputs` directory that the agent is allowed to read from. This is typically the folder that holds the three items above.
+
+## Running an Experiment
+
+The steps below walk through a full run end to end. Each step maps to a cell in the companion demo notebook.
+
+### 1. Create the agent
 
 ```python
 from upsonic.prebuilt import AppliedScientist
@@ -75,7 +89,7 @@ scientist = AppliedScientist(
 
 The `workspace` is the root directory the agent is allowed to work in. All experiment folders are created inside it.
 
-### 3. Prepare the experiment
+### 2. Prepare the experiment
 
 The first positional argument is the experiment name. It becomes the folder name and the registry key.
 
@@ -99,7 +113,7 @@ experiment = scientist.new_experiment(
 | `experiments_directory` | Where the experiment folder is created (relative to workspace) |
 | `inputs` | Extra files or folders the agent should have read access to |
 
-### 4. Run in the background
+### 3. Run in the background
 
 `run_in_background()` starts the run in a daemon thread, silences the agent's printing, and returns immediately.
 
@@ -114,7 +128,7 @@ Three attributes let you check state at any time:
 - `experiment.is_done`: `True` once the run has either succeeded or errored
 - `experiment.error`: the exception object if the run raised, otherwise `None`
 
-### 5. Watch progress
+### 4. Watch progress
 
 ```python
 experiment.progress_bar
@@ -134,7 +148,7 @@ To see the last few things the agent actually did:
 experiment.last_logs(5)
 ```
 
-### 6. Stop or wait
+### 5. Stop or wait
 
 If you change your mind mid-run, `stop()` requests a cooperative cancel. The agent raises at its next pipeline checkpoint.
 
@@ -150,7 +164,7 @@ result = experiment.wait()
 
 `wait()` returns the `ExperimentResult` and re-raises any exception the run produced.
 
-### 7. Read the result
+### 6. Read the result
 
 Once the run finishes, `experiment.result` returns an `ExperimentResult` parsed from `result.json`. It renders as an HTML card in Jupyter and also exposes four Python attributes:
 
