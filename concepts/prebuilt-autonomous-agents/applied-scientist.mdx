@@ -1,13 +1,275 @@
 ---
 title: Applied Scientist
 sidebarTitle: Applied Scientist
-description: Autonomous agent that validates research paper methods against your existing Jupyter notebook
+description: Autonomous agent that benchmarks a research paper's method against your existing Jupyter notebook
 ---
 
-An autonomous agent that runs inside Jupyter notebooks and validates whether a research paper's method delivers a real performance improvement over your existing model.
+Applied Scientist is an autonomous agent that runs inside Jupyter notebooks. You give it two things, your current notebook and a research paper, and it produces a clear, structured comparison of whether the paper's method actually improves your model.
 
-You give it two inputs — your current notebook and a research paper — and it takes it from there: studies both, runs the baseline, extracts metrics and scores, defines the benchmark criteria, applies the new method, and hands back a clear side-by-side comparison.
+## Core Concept
+
+Applied Scientist takes two inputs and produces one output.
+
+**Inputs**
+
+- `current_notebook`: your baseline Jupyter notebook with a working model
+- `research_paper`: a PDF describing the method you want to try
+
+**Output**
+
+- An `ExperimentResult` with a verdict (`BETTER`, `WORSE`, `INCONCLUSIVE`, or `FAILED`), a structured comparison table of metrics, and written explanations of what was tried and why the verdict was reached.
+
+Everything happens on the filesystem inside a workspace folder you pick. Nothing runs outside the workspace, and every run is saved as a folder under `{workspace}/experiments/{name}/` so you can come back to it later.
+
+## Why Use Upsonic Prebuilt Autonomous Agent
+
+A question we hear a lot: *why use this instead of just doing the same thing in Cursor or Claude Code?* The short answer is that those are general coding copilots, and Applied Scientist is a purpose-built experiment runner. The differences come down to four things:
+
+- **Fully isolated workspace folder.** Every experiment runs inside its own `{workspace}/experiments/{name}/` directory. The agent cannot touch your editor's working tree or anything outside the workspace.
+- **Fully structured outputs.** Every run produces the same shape of result: a verdict, a comparison table, a summary, an explanation. No free-form chat to parse, no screenshot to reread.
+- **Tested, battle-hardened workflow.** The pipeline for reading the paper, running the baseline, applying the method, and benchmarking is fixed and pre-tested. You do not assemble it yourself from prompts.
+- **Runs directly inside Jupyter.** The agent is designed to live in a notebook cell. Progress bars, log timelines, and result cards all render as HTML right where you are working.
+
+### Cursor & Claude Code vs Upsonic Prebuilt Autonomous Agents
+
+| Dimension | Cursor & Claude Code | Upsonic Applied Scientist |
+|---|---|---|
+| Workspace | Runs in your working repo, shared with your editor | Fully isolated workspace folder per experiment |
+| Output | Free-form chat and file edits | Structured `ExperimentResult` (verdict, comparison table, metrics) |
+| Workflow | Assembled case by case in the chat | Pre-tested, battle-hardened pipeline |
+| Environment | Outside the notebook | Runs directly inside Jupyter |
+
+## The Experiment
+
+The central unit of Applied Scientist is the **experiment**. Each experiment is a named run with its own folder and its own set of JSON files on disk.
+
+When you call `scientist.new_experiment("my_run", ...)`, the agent creates:
+
+```
+{workspace}/experiments/my_run/
+├── progress.json      # current phase and activity (overwritten every tick)
+├── log.json           # append-only timeline of everything the agent did
+├── result.json        # final structured result, written when the run finishes
+└── experiments.json   # registry entry shared across all experiments
+```
+
+The experiment name is the primary key. It becomes the folder name and the `"name"` field in every JSON file the agent writes. You supply it yourself, the agent never derives it from the paper title or adds suffixes. That means `scientist.experiments["my_run"]` always points at this exact run.
+
+## Phases & Progress
+
+During a run, Applied Scientist moves through a fixed sequence of phases (reading the paper, running the baseline, extracting metrics, applying the new method, benchmarking, writing the result). You can watch what it is doing in three ways:
+
+- `experiment.progress_bar`: a snapshot of the current phase and activity, rendered as an HTML progress bar. Re-run the cell to get a fresh snapshot.
+- `scientist.progress_bar_live(experiment, interval=5)`: a blocking live view that auto-refreshes every `interval` seconds until the run finishes.
+- `experiment.last_logs(n)`: a timeline of the last `n` entries from `log.json`, rendered as HTML.
+
+Note the difference between the two files:
+
+- `progress.json` is a snapshot. It is overwritten on every tick and only tells you the current state.
+- `log.json` is append-only. Every phase writes a timestamped entry with its action, status, and structured details. This is where you go to see *what the agent actually did*.
+
+## Running an Experiment
+
+The steps below walk through a full run end to end. Each step maps to a cell in the companion demo notebook.
+
+### 1. Install and configure
+
+```python
+!pip install upsonic
+```
+
+```python
+import os
+os.environ["ANTHROPIC_API_KEY"] = "sk-ant-..."
+```
+
+### 2. Create the agent
+
+```python
+from upsonic.prebuilt import AppliedScientist
+
+scientist = AppliedScientist(
+    model="anthropic/claude-haiku-4-5",
+    workspace="./autonomous_workspace",
+)
+```
+
+The `workspace` is the root directory the agent is allowed to work in. All experiment folders are created inside it.
+
+### 3. Prepare the experiment
+
+The first positional argument is the experiment name. It becomes the folder name and the registry key.
+
+```python
+experiment = scientist.new_experiment(
+    "tabpfn_adult",
+    research_paper="example_1/CatBoost Unbiased Boosting Paper.pdf",
+    current_notebook="example_1/Baseline XGBoost Adult.ipynb",
+    current_data="downloaded in notebook (ucimlrepo, id=2)",
+    experiments_directory="./experiments",
+    inputs=["example_1/"],
+)
+```
+
+| Parameter | Purpose |
+|---|---|
+| `name` (positional) | Experiment name, used as folder name and registry key |
+| `research_paper` | Path to the PDF of the method you want to try |
+| `current_notebook` | Path to your baseline notebook |
+| `current_data` | Short description of where the data comes from |
+| `experiments_directory` | Where the experiment folder is created (relative to workspace) |
+| `inputs` | Extra files or folders the agent should have read access to |
+
+### 4. Run in the background
+
+`run_in_background()` starts the run in a daemon thread, silences the agent's printing, and returns immediately.
+
+```python
+experiment.run_in_background()
+print("Started.", experiment.name, "| is_running =", experiment.is_running)
+```
+
+Three attributes let you check state at any time:
+
+- `experiment.is_running`: `True` while the thread is alive and has not finished
+- `experiment.is_done`: `True` once the run has either succeeded or errored
+- `experiment.error`: the exception object if the run raised, otherwise `None`
+
+### 5. Watch progress
+
+```python
+experiment.progress_bar
+```
+
+For a live view that auto-refreshes in place:
+
+```python
+scientist.progress_bar_live(experiment, interval=5)
+```
+
+Interrupt the kernel to stop watching without cancelling the run.
+
+To see the last few things the agent actually did:
+
+```python
+experiment.last_logs(5)
+```
+
+### 6. Stop or wait
+
+If you change your mind mid-run, `stop()` requests a cooperative cancel. The agent raises at its next pipeline checkpoint.
+
+```python
+experiment.stop()
+```
+
+If you would rather just block until the run finishes:
+
+```python
+result = experiment.wait()
+```
+
+`wait()` returns the `ExperimentResult` and re-raises any exception the run produced.
+
+### 7. Read the result
+
+Once the run finishes, `experiment.result` returns an `ExperimentResult` parsed from `result.json`. It renders as an HTML card in Jupyter and also exposes four Python attributes:
+
+```python
+result = experiment.result
+
+result.verdict      # 'BETTER' | 'WORSE' | 'INCONCLUSIVE' | 'FAILED'
+result.summary      # what the new method is and how it differs from the baseline
+result.explanation  # why this verdict was reached, referencing concrete numbers
+result.table        # list of metric dicts (name, current, new, diff, better, ...)
+```
+
+Each row of `result.table` looks like this:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `name` | `str` | Metric name (e.g. `accuracy`, `f1`, `auroc`) |
+| `current` | `float` | Value from the baseline run |
+| `new` | `float` | Value from the new method |
+| `diff` | `float` | Raw difference `new - current` |
+| `diff_display` | `str` | Human-friendly diff (e.g. `+1.2%`) |
+| `unit` | `str` | Unit of the metric |
+| `higher_is_better` | `bool` | Whether larger values are better for this metric |
+| `better` | `bool` | Whether the new method won on this metric |
+
+If you need the raw JSON files, `result.record` gives you the underlying `ExperimentRecord` with access to `log.json`, `progress.json`, and registry metadata.
+
+## Managing Experiments
+
+Every experiment you create is recorded in `experiments.json`. The registry is re-read from disk on every call, so it always reflects current state.
+
+List every experiment, newest first:
+
+```python
+scientist.list_experiments()
+```
+
+Filter by status:
+
+```python
+scientist.list_experiments(status="completed")   # 'in_progress' | 'completed' | 'failed'
+```
+
+Each entry is a dict with `name`, `date`, `status`, `verdict`, `baseline_model`, `new_method`, `paper`, and `path`.
+
+To access an experiment programmatically by name:
+
+```python
+exp = scientist.experiments["tabpfn_adult"]
+exp.phases   # normalised phase list
+exp.log      # parsed log.json
+```
+
+## API Reference
+
+```python
+from upsonic.prebuilt import AppliedScientist
+
+scientist = AppliedScientist(model=..., workspace="./ws")
+
+# Create an experiment
+exp = scientist.new_experiment(
+    "tabpfn_adult",
+    research_paper=...,
+    current_notebook=...,
+    current_data=...,
+    experiments_directory="./experiments",
+    inputs=["example_1/"],
+)
+
+# Run control
+exp.run_in_background()   # start silently, non-blocking
+exp.is_running            # bool, still alive?
+exp.is_done               # bool, finished (ok or error)?
+exp.error                 # exception or None
+exp.stop()                # cooperative cancel
+exp.wait()                # block until done, returns ExperimentResult
+
+# Progress
+exp.progress_bar                              # HTML snapshot
+scientist.progress_bar_live(exp, interval=5)  # live auto-refresh
+exp.last_logs(5)                              # HTML timeline of last N log entries
+
+# Result
+res = exp.result
+res.verdict       # 'BETTER' | 'WORSE' | 'INCONCLUSIVE' | 'FAILED'
+res.summary       # str
+res.explanation   # str
+res.table         # list[dict]
+
+# Registry
+scientist.list_experiments()
+scientist.list_experiments(status="completed")
+scientist.experiments                         # live dict-like registry
+scientist.experiments["tabpfn_adult"].phases
+scientist.experiments["tabpfn_adult"].log
+```
 
 <Info>
-  Full documentation for this agent is coming soon. In the meantime, check the source on [GitHub](https://github.com/Upsonic/Upsonic/tree/master/prebuilt_autonomous_agents).
+  The full demo notebook for this agent lives in the Upsonic repo under [prebuilt_autonomous_agents](https://github.com/Upsonic/Upsonic/tree/master/prebuilt_autonomous_agents).
 </Info>
