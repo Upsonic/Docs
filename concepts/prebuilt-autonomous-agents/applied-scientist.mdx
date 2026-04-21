@@ -4,69 +4,48 @@ sidebarTitle: Applied Scientist
 description: Autonomous agent that benchmarks a research paper's method against your existing Jupyter notebook
 ---
 
-Applied Scientist is an autonomous agent that runs inside Jupyter notebooks. You give it two things, your current notebook and a research paper, and it produces a clear, structured comparison of whether the paper's method actually improves your model.
+## What is Applied Scientist
 
-## Core Concept
+Applied Scientist is an autonomous agent that runs inside Jupyter notebooks. You hand it two things, your current notebook and a research paper, and it does the work a researcher would do by hand: it reads both, runs your baseline to capture metrics, applies the method from the paper, and produces a clear structured comparison of whether the new approach actually improves your model. You do not prompt it turn by turn, you do not wire the benchmark together yourself. You supply the inputs, launch the run, and read the result.
 
-Applied Scientist takes two inputs and produces one output.
+## How Applied Scientist Works
 
-**Inputs**
+A run moves through six fixed phases, in order. Each phase has a clear job and hands off a well-defined output to the next one.
 
-- `current_notebook`: your baseline Jupyter notebook with a working model
-- `research_paper`: a PDF describing the method you want to try
+### Phase 0, Setup
 
-**Output**
+Prepares an isolated workspace for the experiment and copies the current notebook, data, and research paper into it without touching the originals. This lets all later phases operate on their own copies without putting production code at risk.
 
-- An `ExperimentResult` with a verdict (`BETTER`, `WORSE`, `INCONCLUSIVE`, or `FAILED`), a structured comparison table of metrics, and written explanations of what was tried and why the verdict was reached.
+### Phase 1, Analyze Current
 
-Everything happens on the filesystem inside a workspace folder you pick. Nothing runs outside the workspace, and every run is saved as a folder under `{workspace}/experiments/{name}/` so you can come back to it later.
+Focuses on understanding how the existing baseline works: which model, preprocessing steps, and hyperparameters it uses, and what scores it achieves on which metrics. The goal is to clearly document the "other side" of the comparison before anything new is introduced.
 
-## Why Use Upsonic Prebuilt Autonomous Agent
+### Phase 2, Research
 
-A question we hear a lot: *why use this instead of just doing the same thing in Cursor or Claude Code?* The short answer is that those are general coding copilots, and Applied Scientist is a purpose-built experiment runner. The differences come down to four things:
+Reads the research paper and digests the proposed method: what it does, what it improves, its pros and cons, and its technical requirements. It also assesses whether the method is compatible with the current data and metrics, clarifying the implementation plan.
 
-- **Fully isolated workspace folder.** Every experiment runs inside its own `{workspace}/experiments/{name}/` directory. The agent cannot touch your editor's working tree or anything outside the workspace.
-- **Fully structured outputs.** Every run produces the same shape of result: a verdict, a comparison table, a summary, an explanation. No free-form chat to parse, no screenshot to reread.
-- **Tested, battle-hardened workflow.** The pipeline for reading the paper, running the baseline, applying the method, and benchmarking is fixed and pre-tested. You do not assemble it yourself from prompts.
-- **Runs directly inside Jupyter.** The agent is designed to live in a notebook cell. Progress bars, log timelines, and result cards all render as HTML right where you are working.
+### Phase 3, Benchmark
 
-### Cursor & Claude Code vs Upsonic Prebuilt Autonomous Agents
+Sets the ground rules for a fair comparison: decides which metrics will be measured on both sides and locks in the baseline values. Any metric missing from the baseline is flagged, forcing the new implementation to compute it too.
+
+### Phase 4, Implement
+
+Brings the paper's method to life in a new notebook using the same data, the same train/test split, and the same random seed as the baseline. It runs the notebook end-to-end and measures every metric defined in Phase 3. The aim is a comparable result, not a production-grade model.
+
+### Phase 5, Evaluate
+
+Places the baseline and the new method side by side and issues a verdict: better, worse, inconclusive, or failed. The decision is reported with concrete reasoning and recorded in a shared log so this experiment can be compared against others over time.
+
+## Cursor & Claude Code vs Upsonic Prebuilt Autonomous Agents
+
+A question we hear a lot: *why use this instead of just doing the same thing in Cursor or Claude Code?* The short answer is that those are general coding copilots, and Applied Scientist is a purpose-built experiment runner. The table below shows where the two approaches diverge.
 
 | Dimension | Cursor & Claude Code | Upsonic Applied Scientist |
 |---|---|---|
 | Workspace | Runs in your working repo, shared with your editor | Fully isolated workspace folder per experiment |
 | Output | Free-form chat and file edits | Structured `ExperimentResult` (verdict, comparison table, metrics) |
-| Workflow | Assembled case by case in the chat | Pre-tested, battle-hardened pipeline |
+| Workflow | Assembled case by case in the chat | Pre-tested, well-designed pipeline |
 | Environment | Outside the notebook | Runs directly inside Jupyter |
-
-## The Experiment
-
-The central unit of Applied Scientist is the **experiment**. Each experiment is a named run with its own folder and its own set of JSON files on disk.
-
-When you call `scientist.new_experiment("my_run", ...)`, the agent creates:
-
-```
-{workspace}/experiments/my_run/
-├── progress.json      # current phase and activity (overwritten every tick)
-├── log.json           # append-only timeline of everything the agent did
-├── result.json        # final structured result, written when the run finishes
-└── experiments.json   # registry entry shared across all experiments
-```
-
-The experiment name is the primary key. It becomes the folder name and the `"name"` field in every JSON file the agent writes. You supply it yourself, the agent never derives it from the paper title or adds suffixes. That means `scientist.experiments["my_run"]` always points at this exact run.
-
-## Phases & Progress
-
-During a run, Applied Scientist moves through a fixed sequence of phases (reading the paper, running the baseline, extracting metrics, applying the new method, benchmarking, writing the result). You can watch what it is doing in three ways:
-
-- `experiment.progress_bar`: a snapshot of the current phase and activity, rendered as an HTML progress bar. Re-run the cell to get a fresh snapshot.
-- `scientist.progress_bar_live(experiment, interval=5)`: a blocking live view that auto-refreshes every `interval` seconds until the run finishes.
-- `experiment.last_logs(n)`: a timeline of the last `n` entries from `log.json`, rendered as HTML.
-
-Note the difference between the two files:
-
-- `progress.json` is a snapshot. It is overwritten on every tick and only tells you the current state.
-- `log.json` is append-only. Every phase writes a timestamped entry with its action, status, and structured details. This is where you go to see *what the agent actually did*.
 
 ## Running an Experiment
 
