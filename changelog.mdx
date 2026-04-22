@@ -8,6 +8,26 @@ description: Latest updates and improvements to Upsonic AI Agent Framework
 
 
 <Update label="Apr 22, 2026">
+    ## v0.76.2
+
+    [View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.76.2)
+
+    ## Improvements:
+    - **AppliedScientist: flexible `research_source`**: Accepts anything — local path, URL, git / Kaggle / arXiv / Hugging Face link, or a plain-text idea. The agent-side skill inspects the value, fetches it with whichever tool fits (`cp` / `git clone` / `curl` / `kaggle` CLI / `huggingface-cli` / …), and for text ideas saves the description verbatim to `research_source.md`. No hardcoded scheme sniffing on the Python side.
+    - **Auto-derived `inputs`**: `scientist.new_experiment(...)` no longer needs an `inputs=[...]` argument. Any of `research_source`, `current_notebook`, `current_data` that points at an existing local path is auto-copied into the workspace.
+    - **`experiments_directory` optional**: now defaults to `./experiments`.
+
+
+    Full Changelog: https://github.com/Upsonic/Upsonic/compare/v0.76.1...v0.76.2
+
+    ### Pull Requests:
+    - feat: AppliedScientist accepts any research_source + auto inputs: [onuratakan](https://github.com/onuratakan) in [#571](https://github.com/Upsonic/Upsonic/pull/571)
+    - chore: New Version 0.76.2: [onuratakan](https://github.com/onuratakan) in [#572](https://github.com/Upsonic/Upsonic/pull/572)
+</Update>
+
+
+
+<Update label="Apr 22, 2026">
     ## v0.76.1
 
     [View releases on GitHub](https://github.com/Upsonic/Upsonic/releases/v0.76.1)
