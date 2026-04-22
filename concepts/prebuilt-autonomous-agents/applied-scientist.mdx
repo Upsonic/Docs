@@ -63,13 +63,13 @@ os.environ["ANTHROPIC_API_KEY"] = "sk-ant-..."
 
 ## Requirements
 
-Before you launch a run, you need three things ready on disk. The agent does not generate these for you, you bring them in.
+Before you launch a run, you need two things ready on disk — the current notebook and a research source. Everything else is optional.
 
 | Requirement | What it is |
 |---|---|
 | Your current notebook | A working Jupyter notebook (`.ipynb`) that trains your baseline model end-to-end. This is the reference point every comparison is made against. |
-| Your current data location | Where the baseline data comes from. It can be a file path (CSV, Parquet, etc.), a folder, or a short description of an in-notebook loader (e.g. `"downloaded in notebook (ucimlrepo, id=2)"`). |
 | New research source | Any reference describing the method you want to try against the baseline. The agent accepts local files (PDF, Markdown, HTML, `.ipynb`, text), web URLs (blog posts, arXiv pages, documentation), GitHub / GitLab / Bitbucket repository URLs (`https://github.com/...` or `git@...`), Kaggle notebook or dataset pages, or any other fetchable resource. |
+| Your current data location *(optional)* | Where the baseline data comes from — a file path (CSV, Parquet, etc.), a folder, or a short description of an in-notebook loader (e.g. `"downloaded in notebook (ucimlrepo, id=2)"`). If you leave it out, the agent opens the notebook itself, locates the data-loading cells, records what it found, and reuses the same loader in the new implementation. |
 
 ## Running an Experiment
 
@@ -97,7 +97,8 @@ experiment = scientist.new_experiment(
     "catboost_adult",
     research_source="example_1/CatBoost Unbiased Boosting Paper.pdf",
     current_notebook="example_1/Baseline XGBoost Adult.ipynb",
-    current_data="downloaded in notebook (ucimlrepo, id=2)",
+    # current_data is optional — omit it and the agent infers the data
+    # source from the notebook's loading cells.
 )
 ```
 
@@ -131,7 +132,7 @@ research_source="Swap XGBoost for CatBoost with ordered boosting and native cate
 | `name` (positional) | Experiment name, used as folder name and registry key |
 | `research_source` | Reference to the method you want to try. Can be a local file (PDF, Markdown, HTML, `.ipynb`, text), a web URL, a GitHub / GitLab / Bitbucket repository URL, a Kaggle notebook or dataset page, or a plain-text idea describing the approach to try |
 | `current_notebook` | Path to your baseline notebook |
-| `current_data` | Short description of where the data comes from |
+| `current_data` | **Optional.** A file / folder path or a short description of the notebook's loader (e.g. `"downloaded in notebook (ucimlrepo, id=2)"`). When omitted, the agent opens the notebook itself and infers the source from the data-loading cells |
 | `experiments_directory` | **Optional.** Where the experiment folder is created (relative to workspace). Defaults to `./experiments` |
 
 ### 3. Run in the background
@@ -251,7 +252,7 @@ exp = scientist.new_experiment(
     "catboost_adult",
     research_source=...,     # PDF, URL, GitHub/GitLab repo, Kaggle page, Markdown/HTML, or a free-form idea
     current_notebook=...,
-    current_data=...,
+    # current_data=...,                      # optional, inferred from the notebook when omitted
     # experiments_directory="./experiments"  # optional, this is the default
 )
 
