@@ -1,12 +1,12 @@
 ---
 title: Applied Scientist
 sidebarTitle: Applied Scientist
-description: Autonomous agent that benchmarks a new method — described in a PDF, a web page, a GitHub repo, a Kaggle notebook, or anything similar — against your existing Jupyter notebook
+description: Autonomous agent that benchmarks a new method — described in a PDF, a web page, a GitHub repo, a Kaggle notebook, or just a free-form idea — against your existing Jupyter notebook
 ---
 
 ## What is Applied Scientist
 
-Applied Scientist is an autonomous agent that runs inside Jupyter notebooks. You hand it two things, your current notebook and a **research source** describing a new method (a PDF paper, a blog post URL, an arXiv link, a GitHub or GitLab repository, a Kaggle notebook or dataset page, a documentation page, or any other reference it can fetch), and it does the work a researcher would do by hand: it reads it, runs your baseline to capture metrics, applies the method from the source, and produces a clear structured comparison of whether the new approach actually improves your model. You do not prompt it turn by turn, you do not wire the benchmark together yourself. You supply the inputs, launch the run, and read the result.
+Applied Scientist is an autonomous agent that runs inside Jupyter notebooks. You hand it two things, your current notebook and a **research source** describing a new method (a PDF paper, a blog post URL, an arXiv link, a GitHub or GitLab repository, a Kaggle notebook or dataset page, a documentation page, any other reference it can fetch, or simply a free-form idea written as plain text), and it does the work a researcher would do by hand: it reads it, runs your baseline to capture metrics, applies the method from the source, and produces a clear structured comparison of whether the new approach actually improves your model. You do not prompt it turn by turn, you do not wire the benchmark together yourself. You supply the inputs, launch the run, and read the result.
 
 ## How Applied Scientist Works
 
@@ -14,7 +14,7 @@ A run moves through six fixed phases, in order. Each phase has a clear job and h
 
 ### Phase 0: Setup
 
-Prepares an isolated workspace for the experiment and materializes the current notebook, data, and research source into it without touching the originals. The research source is handled based on its kind: a local PDF is copied in as `research.pdf`, other local files (Markdown, HTML, `.ipynb`, text) keep their extension as `research_source.{ext}`, GitHub/GitLab/Bitbucket repositories are shallow-cloned into `research_source/`, Kaggle notebook or dataset pages are pulled down (via the Kaggle link or API) into `research_source/`, and regular web URLs are fetched and saved as `research_source.html` (with the matching PDF pulled in too for arXiv-style links). This lets all later phases operate on their own copies without putting production code at risk.
+Prepares an isolated workspace for the experiment and materializes the current notebook, data, and research source into it without touching the originals. The research source is handled based on what it actually is: a local PDF is copied in as `research.pdf`, other local files (Markdown, HTML, `.ipynb`, text) keep their extension as `research_source.{ext}`, GitHub/GitLab/Bitbucket repositories are shallow-cloned into `research_source/`, Kaggle notebook or dataset pages are pulled down (via the Kaggle link or API) into `research_source/`, regular web URLs are fetched and saved as `research_source.html` (with the matching PDF pulled in too for arXiv-style links), and a free-form text idea is written verbatim to `research_source.md`. This lets all later phases operate on their own copies without putting production code at risk.
 
 ### Phase 1: Analyze Current
 
@@ -71,8 +71,6 @@ Before you launch a run, you need three things ready on disk. The agent does not
 | Your current data location | Where the baseline data comes from. It can be a file path (CSV, Parquet, etc.), a folder, or a short description of an in-notebook loader (e.g. `"downloaded in notebook (ucimlrepo, id=2)"`). |
 | New research source | Any reference describing the method you want to try against the baseline. The agent accepts local files (PDF, Markdown, HTML, `.ipynb`, text), web URLs (blog posts, arXiv pages, documentation), GitHub / GitLab / Bitbucket repository URLs (`https://github.com/...` or `git@...`), Kaggle notebook or dataset pages, or any other fetchable resource. |
 
-You will also pick an `inputs` directory that the agent is allowed to read from. This is typically the folder that holds the three items above. Local files passed as `research_source` must live inside this tree so the agent can read them; remote sources (URLs, git repos, Kaggle pages) do not need to.
-
 ## Running an Experiment
 
 The steps below walk through a full run end to end. Each step maps to a cell in the companion demo notebook.
@@ -100,12 +98,10 @@ experiment = scientist.new_experiment(
     research_source="example_1/CatBoost Unbiased Boosting Paper.pdf",
     current_notebook="example_1/Baseline XGBoost Adult.ipynb",
     current_data="downloaded in notebook (ucimlrepo, id=2)",
-    experiments_directory="./experiments",
-    inputs=["example_1/"],
 )
 ```
 
-`research_source` is polymorphic — the agent detects its kind and materializes it inside the experiment folder before reading it:
+`research_source` is polymorphic — the agent inspects whatever you pass and materializes it inside the experiment folder before reading it:
 
 ```python
 # Local PDF
@@ -125,16 +121,18 @@ research_source="https://github.com/automl/TabPFN"
 # Kaggle notebook or dataset page
 research_source="https://www.kaggle.com/code/someuser/catboost-baseline"
 research_source="https://www.kaggle.com/datasets/uciml/adult-census-income"
+
+# A free-form idea — no URL, no paper, just a description
+research_source="Swap XGBoost for CatBoost with ordered boosting and native categorical handling"
 ```
 
 | Parameter | Purpose |
 |---|---|
 | `name` (positional) | Experiment name, used as folder name and registry key |
-| `research_source` | Reference to the method you want to try. Can be a local file (PDF, Markdown, HTML, `.ipynb`, text), a web URL, a GitHub / GitLab / Bitbucket repository URL, or a Kaggle notebook or dataset page |
+| `research_source` | Reference to the method you want to try. Can be a local file (PDF, Markdown, HTML, `.ipynb`, text), a web URL, a GitHub / GitLab / Bitbucket repository URL, a Kaggle notebook or dataset page, or a plain-text idea describing the approach to try |
 | `current_notebook` | Path to your baseline notebook |
 | `current_data` | Short description of where the data comes from |
-| `experiments_directory` | Where the experiment folder is created (relative to workspace) |
-| `inputs` | Extra files or folders the agent should have read access to |
+| `experiments_directory` | **Optional.** Where the experiment folder is created (relative to workspace). Defaults to `./experiments` |
 
 ### 3. Run in the background
 
@@ -251,11 +249,10 @@ scientist = AppliedScientist(model=..., workspace="./ws")
 # Create an experiment
 exp = scientist.new_experiment(
     "catboost_adult",
-    research_source=...,     # PDF, URL, GitHub/GitLab repo, Kaggle page, Markdown/HTML, ...
+    research_source=...,     # PDF, URL, GitHub/GitLab repo, Kaggle page, Markdown/HTML, or a free-form idea
     current_notebook=...,
     current_data=...,
-    experiments_directory="./experiments",
-    inputs=["example_1/"],
+    # experiments_directory="./experiments"  # optional, this is the default
 )
 
 # Run control
