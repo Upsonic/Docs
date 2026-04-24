@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the **Upsonic AI documentation site**, built with [Mintlify](https://mintlify.com/). It documents the Upsonic Framework (an AI agent development framework focused on safety-first agents for fintech/banking) and Upsonic AgentOS (a deployment/management platform).
+This is the **Upsonic AI documentation site**, built with [Mintlify](https://mintlify.com/). It documents the Upsonic Framework, a Python framework for building autonomous and traditional AI agents.
 
 ## Development Commands
 
@@ -38,7 +38,6 @@ Local preview runs at `http://localhost:3000`.
 
 **Navigation structure** (tabs in `docs.json`):
 - **Upsonic Framework** — Main framework docs: get-started, concepts, CLI, deployment
-- **Upsonic AgentOS** — Agent deployment platform docs (`agentos/`)
 - **Universal Commerce Protocol (UCP)** — Protocol docs (`ucp/`)
 - **Guides** — Step-by-step tutorials (`guides/`)
 - **Reference** — API reference pages (`reference/`)
