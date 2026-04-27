@@ -1,40 +1,39 @@
 ---
 title: Applied Scientist
 sidebarTitle: Applied Scientist
-description: Autonomous agent that benchmarks a new method — described in a PDF, a web page, a GitHub repo, a Kaggle notebook, or just a free-form idea — against your existing Jupyter notebook
+description: Autonomous agent that benchmarks a new method against your existing Jupyter notebook — from a paper, repo, Kaggle link, or a free-form idea.
 ---
 
 ## What is Applied Scientist
 
-Applied Scientist is an autonomous agent that runs inside Jupyter notebooks. You hand it two things, your current notebook and a **research source** describing a new method (a PDF paper, a blog post URL, an arXiv link, a GitHub or GitLab repository, a Kaggle notebook or dataset page, a documentation page, any other reference it can fetch, or simply a free-form idea written as plain text), and it does the work a researcher would do by hand: it reads it, runs your baseline to capture metrics, applies the method from the source, and produces a clear structured comparison of whether the new approach actually improves your model. You do not prompt it turn by turn, you do not wire the benchmark together yourself. You supply the inputs, launch the run, and read the result.
+Applied Scientist is an autonomous agent that runs inside Jupyter. You hand it your **baseline notebook** and a **research source** (PDF, web URL, Kaggle link, GitHub/GitLab repo, or a plain-text idea), and it does the work a researcher would do by hand: read it, run your baseline, implement the new method, and produce a structured comparison.
 
-## How Applied Scientist Works
+You supply the inputs, launch the run, and read the result.
 
-A run moves through six fixed phases, in order. Each phase has a clear job and hands off a well-defined output to the next one.
+## How It Works
 
-### Phase 0: Setup
+A run moves through six fixed phases. Each phase has one job and hands off to the next.
 
-Prepares an isolated workspace for the experiment and materializes the current notebook, data, and research source into it without touching the originals. The research source is handled based on what it actually is: a local PDF is copied in as `research.pdf`, other local files (Markdown, HTML, `.ipynb`, text) keep their extension as `research_source.{ext}`, GitHub/GitLab/Bitbucket repositories are shallow-cloned into `research_source/`, Kaggle notebook or dataset pages are pulled down (via the Kaggle link or API) into `research_source/`, regular web URLs are fetched and saved as `research_source.html` (with the matching PDF pulled in too for arXiv-style links), and a free-form text idea is written verbatim to `research_source.md`. This lets all later phases operate on their own copies without putting production code at risk.
-
-### Phase 1: Analyze Current
-
-Focuses on understanding how the existing baseline works: which model, preprocessing steps, and hyperparameters it uses, and what scores it achieves on which metrics. The goal is to clearly document the "other side" of the comparison before anything new is introduced.
-
-### Phase 2: Research
-
-Reads the materialized research source — whether that is a PDF, a Markdown/HTML dump, a cloned repository, or a fetched web page — and digests the proposed method: what it does, what it improves, its pros and cons, and its technical requirements. It also assesses whether the method is compatible with the current data and metrics, clarifying the implementation plan.
-
-### Phase 3: Benchmark
-
-Sets the ground rules for a fair comparison: decides which metrics will be measured on both sides and locks in the baseline values. Any metric missing from the baseline is flagged, forcing the new implementation to compute it too.
-
-### Phase 4: Implement
-
-Brings the paper's method to life in a new notebook using the same data, the same train/test split, and the same random seed as the baseline. It runs the notebook end-to-end and measures every metric defined in Phase 3. The aim is a comparable result, not a production-grade model.
-
-### Phase 5: Evaluate
-
-Places the baseline and the new method side by side and issues a verdict: better, worse, inconclusive, or failed. The decision is reported with concrete reasoning and recorded in a shared log so this experiment can be compared against others over time.
+<Steps>
+  <Step title="Phase 0 — Setup">
+    Creates an isolated workspace and copies your notebook, data, and research source into it. The original files are never touched.
+  </Step>
+  <Step title="Phase 1 — Analyze Current">
+    Reads your baseline notebook and documents the model, preprocessing, hyperparameters, and the metrics it reports.
+  </Step>
+  <Step title="Phase 2 — Research">
+    Digests the research source: what the method does, what it improves, its requirements, and whether it's compatible with your data.
+  </Step>
+  <Step title="Phase 3 — Benchmark">
+    Locks in the metrics and baseline values that both sides will be measured on. Missing baseline metrics are flagged so the new run computes them too.
+  </Step>
+  <Step title="Phase 4 — Implement">
+    Writes a new notebook implementing the method, using the same data, split, and seed as the baseline. Runs it end-to-end.
+  </Step>
+  <Step title="Phase 5 — Evaluate">
+    Compares both runs and issues a verdict — `BETTER`, `WORSE`, `INCONCLUSIVE`, or `FAILED` — with concrete reasoning recorded to disk.
+  </Step>
+</Steps>
 
 ## Cursor & Claude Code vs Upsonic Prebuilt Autonomous Agents
 
@@ -48,9 +47,7 @@ A question we hear a lot: *why use this instead of just doing the same thing in 
 | Environment | Outside the notebook | Runs directly inside Jupyter |
 | Progress tracking | Scroll through chat transcript to guess where it is | Live progress bar driven by `progress.json`, plus `last_logs(n)` timeline |
 
-## Install and Configure
-
-Install the Upsonic package and set the API key for the model you want the agent to use.
+## Install
 
 ```python
 !pip install upsonic
@@ -63,17 +60,24 @@ os.environ["ANTHROPIC_API_KEY"] = "sk-ant-..."
 
 ## Requirements
 
-Before you launch a run, you need two things ready on disk — the current notebook and a research source. Everything else is optional.
+You only need two things on disk.
 
-| Requirement | What it is |
-|---|---|
-| Your current notebook | A working Jupyter notebook (`.ipynb`) that trains your baseline model end-to-end. This is the reference point every comparison is made against. |
-| New research source | Any reference describing the method you want to try against the baseline. The agent accepts local files (PDF, Markdown, HTML, `.ipynb`, text), web URLs (blog posts, arXiv pages, documentation), GitHub / GitLab / Bitbucket repository URLs (`https://github.com/...` or `git@...`), Kaggle notebook or dataset pages, or any other fetchable resource. |
-| Your current data location *(optional)* | Where the baseline data comes from — a file path (CSV, Parquet, etc.), a folder, or a short description of an in-notebook loader (e.g. `"downloaded in notebook (ucimlrepo, id=2)"`). If you leave it out, the agent opens the notebook itself, locates the data-loading cells, records what it found, and reuses the same loader in the new implementation. |
+<CardGroup cols={2}>
+  <Card title="Baseline notebook" icon="book">
+    A working `.ipynb` that trains your baseline model end-to-end. This is the reference every comparison is made against.
+  </Card>
+  <Card title="Research source" icon="flask">
+    Anything describing the method to try: PDF, Markdown/HTML, web URL, arXiv link, GitHub/GitLab/Bitbucket repo, Kaggle notebook or dataset page, or a free-form idea as plain text.
+  </Card>
+</CardGroup>
+
+<Tip>
+  `current_data` is optional. Omit it and the agent reads your notebook to find the data-loading cells itself.
+</Tip>
 
 ## Running an Experiment
 
-The steps below walk through a full run end to end. Each step maps to a cell in the companion demo notebook.
+The example below is the demo shipped with Upsonic: a Random Forest baseline for telco customer churn, benchmarked against a Kaggle notebook that uses **SMOTE + XGBoost** to handle class imbalance.
 
 ### 1. Create the agent
 
@@ -86,83 +90,55 @@ scientist = AppliedScientist(
 )
 ```
 
-The `workspace` is the root directory the agent is allowed to work in. All experiment folders are created inside it.
+`workspace` is the root directory the agent is allowed to work in. Every experiment lives in its own folder inside it.
 
-### 2. Prepare the experiment
-
-The first positional argument is the experiment name. It becomes the folder name and the registry key.
+### 2. Define the experiment
 
 ```python
 experiment = scientist.new_experiment(
-    "catboost_adult",
-    research_source="example_1/CatBoost Unbiased Boosting Paper.pdf",
-    current_notebook="example_1/Baseline XGBoost Adult.ipynb",
-    # current_data is optional — omit it and the agent infers the data
-    # source from the notebook's loading cells.
+    "smote_xgboost_churn",
+    research_source="https://www.kaggle.com/code/ragilhadip/churn-prediction-handilng-imbalance-using-smote",
+    current_notebook="telco_churn/Baseline_RandomForest_Churn.ipynb",
+    current_data="telco_churn/WA_Fn-UseC_-Telco-Customer-Churn.csv",
 )
 ```
 
-`research_source` is polymorphic — the agent inspects whatever you pass and materializes it inside the experiment folder before reading it:
+`research_source` is polymorphic — pass any of these and the agent figures out how to materialize it:
 
-```python
-# Local PDF
-research_source="example_1/CatBoost Unbiased Boosting Paper.pdf"
-
-# Any other local file
-research_source="example_1/method.md"
-research_source="example_1/method.html"
-
-# Web URL (blog post, arXiv page, documentation)
-research_source="https://arxiv.org/abs/2207.01848"
-research_source="https://catboost.ai/docs/en/concepts/algorithm-main-stages"
-
-# GitHub / GitLab / Bitbucket repository
-research_source="https://github.com/automl/TabPFN"
-
-# Kaggle notebook or dataset page
-research_source="https://www.kaggle.com/code/someuser/catboost-baseline"
-research_source="https://www.kaggle.com/datasets/uciml/adult-census-income"
-
-# A free-form idea — no URL, no paper, just a description
-research_source="Swap XGBoost for CatBoost with ordered boosting and native categorical handling"
-```
+- **Local files** — PDF, Markdown, HTML, `.ipynb`, plain text
+- **Web URLs** — blog posts, arXiv pages, documentation
+- **Code hosts** — GitHub, GitLab, or Bitbucket repository URLs
+- **Kaggle** — notebook or dataset pages
+- **Free-form idea** — a plain string describing what to try
 
 | Parameter | Purpose |
 |---|---|
-| `name` (positional) | Experiment name, used as folder name and registry key |
-| `research_source` | Reference to the method you want to try. Can be a local file (PDF, Markdown, HTML, `.ipynb`, text), a web URL, a GitHub / GitLab / Bitbucket repository URL, a Kaggle notebook or dataset page, or a plain-text idea describing the approach to try |
+| `name` (positional) | Folder name and registry key |
+| `research_source` | Anything from the list above |
 | `current_notebook` | Path to your baseline notebook |
-| `current_data` | **Optional.** A file / folder path or a short description of the notebook's loader (e.g. `"downloaded in notebook (ucimlrepo, id=2)"`). When omitted, the agent opens the notebook itself and infers the source from the data-loading cells |
-| `experiments_directory` | **Optional.** Where the experiment folder is created (relative to workspace). Defaults to `./experiments` |
+| `current_data` | *Optional.* Data path or a short loader description. Inferred from the notebook when omitted. |
+| `experiments_directory` | *Optional.* Defaults to `./experiments` inside the workspace. |
 
-### 3. Run in the background
+### 3. Run and watch
 
-`run_in_background()` starts the run in a daemon thread, silences the agent's printing, and returns immediately.
+`run_in_background()` starts the run in a daemon thread and returns immediately.
 
 ```python
 experiment.run_in_background()
-print("Started.", experiment.name, "| is_running =", experiment.is_running)
-```
-
-Three attributes let you check state at any time:
-
-- `experiment.is_running`: `True` while the thread is alive and has not finished
-- `experiment.is_done`: `True` once the run has either succeeded or errored
-- `experiment.error`: the exception object if the run raised, otherwise `None`
-
-### 4. Watch progress
-
-```python
-experiment.progress_bar
-```
-
-For a live view that auto-refreshes in place:
-
-```python
 scientist.progress_bar_live(experiment, interval=5)
 ```
 
-Interrupt the kernel to stop watching without cancelling the run.
+<Frame>
+  <img src="/images/applied-scientist/jupyter-progress.png" alt="Live progress bar streaming each phase as the experiment runs" />
+</Frame>
+
+State is exposed on the experiment object at any time:
+
+| Attribute | What it tells you |
+|---|---|
+| `experiment.is_running` | `True` while the thread is alive |
+| `experiment.is_done` | `True` once finished (success or error) |
+| `experiment.error` | The exception if the run raised, else `None` |
 
 To see the last few things the agent actually did:
 
@@ -170,75 +146,103 @@ To see the last few things the agent actually did:
 experiment.last_logs(5)
 ```
 
-### 5. Stop or wait
+<Frame>
+  <img src="/images/applied-scientist/last-logs.png" alt="last_logs(5) rendering the most recent phase entries with their structured payloads" />
+</Frame>
 
-If you change your mind mid-run, `stop()` requests a cooperative cancel. The agent raises at its next pipeline checkpoint.
+Interrupt the kernel to stop watching without cancelling the run. Call `experiment.stop()` to cooperatively cancel.
 
-```python
-experiment.stop()
-```
-
-If you would rather just block until the run finishes:
+### 4. Wait for the result
 
 ```python
 result = experiment.wait()
+
+print(f"VERDICT: {result.verdict}")
+print(f"\nSummary: {result.summary}")
+print(f"\nExplanation: {result.explanation}")
 ```
 
-`wait()` returns the `ExperimentResult` and re-raises any exception the run produced.
+`wait()` blocks until the run finishes and re-raises any exception it produced. For this demo run, it returns:
 
-### 6. Read the result
+```text
+VERDICT: BETTER
 
-Once the run finishes, `experiment.result` returns an `ExperimentResult` parsed from `result.json`. It renders as an HTML card in Jupyter and also exposes four Python attributes:
+Summary: XGBoost combined with SMOTE oversampling significantly improves minority class
+detection in churn prediction. While overall accuracy decreases slightly (70.4% vs 80.3%),
+the model achieves substantially higher recall for churned customers (85.6% vs 52.1%),
+successfully catching more customers at risk of leaving. The F1 score improved from 0.5847
+to 0.6055, indicating better balanced performance on the minority class. This trade-off is
+favorable for churn prediction where identifying at-risk customers for retention campaigns
+is more valuable than overall accuracy.
+
+Explanation: The verdict is BETTER because: (1) Recall improved by +32.2 percentage points
+(0.5214 → 0.8556), catching 85.6% of churners vs. only 52.1% before, reducing missed
+opportunities for retention by ~60%. (2) F1-score improved by +3.5% (0.5847 → 0.6055),
+showing better minority class balance. (3) While accuracy dropped 10.1 percentage points
+(expected with SMOTE), the business impact is positive: preventing customer churn is more
+valuable than reducing false positives. (4) SMOTE successfully balanced the 2.77:1 class
+imbalance to 1:1, and XGBoost's gradient boosting effectively learned improved decision
+boundaries.
+```
+
+| Attribute | Value |
+|---|---|
+| `result.verdict` | `'BETTER'` \| `'WORSE'` \| `'INCONCLUSIVE'` \| `'FAILED'` |
+| `result.summary` | What the new method is and how it differs from the baseline |
+| `result.explanation` | Why this verdict was reached, referencing concrete numbers |
+
+### 5. Inspect the comparison
+
+`result.table` is a list of metric dicts. Drop it into a DataFrame to see the side-by-side:
 
 ```python
-result = experiment.result
-
-result.verdict      # 'BETTER' | 'WORSE' | 'INCONCLUSIVE' | 'FAILED'
-result.summary      # what the new method is and how it differs from the baseline
-result.explanation  # why this verdict was reached, referencing concrete numbers
-result.table        # list of metric dicts (name, current, new, diff, better, ...)
+import pandas as pd
+pd.DataFrame(result.table)
 ```
 
-Each row of `result.table` looks like this:
+<Frame>
+  <img src="/images/applied-scientist/result-table.png" alt="result.table rendered as a pandas DataFrame" />
+</Frame>
 
-| Field | Type | Meaning |
-|---|---|---|
-| `name` | `str` | Metric name (e.g. `accuracy`, `f1`, `auroc`) |
-| `current` | `float` | Value from the baseline run |
-| `new` | `float` | Value from the new method |
-| `diff` | `float` | Raw difference `new - current` |
-| `diff_display` | `str` | Human-friendly diff (e.g. `+1.2%`) |
-| `unit` | `str` | Unit of the metric |
-| `higher_is_better` | `bool` | Whether larger values are better for this metric |
-| `better` | `bool` | Whether the new method won on this metric |
+Each row contains:
 
-If you need the raw JSON files, `result.record` gives you the underlying `ExperimentRecord` with access to `log.json`, `progress.json`, and registry metadata.
+| Field | Meaning |
+|---|---|
+| `name` | Metric name (e.g. `accuracy`, `f1`, `auroc`) |
+| `current` / `new` | Baseline and new-method values |
+| `diff` / `diff_display` | Raw difference and a human-friendly version |
+| `unit` | Unit of the metric |
+| `higher_is_better` | Whether larger is better |
+| `better` | Which side won on this metric (`current` or `new`) |
+
+Plotting the table makes the trade-off obvious — in this run, the new method trades a little overall accuracy for a large gain in churn recall:
+
+<Frame>
+  <img src="/images/applied-scientist/verdict-chart-large.png" alt="Bar chart comparing Random Forest baseline against SMOTE + XGBoost" />
+</Frame>
+
+<Info>
+  Need the raw artifacts? `result.record` exposes `log.json`, `progress.json`, and registry metadata for the run.
+</Info>
 
 ## Managing Experiments
 
-Every experiment you create is recorded in `experiments.json`. The registry is re-read from disk on every call, so it always reflects current state.
-
-List every experiment, newest first:
+Every experiment is recorded in `experiments.json`. The registry is re-read from disk on every call, so it always reflects current state.
 
 ```python
-scientist.list_experiments()
-```
+scientist.list_experiments()                      # newest first
+scientist.list_experiments(status="completed")    # 'in_progress' | 'completed' | 'failed'
 
-Filter by status:
-
-```python
-scientist.list_experiments(status="completed")   # 'in_progress' | 'completed' | 'failed'
-```
-
-Each entry is a dict with `name`, `date`, `status`, `verdict`, `baseline_model`, `new_method`, `paper`, and `path`.
-
-To access an experiment programmatically by name:
-
-```python
-exp = scientist.experiments["catboost_adult"]
+exp = scientist.experiments["smote_xgboost_churn"]
 exp.phases   # normalised phase list
 exp.log      # parsed log.json
 ```
+
+<Frame>
+  <img src="/images/applied-scientist/list-experiments.png" alt="list_experiments output showing date, name, status, verdict, and new vs baseline" />
+</Frame>
+
+Each registry entry is a dict with `name`, `date`, `status`, `verdict`, `baseline_model`, `new_method`, `paper`, and `path`.
 
 ## API Reference
 
@@ -249,39 +253,37 @@ scientist = AppliedScientist(model=..., workspace="./ws")
 
 # Create an experiment
 exp = scientist.new_experiment(
-    "catboost_adult",
-    research_source=...,     # PDF, URL, GitHub/GitLab repo, Kaggle page, Markdown/HTML, or a free-form idea
+    "smote_xgboost_churn",
+    research_source=...,     # PDF, URL, repo, Kaggle page, or free-form idea
     current_notebook=...,
-    # current_data=...,                      # optional, inferred from the notebook when omitted
-    # experiments_directory="./experiments"  # optional, this is the default
+    # current_data=...,                      # optional
+    # experiments_directory="./experiments"  # optional
 )
 
 # Run control
-exp.run_in_background()   # start silently, non-blocking
-exp.is_running            # bool, still alive?
-exp.is_done               # bool, finished (ok or error)?
-exp.error                 # exception or None
-exp.stop()                # cooperative cancel
-exp.wait()                # block until done, returns ExperimentResult
+exp.run_in_background()
+exp.is_running
+exp.is_done
+exp.error
+exp.stop()
+exp.wait()                # blocks, returns ExperimentResult
 
 # Progress
-exp.progress_bar                              # HTML snapshot
-scientist.progress_bar_live(exp, interval=5)  # live auto-refresh
-exp.last_logs(5)                              # HTML timeline of last N log entries
+exp.progress_bar
+scientist.progress_bar_live(exp, interval=5)
+exp.last_logs(5)
 
 # Result
 res = exp.result
 res.verdict       # 'BETTER' | 'WORSE' | 'INCONCLUSIVE' | 'FAILED'
-res.summary       # str
-res.explanation   # str
+res.summary
+res.explanation
 res.table         # list[dict]
 
 # Registry
 scientist.list_experiments()
-scientist.list_experiments(status="completed")
-scientist.experiments                         # live dict-like registry
-scientist.experiments["catboost_adult"].phases
-scientist.experiments["catboost_adult"].log
+scientist.experiments["smote_xgboost_churn"].phases
+scientist.experiments["smote_xgboost_churn"].log
 ```
 
 <Info>
