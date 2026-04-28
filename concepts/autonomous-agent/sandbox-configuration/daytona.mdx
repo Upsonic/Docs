@@ -1,0 +1,94 @@
+---
+title: "Daytona"
+description: "Run AutonomousAgent code execution in a secure Daytona cloud sandbox while keeping file edits local."
+---
+
+## Overview
+
+[Daytona](https://www.daytona.io) provides isolated cloud sandboxes for running code, shell commands, and git operations. Pairing **DaytonaTools** with **AutonomousAgent** gives you the best of both worlds: the agent edits files locally in your workspace, but every code or shell execution happens in a remote sandbox — so untrusted output never touches your machine.
+
+**Toolkit Class:** `DaytonaTools`
+
+<Info>
+For the full toolkit reference (all 11 tools, every parameter, advanced options) see [DaytonaTools](/concepts/tools/sandbox-tools/daytona).
+</Info>
+
+## Setup
+
+```bash
+pip install daytona
+export DAYTONA_API_KEY="your-api-key"
+```
+
+## Example with AutonomousAgent
+
+The recommended pattern: keep `enable_filesystem=True` so the agent uses Upsonic's local sandboxed filesystem tools, disable `enable_shell` so no shell runs locally, and pass `DaytonaTools()` so all code and commands execute remotely.
+
+```python
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.custom_tools.daytona import DaytonaTools
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-5",
+    workspace="/path/to/project",
+    enable_filesystem=True,   # local: write_file, edit_file, read_file, ...
+    enable_shell=False,       # disable local shell
+    tools=[DaytonaTools()],   # remote: daytona_run_code, daytona_run_command, ...
+)
+
+task = Task("Read main.py, run it in the sandbox, and fix any errors.")
+agent.print_do(task)
+```
+
+| Capability | Where it runs | Tools |
+|---|---|---|
+| File write/edit/delete | Local workspace | `write_file`, `edit_file`, `delete_file` |
+| File read/search | Local workspace | `read_file`, `list_files`, `grep_files` |
+| Code execution | Remote Daytona sandbox | `daytona_run_code` (Python/TypeScript/JavaScript) |
+| Shell commands | Remote Daytona sandbox | `daytona_run_command` |
+| Package install | Remote Daytona sandbox | `daytona_install_packages` |
+| Git operations | Remote Daytona sandbox | `daytona_git_clone` |
+
+<Note>
+All Daytona tools are prefixed with `daytona_` to avoid name collisions with the AutonomousAgent's local filesystem tools.
+</Note>
+
+## Custom Configuration
+
+Pass options into `DaytonaTools()` to tune sandbox lifetime, language defaults, env vars, or restrict what the agent can do:
+
+```python
+from upsonic import AutonomousAgent, Task
+from upsonic.tools.custom_tools.daytona import DaytonaTools
+
+tools = DaytonaTools(
+    auto_stop_interval=120,                       # auto-stop after 2 hours idle
+    sandbox_language="python",                    # default language
+    env_vars={"MY_API_KEY": "sk-..."},            # env vars in the sandbox
+    labels={"project": "demo"},                   # metadata labels
+    exclude_tools=["daytona_shutdown_sandbox"],   # don't let the agent kill the sandbox
+)
+
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-5",
+    workspace="/path/to/project",
+    enable_shell=False,
+    tools=[tools],
+)
+
+agent.print_do(Task("Install pandas and matplotlib, then plot a sales chart."))
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api_key` | `str \| None` | env `DAYTONA_API_KEY` | Daytona API key. |
+| `api_url` | `str \| None` | env `DAYTONA_API_URL` | Daytona API URL. |
+| `target` | `str \| None` | env `DAYTONA_TARGET` | Sandbox deployment region. |
+| `sandbox_id` | `str \| None` | `None` | Connect to an existing sandbox instead of creating one. |
+| `sandbox_language` | `str` | `"python"` | Default language: `python`, `typescript`, or `javascript`. |
+| `env_vars` | `dict \| None` | `None` | Environment variables for the sandbox. |
+| `labels` | `dict` | `{}` | Metadata labels attached to the sandbox. |
+| `auto_stop_interval` | `int` | `60` | Minutes of idle time before auto-stop. `0` disables. |
+| `timeout` | `int` | `300` | Sandbox creation timeout (seconds). |
