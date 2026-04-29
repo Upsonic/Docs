@@ -1,0 +1,210 @@
+---
+title: "Overview"
+sidebarTitle: "Asqav"
+description: "Add tamper-evident ML-DSA-65 signed audit trails to every Upsonic Agent action"
+---
+
+## Overview
+
+[Asqav](https://asqav.com) is a governance layer for AI agents. It extends Upsonic's standard tracing pipeline with cryptographic signing: every span (tool call, agent step, LLM invocation) gets an ML-DSA-65 (quantum-safe) signature chained to the previous action, producing a tamper-evident audit trail you can export as JSON or CSV for compliance.
+
+## Setup
+
+Get your API key from the [Asqav dashboard](https://asqav.com) and export it:
+
+```bash
+export ASQAV_API_KEY=sk_...
+```
+
+<Info>
+Install the optional dependencies:
+
+```bash
+uv pip install "upsonic[asqav]"
+# pip install "upsonic[asqav]"
+```
+
+This installs the [asqav](https://pypi.org/project/asqav/) Python SDK alongside Upsonic.
+</Info>
+
+---
+
+## Usage with Agent / Task
+
+Every `agent.do()` or `agent.print_do()` call (including async versions) is automatically signed and traced when you pass `instrument=gov`.
+
+### Minimal - Key from Environment
+
+<Tabs>
+  <Tab title="Agent">
+```python
+from upsonic import Agent, Task
+from upsonic.integrations.asqav import AsqavGovernance
+
+gov = AsqavGovernance()
+agent = Agent("openai/gpt-4o", instrument=gov)
+
+task = Task(description="Analyze quarterly revenue data")
+agent.print_do(task)
+
+gov.shutdown()
+```
+  </Tab>
+  <Tab title="AutonomousAgent">
+```python
+from upsonic import AutonomousAgent, Task
+from upsonic.integrations.asqav import AsqavGovernance
+
+gov = AsqavGovernance()
+agent = AutonomousAgent("openai/gpt-4o", instrument=gov)
+
+task = Task(description="Analyze quarterly revenue data")
+agent.print_do(task)
+
+gov.shutdown()
+```
+  </Tab>
+</Tabs>
+
+### Full Configuration
+
+<Tabs>
+  <Tab title="Agent">
+```python
+from upsonic import Agent, Task
+from upsonic.integrations.asqav import AsqavGovernance
+from upsonic.tools import tool
+
+@tool
+def get_revenue(quarter: str) -> str:
+    """Get reported revenue for a quarter."""
+    return f"Revenue for {quarter}: $1.2M"
+
+gov = AsqavGovernance(
+    api_key="sk_...",
+    agent_name="finance-agent",      # asqav agent identity, reused across runs
+    sign_tool_calls=True,            # sign real tool invocations
+    sign_llm_calls=True,             # sign LLM calls
+    sign_agent_steps=True,           # sign generic pipeline-step spans
+    include_content=True,            # include prompts/responses in traces
+    service_name="finance-service",
+)
+
+agent = Agent(
+    "openai/gpt-4o",
+    instrument=gov,
+    tools=[get_revenue],
+)
+
+task = Task(description="What was revenue last quarter?")
+agent.print_do(task)
+
+# Export the signed audit trail for this agent
+audit = gov.export_audit_json()
+print(audit)
+
+gov.shutdown()
+```
+  </Tab>
+  <Tab title="AutonomousAgent">
+```python
+from upsonic import AutonomousAgent, Task
+from upsonic.integrations.asqav import AsqavGovernance
+from upsonic.tools import tool
+
+@tool
+def get_revenue(quarter: str) -> str:
+    """Get reported revenue for a quarter."""
+    return f"Revenue for {quarter}: $1.2M"
+
+gov = AsqavGovernance(
+    api_key="sk_...",
+    agent_name="finance-agent",
+    sign_tool_calls=True,
+    sign_llm_calls=True,
+    sign_agent_steps=True,
+    include_content=True,
+    service_name="finance-service",
+)
+
+agent = AutonomousAgent(
+    "openai/gpt-4o",
+    instrument=gov,
+    tools=[get_revenue],
+)
+
+task = Task(description="What was revenue last quarter?")
+agent.print_do(task)
+
+audit = gov.export_audit_json()
+print(audit)
+
+gov.shutdown()
+```
+  </Tab>
+</Tabs>
+
+---
+
+## What Gets Signed
+
+`AsqavGovernance` classifies each OpenTelemetry span using the [GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) and signs three categories:
+
+| Category | What it is | Toggle |
+|---|---|---|
+| Tool calls | Spans with `gen_ai.tool.name` or `gen_ai.tool.call.id` attributes | `sign_tool_calls` |
+| LLM calls | Spans with `gen_ai.system`, `gen_ai.request.model`, or `gen_ai.operation.name` | `sign_llm_calls` |
+| Agent steps | Generic agent / pipeline-step spans that don't match the above | `sign_agent_steps` |
+
+Each signed action is chained to the previous one, so any later modification to the audit log breaks the chain and is detectable on verification.
+
+---
+
+## Exporting the Audit Trail
+
+After (or during) a run you can export the signed audit trail as JSON or CSV:
+
+```python
+# JSON - scoped to this provider's agent by default
+audit_json = gov.export_audit_json()
+
+# CSV - same default scoping
+audit_csv = gov.export_audit_csv()
+
+# With date filters (ISO-8601)
+audit_json = gov.export_audit_json(
+    start_date="2026-01-01T00:00:00Z",
+    end_date="2026-04-01T00:00:00Z",
+)
+```
+
+By default the export is scoped to the agent identity created by this provider. To export across all agents under your API key, pass `agent_id=None` explicitly - your key needs the global `export:read` scope.
+
+---
+
+## Parameters Reference
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `api_key` | `str` | env `ASQAV_API_KEY` | Asqav API key (`sk_...`) |
+| `agent_name` | `str` | `"upsonic-agent"` | Asqav agent identity. Reused on subsequent runs |
+| `endpoint` | `str` | env `ASQAV_API_URL` | Override Asqav API base URL |
+| `sign_tool_calls` | `bool` | `True` | Sign real tool execution spans |
+| `sign_llm_calls` | `bool` | `True` | Sign real LLM invocation spans |
+| `sign_agent_steps` | `bool` | `True` | Sign generic agent / pipeline-step spans |
+| `include_content` | `bool` | `True` | Include prompts/responses in traces |
+| `service_name` | `str` | `"upsonic"` | Service name in traces |
+
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `ASQAV_API_KEY` | Asqav API key (`sk_...`) |
+| `ASQAV_API_URL` | Custom Asqav API base URL (defaults to `https://api.asqav.com/api/v1`) |
+
+---
+
+## Resources
+
+- [Asqav documentation](https://asqav.com/docs)
+- [Upsonic integration source](https://github.com/Upsonic/Upsonic/blob/master/src/upsonic/integrations/asqav.py)
