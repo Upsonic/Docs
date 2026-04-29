@@ -10,6 +10,10 @@ Applied Scientist is an autonomous agent that runs inside Jupyter. You hand it y
 
 You supply the inputs, launch the run, and read the result.
 
+<Frame>
+  <img src="/images/applied-scientist/jupyter-progress.png" alt="Applied Scientist running inside Jupyter — a six-phase pipeline from setup to verdict" />
+</Frame>
+
 ## How It Works
 
 A run moves through six fixed phases. Each phase has one job and hands off to the next.
@@ -129,7 +133,7 @@ scientist.progress_bar_live(experiment, interval=5)
 ```
 
 <Frame>
-  <img src="/images/applied-scientist/jupyter-progress.png" alt="Live progress bar streaming each phase as the experiment runs" />
+  <img src="/images/applied-scientist/progress-live-bar.gif" alt="Live progress bar updating phase-by-phase as the experiment runs" />
 </Frame>
 
 State is exposed on the experiment object at any time:
