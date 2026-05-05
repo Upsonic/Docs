@@ -8,6 +8,8 @@ description: Track your Agent's token usage, timing, and costs across all runs
 
 Your **Agent** keeps a single **`usage`** object (`AgentUsage`) that accumulates metrics over every run. Use it to monitor total tokens, requests, tool calls, cost, and detailed timing breakdowns for that agent.
 
+For a quick, JSON-friendly snapshot of session spend, you can also use **`agent.cost`** — a dictionary that aggregates the same token and cost figures across every task the agent has executed. See [Quick Session Summary via `agent.cost`](#quick-session-summary-via-agent-cost) below.
+
 When printing is enabled (`print_do` / `print_do_async`), an **Agent Metrics** panel is displayed after each task so you can see the updated totals.
 
 ## Accessing Agent Metrics
@@ -46,6 +48,54 @@ On any `Agent` instance, use **`agent.usage`**. It returns an `AgentUsage` objec
 | Property | Type | Description |
 |----------|------|-------------|
 | `cost` | `float \| None` | Estimated total cost across all runs (provider-specific) |
+
+
+## Quick Session Summary via `agent.cost`
+
+`agent.cost` is a convenience property that returns a single dictionary aggregating tokens and estimated cost across **every** task the agent has executed (`do`, `do_async`, `run`, `run_async`). It's especially useful for autonomous agents and prebuilt agents that dispatch several tasks per run — bootstrap, workspace setup, the user's prompt, sub-agents — so the dictionary reports the full session spend, not just the last task.
+
+- Returns **`None`** before any task has been executed.
+- Returns a `dict[str, Any]` once the agent has run at least one task.
+- `estimated_cost` is in USD and is `None` when the model's pricing cannot be resolved.
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `input_tokens` | `int` | Total prompt/input tokens across all runs |
+| `output_tokens` | `int` | Total completion/output tokens across all runs |
+| `total_tokens` | `int` | `input_tokens + output_tokens` |
+| `estimated_cost` | `float \| None` | Estimated total cost in USD (or `None` if pricing not resolvable) |
+| `requests` | `int` | Total number of LLM API requests |
+| `tool_calls` | `int` | Total number of tool calls executed |
+| `cache_read_tokens` | `int` | Total tokens read from cache |
+| `cache_write_tokens` | `int` | Total tokens written to cache |
+| `reasoning_tokens` | `int` | Total reasoning/chain-of-thought tokens |
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+agent.do(Task("What is 2 + 2? Reply with one number."))
+agent.do(Task("What is 3 + 3? Reply with one number."))
+
+summary = agent.cost
+# {
+#   'input_tokens': 184,
+#   'output_tokens': 10,
+#   'total_tokens': 194,
+#   'estimated_cost': 0.000702,
+#   'requests': 2,
+#   'tool_calls': 0,
+#   'cache_read_tokens': 0,
+#   'cache_write_tokens': 0,
+#   'reasoning_tokens': 0,
+# }
+
+print(f"Spent ${summary['estimated_cost']:.4f} over {summary['requests']} requests")
+```
+
+<Note>
+`agent.cost` and `agent.usage` are **complementary, not duplicative**. `agent.usage` is the full `AgentUsage` object with timing breakdowns (`duration`, `model_execution_time`, etc.); `agent.cost` is a flat dictionary focused on tokens and money — convenient for logging, dashboards, or returning over an API.
+</Note>
 
 
 ## Example
