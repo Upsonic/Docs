@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
 ## Event Streaming
 
-For full visibility into agent execution, use `stream_events()` to receive detailed events about every step of the pipeline.
+For full visibility into agent execution, use `astream()` (or `stream()` for synchronous code) with `events=True` to receive detailed events about every step of the pipeline.
 
 ```python
 import asyncio
@@ -195,6 +195,18 @@ asyncio.run(main())
 | `ModelRequestStartEvent` | Model request starting | `model_name`, `is_streaming`, `has_tools`, `tool_call_count`, `tool_call_limit` |
 | `ModelResponseEvent` | Model response received (non-streaming) | `model_name`, `has_text`, `has_tool_calls`, `tool_call_count`, `finish_reason` |
 
+#### Context & Input Build Events
+
+These fire once per run as the agent assembles the request sent to the model. Useful for inspecting what the model actually receives (history size, prompt length, attached media).
+
+| Event | Description | Key Attributes |
+|-------|-------------|----------------|
+| `MemoryPreparedEvent` | Memory manager preparation finished | `memory_enabled`, `history_count` |
+| `ChatHistoryLoadedEvent` | Chat history loaded; run boundary marked | `history_count` |
+| `SystemPromptBuiltEvent` | System prompt assembled | `prompt_length`, `has_culture`, `has_skills` |
+| `ContextBuiltEvent` | Task context assembled (RAG + prior outputs) | `context_length`, `has_knowledge_base`, `has_prior_outputs` |
+| `UserInputBuiltEvent` | User input assembled (text + media) | `input_type`, `has_images`, `has_documents`, `input_length` |
+
 #### Cache Events
 
 | Event | Description | Key Attributes |
@@ -228,12 +240,6 @@ asyncio.run(main())
 | `RunCompletedEvent` | Run completed successfully | `agent_id`, `output_preview` |
 | `RunPausedEvent` | Run paused (for HITL requirements) | `reason`, `requirements`, `step_name` |
 | `RunCancelledEvent` | Run cancelled | `message`, `step_name` |
-
-#### Culture Events
-
-| Event | Description | Key Attributes |
-|-------|-------------|----------------|
-| `CultureUpdateEvent` | Cultural knowledge updated (experimental) | `culture_enabled`, `extraction_triggered`, `knowledge_updated` |
 
 ### Common Attributes
 
