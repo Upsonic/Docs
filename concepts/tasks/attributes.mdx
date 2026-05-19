@@ -73,8 +73,8 @@ The Task class provides the following read-only properties:
 |----------|------|-------------|
 | `id` | str | Get the task ID. Auto-generates a UUID if not set |
 | `task_id` | str | Get the task ID. Auto-generates a UUID if not set |
-| `price_id` | str | Get the price ID for cost tracking. Auto-generates a UUID if not set |
-| `duration` | float \| None | Get task execution duration in seconds (end_time - start_time). Returns `None` if not started or not ended |
+| `task_usage_id` | str | Scope tag used to filter the centralized usage registry for this task. Auto-generated if not set |
+| `usage` | `AggregatedUsage` | Read-only view over the usage registry filtered by `task_usage_id` — tokens, cost, requests, tool calls, timing. See [Task Metrics](/concepts/tasks/metrics). |
 | `response` | str \| bytes \| None | Get the task response. Returns `None` if not yet set |
 | `context_formatted` | str \| None | Get the formatted context string (read-only). Set by context management process |
 | `run_id` | str \| None | Get the run ID associated with this task. Allows task continuation with a new agent instance |
@@ -82,9 +82,6 @@ The Task class provides the following read-only properties:
 | `is_completed` | bool | Check if the task's run is already completed. A completed task cannot be re-run or continued |
 | `cache_hit` | bool | Check if the last response was retrieved from cache |
 | `tool_calls` | List[Dict[str, Any]] | Get all tool calls made during this task's execution. Each dict contains 'tool_name', 'params', and 'tool_result' |
-| `total_cost` | float \| None | Get the total estimated cost of this task in USD. Returns `None` if not available |
-| `total_input_token` | int \| None | Get the total number of input tokens used by this task. Returns `None` if not available |
-| `total_output_token` | int \| None | Get the total number of output tokens used by this task. Returns `None` if not available |
 | `attachments_base64` | List[str] \| None | Convert all attachment files to base64 encoded strings. Returns `None` if no attachments |
 
 ## Methods
@@ -123,7 +120,6 @@ The Task class provides the following read-only properties:
 | Method | Signature | Description |
 |--------|-----------|-------------|
 | `get_task_id` | `get_task_id() -> str` | Get formatted task ID as "Task_{first_8_chars}" |
-| `get_total_cost` | `get_total_cost() -> Optional[Dict[str, Any]]` | Get total cost information including estimated_cost, input_tokens, and output_tokens |
 | `to_dict` | `to_dict(serialize_flag: bool = False) -> Dict[str, Any]` | Convert task to dictionary. If `serialize_flag=True`, uses cloudpickle for tools, guardrail, and response_format |
 | `from_dict` | `@classmethod from_dict(data: Dict[str, Any], deserialize_flag: bool = False) -> Task` | Reconstruct Task from dictionary. If `deserialize_flag=True`, uses cloudpickle to deserialize pickled fields |
 
@@ -140,8 +136,8 @@ The following attributes are internal and typically not set by users:
 - `_last_cache_entry`: Internal storage for last cache entry
 - `_run_id`: Internal run ID for task continuation
 - `_task_todos`: Internal todo list for task planning
-- `price_id_`: Internal price ID (use `price_id` property)
 - `task_id_`: Internal task ID (use `task_id` property)
+- `task_usage_id_`: Internal usage-scope tag (use `task_usage_id` property)
 - `agent`: Internal reference to agent instance
 
 ## Configuration Examples
@@ -283,13 +279,16 @@ task = Task(
 agent.print_do(task)
 
 # Access task properties
-print(f"Task ID: {task.id}")
-print(f"Duration: {task.duration:.2f} seconds")
-print(f"Status: {task.status}")
-print(f"Total Cost: ${task.total_cost:.4f}")
-print(f"Input Tokens: {task.total_input_token}")
-print(f"Output Tokens: {task.total_output_token}")
-print(f"Tool Calls: {len(task.tool_calls)}")
+print(f"Task ID:      {task.id}")
+if task.start_time and task.end_time:
+    print(f"Wall-clock:   {(task.end_time - task.start_time):.2f} seconds")
+print(f"Status:       {task.status}")
+u = task.usage
+if u.cost is not None:
+    print(f"Total Cost:   ${u.cost:.4f}")
+print(f"Input Tokens: {u.input_tokens}")
+print(f"Output Tokens:{u.output_tokens}")
+print(f"Tool Calls:   {len(task.tool_calls)}")
 
 # Check task state
 if task.is_completed:

@@ -1,0 +1,148 @@
+---
+title: Usage Registry
+sidebarTitle: Usage Registry
+description: One append-only registry of every model call — read uniformly through agent.usage, task.usage, chat.usage, team.usage, and output.usage.
+---
+
+## Overview
+
+Upsonic records every model call into a single **centralized usage registry**. Tokens, cost, requests, tool calls, and timing are written exactly once per call, keyed by a unique `entry_id`, and tagged with the scopes the call belongs to. Reading metrics anywhere in the framework is a derived view over those rows — no manual rollups, no double-counting on retry.
+
+You never interact with the registry directly. Instead, every surface that has metrics exposes a single read-only **`.usage`** property:
+
+```python
+agent.usage       # rolled up across every model call this agent participated in
+task.usage        # filtered to this task's scope
+chat.usage        # filtered to this chat session
+team.usage        # filtered across a team and its members
+output.usage      # the per-run snapshot returned alongside an agent run
+```
+
+All five return the same shape — an `AggregatedUsage` view — so once you learn the fields, you can read them from anywhere.
+
+## The `AggregatedUsage` shape
+
+`AggregatedUsage` is a read-only dataclass derived from the registry on each access.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `input_tokens` | `int` | Prompt/input tokens |
+| `output_tokens` | `int` | Completion/output tokens |
+| `total_tokens` | `int` | `input_tokens + output_tokens` |
+| `cache_read_tokens` | `int` | Tokens read from prompt cache |
+| `cache_write_tokens` | `int` | Tokens written to prompt cache |
+| `reasoning_tokens` | `int` | Chain-of-thought / reasoning tokens |
+| `requests` | `int` | Number of model requests |
+| `tool_calls` | `int` | Number of tool calls |
+| `cost` | `float \| None` | Sum of `cost_usd` across contributing entries; `None` if nothing priced |
+| `duration` | `float` | Sum of per-call durations recorded on entries |
+| `model_execution_time` | `float` | Time spent inside model calls |
+| `tool_execution_time` | `float` | Time spent inside tool calls |
+| `upsonic_execution_time` | `float` | Framework overhead = `duration − model − tool` |
+| `time_to_first_token` | `float \| None` | Earliest TTFT across contributing entries |
+| `entry_count` | `int` | Number of contributing `UsageEntry` rows |
+| `models` | `list[str]` | Distinct models that contributed, first-seen order |
+
+```python
+u = agent.usage
+print(u.input_tokens, u.output_tokens, u.cost, u.models)
+print(u.to_dict())  # JSON-friendly flat dict for logs/dashboards
+```
+
+`cost` is `None` (rather than `0.0`) when **no** contributing entry was priced. `0.0` means at least one entry was priced and the total came out free.
+
+## Scope tags
+
+Every recorded `UsageEntry` carries scope tags so the same row can be filtered into multiple views:
+
+| Tag | Set by | Visible as |
+|-----|--------|------------|
+| `chat_usage_id` | `Chat` session | `chat.usage` |
+| `agent_usage_id` | `Agent` instance | `agent.usage` |
+| `task_usage_id` | `Task` | `task.usage` |
+| `team_usage_id` | `Team` | `team.usage` |
+| `workflow_usage_id` | StateGraph / workflow | (registry queries) |
+| `system_usage_id` | System-level groupings | (registry queries) |
+| `run_id` | Per-run identifier | `output.usage` (one run) |
+| `user_id` | Per-user identifier | (registry queries) |
+
+Scope tags are propagated through Python `contextvars`. Sub-pipeline LLM calls — memory summarization, reliability validator/editor, culture checks, policy enforcement, sub-agents — **automatically inherit** the parent's tags, so their spend rolls up into `agent.usage`, `chat.usage`, etc., without any explicit propagation step.
+
+## Idempotency and retries
+
+The registry is keyed by `entry_id`. Re-recording an entry with the same id **replaces** the prior row rather than adding a second one. Retried requests therefore never double-count, and there is no separate baseline/snapshot machinery to keep in sync.
+
+## Persistence
+
+When you configure a storage backend on `Chat`, recorded entries are persisted alongside the conversation. Re-opening the same `session_id` re-hydrates the registry, so `chat.usage` continues from where it left off across processes and restarts.
+
+Supported backends: InMemory, JSON, SQLite, PostgreSQL, MongoDB, Redis.
+
+## Examples
+
+### Per-task vs. per-agent
+
+```python
+from upsonic import Agent, Task
+
+agent = Agent("anthropic/claude-sonnet-4-5")
+t1 = Task("Say hello.")
+t2 = Task("Say goodbye.")
+agent.do(t1)
+agent.do(t2)
+
+print(t1.usage.total_tokens, t2.usage.total_tokens)  # per-task
+print(agent.usage.total_tokens)                       # both tasks + any sub-pipeline calls
+```
+
+### Chat sessions
+
+```python
+import asyncio
+from upsonic import Agent, Chat
+
+async def main():
+    chat = Chat(session_id="s1", user_id="u1", agent=Agent("anthropic/claude-sonnet-4-5"))
+    await chat.invoke("Hello")
+    await chat.invoke("How are you?")
+
+    u = chat.usage
+    if u.cost is not None:
+        print(f"${u.cost:.4f} across {u.requests} requests using {u.models}")
+    print(f"Wall-clock session length: {chat.duration:.1f}s")
+
+asyncio.run(main())
+```
+
+### Teams
+
+```python
+from upsonic import Agent, Team
+
+team = Team(agents=[Agent("openai/gpt-4o-mini"), Agent("anthropic/claude-sonnet-4-5")])
+team.do("Plan and review a small feature.")
+
+print(team.usage.to_dict())  # spend across every member + sub-pipeline call
+```
+
+## Migration from the legacy surface
+
+The following legacy surfaces have been removed in favour of `.usage`. If you have older code, the replacements are:
+
+| Legacy | Replacement |
+|--------|-------------|
+| `task.price_id`, `task.get_total_cost()`, `task.total_input_token`, `task.total_output_token` | `task.task_usage_id`, `task.usage.X` |
+| `task.duration`, `task.model_execution_time`, `task.tool_execution_time`, `task.upsonic_execution_time` | `task.usage.X` (per-call sums); for wall-clock use `task.end_time - task.start_time` |
+| `agent.cost` (dict) | `agent.usage.to_dict()` |
+| `chat.input_tokens`, `chat.output_tokens`, `chat.total_tokens`, `chat.total_cost`, `chat.total_requests`, `chat.total_tool_calls`, `chat.run_duration`, `chat.time_to_first_token` | `chat.usage.X` |
+| `chat.get_usage()`, `chat.get_session_metrics()`, `chat.get_session_summary()` | `chat.usage`; for message count `len(chat.all_messages)`; for wall-clock `chat.duration` |
+| `SessionMetrics` dataclass | `chat.usage` + `chat.duration` + `len(chat.all_messages)` |
+| `UPSONIC_LEGACY_USAGE` env flag | (removed; the unified registry is always on) |
+
+## Related Documentation
+
+- [Agent Metrics](/concepts/agents/metrics)
+- [Task Metrics](/concepts/tasks/metrics)
+- [Chat Metrics](/concepts/chat/metrics)
+- [Team Metrics](/concepts/team/metrics)
+- [Tracing Overview](/concepts/tracing/overview)

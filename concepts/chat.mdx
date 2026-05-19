@@ -78,7 +78,8 @@ async def main():
 
     # Access chat history
     print(chat.all_messages)
-    print(f"Total cost: ${chat.total_cost}")
+    if chat.usage.cost is not None:
+        print(f"Total cost: ${chat.usage.cost:.4f}")
 
 
 if __name__ == "__main__":
@@ -235,21 +236,18 @@ async for chunk in chat.stream("Explain quantum computing"):
 
 ```python
 # Get session information
-print(f"Session state: {chat.state}")
-print(f"Total messages: {len(chat.all_messages)}")
-print(f"Input tokens: {chat.input_tokens}")
-print(f"Output tokens: {chat.output_tokens}")
-print(f"Total cost: ${chat.total_cost:.4f}")
+print(f"Session state:   {chat.state}")
+print(f"Total messages:  {len(chat.all_messages)}")
+print(f"Input tokens:    {chat.usage.input_tokens}")
+print(f"Output tokens:   {chat.usage.output_tokens}")
+if chat.usage.cost is not None:
+    print(f"Total cost:      ${chat.usage.cost:.4f}")
 
-# Get session metrics
-metrics = chat.get_session_metrics()
-print(f"Session duration: {metrics.duration:.1f}s")
-print(f"Average response time: {metrics.average_response_time:.2f}s")
+# Session timing (wall-clock)
+print(f"Session duration: {chat.duration:.1f}s")
 
-# Get cost history
-cost_history = chat.get_cost_history()
-for entry in cost_history:
-    print(f"Cost: ${entry['estimated_cost']:.4f} - {entry['model_name']}")
+# Models that contributed to this session
+print(f"Models used:     {chat.usage.models}")
 ```
 
 ## Session State Management
@@ -326,32 +324,34 @@ response = await chat.invoke("What programming language do I prefer?")
 ### Cost Monitoring
 
 ```python
-# Track costs across the session
-print(f"Total cost: ${chat.total_cost:.4f}")
-print(f"Input tokens: {chat.input_tokens}")
-print(f"Output tokens: {chat.output_tokens}")
+# Track costs across the session via the unified usage view
+u = chat.usage
+if u.cost is not None:
+    print(f"Total cost:     ${u.cost:.4f}")
+print(f"Input tokens:   {u.input_tokens}")
+print(f"Output tokens:  {u.output_tokens}")
+print(f"Requests:       {u.requests}")
+print(f"Tool calls:     {u.tool_calls}")
+print(f"Models used:    {u.models}")
 
-# Get detailed cost breakdown
-cost_history = chat.get_cost_history()
-for entry in cost_history:
-    print(f"Model: {entry['model_name']}")
-    print(f"Cost: ${entry['estimated_cost']:.4f}")
-    print(f"Tokens: {entry['input_tokens']} in, {entry['output_tokens']} out")
+# JSON-friendly snapshot (for logs/dashboards)
+import json
+print(json.dumps(u.to_dict(), indent=2))
 ```
 
 ### Session Analytics
 
 ```python
-# Get comprehensive session metrics
-metrics = chat.get_session_metrics()
-print(f"Session duration: {metrics.duration:.1f}s")
-print(f"Messages per minute: {metrics.messages_per_minute:.1f}")
-print(f"Average response time: {metrics.average_response_time:.2f}s")
-print(f"Total cost: ${metrics.total_cost:.4f}")
-
-# Get session summary
-summary = chat.get_session_summary()
-print(summary)
+# Session timing and usage aggregate
+print(f"Session duration: {chat.duration:.1f}s")
+print(f"Total messages:   {len(chat.all_messages)}")
+print(f"Requests:         {chat.usage.requests}")
+print(f"Tool calls:       {chat.usage.tool_calls}")
+print(f"Model time:       {chat.usage.model_execution_time:.2f}s")
+print(f"Tool time:        {chat.usage.tool_execution_time:.2f}s")
+print(f"Framework time:   {chat.usage.upsonic_execution_time:.2f}s")
+if chat.usage.cost is not None:
+    print(f"Total cost:       ${chat.usage.cost:.4f}")
 ```
 
 ## Error Handling and Retry Logic
@@ -583,12 +583,12 @@ async def main():
         # Session analytics
         print("\n=== SESSION ANALYTICS ===")
         print(f"Total messages: {len(chat.all_messages)}")
-        print(f"Total cost: ${chat.total_cost:.4f}")
-        print(f"Input tokens: {chat.input_tokens}")
-        print(f"Output tokens: {chat.output_tokens}")
-        
-        # Session summary
-        print(f"\nSession summary:\n{chat.get_session_summary()}")
+        u = chat.usage
+        if u.cost is not None:
+            print(f"Total cost:     ${u.cost:.4f}")
+        print(f"Input tokens:   {u.input_tokens}")
+        print(f"Output tokens:  {u.output_tokens}")
+        print(f"Duration:       {chat.duration:.1f}s")
         
     finally:
         # Clean up

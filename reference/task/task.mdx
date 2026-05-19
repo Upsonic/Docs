@@ -86,7 +86,7 @@ The following parameters are internal and typically not set by users:
 | `_last_cache_entry`                | `Optional[Dict[str, Any]]`                          | `None`     | Internal storage for last cache entry                                                                                                                                                                                                                  |
 | `_run_id`                          | `Optional[str]`                                       | `None`     | Internal run ID for task continuation                                                                                                                                                                                                  |
 | `_task_todos`                      | `Optional[TodoList]`                                 | `None`     | Internal todo list for task planning                                                                                                                                                                                                                   |
-| `price_id_`                        | `Optional[str]`                                       | `None`     | Internal price ID (use `price_id` property)                                                                                                                                                                                                        |
+| `task_usage_id_`                   | `Optional[str]`                                       | `None`     | Internal usage-scope tag (use `task_usage_id` property)                                                                                                                                                                                            |
 | `task_id_`                         | `Optional[str]`                                       | `None`     | Internal task ID (use `task_id` property)                                                                                                                                                                                                                           |
 | `agent`                            | `Optional[Agent]`                                       | `None`     | Internal reference to agent instance                                                                                                                                                                                                   |
 | `_run_output`                      | `Optional[AgentRunOutput]`                           | `None`     | The AgentRunOutput for this task                                                                                                                                                                                                  |
@@ -155,21 +155,23 @@ Get the task ID. Auto-generates a UUID if not set.
 
 - `str`: The task ID
 
-##### `price_id`
+##### `task_usage_id`
 
-Get the price ID for cost tracking. Auto-generates a UUID if not set.
-
-**Returns:**
-
-- `str`: The price ID
-
-##### `duration`
-
-Get task execution duration in seconds (end_time - start_time). Returns `None` if not started or not ended.
+Scope tag used to filter the centralized usage registry for this task. Auto-generates a UUID if not set.
 
 **Returns:**
 
-- `Optional[float]`: Task duration in seconds
+- `str`: The task usage ID
+
+##### `usage`
+
+Read-only `AggregatedUsage` view over the usage registry, filtered by `task_usage_id`. Exposes `input_tokens`, `output_tokens`, `total_tokens`, `cost`, `requests`, `tool_calls`, `model_execution_time`, `tool_execution_time`, `upsonic_execution_time`, `duration` (sum of per-call durations), `time_to_first_token`, `cache_read_tokens`, `cache_write_tokens`, `reasoning_tokens`, `models`, and `entry_count`.
+
+**Returns:**
+
+- `AggregatedUsage`: Read-only metrics view (never `None`; zero-valued before any model call)
+
+For wall-clock task length, compute `task.end_time - task.start_time`.
 
 ##### `response`
 
@@ -226,30 +228,6 @@ Get all tool calls made during this task's execution. Each dict contains 'tool_n
 **Returns:**
 
 - `List[Dict[str, Any]]`: A list of dictionaries containing information about tool calls
-
-##### `total_cost`
-
-Get the total estimated cost of this task in USD. Returns `None` if not available.
-
-**Returns:**
-
-- `Optional[float]`: The estimated cost in USD, or None if not available
-
-##### `total_input_token`
-
-Get the total number of input tokens used by this task. Returns `None` if not available.
-
-**Returns:**
-
-- `Optional[int]`: The number of input tokens, or None if not available
-
-##### `total_output_token`
-
-Get the total number of output tokens used by this task. Returns `None` if not available.
-
-**Returns:**
-
-- `Optional[int]`: The number of output tokens, or None if not available
 
 ##### `attachments_base64`
 
@@ -355,14 +333,6 @@ Get formatted task ID as "Task_{first_8_chars}".
 **Returns:**
 
 - `str`: Formatted task ID
-
-##### `get_total_cost`
-
-Get total cost information including estimated_cost, input_tokens, and output_tokens.
-
-**Returns:**
-
-- `Optional[Dict[str, Any]]`: Dictionary with cost information, or None if not available
 
 ##### Cache Management
 

@@ -37,7 +37,8 @@ async def main():
     response = await chat.invoke("Hello, how are you?")
     print(response)
 
-    print(f"Total cost: ${chat.total_cost:.4f}")
+    if chat.usage.cost is not None:
+        print(f"Total cost: ${chat.usage.cost:.4f}")
     print(f"Messages: {len(chat.all_messages)}")
 
 

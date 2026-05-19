@@ -1,0 +1,132 @@
+---
+title: "Team Metrics"
+sidebarTitle: "Metrics"
+description: "Track tokens, cost, requests, tool calls, and timing across every member of a team."
+---
+
+## Overview
+
+Every team exposes a single read-only **`team.usage`** property. It returns an `AggregatedUsage` view derived from the [centralized usage registry](/concepts/usage-registry) on each access, scoped to this team's `team_usage_id`.
+
+Each member's model calls — including sub-pipeline calls like memory summarization, reliability passes, culture, policy, and sub-agents — inherit the team scope and roll into `team.usage` automatically. Nested sub-teams contribute to their parent team's view as well.
+
+## Accessing Team Metrics
+
+Read **`team.usage`** on any `Team` instance. It always returns an `AggregatedUsage` — zero-valued before the first run, populated thereafter.
+
+### Token Metrics
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `input_tokens` | `int` | Prompt tokens across every team member's model calls |
+| `output_tokens` | `int` | Completion tokens across every team member's model calls |
+| `total_tokens` | `int` | Sum of `input_tokens + output_tokens` |
+| `cache_read_tokens` | `int` | Tokens read from prompt cache |
+| `cache_write_tokens` | `int` | Tokens written to prompt cache |
+| `reasoning_tokens` | `int` | Reasoning (chain-of-thought) tokens |
+
+### Request & Tool Metrics
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `requests` | `int` | Total number of LLM API requests across the team |
+| `tool_calls` | `int` | Total number of tool calls across the team |
+
+### Timing Metrics
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `duration` | `float` | Sum of per-call durations recorded on entries (seconds) |
+| `model_execution_time` | `float` | Total time spent inside LLM API calls (seconds) |
+| `tool_execution_time` | `float` | Total time spent executing tools (seconds) |
+| `upsonic_execution_time` | `float` | Framework overhead = `duration − model − tool` (seconds) |
+| `time_to_first_token` | `float \| None` | Earliest TTFT across contributing entries |
+
+### Cost Metrics
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `cost` | `float \| None` | Sum of `cost_usd` across contributing entries. `None` if no entry was priced; `0.0` means priced and free. |
+
+### Aggregation Metadata
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entry_count` | `int` | Number of underlying `UsageEntry` rows contributing to this view |
+| `models` | `list[str]` | Distinct model identifiers that contributed (first-seen order) |
+
+### Team Identity
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `team_id` | `str` | Stable identifier for the team |
+| `team_usage_id` | `str` | Scope tag used to filter the usage registry for this team |
+
+## Example
+
+```python
+from upsonic import Agent, Team
+
+team = Team(
+    entities=[
+        Agent("openai/gpt-4o-mini", name="Researcher"),
+        Agent("anthropic/claude-sonnet-4-5", name="Reviewer"),
+    ],
+)
+
+team.do("Plan and review a small feature.")
+
+u = team.usage
+print(f"Requests:        {u.requests}")
+print(f"Input tokens:    {u.input_tokens}")
+print(f"Output tokens:   {u.output_tokens}")
+print(f"Tool calls:      {u.tool_calls}")
+if u.cost is not None:
+    print(f"Cost:            ${u.cost:.4f}")
+print(f"Model time:      {u.model_execution_time:.2f}s")
+print(f"Tool time:       {u.tool_execution_time:.2f}s")
+print(f"Framework time:  {u.upsonic_execution_time:.2f}s")
+print(f"Models used:     {u.models}")
+```
+
+## JSON-Friendly Output
+
+```python
+import json
+
+snapshot = team.usage.to_dict()
+print(json.dumps(snapshot, indent=2))
+```
+
+## Scope & Propagation
+
+- **Across members** — Every team member's model call records an entry tagged with the team's `team_usage_id`. Reading `team.usage` re-aggregates all of them.
+- **Per-member breakdown** — Each agent still has its own `agent_usage_id`. To see one member in isolation, read that agent's `agent.usage`. The same entries contribute to both views (one entry, multiple scope tags).
+- **Sub-teams** — When a `Team` is nested inside another `Team`, the nested team's entries carry both `team_usage_id` tags, rolling up into the parent automatically.
+- **Sub-pipeline rollup** — Memory summarization, reliability validator/editor, culture, policy, and sub-agent calls dispatched by team members inherit the team scope via context variables.
+- **Retry idempotency** — The registry is keyed by `entry_id`. Retried requests replace their prior entry instead of double-counting.
+- **JSON snapshot** — Call `team.usage.to_dict()` for a flat dict suitable for logs and dashboards.
+
+## Per-Member Breakdown
+
+```python
+print("=== Team total ===")
+print(team.usage.to_dict())
+
+print("\n=== Per-member ===")
+for entity in team.entities:
+    print(f"{entity.name}: {entity.usage.to_dict()}")
+```
+
+## Legacy Migration
+
+<Note>
+`team.usage` is the unified entry point for all team-level metrics. There is no legacy `team.total_cost` / `team.input_tokens` / `team.get_session_metrics()` surface — `team.usage` was introduced as part of the centralized usage registry rollout.
+</Note>
+
+## Related Documentation
+
+- [Usage Registry](/concepts/usage-registry) — Architecture, scope tags, persistence
+- [Agent Metrics](/concepts/agents/metrics) — Per-member scoped view
+- [Task Metrics](/concepts/tasks/metrics) — Per-task scoped view
+- [Chat Metrics](/concepts/chat/metrics) — Per-session scoped view
