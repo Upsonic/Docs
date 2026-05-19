@@ -32,11 +32,12 @@ task = Task(description="Explain quantum computing in simple terms")
 agent.print_do(task)
 
 # Access task metadata
-print(f"Task ID: {task.task_id}")
-print(f"Price ID: {task.price_id}")
-print(f"Duration: {task.duration}")
-print(f"Start time: {task.start_time}")
-print(f"End time: {task.end_time}")
+print(f"Task ID:        {task.task_id}")
+print(f"Task Usage ID:  {task.task_usage_id}")
+print(f"Start time:     {task.start_time}")
+print(f"End time:       {task.end_time}")
+if task.start_time and task.end_time:
+    print(f"Wall-clock:     {(task.end_time - task.start_time):.2f}s")
 ```
 
 ## Cost Information
@@ -49,14 +50,13 @@ agent = Agent(model="anthropic/claude-sonnet-4-5")
 task = Task(description="Write a short poem about technology")
 agent.print_do(task)
 
-# Access cost information
-total_cost = task.total_cost
-input_tokens = task.total_input_token
-output_tokens = task.total_output_token
-
-print(f"Total cost: ${total_cost}")
-print(f"Input tokens: {input_tokens}")
-print(f"Output tokens: {output_tokens}")
+# Access cost information via the unified usage view
+u = task.usage
+if u.cost is not None:
+    print(f"Total cost:   ${u.cost:.6f}")
+print(f"Input tokens:  {u.input_tokens}")
+print(f"Output tokens: {u.output_tokens}")
+print(f"Requests:      {u.requests}")
 ```
 
 ## Tool Call History
@@ -130,12 +130,15 @@ result = agent.print_do(task)
 
 # Access all available information
 print("=== TASK EXECUTION SUMMARY ===")
-print(f"Task ID: {task.get_task_id()}")
-print(f"Duration: {task.duration:.2f} seconds")
-print(f"Cost: ${task.total_cost}")
-print(f"Tokens: {task.total_input_token} in, {task.total_output_token} out")
-print(f"Tool calls made: {len(task.tool_calls)}")
-print(f"Cache hit: {task._cache_hit}")
+print(f"Task ID:        {task.get_task_id()}")
+if task.start_time and task.end_time:
+    print(f"Wall-clock:     {(task.end_time - task.start_time):.2f} seconds")
+u = task.usage
+if u.cost is not None:
+    print(f"Cost:           ${u.cost:.6f}")
+print(f"Tokens:         {u.input_tokens} in, {u.output_tokens} out")
+print(f"Tool calls:     {len(task.tool_calls)}")
+print(f"Cache hit:      {task.cache_hit}")
 
 print("\n=== TASK RESULT ===")
 print(f"Result: {result}")
@@ -149,18 +152,17 @@ for key, value in cache_stats.items():
 
 ## Available Properties and Methods
 
-| Property/Method        | Type       | Description                        |
-| ---------------------- | ---------- | ---------------------------------- |
-| **response**           | Any        | The task's response output         |
-| **task_id**            | str        | Unique task identifier             |
-| **price_id**           | str        | Price tracking identifier          |
-| **duration**           | float      | Task execution duration in seconds |
-| **total_cost**         | float      | Estimated cost in USD              |
-| **total_input_token**  | int        | Number of input tokens used        |
-| **total_output_token** | int        | Number of output tokens generated  |
-| **tool_calls**         | List[Dict] | History of tool calls made         |
-| **get_cache_stats()**  | Dict       | Cache statistics and configuration |
-| **get_task_id()**      | str        | Formatted task ID for display      |
+| Property/Method        | Type              | Description                                                       |
+| ---------------------- | ----------------- | ----------------------------------------------------------------- |
+| **response**           | Any               | The task's response output                                        |
+| **task_id**            | str               | Unique task identifier                                            |
+| **task_usage_id**      | str               | Scope tag for filtering the usage registry to this task           |
+| **usage**              | `AggregatedUsage` | Read-only view of tokens / cost / requests / timing for this task |
+| **start_time**         | float \| None     | Unix timestamp when the task started                              |
+| **end_time**           | float \| None     | Unix timestamp when the task finished                             |
+| **tool_calls**         | List[Dict]        | History of tool calls made                                        |
+| **get_cache_stats()**  | Dict              | Cache statistics and configuration                                |
+| **get_task_id()**      | str               | Formatted task ID for display                                     |
 
 ## Best Practices
 

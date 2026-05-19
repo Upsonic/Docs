@@ -31,17 +31,10 @@ description: "Configuration options for the Chat class"
 |----------|------|-------------|
 | `state` | `SessionState` | Current session state (IDLE, AWAITING_RESPONSE, STREAMING, ERROR) |
 | `all_messages` | `List[ChatMessage]` | All messages in the session |
-| `input_tokens` | `int` | Total input tokens used |
-| `output_tokens` | `int` | Total output tokens used |
-| `total_tokens` | `int` | Total tokens (input + output) |
-| `total_cost` | `float` | Total cost in USD |
-| `total_requests` | `int` | Total API requests made |
-| `total_tool_calls` | `int` | Total tool calls made |
-| `run_duration` | `float` | Total run duration in seconds |
-| `time_to_first_token` | `float` | Time to first token in seconds |
+| `usage` | `AggregatedUsage` | Read-only view over every model call recorded for this session — tokens, cost, requests, tool calls, timing. See [Metrics](/concepts/chat/metrics). |
 | `start_time` | `float` | Session start time (Unix timestamp) |
 | `end_time` | `float` | Session end time (None if active) |
-| `duration` | `float` | Session duration in seconds |
+| `duration` | `float` | Wall-clock session duration in seconds |
 | `last_activity` | `float` | Time since last activity in seconds |
 | `is_closed` | `bool` | Whether the session is closed |
 
@@ -69,8 +62,9 @@ async def main():
     print(response)
 
     print(f"State: {chat.state.value}")
-    print(f"Cost: ${chat.total_cost:.4f}")
-    print(f"Tokens: {chat.total_tokens}")
+    if chat.usage.cost is not None:
+        print(f"Cost: ${chat.usage.cost:.4f}")
+    print(f"Tokens: {chat.usage.total_tokens}")
 
 
 if __name__ == "__main__":

@@ -425,24 +425,24 @@ print(f"Task response: {task.response}")
 
 ```python
 # Access task metadata
-print(f"Task ID: {task.task_id}")
-print(f"Price ID: {task.price_id}")
-print(f"Duration: {task.duration}")
-print(f"Start time: {task.start_time}")
-print(f"End time: {task.end_time}")
+print(f"Task ID:       {task.task_id}")
+print(f"Task Usage ID: {task.task_usage_id}")
+print(f"Start time:    {task.start_time}")
+print(f"End time:      {task.end_time}")
+if task.start_time and task.end_time:
+    print(f"Wall-clock:    {(task.end_time - task.start_time):.2f}s")
 ```
 
 ### Cost Information
 
 ```python
-# Access cost information
-total_cost = task.total_cost
-input_tokens = task.total_input_token
-output_tokens = task.total_output_token
-
-print(f"Total cost: ${total_cost}")
-print(f"Input tokens: {input_tokens}")
-print(f"Output tokens: {output_tokens}")
+# Access cost information via the unified usage view
+u = task.usage
+if u.cost is not None:
+    print(f"Total cost:   ${u.cost:.6f}")
+print(f"Input tokens:  {u.input_tokens}")
+print(f"Output tokens: {u.output_tokens}")
+print(f"Requests:      {u.requests}")
 ```
 
 ### Tool Call History
@@ -506,12 +506,15 @@ result = agent.do(task)
 
 # Access all available information
 print("=== TASK EXECUTION SUMMARY ===")
-print(f"Task ID: {task.get_task_id()}")
-print(f"Duration: {task.duration:.2f} seconds")
-print(f"Cost: ${task.total_cost}")
-print(f"Tokens: {task.total_input_token} in, {task.total_output_token} out")
-print(f"Tool calls made: {len(task.tool_calls)}")
-print(f"Cache hit: {task._cache_hit}")
+print(f"Task ID:        {task.get_task_id()}")
+if task.start_time and task.end_time:
+    print(f"Wall-clock:     {(task.end_time - task.start_time):.2f} seconds")
+u = task.usage
+if u.cost is not None:
+    print(f"Cost:           ${u.cost:.6f}")
+print(f"Tokens:         {u.input_tokens} in, {u.output_tokens} out")
+print(f"Tool calls:     {len(task.tool_calls)}")
+print(f"Cache hit:      {task.cache_hit}")
 
 print("\n=== TASK RESULT ===")
 print(f"Result: {result}")

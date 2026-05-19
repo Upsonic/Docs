@@ -1,11 +1,72 @@
 ---
-title: "Metrics"
-description: "Cost tracking and session analytics"
+title: "Chat Metrics"
+sidebarTitle: "Metrics"
+description: "Track tokens, cost, requests, tool calls, and timing across an entire chat session."
 ---
 
-## Token and Cost Tracking
+## Overview
 
-Access usage metrics via properties:
+Every chat session exposes a single read-only **`chat.usage`** property. It returns an `AggregatedUsage` view derived from the [centralized usage registry](/concepts/usage-registry) on each access, scoped to this chat's `chat_usage_id`.
+
+The session's own agent calls, sub-agents, memory summarization, reliability passes, culture, and policy checks all inherit the chat scope and roll into `chat.usage` automatically.
+
+For wall-clock session length, use `chat.duration` (or `chat.end_time - chat.start_time` for an explicit window).
+
+## Accessing Chat Metrics
+
+Read **`chat.usage`** on any `Chat` instance. It always returns an `AggregatedUsage` — zero-valued before the first message, populated thereafter.
+
+### Token Metrics
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `input_tokens` | `int` | Prompt tokens across all model calls in the session |
+| `output_tokens` | `int` | Completion tokens across all model calls |
+| `total_tokens` | `int` | Sum of `input_tokens + output_tokens` |
+| `cache_read_tokens` | `int` | Tokens read from prompt cache |
+| `cache_write_tokens` | `int` | Tokens written to prompt cache |
+| `reasoning_tokens` | `int` | Reasoning (chain-of-thought) tokens |
+
+### Request & Tool Metrics
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `requests` | `int` | Number of LLM API requests across the session |
+| `tool_calls` | `int` | Number of tool calls across the session |
+
+### Timing Metrics
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `duration` | `float` | Sum of per-call durations recorded on entries (seconds) |
+| `model_execution_time` | `float` | Total time spent inside LLM API calls (seconds) |
+| `tool_execution_time` | `float` | Total time spent executing tools (seconds) |
+| `upsonic_execution_time` | `float` | Framework overhead = `duration − model − tool` (seconds) |
+| `time_to_first_token` | `float \| None` | Earliest TTFT across contributing entries |
+
+### Cost Metrics
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `cost` | `float \| None` | Sum of `cost_usd` across contributing entries. `None` if no entry was priced; `0.0` means priced and free. |
+
+### Aggregation Metadata
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entry_count` | `int` | Number of underlying `UsageEntry` rows contributing to this view |
+| `models` | `list[str]` | Distinct model identifiers that contributed (first-seen order) |
+
+### Session Wall-Clock & Messages
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `chat.duration` | `float` | Wall-clock session length in seconds |
+| `chat.start_time` | `float` | Unix timestamp when the session opened |
+| `chat.end_time` | `float \| None` | Unix timestamp when the session closed (`None` if active) |
+| `len(chat.all_messages)` | `int` | Total messages in the session |
+
+## Example
 
 ```python
 import asyncio
@@ -19,89 +80,70 @@ async def main():
     await chat.invoke("Hello")
     await chat.invoke("How are you?")
 
-    print(f"Total cost: ${chat.total_cost:.4f}")
-    print(f"Input tokens: {chat.input_tokens}")
-    print(f"Output tokens: {chat.output_tokens}")
-    print(f"Total tokens: {chat.total_tokens}")
-    print(f"Total requests: {chat.total_requests}")
+    u = chat.usage
+    print(f"Requests:        {u.requests}")
+    print(f"Input tokens:    {u.input_tokens}")
+    print(f"Output tokens:   {u.output_tokens}")
+    print(f"Tool calls:      {u.tool_calls}")
+    if u.cost is not None:
+        print(f"Cost:            ${u.cost:.4f}")
+    print(f"Model time:      {u.model_execution_time:.2f}s")
+    print(f"Tool time:       {u.tool_execution_time:.2f}s")
+    print(f"Framework time:  {u.upsonic_execution_time:.2f}s")
+    print(f"Models used:     {u.models}")
+
+    # Wall-clock session length
+    print(f"Wall-clock:      {chat.duration:.1f}s")
+    print(f"Messages:        {len(chat.all_messages)}")
 
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Session Metrics
-
-Get comprehensive metrics via `get_session_metrics()`:
+## JSON-Friendly Output
 
 ```python
-import asyncio
-from upsonic import Agent, Chat
+import json
 
-
-async def main():
-    agent = Agent("anthropic/claude-sonnet-4-5")
-    chat = Chat(session_id="session1", user_id="user1", agent=agent)
-
-    await chat.invoke("Hello")
-
-    metrics = chat.get_session_metrics()
-    print(f"Duration: {metrics.duration:.1f}s")
-    print(f"Messages: {metrics.message_count}")
-    print(f"Total cost: ${metrics.total_cost:.4f}")
-    print(f"Avg response time: {metrics.average_response_time:.2f}s")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+snapshot = {
+    **chat.usage.to_dict(),
+    "duration_wallclock": chat.duration,
+    "messages": len(chat.all_messages),
+}
+print(json.dumps(snapshot, indent=2))
 ```
 
-## Session Summary
+## Scope & Propagation
 
-Get a human-readable summary:
+- **Across invocations** — Every `chat.invoke` / `chat.stream` adds entries under the chat's scope. Reading `chat.usage` re-aggregates them, so the figures always reflect the latest state.
+- **Sub-pipeline rollup** — Memory summarization, reliability validator/editor, culture, policy, and sub-agent calls inherit the chat scope via context variables and roll into `chat.usage` automatically.
+- **Retry idempotency** — The registry is keyed by `entry_id`. Retried requests replace their prior entry instead of double-counting.
+- **Persistence** — When you configure storage on `Chat`, recorded entries persist alongside the conversation. Re-opening the same `session_id` re-hydrates the registry, so `chat.usage` continues from where it left off across processes and restarts.
 
-```python
-import asyncio
-from upsonic import Agent, Chat
+## Legacy Migration
 
+<Note>
+Legacy chat-level properties and helpers have been removed in favour of `chat.usage`:
 
-async def main():
-    agent = Agent("anthropic/claude-sonnet-4-5")
-    chat = Chat(session_id="session1", user_id="user1", agent=agent)
+| Legacy | Replacement |
+|--------|-------------|
+| `chat.input_tokens` | `chat.usage.input_tokens` |
+| `chat.output_tokens` | `chat.usage.output_tokens` |
+| `chat.total_tokens` | `chat.usage.total_tokens` |
+| `chat.total_cost` | `chat.usage.cost` |
+| `chat.total_requests` | `chat.usage.requests` |
+| `chat.total_tool_calls` | `chat.usage.tool_calls` |
+| `chat.run_duration`, `chat.time_to_first_token` | `chat.usage.duration`, `chat.usage.time_to_first_token` |
+| `chat.get_usage()` | `chat.usage` |
+| `chat.get_session_metrics()`, `chat.get_session_summary()`, `SessionMetrics` | `chat.usage` + `chat.duration` + `len(chat.all_messages)` |
+| `chat.get_cost_history()` | (registry query — filter `UsageEntry` rows by `chat_usage_id`) |
+</Note>
 
-    await chat.invoke("Hello")
-    await chat.invoke("How are you?")
+## Related Documentation
 
-    summary = chat.get_session_summary()
-    print(summary)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-## Run Usage Object
-
-Access the full usage object:
-
-```python
-import asyncio
-from upsonic import Agent, Chat
-
-
-async def main():
-    agent = Agent("anthropic/claude-sonnet-4-5")
-    chat = Chat(session_id="session1", user_id="user1", agent=agent)
-
-    await chat.invoke("Hello")
-
-    usage = chat.get_usage()
-    if usage:
-        print(f"Input tokens: {usage.input_tokens}")
-        print(f"Output tokens: {usage.output_tokens}")
-        print(f"Cost: ${usage.cost:.4f}")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
+- [Usage Registry](/concepts/usage-registry) — Architecture, scope tags, persistence
+- [Agent Metrics](/concepts/agents/metrics) — Accumulated agent-level view
+- [Task Metrics](/concepts/tasks/metrics) — Per-task scoped view
+- [Team Metrics](/concepts/team/metrics) — Per-team scoped view
+- [Storage Backends](/concepts/chat/storage-backends) — Persisting usage across processes

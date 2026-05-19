@@ -26,7 +26,8 @@ async def main():
     print(f"Assistant: {response2}")
 
     print(f"\nMessages: {len(chat.all_messages)}")
-    print(f"Cost: ${chat.total_cost:.4f}")
+    if chat.usage.cost is not None:
+        print(f"Cost: ${chat.usage.cost:.4f}")
 
 
 if __name__ == "__main__":
