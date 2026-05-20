@@ -91,7 +91,8 @@ if __name__ == "__main__":
 
 ## With Retry Configuration
 
-Configure retry behavior for transient failures:
+Retries are configured on the `Agent`, not on `Chat` — `Chat` delegates
+all retry behavior to its underlying agent via `Agent(retry=N)`:
 
 ```python
 import asyncio
@@ -99,15 +100,13 @@ from upsonic import Agent, Chat
 
 
 async def main():
-    agent = Agent("anthropic/claude-sonnet-4-5")
+    agent = Agent("anthropic/claude-sonnet-4-5", retry=5)
 
     chat = Chat(
         session_id="session1",
         user_id="user1",
         agent=agent,
-        retry_attempts=5,
-        retry_delay=2.0,
-        max_concurrent_invocations=2
+        max_concurrent_invocations=2,
     )
 
     response = await chat.invoke("Hello!")
@@ -124,3 +123,51 @@ if __name__ == "__main__":
 - `user_id`: Unique per user, can have multiple sessions
 
 Use consistent IDs to maintain context across application restarts.
+
+<Note>
+If the agent's `Memory` already carries `session_id` / `user_id` (because you
+built it as `Memory(session_id="…", user_id="…")` or because the agent class —
+like `AutonomousAgent` — generated them), `Chat` realigns its own ids to the
+agent's values. A mismatched `Chat(session_id=…, user_id=…)` triggers a
+`UserWarning` and the agent's ids win.
+</Note>
+
+## Storage and Memory Resolution
+
+`Chat` follows an **agent-first** policy when deciding which storage and memory
+to use. The resolution order, from highest priority to lowest, is:
+
+1. **`agent.memory`** (and its `storage`) — when the agent already arrives
+   wired with memory, `Chat` reuses both the memory instance *and* its storage
+   verbatim. The `storage` kwarg on `Chat` and every memory-config kwarg
+   (`full_session_memory`, `summary_memory`, `num_last_messages`, …) are
+   silently ignored in this case. Configure those by building the agent's
+   `Memory` instead.
+2. **`Chat(storage=…)`** — used only when the agent has no memory. `Chat` wraps
+   the supplied storage in a fresh `Memory` built from its own config kwargs,
+   and attaches that memory to the agent.
+3. **Default `InMemoryStorage`** — last-resort fallback. Same behavior as (2),
+   but with a fresh in-memory backend.
+
+```python
+# (1) Agent already has memory → Chat reuses it as-is
+from upsonic.storage import SqliteStorage, Memory
+
+storage = SqliteStorage(db_file="chat.db")
+agent = Agent(
+    "anthropic/claude-sonnet-4-5",
+    memory=Memory(storage=storage, session_id="s1", user_id="u1",
+                  full_session_memory=True),
+)
+chat = Chat(session_id="s1", user_id="u1", agent=agent)  # storage / memory kwargs ignored
+
+# (2) Agent has no memory → Chat's storage kwarg is used
+agent = Agent("anthropic/claude-sonnet-4-5")
+chat = Chat(session_id="s1", user_id="u1", agent=agent,
+            storage=SqliteStorage(db_file="chat.db"),
+            full_session_memory=True)
+```
+
+`Chat` no longer overrides `agent.memory` — once the agent has memory, both
+sides share the same storage and the same memory instance. This means
+`agent.memory is chat._memory` holds throughout the session.
