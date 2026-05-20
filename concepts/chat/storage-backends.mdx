@@ -12,6 +12,17 @@ description: "Persistence options for Chat sessions"
 - **RedisStorage**: Redis with TTL
 - **JSONStorage**: File-based JSON
 
+<Note>
+**Where to attach the storage** — `Chat` follows an *agent-first* policy:
+when `agent.memory` already exists, `Chat`'s `storage=` kwarg is ignored and
+the agent's existing storage wins. The examples below build the agent
+*without* a memory, so the storage you pass to `Chat` is the one actually
+used. If you need to share a storage between an already-memory-wired agent
+and `Chat`, configure it on the agent's `Memory` instead. See
+[Creating a Chat → Storage and Memory Resolution](./creating-a-chat) for the
+full priority order.
+</Note>
+
 ## SQLite Storage
 
 ```python

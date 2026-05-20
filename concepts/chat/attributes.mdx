@@ -7,23 +7,29 @@ description: "Configuration options for the Chat class"
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `session_id` | `str` | (required) | Unique identifier for this chat session |
-| `user_id` | `str` | (required) | Unique identifier for the user |
+| `session_id` | `str` | (required) | Unique identifier for this chat session. Realigned to `agent.memory.session_id` if the agent's memory already carries one (emits `UserWarning`). |
+| `user_id` | `str` | (required) | Unique identifier for the user. Realigned to `agent.memory.user_id` if the agent's memory already carries one (emits `UserWarning`). |
 | `agent` | `Agent` | (required) | The Agent instance to handle conversations |
-| `storage` | `Storage` | `None` | Storage backend (defaults to InMemoryStorage) |
-| `full_session_memory` | `bool` | `True` | Store full conversation history |
-| `summary_memory` | `bool` | `False` | Enable conversation summarization |
-| `user_analysis_memory` | `bool` | `False` | Enable user profile analysis |
-| `user_profile_schema` | `type` | `None` | Custom Pydantic schema for user profiles |
-| `dynamic_user_profile` | `bool` | `False` | Auto-generate profile schema from conversations |
-| `num_last_messages` | `int` | `None` | Limit history to last N messages |
-| `feed_tool_call_results` | `bool` | `False` | Include tool calls in memory |
-| `user_memory_mode` | `'update' \| 'replace'` | `'update'` | How to update user profiles |
+| `storage` | `Storage` | `None` | Storage backend. **Agent-first policy**: only used when `agent.memory` is `None`. Otherwise the agent's existing storage wins and this kwarg is ignored. |
+| `full_session_memory` | `bool` | `True` | Store full conversation history. Ignored when the agent already has memory (the agent's memory config wins). |
+| `summary_memory` | `bool` | `False` | Enable conversation summarization. Ignored when the agent already has memory. |
+| `user_analysis_memory` | `bool` | `False` | Enable user profile analysis. Ignored when the agent already has memory. |
+| `user_profile_schema` | `type` | `None` | Custom Pydantic schema for user profiles. Ignored when the agent already has memory. |
+| `dynamic_user_profile` | `bool` | `False` | Auto-generate profile schema. Ignored when the agent already has memory. |
+| `num_last_messages` | `int` | `None` | Limit history to last N messages. Ignored when the agent already has memory. |
+| `feed_tool_call_results` | `bool` | `False` | Include tool calls in memory. Ignored when the agent already has memory. |
+| `user_memory_mode` | `'update' \| 'replace'` | `'update'` | How to update user profiles. Ignored when the agent already has memory. |
 | `debug` | `bool` | `False` | Enable debug logging |
 | `debug_level` | `int` | `1` | Debug verbosity (1=standard, 2=detailed) |
 | `max_concurrent_invocations` | `int` | `1` | Maximum concurrent invoke calls |
-| `retry_attempts` | `int` | `3` | Number of retry attempts for failed calls |
-| `retry_delay` | `float` | `1.0` | Delay between retry attempts (seconds) |
+
+<Note>
+**Agent-first resolution.** When `agent.memory` is already wired (either because
+the agent was built with `memory=…`, `storage=…`, `db=…`, or because the agent
+class — like `AutonomousAgent` — seeds a default memory), `Chat` reuses it as-is:
+`storage` and every memory-config kwarg above are silently ignored. To configure
+those features, pass them when building the agent's `Memory`, not on `Chat`.
+</Note>
 
 ## Instance Properties
 
@@ -55,7 +61,6 @@ async def main():
         full_session_memory=True,
         summary_memory=True,
         num_last_messages=50,
-        retry_attempts=3
     )
 
     response = await chat.invoke("Hello!")

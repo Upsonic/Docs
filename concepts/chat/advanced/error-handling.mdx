@@ -5,7 +5,10 @@ description: "Retry mechanisms and error recovery"
 
 ## Retry Configuration
 
-Configure automatic retries for transient failures:
+Retries are configured on the underlying `Agent`. `Chat` has no retry
+knobs of its own — it delegates entirely to `Agent.do_async`'s
+`@retryable` behavior. Set `retry=N` on the `Agent` to control the
+total number of attempts:
 
 ```python
 import asyncio
@@ -13,14 +16,12 @@ from upsonic import Agent, Chat
 
 
 async def main():
-    agent = Agent("anthropic/claude-sonnet-4-5")
+    agent = Agent("anthropic/claude-sonnet-4-5", retry=5)
 
     chat = Chat(
         session_id="session1",
         user_id="user1",
         agent=agent,
-        retry_attempts=5,
-        retry_delay=1.0
     )
 
     response = await chat.invoke("Hello")
@@ -31,15 +32,6 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Retryable Errors
-
-Chat automatically retries on:
-- Network errors (ConnectionError, TimeoutError)
-- Rate limiting
-- Temporary service unavailability
-- Internal server errors
-
-Non-retryable errors are raised immediately.
 
 ## Error State Recovery
 
