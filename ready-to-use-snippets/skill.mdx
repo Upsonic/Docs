@@ -1,165 +1,144 @@
 ---
 title: "SKILL.md"
 sidebarTitle: "SKILL.md"
-description: "A ready-to-use SKILL.md template for creating custom skills"
+description: "A ready-to-use SKILL.md template for adding a workspace skill your autonomous agent discovers and runs"
 ---
 
-The `SKILL.md` file defines your skill's identity, metadata, and instructions in a simple markdown file. Place it inside a **skill directory** and the agent will automatically load it when the skill is requested.
+A `SKILL.md` file defines a **skill** — a self-contained capability that lives as a folder inside your agent's workspace. It tells the agent **when** the skill applies, **how** to run it, and **what it must never do**. Drop the folder into `workspace/skills/`, point to it from `AGENTS.md`, and the agent discovers and runs it on its own — no code changes.
 
 ## Where to Use
 
 You can use `SKILL.md` with:
 
-- [**LocalSkills**](/docs/skills/loaders/local) — Load from a local directory on disk
-- [**GitHubSkills**](/docs/skills/loaders/github) — Load from a GitHub repository
-- [**BuiltinSkills**](/docs/skills/loaders/builtin) — Built-in skills that ship with Upsonic
+- [**AutonomousAgent**](/concepts/autonomous-agent/skills) — comes with workspace, filesystem, and shell tools built in
+- [**Agent** with workspace](/concepts/agents/advanced/workspace) — set the `workspace` parameter on your Agent
 
 ## How It Works
 
-1. Create a folder named after your skill (kebab-case)
-2. Add a `SKILL.md` file with YAML frontmatter and Markdown instructions
-3. Optionally add `scripts/`, `references/`, and `assets/` directories
-4. Point a loader at the parent directory
+A skill is just a directory under `workspace/skills/`. Each one owns a `SKILL.md` plus the scripts, templates, and assets it needs:
+
+```
+workspace/
+├── AGENTS.md                    # agent behavior + skill index (routing)
+├── data/                        # source data the skills operate on
+├── reports/                     # outputs
+└── skills/
+    └── excel_report/
+        ├── SKILL.md             # ← when & how to use this skill
+        ├── generate.py          # the real generator (the agent calls this)
+        ├── templates/
+        │   └── onboarding.json  # branding: colors, logo, columns
+        └── assets/
+            └── upsonic_logo.png
+```
+
+1. Create a folder named after your skill inside `workspace/skills/`
+2. Add a `SKILL.md` with **When to Use**, **Usage**, and **Important** sections
+3. Optionally add scripts, `templates/`, and `assets/`
+4. Register the skill in `AGENTS.md` so the agent knows when to reach for it
 
 ```python
-from upsonic import Agent
-from upsonic.skills import Skills, LocalSkills
+from upsonic import AutonomousAgent, Task
 
-agent = Agent(
-    "anthropic/claude-sonnet-4-5",
-    skills=Skills(loaders=[LocalSkills("./my-skills")])  # <- put skill folders here
+agent = AutonomousAgent(
+    model="anthropic/claude-sonnet-4-5",
+    workspace="/path/to/workspace"  # <- skills/ and AGENTS.md live here
 )
+
+# The agent reads AGENTS.md, routes to the skill, reads its SKILL.md, and runs it
+agent.print_do(Task("Generate the onboarding report for the last 2 weeks"))
 ```
+
+The agent never imports the skill. It **discovers** it at runtime by reading files: `AGENTS.md` routes the request, then the agent opens the matching `SKILL.md` only when a task needs it (progressive disclosure). See [Skills](/concepts/autonomous-agent/skills) for the full walkthrough.
 
 ## Template
 
-Copy and customize this template for your use case:
+Copy and customize this `SKILL.md` for your use case:
+
+````markdown
+# Skill: Excel Report Generator
+
+Generate branded, formatted Excel reports from CSV data using predefined templates.
+
+## When to Use
+
+Trigger this skill when the user asks for:
+- Reports (onboarding, weekly, monthly, etc.)
+- Excel/spreadsheet generation
+- Data exports with formatting
+
+## How It Works
+
+1. **Find the data** — look in `data/` for the relevant CSV file
+2. **Pick the template** — match the request to a template in `skills/excel_report/templates/`
+3. **Run the generator** — execute `generate.py` with the right arguments
+4. **Return the result** — tell the user where the report was saved
+
+## Usage
+
+```bash
+python skills/excel_report/generate.py \
+  --data data/onboarding.csv \
+  --template skills/excel_report/templates/onboarding.json \
+  --output reports/<filename>.xlsx
+```
+
+### Arguments
+
+| Argument     | Required | Description                                  |
+|--------------|----------|----------------------------------------------|
+| `--data`     | Yes      | Path to the source CSV file                  |
+| `--template` | Yes      | Path to the template JSON config             |
+| `--output`   | Yes      | Where to save the generated `.xlsx`          |
+| `--filter`   | No       | Date filter, e.g. `--filter "last_2_weeks"`  |
+| `--date-col` | No       | Column to apply the date filter on           |
+
+### Date Filters
+
+- `last_2_weeks` — rows from the last 14 days
+- `last_month` — rows from the last 30 days
+- `this_month` — rows from the current calendar month
+- `YYYY-MM-DD:YYYY-MM-DD` — explicit date range
+
+## Naming Convention for Output
+
+Use: `reports/{template_name}_{YYYY-MM-DD}.xlsx`
+
+Example: `reports/onboarding_2026-05-11.xlsx`
+
+## Important
+
+- **Never write Excel manually.** Always use `generate.py` with a template.
+- The generator handles all formatting, branding, and data type conversions.
+- If a new report type is needed, create a new template JSON — don't modify `generate.py`.
+````
+
+## Register the Skill in AGENTS.md
+
+Add the skill to your `AGENTS.md` so the agent knows it exists and when to use it:
 
 ```markdown
----
-name: api-integration
-description: Design and implement REST API integrations with proper error handling, retry logic, and authentication. Use when a user asks to integrate with an external API, build API clients, handle webhooks, or troubleshoot HTTP request issues. Trigger when user mentions "API", "REST", "HTTP client", "webhook", "endpoint", or asks about authentication flows like OAuth.
-version: "1.0.0"
-license: MIT
-compatibility: "python>=3.9"
-metadata:
-  author: Your Name
-  tags:
-    - api
-    - rest
-    - http
-    - integration
----
+## Skills
 
-# API Integration Skill
+Skills live in `skills/`. Each skill has its own folder with a `SKILL.md`.
+Read the relevant one before starting a task — skills can be combined.
 
-You are an expert at designing and building reliable API integrations. When helping with API work, prioritize reliability, proper error handling, and clean abstractions.
+**Available skills:**
 
-## When to Offer This Workflow
+- **excel_report** — Generate branded Excel reports from CSV data. Use when the
+  user asks for reports, exports, spreadsheets, or "son 2 haftanın raporu".
 
-**Trigger conditions:**
-- User asks to integrate with an external API or service
-- User needs help building an HTTP client or wrapper
-- User is debugging API request/response issues
-- User asks about authentication (API keys, OAuth, JWT)
-- User needs to handle webhooks or callbacks
+### Routing Rules
 
-**Initial approach:**
-Before writing code, understand:
-1. Which API are we integrating with? Is there official documentation?
-2. What authentication method does it use?
-3. What operations does the user need (read, write, both)?
-4. What error scenarios should we handle?
+| User says...                          | Skill to use |
+|---------------------------------------|--------------|
+| "rapor oluştur", "report", "export"   | excel_report |
+| "onboarding durumu", "son 2 hafta"    | excel_report |
+| "excel", "spreadsheet", "tablo"       | excel_report |
 
-## Integration Principles
-
-### 1. Always Use a Client Wrapper
-
-Never scatter raw HTTP calls throughout the codebase. Create a dedicated client class:
-
-    class PaymentAPIClient:
-        def __init__(self, api_key: str, base_url: str = "https://api.example.com/v1"):
-            self.base_url = base_url
-            self.session = httpx.Client(
-                base_url=base_url,
-                headers={"Authorization": f"Bearer {api_key}"},
-                timeout=30.0,
-            )
-
-        def create_charge(self, amount: int, currency: str) -> dict:
-            response = self.session.post("/charges", json={"amount": amount, "currency": currency})
-            response.raise_for_status()
-            return response.json()
-
-### 2. Implement Retry Logic
-
-Transient failures happen. Use exponential backoff for retryable status codes (429, 502, 503, 504):
-
-    import time
-
-    MAX_RETRIES = 3
-    RETRYABLE_CODES = {429, 502, 503, 504}
-
-    def request_with_retry(method, url, **kwargs):
-        for attempt in range(MAX_RETRIES):
-            response = method(url, **kwargs)
-            if response.status_code not in RETRYABLE_CODES:
-                return response
-            wait = 2 ** attempt
-            time.sleep(wait)
-        return response
-
-### 3. Handle Rate Limits
-
-Respect `Retry-After` headers. Log when rate-limited so the team can adjust usage patterns.
-
-### 4. Validate Responses
-
-Never trust API responses blindly:
-- Check status codes before parsing the body
-- Validate response schemas for critical operations
-- Handle unexpected fields gracefully (don't crash on extra keys)
-
-### 5. Keep Secrets Out of Code
-
-- Use environment variables for API keys
-- Never log full request bodies that might contain tokens
-- Mask sensitive fields in error messages
-
-## Error Handling
-
-Categorize errors into actionable groups:
-
-- **Client error (400, 422):** Fix the request — log the validation error details
-- **Auth error (401, 403):** Re-authenticate or check permissions
-- **Not found (404):** Handle gracefully — the resource may have been deleted
-- **Rate limit (429):** Back off and retry with `Retry-After` header
-- **Server error (500, 502, 503):** Retry with exponential backoff
-
-## Reference Materials
-
-- Load `authentication-patterns.md` for detailed examples of API key, OAuth 2.0, and JWT authentication flows
-- Load `error-catalog.md` for a comprehensive list of common API error patterns and their solutions
-
-## Output Format
-
-When building an integration, deliver:
-
-1. **Client class** with typed methods for each API operation
-2. **Error handling** with custom exception classes
-3. **Configuration** via environment variables or config objects
-4. **Usage example** showing how to initialize and call the client
-
-## Scripts
-
-- Use `test_connection.py` to verify API connectivity and authentication before building the full integration
-
-## Guidelines
-
-- **Prefer `httpx` over `requests`** for async support and HTTP/2
-- **Type-hint all return values** so callers know what to expect
-- **Log at appropriate levels**: DEBUG for request/response details, WARNING for retries, ERROR for failures
-- **Set timeouts on every request** — never use infinite timeouts
-- **Use pagination** when listing resources — never assume all results fit in one response
-- **Idempotency keys** for write operations to prevent duplicate actions on retry
+**Important:** Never write Excel files by hand. Always delegate to the skill's `generate.py`.
 ```
+
+<Tip>
+Keep formatting decisions in scripts and templates — never in the agent's head. The agent's job is to *choose* and *orchestrate* the skill, not to reinvent its output. This is what keeps results reproducible across runs.
+</Tip>

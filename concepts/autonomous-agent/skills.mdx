@@ -1,0 +1,324 @@
+---
+title: "Skills"
+description: "Package reusable capabilities as workspace folders that your autonomous agent discovers, respects, and runs on demand"
+sidebarTitle: "Skills"
+---
+
+A **skill** is a self-contained capability that lives as a folder inside your agent's workspace. It bundles instructions (`SKILL.md`), the scripts that do the real work, and any templates or assets they need. The agent isn't told about skills in Python — it **discovers** them at runtime by reading files, decides when one applies, follows its rules, and runs its scripts.
+
+This is the natural counterpart to the [`AutonomousAgent`](/concepts/autonomous-agent/overview): the agent brings the reasoning and the filesystem/shell tools, and skills bring the standardized, repeatable know-how. Together they turn "an agent that can run commands" into "an agent that knows *how your team does things*."
+
+<Info>
+Skills require no new API. An `AutonomousAgent` already has the filesystem and shell tools it needs to find, read, and execute a skill. You add a skill by **dropping a folder into the workspace** and pointing to it from [`AGENTS.md`](/concepts/autonomous-agent/agents-md) — no code changes.
+</Info>
+
+## Why skills exist
+
+Without skills, an autonomous agent improvises every task from scratch. Ask it for "a report" twice and you can get two different layouts. Skills fix that by making the *method* a first-class artifact:
+
+- **Consistency** — the branding, columns, and formatting come from a template file, not from whatever the model invents that run.
+- **Progressive disclosure** — the agent only loads a skill's full details when a task actually needs it, keeping context lean even with dozens of skills installed.
+- **Evolvability** — adding or improving a capability means editing a folder, not redeploying code.
+- **Guardrails** — a skill states its own rules ("never hand-write Excel; always call `generate.py`"), and the agent respects them.
+
+## Anatomy of a skill
+
+A skill is just a directory under `workspace/skills/`. Each one owns a `SKILL.md` plus whatever scripts, templates, and assets it needs:
+
+```
+workspace/
+├── AGENTS.md                    # agent behavior + skill index (routing)
+├── SOUL.md                      # optional: identity / behavioral rules
+├── memory/                      # cross-session continuity (YYYY-MM-DD.md)
+├── data/                        # source data the skills operate on
+├── reports/                     # outputs
+└── skills/
+    └── excel_report/
+        ├── SKILL.md             # ← the contract: when & how to use this skill
+        ├── generate.py          # the real generator (the agent calls this)
+        ├── templates/
+        │   └── onboarding.json  # branding: colors, logo, columns, title
+        └── assets/
+            └── upsonic_logo.png
+```
+
+| Part | Role |
+|------|------|
+| `SKILL.md` | The contract. When to trigger, how to invoke, arguments, hard rules. |
+| Scripts (e.g. `generate.py`) | The deterministic work. Formatting/branding lives here, **not** in the model. |
+| `templates/` | Declarative config (layout, colors, columns) the scripts read. |
+| `assets/` | Logos, fonts, and other static files the scripts embed. |
+
+<Tip>
+Keep formatting decisions in scripts and templates — never in the agent's head. The agent's job is to *choose* and *orchestrate* the skill, not to reinvent its output. This is what makes results reproducible across runs.
+</Tip>
+
+## Writing a SKILL.md
+
+`SKILL.md` is a plain Markdown file written like a briefing for a capable colleague. It tells the agent **when** the skill applies, **how** to run it, and **what it must never do**. Here is the `excel_report` skill from the example below:
+
+````markdown SKILL.md
+# Skill: Excel Report Generator
+
+Generate branded, formatted Excel reports from CSV data using predefined templates.
+
+## When to Use
+
+Trigger this skill when the user asks for:
+- Reports (onboarding, weekly, monthly, etc.)
+- Excel/spreadsheet generation
+- Data exports with formatting
+
+## Usage
+
+```bash
+python skills/excel_report/generate.py \
+  --data data/onboarding.csv \
+  --template skills/excel_report/templates/onboarding.json \
+  --output reports/<filename>.xlsx
+```
+
+### Arguments
+
+| Argument     | Required | Description                                 |
+|--------------|----------|---------------------------------------------|
+| `--data`     | Yes      | Path to the source CSV file                 |
+| `--template` | Yes      | Path to the template JSON config            |
+| `--output`   | Yes      | Where to save the generated `.xlsx`         |
+| `--filter`   | No       | Date filter, e.g. `--filter "last_2_weeks"` |
+
+### Date Filters
+
+- `last_2_weeks` — rows from the last 14 days
+- `last_month` — rows from the last 30 days
+- `YYYY-MM-DD:YYYY-MM-DD` — explicit date range
+
+## Important
+
+- **Never write Excel manually.** Always use `generate.py` with a template.
+- The generator handles all formatting, branding, and data type conversions.
+- If a new report type is needed, create a new template JSON — don't modify `generate.py`.
+````
+
+The key sections every `SKILL.md` should have:
+
+<AccordionGroup>
+  <Accordion title="When to Use — the trigger" icon="bullseye">
+    Concrete phrases and situations that should activate the skill. This is what the agent matches a request against. Be specific: "reports, exports, spreadsheets, 'son 2 haftanın raporu'."
+  </Accordion>
+  <Accordion title="Usage — the exact invocation" icon="terminal">
+    The precise command and arguments. The agent will run this verbatim through its shell tool, so include real paths and a full example.
+  </Accordion>
+  <Accordion title="Important — the hard rules" icon="shield">
+    The non-negotiables that keep the skill's guarantees intact: *"Never write Excel manually,"* *"don't modify `generate.py`; add a new template instead."* The agent treats these as boundaries, not suggestions.
+  </Accordion>
+</AccordionGroup>
+
+## Registering a skill in AGENTS.md
+
+The agent finds skills because [`AGENTS.md`](/concepts/autonomous-agent/agents-md) tells it where to look and when to use each one. `AGENTS.md` is the **index and routing table**; each `SKILL.md` is the detailed manual the agent opens only when routed there.
+
+```markdown AGENTS.md
+## Skills
+
+Skills live in `skills/`. Each skill has its own folder with a `SKILL.md`.
+Read the relevant one before starting a task — skills can be combined.
+
+**Available skills:**
+
+- **excel_report** — Generate branded Excel reports from CSV data. Use when the
+  user asks for reports, exports, spreadsheets, or "son 2 haftanın raporu".
+
+### Routing Rules
+
+| User says...                          | Skill to use |
+|---------------------------------------|--------------|
+| "rapor oluştur", "report", "export"   | excel_report |
+| "onboarding durumu", "son 2 hafta"    | excel_report |
+| "excel", "spreadsheet", "tablo"       | excel_report |
+
+**Important:** Never write Excel files by hand. Always delegate to the skill's `generate.py`.
+```
+
+When the workspace is set, `AGENTS.md` is injected into the system prompt automatically. So at the start of every run the agent already knows the skill catalog and the routing rules — without any of the skills' bulky details. It opens the full `SKILL.md` only once a task routes to it. That is **progressive disclosure**, and it's what lets the model scale to many skills without bloating context.
+
+## How skills and the autonomous agent work together
+
+The connection between the two is **files, not code**. The agent never imports a skill. It discovers, respects, and (when needed) extends a skill purely by reading and running files in the workspace.
+
+```
+User input: "give me last month's onboarding report — as a PDF"
+        │
+        ▼
+┌───────────────────────────────────────────────┐
+│  Chat  (session + memory)                       │
+└───────────────────────────────────────────────┘
+        │  invoke(stream=True, events=True)
+        ▼
+┌───────────────────────────────────────────────┐
+│  AutonomousAgent  (reasoning + tools)           │
+│  tools: read_file · list_files · write_file ·   │
+│         check_command_exists · run_command      │
+└───────────────────────────────────────────────┘
+        │   reads ┌─────────────┐
+        ├────────▶│ AGENTS.md   │  routing → excel_report; "never hand-write Excel"
+        │         │ SOUL.md     │  identity + behavior
+        │         │ memory/*    │  what happened last time
+        │         └─────────────┘
+        │   discovers + respects
+        ▼
+┌───────────────────────────────────────────────┐
+│  Skill: excel_report                            │
+│   SKILL.md  ............ the contract            │
+│   generate.py  ──► .xlsx  (branding=template)   │
+│   templates/onboarding.json  (colors/logo/cols) │
+└───────────────────────────────────────────────┘
+        │
+        ▼
+   reports/onboarding_2026-06-09.xlsx
+```
+
+The agent is the **reasoning + tools**; the skill is the **declarative capability on disk**; `AGENTS.md` + `SKILL.md` are the **contracts** that bind them. None of this behavior is hardcoded in Python — it emerges from the workspace files plus the model's reasoning.
+
+---
+
+## Walkthrough: a skill in a live run
+
+This is a real, observed run of an `AutonomousAgent` paired with the `excel_report` skill. It shows the whole loop — discover, respect, extend, verify, remember — and is the best way to understand the combo.
+
+### The driver: a terminal chat over the workspace
+
+`chat.py` wires a `Chat` session to an `AutonomousAgent` pointed at the workspace. That's the entire integration — there is **no mention of skills in this file**.
+
+```python chat.py
+import asyncio
+import os
+from dotenv import load_dotenv
+from upsonic import AutonomousAgent, Chat
+from upsonic.run.events.events import TextDeltaEvent, ToolCallEvent
+
+load_dotenv()
+WORKSPACE = os.path.join(os.path.dirname(__file__), "workspace")
+
+
+async def main() -> None:
+    agent = AutonomousAgent(
+        model="anthropic/claude-opus-4-8",
+        workspace=WORKSPACE,        # ← skills/, AGENTS.md, memory/ live here
+        print=True,
+    )
+
+    async with Chat(session_id="hq-terminal", user_id="user", agent=agent) as chat:
+        while True:
+            user_input = input("You: ").strip()
+            if user_input.lower() in {"exit", "quit"}:
+                break
+
+            stream = await chat.invoke(user_input, stream=True, events=True)
+            async for event in stream:
+                if isinstance(event, ToolCallEvent):
+                    print(f"\n  ↳ [tool] {event.tool_name}", flush=True)
+                elif isinstance(event, TextDeltaEvent):
+                    print(event.content, end="", flush=True)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+The single input for this run was: *"give me last month's onboarding report — as a PDF."* Note the twist: the `excel_report` skill only outputs `.xlsx`. Here is how the agent handled it, across four phases.
+
+<Steps>
+  <Step title="Orient — read the contracts and the data">
+    Before producing anything, the agent followed the order `AGENTS.md` imposes: it read `SOUL.md` (identity), scanned `memory/` for prior runs, opened `skills/excel_report/SKILL.md`, then looked at the actual data (`data/onboarding.csv`) and even `generate.py` to understand what the skill really produces.
+
+    Its own framing: *"The skill makes Excel, you asked for PDF. Let me read the context and check the data first."* Critically, it identified the skill's **boundary** (`.xlsx` only) and the user's **real ask** (PDF) before writing a single line.
+  </Step>
+  <Step title="Probe the environment">
+    The agent checked what tools were available for PDF generation: `check_command_exists libreoffice` (missing), `soffice` (missing), then probed Python and found `reportlab`, `pandas`, and `openpyxl` already installed. It decided to generate the PDF with `reportlab` — but to pull layout and branding from the **same template** the Excel uses, so the two formats stay identical.
+  </Step>
+  <Step title="Run the skill — and face the data">
+    It invoked the skill as `SKILL.md` documents it: `generate.py --filter last_month` returned **"No data after filtering."** Instead of shipping an empty report, the agent diagnosed *why*: today is 2026-06-09, but every CSV record is from 2026-04-28 to 2026-05-05, so a rolling 30-day window catches nothing. It fell back to an explicit range covering the real data and got a valid report (12 rows) — and flagged the staleness to the user honestly.
+  </Step>
+  <Step title="Extend, verify, remember">
+    To fill the PDF gap, the agent did **not** bypass or modify the skill (`SKILL.md` forbids editing `generate.py`). Instead it added a sibling script, `to_pdf.py`, that **reuses the skill's own logic**:
+
+    ```python to_pdf.py
+    # Reuse the proven logic from the Excel generator
+    from generate import (
+        apply_date_filter, format_cell_value,
+        load_data, load_template, validate_columns,
+    )
+    ```
+
+    Same template, same colors, same status coloring (`İNSAN İNCELEMESİ` → yellow, `TAMAMLANDI` → green) — just a PDF renderer. It generated the file, verified it (1 page, landscape A4, branding intact), and wrote the session and its lessons to `memory/2026-06-09.md` so the next session starts smarter.
+  </Step>
+</Steps>
+
+### What the agent produced
+
+- `reports/onboarding_2026-06-09_son1ay.xlsx` — the skill's standard output.
+- `reports/onboarding_2026-06-09_son1ay.pdf` — the requested format, branded identically.
+- `skills/excel_report/to_pdf.py` — a new capability **added to the skill ecosystem without breaking it**.
+- `memory/2026-06-09.md` — a continuity note: *"this data is stale; rolling-window filters return empty; use `to_pdf.py` for PDFs."*
+
+## Design principles this run reveals
+
+<AccordionGroup>
+  <Accordion title="Skills are discovered, not embedded" icon="magnifying-glass">
+    The agent learned the skill at runtime by reading `SKILL.md`. Adding a new skill = a new folder + a `SKILL.md` + a routing line in `AGENTS.md`. The agent's code never changes.
+  </Accordion>
+  <Accordion title="The agent respects the skill's boundaries" icon="shield-halved">
+    `AGENTS.md` said "never hand-write Excel." The agent always produced Excel through `generate.py`. Branding lived in the template, not in the model's improvisation.
+  </Accordion>
+  <Accordion title="Gaps are filled by extending, not bypassing" icon="puzzle-piece">
+    PDF wasn't supported. The agent didn't fake a table or edit `generate.py` (forbidden). It added a sibling script that reuses the skill's logic — the ecosystem grew, the guarantees held.
+  </Accordion>
+  <Accordion title="The agent confronts the truth of the data" icon="triangle-exclamation">
+    An empty filter result wasn't silently shipped. The agent found the cause, told the user, and chose a sensible fallback — behavior that flows from `SOUL.md`'s "have opinions / flag what looks off."
+  </Accordion>
+  <Accordion title="Memory closes the loop" icon="floppy-disk">
+    The agent wrote what it learned to `memory/`. The next session reads it and avoids repeating the same discovery. Skills + memory compound over time.
+  </Accordion>
+</AccordionGroup>
+
+## Adding a new skill
+
+<Steps>
+  <Step title="Create the folder">
+    Make `workspace/skills/<skill_name>/` (kebab or snake case, matching how you'll reference it).
+  </Step>
+  <Step title="Write SKILL.md">
+    Add a `SKILL.md` with **When to Use**, **Usage** (exact command + arguments), and **Important** (the hard rules). Write it like a briefing — concise and actionable.
+  </Step>
+  <Step title="Add scripts, templates, and assets">
+    Put the deterministic work in scripts and the formatting/branding in templates. Keep decisions out of the model so output stays reproducible.
+  </Step>
+  <Step title="Register it in AGENTS.md">
+    Add the skill to the **Available skills** list and the **Routing Rules** table so the agent knows when to reach for it.
+  </Step>
+  <Step title="Run a task that triggers it">
+    Invoke the agent with a request that matches the routing rules and confirm it reads the `SKILL.md`, runs the script, and produces the expected output.
+  </Step>
+</Steps>
+
+<Warning>
+All skill scripts run through the agent's shell tool, sandboxed to the workspace. Only add scripts you trust, and keep secrets out of skill files — the workspace travels with the agent.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="AGENTS.md" icon="file-lines" href="/concepts/autonomous-agent/agents-md">
+    How the workspace contract is loaded into the system prompt and used to route to skills.
+  </Card>
+  <Card title="Filesystem Tools" icon="folder-tree" href="/concepts/autonomous-agent/advanced/filesystem-tools">
+    The read/write/search tools the agent uses to discover and run skills.
+  </Card>
+  <Card title="Memory Integration" icon="brain" href="/concepts/autonomous-agent/advanced/memory-integration">
+    How cross-session memory lets skill usage compound over time.
+  </Card>
+  <Card title="Folder Organizer Example" icon="play" href="/examples/autonomous-agents/folder-organizer">
+    A complete autonomous agent driven entirely by a workspace skill file.
+  </Card>
+</CardGroup>
