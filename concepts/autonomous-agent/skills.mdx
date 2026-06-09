@@ -104,7 +104,7 @@ The key sections every `SKILL.md` should have:
 
 <AccordionGroup>
   <Accordion title="When to Use — the trigger" icon="bullseye">
-    Concrete phrases and situations that should activate the skill. This is what the agent matches a request against. Be specific: "reports, exports, spreadsheets, 'son 2 haftanın raporu'."
+    Concrete phrases and situations that should activate the skill. This is what the agent matches a request against. Be specific: "reports, exports, spreadsheets, 'last 2 weeks' report'."
   </Accordion>
   <Accordion title="Usage — the exact invocation" icon="terminal">
     The precise command and arguments. The agent will run this verbatim through its shell tool, so include real paths and a full example.
@@ -127,15 +127,15 @@ Read the relevant one before starting a task — skills can be combined.
 **Available skills:**
 
 - **excel_report** — Generate branded Excel reports from CSV data. Use when the
-  user asks for reports, exports, spreadsheets, or "son 2 haftanın raporu".
+  user asks for reports, exports, spreadsheets, or "last 2 weeks' report".
 
 ### Routing Rules
 
-| User says...                          | Skill to use |
-|---------------------------------------|--------------|
-| "rapor oluştur", "report", "export"   | excel_report |
-| "onboarding durumu", "son 2 hafta"    | excel_report |
-| "excel", "spreadsheet", "tablo"       | excel_report |
+| User says...                            | Skill to use |
+|-----------------------------------------|--------------|
+| "create report", "report", "export"     | excel_report |
+| "onboarding status", "last 2 weeks"     | excel_report |
+| "excel", "spreadsheet", "table"         | excel_report |
 
 **Important:** Never write Excel files by hand. Always delegate to the skill's `generate.py`.
 ```
@@ -251,14 +251,14 @@ The single input for this run was: *"give me last month's onboarding report — 
     )
     ```
 
-    Same template, same colors, same status coloring (`İNSAN İNCELEMESİ` → yellow, `TAMAMLANDI` → green) — just a PDF renderer. It generated the file, verified it (1 page, landscape A4, branding intact), and wrote the session and its lessons to `memory/2026-06-09.md` so the next session starts smarter.
+    Same template, same colors, same status coloring (`HUMAN REVIEW` → yellow, `COMPLETED` → green) — just a PDF renderer. It generated the file, verified it (1 page, landscape A4, branding intact), and wrote the session and its lessons to `memory/2026-06-09.md` so the next session starts smarter.
   </Step>
 </Steps>
 
 ### What the agent produced
 
-- `reports/onboarding_2026-06-09_son1ay.xlsx` — the skill's standard output.
-- `reports/onboarding_2026-06-09_son1ay.pdf` — the requested format, branded identically.
+- `reports/onboarding_2026-06-09_last_month.xlsx` — the skill's standard output.
+- `reports/onboarding_2026-06-09_last_month.pdf` — the requested format, branded identically.
 - `skills/excel_report/to_pdf.py` — a new capability **added to the skill ecosystem without breaking it**.
 - `memory/2026-06-09.md` — a continuity note: *"this data is stale; rolling-window filters return empty; use `to_pdf.py` for PDFs."*
 
