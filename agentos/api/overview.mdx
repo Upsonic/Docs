@@ -27,39 +27,15 @@ The OpenAPI description is at `/v0/openapi.json`, browsable at `/v0/docs`. Both 
 
 ## Authentication
 
-<Tabs>
-  <Tab title="API key (recommended)">
-    Scripts and other systems use a **service account**. A tenant admin creates one on the **Users** page, gives it a role in each environment it calls, and issues an API key. The key is shown once.
+Every request carries an API key. Scripts and other systems use a **service account**: a tenant admin creates one on the **Users** page, gives it a role in each environment it calls, and issues an API key. The key is shown once.
 
-    ```bash
-    curl -sS -H "Authorization: Bearer aos_..." $AGENTOS/v0/envs/default/agents
-    ```
+```bash
+curl -sS -H "Authorization: Bearer aos_..." $AGENTOS/v0/envs/default/agents
+```
 
-    No CSRF token is needed with a key. Revoking the key or deactivating the service account takes effect at once. See [Users and API keys](/agentos/platform/users-and-api-keys).
-  </Tab>
-  <Tab title="Panel session">
-    The panel's login session works on the same API. A script without a key can sign in like a browser: fetch `/accounts/login/` to get the `csrftoken` cookie, post the form with `login`, `password` and `csrfmiddlewaretoken`, keep the cookie jar, and send the `csrftoken` cookie back as `X-CSRFToken` on every `POST`, `PUT`, `PATCH` and `DELETE`.
+Revoking the key or deactivating the service account takes effect at once. See [Users and API keys](/agentos/platform/users-and-api-keys).
 
-    ```bash
-    JAR=$(mktemp)
-    csrf() { awk '$6 == "csrftoken" {print $7}' "$JAR"; }
-    curl -fsS -c "$JAR" -o /dev/null "$AGENTOS/accounts/login/"
-    curl -fsS -b "$JAR" -c "$JAR" -o /dev/null -H "Referer: $AGENTOS/accounts/login/" \
-      --data-urlencode "csrfmiddlewaretoken=$(csrf)" \
-      --data-urlencode "login=$AGENTOS_EMAIL" --data-urlencode "password=$AGENTOS_PASSWORD" \
-      "$AGENTOS/accounts/login/"
-    grep -q sessionid "$JAR" || { echo "sign-in failed" >&2; exit 1; }
-    CSRF=$(csrf)   # read it again: signing in rotates the token
-
-    curl -sS -b "$JAR" -H "X-CSRFToken: $CSRF" -F bundle=@hello-agent.zip \
-      $AGENTOS/v0/envs/default/agents/hello-agent/versions
-    ```
-
-    A wrong password answers `200` with the login form again and no `sessionid` cookie, hence the `grep`.
-  </Tab>
-</Tabs>
-
-A request with neither answers `401 unauthorized`.
+A request without a valid key answers `401 unauthorized`.
 
 ## Roles
 
