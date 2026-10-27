@@ -1,0 +1,73 @@
+---
+title: "Evals"
+sidebarTitle: "Evals"
+description: "Test sets, checks and AI judges that score an agent version or model on quality, cost and speed before you ship"
+---
+
+An eval answers one question: **is this version, or this model, good enough?** You build a test set, choose what to check, and run it against any version of the agent. Results show a score per check, with the reason behind every failure.
+
+## The pieces
+
+| Piece | What it is |
+|---|---|
+| **Test cases (dataset)** | Inputs, with the right answer where there is one. Published versions never change, so results stay comparable. |
+| **Checks (evaluators)** | How an output is judged. See below. |
+| **Eval** | A test set, an agent capability and its checks, with a repeat count. |
+| **Experiment** | One run of an eval against a version, optionally with another model or prompt. |
+
+## Set up an eval
+
+On an agent's eval tab, **Set up an eval** is one table:
+
+- **Add rows** by typing or pasting, from recent runs, from a CSV or JSONL file (columns are matched to the fields by name, bad lines are listed), or from documents (one row per file, uploaded as soon as chosen).
+- **Fill** empty answers in place, using the agent itself or a stronger model. Filled answers are tinted as suggested until you confirm or change them, and nothing is saved before **Create**.
+- **What to check** is one list of rows, pre-filled from the output.
+- **Create** saves and runs, with a cost and time estimate beforehand.
+
+## Kinds of check
+
+| Kind | Use when | Examples |
+|---|---|---|
+| **Reference** | There is a right answer | Per field: exact, normalized (Turkish-aware, `ALİ` matches `ali`), or number within a tolerance |
+| **Rules** | There is no single right answer | Field is present, contains, doesn't contain, matches a pattern, at most N words, output fits the schema |
+| **AI judge** | Quality is described in words | One criterion per row, one score and reason each |
+
+Every check gives a named score per field, rule or criterion, never one blended number, and a reason you can read.
+
+## Read the result
+
+An experiment gives you the pass rate per score, items passed, errors, runs that asked for a human, **cost per item**, **tokens per item** and **p95 duration**. Each test case lists its outcome with the reason, for example `expected 'AYŞE YILMAZ', got 'AYSE YILMAZ'`, and links to the full run timeline.
+
+Repeats (1-10) show which cases pass sometimes and fail sometimes.
+
+## Compare and change
+
+Run the same eval on the live version, a candidate, or with an **override** such as another model for a role. Compare score, cost and speed side by side. If the override wins, **make it a candidate** and promote it like any other version. See [Deploy and versions](/agentos/operate/deploy-and-versions).
+
+## Grow the test set from real use
+
+- Add any finished run to a dataset in one call. Its input and output become a case.
+- A **collect rule** copies runs into a dataset automatically once a person has decided or edited one of their holds, as candidates you review. The corrections your reviewers make become tomorrow's test cases.
+- Run an eval with a strong model and **save its outputs as expected answers** to bootstrap labels.
+
+## Keeping experiments safe
+
+Experiment runs never wait for a person. They receive the holds recorded for the test case in `context.eval.recorded_holds`, and use a temporary empty memory. They stay out of the dashboard, metrics and webhooks. Your agent must keep side effects such as payments and emails off when `context.eval` is set.
+
+## Planned
+
+<Info>
+Evals today are **offline**: a person starts an experiment against a version. These are designed or proposed but not available yet. See the [Roadmap](/agentos/roadmap) for status.
+</Info>
+
+<Badge color="orange">Planned</Badge> **Scheduled evals** with a threshold alert, to catch model-provider drift and slow degradation as context and memory grow.
+
+<Badge color="orange">Planned</Badge> **Eval gate on promote**: block a version whose score drops by more than a set amount, with a logged override.
+
+<Badge color="orange">Planned</Badge> **Scoring live traffic**: sample production runs and score them, so quality is watched where it matters.
+
+<Badge color="orange">Planned</Badge> **Score history** across versions and model changes, with an exportable report.
+
+<Badge color="orange">Planned</Badge> **Tool-call checks**: must call a tool, must never call another, order, and call count limits, read from the run timeline.
+
+<Badge color="orange">Planned</Badge> **Re-score** stored outputs after changing a check, without running the agent again.

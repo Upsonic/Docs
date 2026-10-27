@@ -1,0 +1,86 @@
+---
+title: "AgentOS Quickstart"
+sidebarTitle: "Quickstart"
+description: "Install AgentOS with Docker Compose, deploy an example agent and run it"
+---
+
+## Prerequisites
+
+- A Linux host with Docker Engine and Docker Compose v2.
+- Free host ports 8700-8706 (configurable in `.env`).
+- A few GB of disk for agent images, plus room for BuildKit's cache.
+- `make` and Python 3 (only used to generate secrets).
+
+<Note>
+The builder runs rootless BuildKit. On Ubuntu 23.10 and later the defaults work. On other hosts you may need to set `AGENTOS_BUILDKIT_APPARMOR=unconfined` in `.env`.
+</Note>
+
+## Install
+
+<Steps>
+  <Step title="Get the code and secrets">
+    ```bash
+    git clone <your AgentOS repository> agentos && cd agentos
+    make env     # writes .env with fresh secrets. Never commit it.
+    ```
+  </Step>
+  <Step title="Start the stack">
+    ```bash
+    docker compose up -d --build --wait
+    ```
+  </Step>
+  <Step title="Create the first admin">
+    ```bash
+    docker compose exec web python manage.py createadmin --email you@example.com
+    ```
+    Open `http://localhost:8700` and sign in.
+  </Step>
+</Steps>
+
+<Warning>
+Only the panel (port 8700) listens on all interfaces. To reach it by IP or domain, add the name to `ALLOWED_HOSTS` and the full origin to `CSRF_TRUSTED_ORIGINS` in `.env`. Behind HTTPS, set `SECURE_COOKIES=true`.
+</Warning>
+
+## Add a model
+
+On the **Models** page, add a provider (OpenAI, Anthropic, AWS Bedrock, Azure OpenAI, or any OpenAI-compatible server such as vLLM or Ollama). Tick the models agents may use. Models are named `<provider slug>/<model ID>`, for example `anthropic/claude-sonnet-4-5`.
+
+## Deploy an agent
+
+An agent bundle is a zip with a `Dockerfile` and an `agentos.yaml` at its top level. The repository ships working examples.
+
+```bash
+cd examples/hello-agent && zip -r ../hello-agent.zip .
+```
+
+Upload it on **Agents → Deploy agent**, or through the API:
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@hello-agent.zip \
+  $AGENTOS/v0/envs/default/agents/hello-agent/versions
+# 202 {"deploy_id": "d_1", "status": "building"}
+```
+
+The worker builds the image, starts a container and waits for `GET /health`. The version becomes live once it is healthy.
+
+## Run it
+
+```bash
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/hello-agent/capabilities/echo/runs?wait=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"text": "hi"}}'
+# 200 {"run_id": "r_1", "status": "completed", "output": {...}, ...}
+```
+
+Open the run in the panel to see its timeline: model calls, tool calls, guardrail verdicts, cost.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Write your own agent" icon="code" href="/agentos/build/agent-contract">
+    The `agentos.yaml` file and the invoke contract.
+  </Card>
+  <Card title="Bring an existing agent" icon="plug" href="/agentos/build/bring-your-own-agent">
+    Wrap an agent you already have.
+  </Card>
+</CardGroup>

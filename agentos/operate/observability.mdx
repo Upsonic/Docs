@@ -1,0 +1,62 @@
+---
+title: "Observability and Webhooks"
+sidebarTitle: "Observability"
+description: "Dashboard, run timelines, cost tracking and signed webhooks, collected without changing agent code"
+---
+
+Most observability comes from what passes through the platform, so an agent needs no instrumentation.
+
+## Dashboard and agent overview
+
+Over the last 24 hours, 30 days or 12 months:
+
+- Runs, and how they ended: completed on their own, went to a person, failed or cancelled.
+- Holds waiting for a person right now.
+- Tokens and cost of model calls.
+- Run duration p50 and p95, a review's wait included.
+- Failures grouped by error code. Guardrail blocks are grouped by their message.
+
+The **Models** page shows each model's calls, tokens and cost over 30 days.
+
+## Run timeline
+
+Every run records its events in order: invocations, each model call (model, tokens, cost, latency), the names of tools the model asked for, guardrail verdicts, holds and decisions, and the output or error. Agents can add named steps with `inv.event("extraction_review", {...})`.
+
+<Info>
+Prompts and responses are not stored. The timeline keeps the model, token counts, cost, latency and tool names only.
+</Info>
+
+## Webhooks
+
+On an agent's **Webhooks** tab, admins add an `https://` endpoint and pick events: `run.completed`, `run.failed`, `run.cancelled`, `run.held`, `run.resumed`, `hold.decided`, `guardrail.blocked`.
+
+```json
+{"id": "ev_1042", "type": "run.completed", "at": "2026-10-12T12:00:00.123Z", "agent": "claims-reader",
+ "environment": "default", "run_id": "r_501", "metadata": {"ticket": "T-42"}, "data": {"output": {}}}
+```
+
+Each request carries `X-AgentOS-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256 of "<t>.<raw body>">`, keyed with the endpoint's `whsec_` secret. Verify it and refuse old timestamps.
+
+```python
+import hashlib, hmac, time
+
+def verified(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
+    parts = [p.split("=", 1) for p in header.split(",") if "=" in p]
+    t = int(next((v for k, v in parts if k == "t"), "0"))
+    expected = hmac.new(secret.encode(), f"{t}.".encode() + body, hashlib.sha256).hexdigest().encode()
+    return abs(time.time() - t) <= tolerance and any(
+        hmac.compare_digest(expected, v.encode()) for k, v in parts if k == "v1")
+```
+
+| Behavior | Detail |
+|---|---|
+| Success | Any 2xx. |
+| Retries | After 10 s, 1 min, 5 min and 30 min. After the 5th attempt the delivery is dead until replayed. |
+| Replay | Per delivery, or **Replay all dead** per endpoint. |
+| Delivery | At least once and unordered. Dedupe on the event id. |
+| Rotation | The previous secret stays valid for 24 hours. |
+| Safety | Loopback, link-local and the platform's own networks are refused as receivers. |
+
+## Planned
+
+<Badge color="orange">Planned</Badge> OpenTelemetry traces from agents, alerts, and retention policies. See the [Roadmap](/agentos/roadmap).

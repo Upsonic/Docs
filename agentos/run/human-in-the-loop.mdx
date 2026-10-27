@@ -1,0 +1,72 @@
+---
+title: "Human Review (Holds)"
+sidebarTitle: "Human review"
+description: "Pause a run to ask a person to approve, edit, reject or comment, then resume the same run"
+---
+
+An agent asks a person by creating a **hold**. The run becomes `held`: no token exists, nothing runs, and the container may be stopped. When someone decides, the **same run** is invoked again with the decision.
+
+## Ask
+
+```json
+POST {api_url}/v0/holds
+{ "intent": "Pay 2 invoices",
+  "actions": ["approve", "edit", "reject"],
+  "items": [{"id": "INV-1", "title": "Aksa Lojistik · 18400.00",
+             "data": {"payee": "Aksa Lojistik", "amount": "18400.00"},
+             "confidence": {"amount": 0.68}}],
+  "details": "Approve to pay as shown, **edit** the payee or amount first, or reject.",
+  "expires_in": 86400 }
+```
+
+| Field | Rules |
+|---|---|
+| `intent` | One sentence. Required. |
+| `items` | 1-100, decided together. Each has `id`, `title`, `data`; `confidence` maps a field to 0..1. |
+| `actions` | Any of `approve`, `edit`, `reject`, `feedback`. Default approve and reject. |
+| `details` | Markdown. |
+| `expires_in` | 60 s to 30 days. No expiry when absent. |
+| `files` | Up to 20 file ids shown with the ask, with download links. |
+
+The agent then answers its invoke with `{"status": "suspended", "hold_id": "h_7"}`. With the SDKs, `inv.ask(...)` does both.
+
+There is one open hold per run. Several approvals at once are one hold with several items. Independent decisions are child runs.
+
+## Decide
+
+Reviewers use the panel's **Review queue**, or the API:
+
+```bash
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  $AGENTOS/v0/envs/default/holds/h_7/decision -d '{"items": [
+    {"id": "INV-1", "action": "edit", "data": {"payee": "Aksa Lojistik A.Ş.", "amount": "18400.00"}},
+    {"id": "INV-2", "action": "reject", "comment": "paid last week"}], "comment": "one of two"}'
+```
+
+- Every item is decided once, with an action the ask offered.
+- `edit` carries the item's **full** data, not a patch.
+- Who may decide comes from the capability's `approvers` in `agentos.yaml` (`403 not_an_approver` otherwise).
+- People and service accounts can both decide, which lets an automation approve low-risk items.
+
+## Resume
+
+The run is invoked again on the version it started on with `invocation.kind: "resume"` and:
+
+```json
+"resume": {"hold_id": "h_7", "resolved_by": "human",
+           "items": [{"id": "INV-1", "action": "edit", "data": {...}, "comment": null}]}
+```
+
+If `expires_in` passes first, `resolved_by` is `"expired"` and `items` is empty.
+
+## Audit
+
+The ask and the decision are kept as they were, with who decided and when. The run timeline shows `run.held`, `hold.decided` and `run.resumed`. The webhook events `run.held`, `hold.decided` and `run.resumed` let you notify your own channels.
+
+## Holds in experiments
+
+An experiment run never waits for a person. It receives the holds recorded for the test case in `context.eval.recorded_holds`, or ends as "asked for a human" if it asks anyway. See [Evals](/agentos/quality/evals).
+
+## Planned
+
+<Badge color="orange">Planned</Badge> Two more wait types are designed but not built: a **callback** hold resolved by an outside system calling a single-use URL, and a **runs** hold resolved when listed child runs finish. See the [Roadmap](/agentos/roadmap).

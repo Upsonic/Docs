@@ -1,0 +1,113 @@
+---
+title: "Agent Contract"
+sidebarTitle: "Agent contract"
+description: "The agentos.yaml file and the two HTTP endpoints every agent serves"
+---
+
+An AgentOS agent is a container that serves two endpoints. It does not matter which language or framework it uses.
+
+## agentos.yaml
+
+```yaml
+name: hello-agent              # required
+title: Hello Agent
+description: Echoes its input
+runtime: stateless             # required; the only value accepted today
+port: 8080                     # required
+capabilities:                  # required, at least one
+  echo:
+    description: Returns the input unchanged.
+    input: schemas/echo.json   # a file in the bundle, or an inline JSON Schema
+    output: {type: object}
+    timeout: 30s               # required
+    approvers: [admin, member] # who may decide this capability's holds
+config:
+  models: {reader: anthropic/claude-sonnet-4-5}
+  prompts: {system: "You label support tickets."}
+  params: {greeting: hello, max_labels: 3}
+secrets: [CRM_API_KEY]
+network:
+  allow: [api.example.com, "*.wikipedia.org"]
+```
+
+| Key | Rules |
+|---|---|
+| `name` | Lowercase letters, digits and hyphens, 1-63 characters. |
+| `runtime` | `stateless`. `stateful` is refused today. |
+| `port` | Where the container serves `/health` and `/invoke`. The image must listen on `0.0.0.0`. |
+| `capabilities` | Name to `{description, input, output, timeout, approvers}`. `input` and `output` are JSON Schema draft 2020-12. `timeout` is 1 s to 24 h. |
+| `config.models` | Role to model name. Every model must exist on the Models page of the environment you deploy to. |
+| `secrets` | Names only. Values are entered on the agent's Secrets tab and arrive in `context.secrets`. |
+| `network.allow` | Hosts the container may reach. Without it, nothing outside the platform. |
+
+The file is read strictly. Unknown keys, YAML anchors, duplicate keys and non-JSON values are refused, and every problem is reported at once.
+
+**Bundle limits:** zip up to 100 MiB (500 MiB unpacked, 10,000 entries). Build time 15 minutes. Each container gets 1 CPU, 1 GB memory and 512 processes, with all Linux capabilities dropped.
+
+## The two endpoints
+
+### `GET /health`
+
+Any 2xx means healthy. The platform polls it for up to 60 seconds after the container starts.
+
+### `POST /invoke`
+
+One endpoint. The body names the capability:
+
+```json
+{ "capability": "echo",
+  "run_id": "r_501", "session_id": null, "user": null,
+  "input": {"text": "hi"},
+  "invocation": {"id": "r_501:1", "seq": 1, "attempt": 1, "kind": "start"},
+  "resume": null,
+  "context": {
+    "token": "tok_...", "api_url": "https://agentos/...",
+    "config": {"models": {"reader": "anthropic/claude-sonnet-4-5"}, "prompts": {}, "params": {}},
+    "llm": {"base_url": "https://gateway/v1", "api_key": "anything (ignored)"},
+    "secrets": {"CRM_API_KEY": "..."},
+    "eval": null } }
+```
+
+Answer with one of:
+
+```json
+{"status": "completed", "output": {}}
+{"status": "failed", "error": {"code": "my_code", "message": "what went wrong"}}
+{"status": "suspended", "hold_id": "h_7"}
+```
+
+A `completed` output must match the capability's output schema, otherwise the run fails with `invalid_output`.
+
+<Tip>
+Retries reuse `invocation.id`, while a resume gets a new one. Key side effects that must happen once (a payment, an email) by `run_id` plus a stable step name, for example `r_501:pay:INV-1`.
+</Tip>
+
+## What the agent can call
+
+All calls use the **run token**, which works only while the agent is answering. Send it as `x-agentos-run-token`.
+
+| Need | How |
+|---|---|
+| **Models** | Call `context.llm.base_url` (OpenAI-compatible) with the token. Use the model names from `context.config.models`. See [Models and the gateway](/agentos/govern/models-and-gateway). |
+| **Ask a person** | `POST {api_url}/v0/holds`. See [Human review](/agentos/run/human-in-the-loop). |
+| **State** | `GET/PUT/DELETE {api_url}/v0/state/{scope}/{key}`, scopes `run`, `session`, `agent`. |
+| **Memory** | `{api_url}/v0/memory/...`. See [Memory and state](/agentos/run/memory-and-state). |
+| **Files** | `POST {api_url}/v0/files` to upload, `GET {api_url}/v0/files/{id}` to download. Pass ids around, never bytes. |
+| **Events** | `POST {api_url}/v0/runs/{run_id}/events` adds a named step to the run timeline. |
+| **Child runs** | `POST {api_url}/v0/capabilities/{capability}/runs` with an `Idempotency-Key`. At most 5 levels deep and 100 children per run. |
+
+## Streaming answers
+
+An answer with any `Content-Type` other than JSON is treated as a stream: a Vercel AI SDK UI message stream, AG-UI, SSE, NDJSON. A caller who starts the run with `?passthrough=true` receives it as written. The agent reports the run's outcome itself with `POST {api_url}/v0/runs/{run_id}/result` before the stream ends.
+
+<Warning>
+Streamed bytes reach the caller **unscrubbed**. Never write the run token, a secret or the invoke body into a stream.
+</Warning>
+
+## How failures are recorded
+
+The worker calls `/invoke` once per invocation. A request that never reached the agent is retried for 30 seconds. After the agent has received it, nothing is retried: a timeout, a crash or any non-2xx fails the run with `agent_interrupted`.
+
+## Check your agent
+
+The [conformance kit](/agentos/build/sdks#conformance-kit) verifies that an agent follows this contract, in any language, and runs in CI.

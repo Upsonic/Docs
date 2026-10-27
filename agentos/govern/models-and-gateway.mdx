@@ -1,0 +1,39 @@
+---
+title: "Models and the Gateway"
+sidebarTitle: "Models and gateway"
+description: "One OpenAI-compatible address for every provider, with run-token authentication, guardrails and usage tracking"
+---
+
+Agents never hold provider keys. All model calls go to the gateway (LiteLLM with AgentOS plugins).
+
+## Providers and models
+
+Admins add providers on the **Models** page: OpenAI, Anthropic, AWS Bedrock, Azure OpenAI, or any OpenAI-compatible server such as vLLM or Ollama. Credentials are write-only and encrypted.
+
+Each provider has a **slug** (`bedrock-prod`). Its models are named `<slug>/<model ID>`, and that is the name agents use. After adding a provider, tick the models agents may use. Ticked models are pushed to the gateway and unticked ones removed. A model that a live or candidate version, an AI judge or an unfinished experiment names cannot be removed.
+
+Environments never share models. In the gateway every model is registered under the environment's number.
+
+## Calling the gateway
+
+```python
+from openai import OpenAI
+client = OpenAI(**inv.llm.openai_kwargs())          # base_url, run-token header, ignored api_key
+client.chat.completions.create(model=inv.llm.model("reader"), messages=[...])   # role -> config.models
+```
+
+Use the model names from `context.config.models` exactly. The gateway adds the environment prefix itself. Accepted routes include chat and text completions, embeddings, `/v1/messages`, `/v1/responses`, Azure-style deployments and Bedrock `converse` and `converse-stream`. Every other route answers 403.
+
+A call names exactly one model and may not carry fallbacks, routing settings or credentials.
+
+## Roles instead of model names
+
+Code asks for a **role** (`reader`, `judge`) and the version's `config.models` maps it to a model. Switching a model is a config change and a new version, with no code change. The [eval](/agentos/quality/evals) experiments can try another model per role without a deploy.
+
+## What is recorded
+
+Every call records the model, input and output tokens, cost and latency on the run, plus the names of tools the model asked for. Prices come from LiteLLM's price table, and models it does not price cost $0 ("on-prem"). The Models page shows each model's calls, tokens and cost over 30 days.
+
+## Planned
+
+<Badge color="orange">Planned</Badge> Provider health (a model shown as degraded when real calls start failing) and model allow-lists per agent. See the [Roadmap](/agentos/roadmap).

@@ -1,0 +1,63 @@
+---
+title: "Deploy and Versions"
+sidebarTitle: "Deploy and versions"
+description: "Upload a bundle, test it as a candidate, promote it, and roll back"
+---
+
+## Deploy
+
+Upload a zip with a `Dockerfile` and an `agentos.yaml` in the panel (**Agents → Deploy agent**) or through the API. The first upload of a name creates the agent.
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@my-agent.zip \
+  $AGENTOS/v0/envs/default/agents/my-agent/versions
+# 202 {"deploy_id": "d_1", "status": "building"}
+
+curl -sS -N -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/deploys/d_1/events
+```
+
+The worker builds the image, pushes it to the bundled registry, starts a container and waits for `GET /health`. A new version becomes the latest only once it is healthy. The build log streams live as `deploy.log` and `deploy.step` events.
+
+A bad bundle is refused with `422 invalid_bundle` and every problem listed at once, recorded under a `deploy_id` so you can see it later.
+
+## Live or candidate
+
+| | Deploy live | Deploy as candidate |
+|---|---|---|
+| Built and health-checked | Yes | Yes |
+| Receives production runs | Yes, once healthy | No. Only experiments run on it |
+| API | default | `?as=candidate` |
+
+A candidate lets you run an [eval](/agentos/quality/evals) against the new code before any user meets it.
+
+## Promote and roll back
+
+**Promote** makes a candidate, or any earlier version, the latest. Its container is started and health-checked first. The previous version becomes `draining` and keeps its image, so **rollback is the same call**.
+
+```bash
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" \
+  $AGENTOS/v0/envs/default/agents/my-agent/versions/v3/promote
+```
+
+New runs use the latest version. A run that is waiting for a person resumes on the version it started on, so a deploy never changes a run in flight.
+
+Version states: `building`, `latest`, `draining`, `retired`, `failed`, `candidate`.
+
+## Config differences
+
+When an upload's `models.<role>`, `prompts.<name>` or `params.<key>` differs from the live version, the upload is refused until you choose, per key, which value the new version uses. Through the API:
+
+```bash
+# 409 {"code": "config_mismatch", "keys": [{"key": "models.reader", "live": "...", "uploaded": "..."}]}
+curl ... -F bundle=@ocr-agent.zip "$AGENTOS/v0/envs/default/agents/ocr-agent/versions?config=live"   # or config=uploaded
+```
+
+This stops a casual upload from silently swapping a production model.
+
+## History
+
+Every upload, refusal and promote is a deploy record: who, when, which version, and why it failed. List them with `GET .../agents/{agent}/deploys`.
+
+## Planned
+
+<Badge color="orange">Planned</Badge> Git-connected deploys with push webhooks, building without a Dockerfile, an **eval gate** before a version becomes the default, and running an older version on request. See the [Roadmap](/agentos/roadmap).

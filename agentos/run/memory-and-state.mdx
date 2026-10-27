@@ -1,0 +1,65 @@
+---
+title: "Memory and State"
+sidebarTitle: "Memory and state"
+description: "Per-agent facts that persist across runs and versions, per-end-user folders, version history and erasure"
+---
+
+## State store
+
+Small, structured values an agent keeps while it works.
+
+| Scope | Lives for |
+|---|---|
+| `run` | This run, across its invocations. Save progress here before you suspend. |
+| `session` | A conversation. Use it for message history. |
+| `agent` | Every run of the agent. |
+
+`PUT` with `if_version` is a compare-and-set (`0` means only if absent). Values are any JSON up to 1 MiB. Write ids and amounts as strings, because JSON numbers lose precision.
+
+## Memory
+
+Every agent has its own memory with nothing to configure. A memory is a set of short **facts** under paths your code chooses, kept across runs and across versions.
+
+```python
+inv.memory.at("users/{user}/").remember("Prefers window seats", tags=["preference"])
+inv.memory.at("users/{user}/").search("seat", k=5)
+block = inv.memory.context("seat preference", paths=["users/{user}/"])   # a <memory> block for the prompt
+tools = inv.memory.tools(paths=["users/{user}/"])                         # search/save/forget tools for the model
+```
+
+| Property | Detail |
+|---|---|
+| Fact | `text` up to 4000 characters, up to 20 `tags`, optional `confidence` 0..1. |
+| Paths | `/`-separated segments. `users/{user}/` is the end user's own folder, filled in from the session. |
+| Isolation | A run reaches only `users/<its user>/`. Another user's facts and another agent's facts answer 404. |
+| Search | Full-text, case-insensitive, Turkish and English, ranked. |
+| Idempotency | `key` makes a write once per run, so a resumed run does not save twice. |
+| Size | Up to 100,000 facts per agent. |
+| Who wrote it | Each fact records the run and whether code or the model wrote it. |
+
+<Info>
+The platform writes nothing on its own. There is no automatic extraction and no embeddings yet.
+</Info>
+
+## History and governance
+
+- **Versions.** Replacing a fact writes a new version of the same id. Every version is kept and browsable (`GET .../memory/facts/{id}/versions`), with the run that wrote it.
+- **Browse and edit.** The agent's **Memory** tab browses folders, searches and shows history. Admins can edit a fact (a new version, written by the person), delete it or erase a folder.
+- **Cross-agent view.** **Govern → Memory** lists every agent's facts.
+- **Erase an end user.** One call removes `users/<user>/` in every agent of the environment and returns a receipt, also written to the audit trail with counts and never the text.
+
+```bash
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"user": "cust-123"}' $AGENTOS/v0/envs/default/memory/erase-user
+# {"receipt_id": "er_...", "scope": "/default/agents/*/users/cust-123/", "facts": 4, "versions": 6, ...}
+```
+
+Erasing an end user removes their memory only, not their run input and output, session records or state values.
+
+## Memory in experiments
+
+An experiment run gets a temporary, empty memory of its own. It never reads or changes the agent's real memory.
+
+## Planned
+
+<Badge color="orange">Planned</Badge> Automatic fact extraction and embeddings-based search. See the [Roadmap](/agentos/roadmap).

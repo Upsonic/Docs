@@ -1,0 +1,99 @@
+---
+title: "Runs and Sessions API"
+sidebarTitle: "Runs API"
+description: "Start runs, stream answers, group conversations into sessions and authenticate with API keys"
+---
+
+All calls live under `/v0/envs/{env}/`. Authenticate scripts and backends with an API key from a service account:
+
+```bash
+-H "Authorization: Bearer aos_..."
+```
+
+A service account needs a role in each environment it calls. **Member** can run agents. **Admin** can also deploy. The key is shown once, and revoking it or deactivating the account takes effect at once.
+
+## Start a run
+
+<CodeGroup>
+```bash Wait for the result
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/llm-agent/capabilities/ask/runs?wait=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -d '{"input": {"question": "What is AgentOS?"}}'
+# 200 {"run_id": "r_12", "status": "completed", "output": {...}, "usage": {...}}
+```
+
+```bash Answer at once, then follow
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/llm-agent/capabilities/ask/runs" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"question": "What is AgentOS?"}}'
+# 202 {"run_id": "r_13", "status": "queued"}
+
+curl -sS -N -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_13/events
+curl -sS    -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_13
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_13/cancel
+```
+</CodeGroup>
+
+The body is `{input, session_id, metadata}`. `input` must match the capability's input schema (422 with the problems otherwise). Runs use the agent's live version. Input is limited to 1 MiB and `metadata` to 16 KiB.
+
+`?wait=true` waits for the capability's timeout plus 5 seconds, at most 5 minutes, and also returns when the run becomes `held`.
+
+**Idempotency.** The same `Idempotency-Key` with the same body returns the same run. Reusing a key with a different body is `409 idempotency_key_reused`.
+
+## The run object
+
+```json
+{ "run_id": "r_12", "agent": "llm-agent", "capability": "ask", "version": "v3",
+  "status": "completed", "session_id": null, "user": null, "parent_run_id": null,
+  "input": {}, "output": {}, "error": null, "metadata": {},
+  "usage": {"llm_calls": 2, "input_tokens": 1830, "output_tokens": 410, "cost": 0.0021} }
+```
+
+`status` is `queued`, `running`, `held`, `completed`, `failed` or `cancelled`. `error` is `{code, message}`: the agent's own code, or one of `agent_interrupted`, `agent_unreachable`, `invalid_output`, `invalid_response`, `blocked_by_guardrail` and others.
+
+List runs with `GET .../agents/{agent}/runs?status=failed&user=cust-123`.
+
+## Events
+
+The event stream (`GET .../runs/{id}/events`) is server-sent events with `Last-Event-ID` resume:
+
+`run.queued`, `run.started`, `llm.call`, `tool.call`, `agent.<name>`, `guardrail.blocked` / `guardrail.masked` / `guardrail.flagged`, `run.held`, `hold.decided`, `run.resumed`, then `run.completed`, `run.failed` or `run.cancelled`.
+
+## Streaming passthrough
+
+Add `?passthrough=true` and the response is exactly what the agent answered, as it arrives: status, content type and body byte for byte, plus `X-AgentOS-Run-Id`.
+
+```bash
+curl -sS -N -D - -X POST \
+  "$AGENTOS/v0/envs/default/agents/stream-agent/capabilities/chat/runs?passthrough=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"message": "What is AgentOS?"}}'
+```
+
+Your chat backend calls this and hands the response to the browser unchanged. It is a normal run in every other way: same auth, validation, idempotency, events and holds.
+
+<Info>
+Passthrough bytes are relayed through memory for 10 minutes and are not scrubbed. A guardrail on `run_output` cannot recall bytes that already reached the caller. GET the run to learn how it ended.
+</Info>
+
+## Sessions
+
+A session groups the runs of one conversation and gives them session-scoped state.
+
+```bash
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"user": "cust-123"}' $AGENTOS/v0/envs/default/sessions
+# 201 {"session_id": "s_3", "user": "cust-123", ...}
+
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/review-agent/capabilities/chat/runs?wait=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"message": "hi"}, "session_id": "s_3"}'
+```
+
+- One turn runs at a time. Starting another while one is active is `409 session_busy`.
+- The caller is often a backend serving many customers, so name the **end user** on the session. Every run carries it, the run list filters by it, and the agent's memory fills `{user}` in paths with it.
+
+## Limits
+
+At most 50 runs are with their agents at once per installation. Further runs stay `queued`.

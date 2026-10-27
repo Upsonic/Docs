@@ -1,0 +1,68 @@
+---
+title: "Network and Security"
+sidebarTitle: "Network and security"
+description: "Isolated agent networks, an egress proxy with allow and block rules, secrets, tenants and roles"
+---
+
+## Isolation
+
+- **Each agent runs on its own internal network.** Agents cannot reach each other, by name or by address. An agent that needs another starts a child run through the platform.
+- **No route out.** The one way out is the **egress proxy**. A client that ignores the proxy settings reaches nothing outside the platform.
+- **Builds are isolated.** Images are built by rootless BuildKit with internet access but no secrets, and no route to the platform's own services.
+- **Containers are locked down.** One CPU, 1 GB memory, 512 processes, all Linux capabilities dropped, `no-new-privileges`.
+
+<Info>
+Phase 1 runs on a single Docker host. Docker networks keep agents apart, but agents and builds can still reach services listening on the host itself. The repository ships a host firewall script for this. Kubernetes support is on the [Roadmap](/agentos/roadmap).
+</Info>
+
+## Egress rules
+
+For every connection the proxy decides in this order:
+
+1. **Never reachable**, whatever the rules: loopback, link-local (cloud metadata), the Docker host, and the platform's own networks.
+2. An admin's **block** rule beats every allow.
+3. An **allow** (from the agent's Guardrails tab, or `network.allow` in `agentos.yaml`) lets it through. A host that resolves to a private address needs an explicit IP or network rule, because a public name pointing inside is how SSRF works.
+4. Everything else is **blocked** with a `403` that names the host and where to allow it.
+
+| Rule | Covers |
+|---|---|
+| `api.example.com` | That host on ports 80 and 443 |
+| `*.example.com` | Any subdomain, not `example.com` itself |
+| `api.example.com:8443`, `api.example.com:*` | Another port, any port |
+| `10.20.0.0/16:5432` | A network and port |
+| `*` | Any public host on web ports |
+
+HTTPS is an end-to-end encrypted tunnel, so the proxy sees the host and port, never the path or body.
+
+The agent's **Guardrails** tab shows where the agent connected, one row per host and port with the verdict, counts and bytes, and an **Allow** or **Block** button. **Log only** mode lets everything through and records `WOULD BLOCK`, which is the way to learn what a new agent needs.
+
+## Secrets
+
+Declare names in `agentos.yaml` (`secrets: [CRM_API_KEY]`). Admins enter the values on the agent's **Secrets** tab. Values are write-only, encrypted at rest, delivered in `context.secrets` per invocation, and never pass through events, logs or webhooks. If an agent echoes a secret of 8 or more characters into its output, error, an event or an ask, it is stored as `***`.
+
+Model provider credentials are also write-only and stored encrypted. Agents never see them.
+
+## The run token
+
+The token in `context.token` belongs to one invocation. It stops working on the platform at once and at the gateway within 5 seconds after the agent answers or the run is cancelled. The SDKs send it only to the platform and the gateway, and never along a redirect to another host.
+
+## Tenants, users and roles
+
+One installation serves several **tenants** that never see each other. A tenant holds environments, and every user belongs to exactly one tenant.
+
+| Role | Scope |
+|---|---|
+| **Upsonic admin** | Creates tenants. Sees nothing inside them. |
+| **Tenant admin** | Manages users, service accounts, API keys and environments of one tenant. |
+| **Environment admin** | Deploys, manages models, guardrails, webhooks and secrets. |
+| **Environment member** | Runs agents and reads results. |
+
+Users are deactivated rather than deleted. Every guardrail change, memory erase and deploy is recorded.
+
+## Privacy
+
+The gateway never stores prompts or responses. Usage records keep only the model, token counts, cost, latency and tool names.
+
+## Planned
+
+<Badge color="orange">Planned</Badge> A secrets vault, Kubernetes and other sandbox providers behind the same runtime interface, and a stateful runtime with one container per session. See the [Roadmap](/agentos/roadmap).

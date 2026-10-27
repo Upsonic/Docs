@@ -1,0 +1,98 @@
+---
+title: "SDKs, Adapters and Conformance Kit"
+sidebarTitle: "SDKs and adapters"
+description: "Python and TypeScript SDKs, framework adapters for human approval, and the conformance kit"
+---
+
+Everything the SDKs do is one of the HTTP calls in the [agent contract](/agentos/build/agent-contract). An agent in any other language loses nothing by using plain HTTP.
+
+<Note>
+The SDKs are built from the AgentOS repository and vendored into your bundle. They are not published to PyPI or npm yet.
+</Note>
+
+| | Python | TypeScript |
+|---|---|---|
+| Package | `agentos-sdk`, import `agentos` | `@agentos/sdk` (ESM only) |
+| Runtime | Python 3.11+, httpx | Node 20+, no dependencies |
+
+## A complete handler
+
+<CodeGroup>
+```python Python
+import agentos
+
+def pay_invoices(inv: agentos.Invocation):
+    if inv.resume is None:                       # first invocation
+        inv.state.run.put("progress", {"step": "asked"})
+        inv.ask("Pay 2 invoices",
+                [{"id": "INV-1", "title": "Acme · 120.00", "data": {"amount": "120.00"}}],
+                actions=["approve", "edit", "reject"])   # ends the invocation as suspended
+    paid = [d.data for d in inv.resume.approved]         # after a person decided
+    return {"paid": paid}
+
+agentos.serve({"pay_invoices": pay_invoices}, port=8080)
+```
+
+```ts TypeScript
+import { serve } from "@agentos/sdk";
+
+await serve({
+  pay_invoices: async (inv) => {
+    if (!inv.resume) {
+      await inv.state.run.put("progress", { step: "asked" });
+      await inv.ask({ intent: "Pay 2 invoices", actions: ["approve", "edit", "reject"],
+        items: [{ id: "INV-1", title: "Acme · 120.00", data: { amount: "120.00" } }] });
+    }
+    return { paid: inv.resume!.approved.map((d) => d.data) };
+  },
+}, { port: 8080 });
+```
+</CodeGroup>
+
+Code before `ask()` runs again on the resume, so keep it idempotent.
+
+## What an invocation gives you
+
+| Python | What |
+|---|---|
+| `inv.ask(...)` / `inv.resume` | Ask a person; read `approved`, `edited`, `rejected`, `feedback` on the resume. |
+| `inv.state.run / .session / .agent` | The state store with compare-and-set (`put(..., if_version=)`, `update`). |
+| `inv.memory` | Search, remember and forget facts; build a `<memory>` prompt block; give the model memory tools. |
+| `inv.llm` | The gateway with the run token: `chat`, `stream`, `openai_kwargs()` for the OpenAI client. |
+| `inv.start(capability, input, key=)` | A child run with a stable idempotency key. |
+| `inv.event(type, data)` | A named step on the run timeline. |
+| `inv.files` | Upload and download files of the environment. |
+| `agentos.Stream(chunks, content_type)` | A streaming answer. The SDK reports the result before the stream ends. |
+
+Return a value to complete the run. `raise agentos.Fail(code, message)` fails it with your code. A guardrail block raises `GuardrailBlocked`.
+
+<Warning>
+Build model clients, agents and compiled graphs **inside the handler**, per invocation. The model client carries this invocation's run token, which ends when the invocation answers.
+</Warning>
+
+## Framework adapters
+
+An adapter turns a framework's own pause into one hold and keeps what it needs to continue in run state, so the resume continues exactly where the run stopped, in any process.
+
+| Framework | Install | What asks a person |
+|---|---|---|
+| OpenAI Agents SDK | `agentos-sdk[openai-agents]` | Tools with `needs_approval=True` |
+| LangGraph | `agentos-sdk[langgraph]` | `interrupt()` |
+| Agno | `agentos-sdk[agno]` | Tools with `requires_confirmation=True` |
+| Vercel AI SDK | `@agentos/sdk/ai-sdk` | `toolApproval: "user-approval"` |
+| Mastra | `@agentos/sdk/mastra` | A workflow step's `suspend()` |
+
+**CrewAI:** Flows work with the core SDK (ask in a flow step, keep state in run state). A Crew (`Crew.kickoff`) cannot pause without restarting, so move the approval into a Flow step.
+
+Run state values are limited to 1 MiB. A conversation-heavy checkpoint grows with the transcript.
+
+## Conformance kit
+
+`conformance/` checks that an agent, in any language, follows the contract. Use it in CI.
+
+```bash
+uv run --project conformance agentos-conformance check my-agent           # builds and runs in Docker
+uv run --project conformance agentos-conformance check my-agent --url http://127.0.0.1:8080
+```
+
+It runs the agent as the platform does against a mock platform and checks the health endpoint, answer shapes, schema conformance, hold and resume behavior, streaming results, and that the run token only goes to platform hosts while the invocation runs. Add cases in `conformance.yaml` next to `agentos.yaml`. Output is `PASS`, `FAIL` or `SKIP` per check, and `--junit report.xml` writes JUnit for CI. Exit code 0 means all passed, 1 a check failed, 2 it could not run.

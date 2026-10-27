@@ -1,0 +1,67 @@
+---
+title: "AgentOS Roadmap"
+sidebarTitle: "Roadmap"
+description: "What is designed or proposed for AgentOS but not available yet"
+---
+
+<Warning>
+Nothing on this page is available today, and nothing here is a delivery commitment. Items can change, move or be dropped. Pages elsewhere in this section describe only what exists now.
+</Warning>
+
+## Status labels
+
+| Label | Meaning |
+|---|---|
+| **Designed** | The design is decided. Not built yet. |
+| **Deferred** | Consciously postponed. Will be reconsidered. |
+| **Proposed** | An idea we want to build. Not yet decided. |
+
+## Evals and quality
+
+| Item | Status | Why it matters |
+|---|---|---|
+| **Scheduled evals** with threshold alerts | Deferred | An outside team asked for it to catch model-provider drift. Run the same test set every night and see the score move. |
+| **Scoring live traffic** | Deferred | Watch quality where it matters, on sampled production runs. |
+| **Eval gate on promote** | Deferred | Block a version whose score drops by more than a set amount, with a logged override. |
+| **Score history** across versions and model changes | Proposed | One chart of quality over time with deploys and model switches marked. |
+| **Behavior drift signals** | Proposed | Tool calls per run, tokens and duration compared to a baseline, plus quality by conversation length and memory size, to catch slow degradation as context grows. |
+| **Tool-call checks** | Proposed | Must call a tool, must never call another, order, and call count limits, read from the run timeline. |
+| **Re-score** | Proposed | Apply new checks or corrected answers to stored outputs without running the agent again. |
+| **Audit report export** | Proposed | Who ran what, on which version and model, against which test set. |
+| **Feedback signal** | Proposed | Thumbs-down and errors as signals for collecting test cases. |
+
+## Running and connecting
+
+| Item | Status | Why it matters |
+|---|---|---|
+| **MCP and A2A front doors** | Deferred | Capabilities are fully typed, so tools and skills can be generated for outside clients. |
+| **Run an older version on request** | Deferred | An optional version parameter on the start request. |
+| **Callback holds** | Designed | An outside system resolves a wait by calling a single-use URL. |
+| **Wait-for-runs holds** | Designed | A run resumes when listed child runs finish. |
+| **Gateway-level tool approval** | Deferred | Hold a tool call at the gateway. Today approvals live in the agent. |
+| **Observing external agents** | Proposed | Govern and observe agents that run elsewhere, without hosting them. |
+| **Hosted chat widget** | Proposed | A ready-made end-user interface. Today your own UI calls the API. |
+| **n8n integration** | Proposed | Trigger flows from run, hold and eval events. |
+
+## Governance
+
+| Item | Status |
+|---|---|
+| Guardrail scopes for a person or a team | Deferred |
+| Model allow-lists per agent | Deferred |
+| Secrets vault | Deferred |
+| Provider health (degraded model detection) | Deferred |
+
+## Platform
+
+| Item | Status |
+|---|---|
+| Git-connected deploys and building without a Dockerfile | Deferred |
+| Kubernetes and other sandbox providers | Deferred |
+| Stateful runtime (one container per session) | Deferred |
+| OpenTelemetry traces, alerts, retention policies | Deferred |
+| Automatic memory extraction and embeddings | Deferred |
+
+## Tell us what matters
+
+If a planned item blocks your use case, tell your Upsonic contact. Real requests decide the order.

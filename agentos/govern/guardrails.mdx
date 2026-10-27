@@ -1,0 +1,92 @@
+---
+title: "Guardrails"
+sidebarTitle: "Guardrails"
+description: "Block, mask or flag personal data, secrets and your own patterns at the model gateway, without changing agent code"
+---
+
+Guardrails are the environment's policy, managed by admins under **Govern → Guardrails**. They are not part of `agentos.yaml`, so a change reaches running agents within seconds, without a redeploy.
+
+A guardrail is one **check**, the **checkpoints** it watches, an **action**, a **mode** and a **scope**. All checks are deterministic. No model is called.
+
+## Checks
+
+| Kind | Examples |
+|---|---|
+| **Personal data** | `tckn` (11 digits with both checksum digits), `iban` (country length and mod 97), `card` (Luhn), `email`, `phone` (Turkish mobile and landline, E.164) |
+| **Secrets** | AWS keys, private key blocks, JWTs, `sk-` keys, GitHub and Slack tokens, Stripe live keys, Google API keys, `api_key = ...` assignments, `Bearer` tokens, AgentOS's own `aos_`, `tok_` and `whsec_` credentials |
+| **Keywords** | Up to 200 words or phrases, whole words, any case. Turkish `i`, `İ`, `ı`, `I` are treated as one letter. |
+| **Your own patterns** | Up to 20 regular expressions, optionally with a validator (`luhn`, `mod97`, `tckn`). Each runs at most 0.1 s per text. |
+
+Checks read text as it looks: Unicode spaces, full-width characters and zero-width characters are normalized, so simple evasion does not work.
+
+## Checkpoints
+
+| Checkpoint | What is checked |
+|---|---|
+| `run_input` | A run's input and metadata, when it starts. |
+| `model_input` | Every message of each model request. |
+| `tool_result` | Tool results sent back to the model, including MCP and hosted tool results. |
+| `tool_call` | Each tool the model asks for: name and arguments. |
+| `model_output` | The model's answer, streamed or not. |
+| `run_output` | A run's output, before it completes. |
+
+## Actions
+
+| Action | Effect |
+|---|---|
+| `flag` | Record it. |
+| `block` | Refuse. |
+| `mask` | Replace each finding with `[TCKN]`, `[IBAN]`, `[CARD]`, `[EMAIL]`, `[PHONE]`, `[SECRET]` or `[REDACTED]`. Not available at `tool_call`. |
+
+A mask that finds something it cannot safely rewrite (a JSON key, a masked number that no longer fits the schema) **blocks instead**.
+
+## Modes and rollout
+
+<Tip>
+A new guardrail starts in **log only**. It records what it *would* have blocked or masked and changes nothing. Watch the hits, tune the rule, then switch it to **enforce**.
+</Tip>
+
+**Try it** runs an unsaved guardrail on a sample. **Test the policy** sends a text through the enabled guardrails for one agent and capability. Neither records anything. Every change is in the guardrail's revision history.
+
+## Scope
+
+The whole environment (with exemptions), some agents, or some capabilities of agents.
+
+## What an agent sees
+
+A blocked model call fails, and only that call. The run goes on and the agent's code decides what to do. The gateway answers HTTP 400:
+
+```json
+{"error": {"message": "No national IDs to the model. (event gh_01M4VJ3C14H3DNEKQE4PFDWYPJ)",
+           "type": "invalid_request_error", "code": "content_filter",
+           "agentos_guardrail": {"guardrail": "no-tckn", "at": "model_input",
+                                 "hit": "gh_01M4VJ3C14H3DNEKQE4PFDWYPJ", "code": "content_filter"}}}
+```
+
+The matched text is never in the message. The SDKs raise `GuardrailBlocked`. A blocked `run_input` refuses the start with `422 blocked_by_guardrail`, and a blocked `run_output` fails the run and keeps the output for admins only.
+
+The gateway never answers a block with 5xx or 429, because clients retry those.
+
+## Streaming
+
+With an enforced block or mask at `model_output`, a stream is held back by a small window so nothing is sent before it is checked. The window is the longest thing the guardrails look for plus two characters: 13 for a TCKN, 62 with IBANs, at most 258. In measurements on a mock model, time to first token went from 120 ms without guardrails to 220 ms with a TCKN guardrail and 1425 ms with secrets.
+
+## What is recorded
+
+Every verdict is a hit with the finding types, counts, offsets and the guardrail revision. **The matched text is never stored.** Each hit appears on the run timeline (`guardrail.blocked`, `guardrail.masked`, `guardrail.flagged`) and on the guardrail's page. `guardrail.blocked` is also a webhook event.
+
+## Fail closed
+
+- If the gateway cannot read the environment's guardrails, it answers **503** `agentos_unavailable` and records nothing.
+- Each request and response gets 2 seconds of checking. A guardrail that could block and is still unchecked at that point blocks.
+- A route where a guardrail cannot be enforced refuses the run's calls with **403** `agentos_forbidden`, naming the guardrail.
+
+## Known limits
+
+Not checked: a finding split across two messages, prompts sent as token ids, tool definitions, binary or base64 images, files and audio, and anything that does not pass through the gateway (state, events, asks, decisions, files). The check reads at most 256 KiB of one text.
+
+See [Network and security](/agentos/govern/network-and-security) for controlling what agents can reach.
+
+## Planned
+
+<Badge color="orange">Planned</Badge> Guardrail scopes for a person or a team, and model allow-lists. See the [Roadmap](/agentos/roadmap).
