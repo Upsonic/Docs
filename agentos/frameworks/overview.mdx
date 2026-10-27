@@ -1,0 +1,52 @@
+---
+title: "Framework examples"
+sidebarTitle: "Overview"
+description: "Complete, tested agents built with CrewAI, MCP, Open WebUI, Upsonic, LangGraph, LangChain, the OpenAI Agents SDK, Agno, Pydantic AI, LlamaIndex, Google ADK, the Vercel AI SDK and Mastra."
+---
+
+AgentOS runs agents written with any framework. Each page in this section is a complete bundle — `agentos.yaml`, `Dockerfile` and code — that you can zip and deploy as it is. Every one was built and checked with the [conformance kit](/agentos/build/conformance) against the versions named on its page.
+
+## Bringing an existing agent
+
+Your agent's code stays as it is. Three changes connect it to AgentOS:
+
+<Steps>
+  <Step title="Serve the contract">
+    Wrap the agent's entry point in a handler that answers `POST /invoke` and `GET /health`. With the [SDKs](/agentos/build/sdks) this is a few lines: a function per capability, passed to `serve`.
+  </Step>
+  <Step title="Send model calls to the gateway">
+    Point the framework's OpenAI-compatible client at `inv.llm.base_url` with the run token header (`inv.llm.headers`), and use the model names from `config.models` in `agentos.yaml`. Usage, cost, guardrails and model changes then work without touching your code again. See [Calling models](/agentos/build/models).
+  </Step>
+  <Step title="Declare what it needs">
+    List its capabilities with input and output schemas, its secrets, and the hosts it calls (`network.allow`) in [agentos.yaml](/agentos/build/agentos-yaml). Then zip and [deploy](/agentos/platform/deploying).
+  </Step>
+</Steps>
+
+When the framework can pause for a person, the run is held and the decision arrives in the Review queue. The pages show how each framework's pause becomes an AgentOS [approval](/agentos/build/human-approvals).
+
+## Examples
+
+| Framework | Language | Model through the gateway | Asks a person with |
+|---|---|---|---|
+| [CrewAI](/agentos/frameworks/crewai) | Python | `LLM(provider="openai", base_url=…, default_headers=…)` | a Flow step and `inv.ask` (a Crew can't pause) |
+| [MCP](/agentos/frameworks/mcp) | Python | `inv.llm` tool loop over the MCP servers' tools | `inv.ask` before a risky tool call |
+| [Open WebUI](/agentos/frameworks/open-webui) | Python | the agent runs on AgentOS; Open WebUI calls it through a Pipe | the Review queue (the chat shows the run is waiting) |
+| [Upsonic](/agentos/frameworks/upsonic) | Python | `OpenAIChatModel` with an `OpenAIProvider` on the gateway | an external-execution tool, continued with `continue_run_async` |
+| [LangGraph](/agentos/frameworks/langgraph) | Python | `ChatOpenAI` on the gateway | `interrupt()`, through the LangGraph adapter |
+| [LangChain](/agentos/frameworks/langchain) | Python | `ChatOpenAI` on the gateway | `interrupt()` in a `create_agent` tool, through the LangGraph adapter |
+| [OpenAI Agents SDK](/agentos/frameworks/openai-agents) | Python | the adapter's model helper (chat completions) | `needs_approval=True`, through the adapter |
+| [Agno](/agentos/frameworks/agno) | Python | the adapter's model helper | `requires_confirmation=True`, through the adapter |
+| [Pydantic AI](/agentos/frameworks/pydantic-ai) | Python | `OpenAIChatModel` with an `OpenAIProvider` on the gateway | `requires_approval=True`, continued with deferred tool results |
+| [LlamaIndex](/agentos/frameworks/llamaindex) | Python | `OpenAILike` on the gateway | `ctx.wait_for_event` in a `FunctionAgent` tool |
+| [Google ADK](/agentos/frameworks/google-adk) | Python | `LiteLlm` on the gateway | `inv.ask` before money moves |
+| [Vercel AI SDK](/agentos/frameworks/vercel-ai-sdk) | TypeScript | `agentosModel(inv)` | tool approval, through the adapter |
+| [Mastra](/agentos/frameworks/mastra) | TypeScript | a Mastra `Agent` with `agentosModel(inv)` | a workflow step's `suspend()`, through the adapter |
+| [OpenAI Agents SDK (JS)](/agentos/frameworks/openai-agents-js) | TypeScript | an `OpenAI` client on the gateway (chat completions) | `needsApproval`, mapped to `inv.ask` |
+
+<Tip>
+Keep code that runs before an ask idempotent: on the resume, the handler runs again from the top. Key side effects by `run_id` and a step name. See [Human approvals](/agentos/build/human-approvals).
+</Tip>
+
+## Framework not listed?
+
+Anything that can serve HTTP and call an OpenAI-compatible endpoint works, in any language. Follow the [agent contract](/agentos/build/agent-contract) directly, or use the [SDKs](/agentos/build/sdks) and their [framework adapters](/agentos/build/frameworks), then check it with the [conformance kit](/agentos/build/conformance).

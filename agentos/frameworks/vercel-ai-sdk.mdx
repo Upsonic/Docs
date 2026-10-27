@@ -1,0 +1,250 @@
+---
+title: "Vercel AI SDK"
+description: "Run a Vercel AI SDK agent on AgentOS: stream chat answers to a useChat frontend, and pause a tool call for a person's approval."
+---
+
+This example is a support agent written with the [Vercel AI SDK](https://ai-sdk.dev). It has two capabilities:
+
+- **`chat`** streams its answer as an AI SDK **UI message stream**. Your app's backend starts the run with `?passthrough=true` and hands the response to the browser unchanged, so `useChat` reads it with no mapping.
+- **`pay_supplier`** gives the model a `pay` tool that needs approval. The run is held until a person approves, edits or rejects the payment, then `generateText` continues where it stopped.
+
+Every model call goes through the AgentOS gateway with the run token, so the environment's models, guardrails, token counts and costs apply.
+
+## The bundle
+
+<CodeGroup>
+```ts agent.ts
+import { Fail, guardrailBlocked, serve, stream } from "@agentos/sdk";
+import { agentosModel, runWithApprovals } from "@agentos/sdk/ai-sdk";
+import { convertToModelMessages, stepCountIs, streamText, tool, type UIMessage } from "ai";
+import { z } from "zod";
+
+const pay = tool({
+  description: "Pay a supplier. Amounts are text, e.g. \"120.00\".",
+  inputSchema: z.object({ payee: z.string(), amount: z.string() }),
+  execute: async ({ payee, amount }) => `paid ${amount} to ${payee}`,
+});
+
+await serve({
+  // Streams a UI message stream that useChat reads as it is, when the caller starts the run with ?passthrough=true.
+  chat: async (inv) => {
+    let failure: unknown;
+    const result = streamText({
+      model: agentosModel(inv),
+      system: inv.config.prompts?.system,
+      messages: await convertToModelMessages(inv.input.messages as UIMessage[]),
+      onError: ({ error }) => { failure = error; },
+    });
+    const response = result.toUIMessageStreamResponse({
+      onError: (error) => {
+        failure = error;
+        return guardrailBlocked(error)?.message ?? "The model call failed.";
+      },
+    });
+    const headers = Object.fromEntries([...response.headers].filter(([name]) => !["content-type", "connection"].includes(name)));
+
+    async function* chunks() {
+      for await (const chunk of response.body!) yield chunk;
+      // the run's outcome, reported before the stream ends
+      if (failure) throw guardrailBlocked(failure) ?? new Fail("model_call_failed", String(failure));
+      inv.setOutput({ text: await result.text });
+    }
+    return stream(chunks(), { contentType: "text/event-stream", headers });
+  },
+
+  // A tool that needs approval: the run is held until a person decides, then continues where it stopped.
+  pay_supplier: async (inv) => {
+    const result = await runWithApprovals(inv, {
+      model: agentosModel(inv),
+      system: "Pay suppliers with the pay tool.",
+      messages: [{ role: "user", content: inv.input.request }],
+      tools: { pay },
+      toolApproval: { pay: "user-approval" },
+      stopWhen: stepCountIs(5),
+      intent: "Pay a supplier",
+    });
+    return { answer: result.text };
+  },
+}, { port: 8080 });
+```
+
+```yaml agentos.yaml
+name: support-agent
+title: Support Agent (Vercel AI SDK)
+description: Streams chat answers to a useChat frontend, and pays suppliers once a person approves.
+runtime: stateless
+port: 8080
+capabilities:
+  chat:
+    description: One chat turn, streamed as an AI SDK UI message stream.
+    input:
+      type: object
+      properties:
+        messages: {type: array, items: {type: object}}
+      required: [messages]
+    output:
+      type: object
+      properties: {text: {type: string}}
+      required: [text]
+    timeout: 60s
+  pay_supplier:
+    description: Pays a supplier with the pay tool; every payment waits for a person's approval.
+    input:
+      type: object
+      properties: {request: {type: string}}
+      required: [request]
+    output:
+      type: object
+      properties: {answer: {type: string}}
+      required: [answer]
+    timeout: 60s
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5
+  prompts:
+    system: You are a concise support assistant.
+```
+
+```json package.json
+{
+  "name": "support-agent",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@agentos/sdk": "file:vendor/agentos-sdk-0.1.0.tgz",
+    "@ai-sdk/openai-compatible": "3.0.68",
+    "ai": "7.0.138",
+    "zod": "4.6.7"
+  }
+}
+```
+
+```dockerfile Dockerfile
+FROM node:24-slim
+WORKDIR /app
+COPY package.json .
+COPY vendor/ vendor/
+RUN npm install --omit=dev --no-audit --no-fund
+COPY agent.ts .
+USER node
+EXPOSE 8080
+CMD ["node", "agent.ts"]
+```
+</CodeGroup>
+
+The folder also holds `vendor/agentos-sdk-0.1.0.tgz`, the TypeScript SDK (see [SDKs](/agentos/build/sdks): it isn't on npm yet and ships with AgentOS). Node 24 runs `agent.ts` directly. Set `config.models.main` to a model from your environment's [Models page](/agentos/platform/models-and-providers), zip the folder with `vendor/` in it and [deploy](/agentos/platform/deploying) it.
+
+## How the model is wired
+
+`agentosModel(inv)` is an AI SDK model for the role `main` in `config.models`, served by the gateway. Its requests go through `inv.fetch`, which adds the run token only for the gateway and the platform and only while the invocation runs. Build it inside the handler, once per invocation: the token ends when the invocation answers. Pass another role for another model, for example `agentosModel(inv, "judge")`.
+
+## Stream chat to a useChat frontend
+
+The browser never talks to AgentOS and never sees your API key. Your backend starts a run of `chat` with `?passthrough=true` and returns the response as it arrives: AgentOS relays the agent's status, `Content-Type`, `Cache-Control`, `X-Accel-Buffering` and `X-Vercel-AI-*` headers and its body byte for byte, plus `X-AgentOS-Run-Id` (see [Passthrough](/agentos/api/runs#passthrough)).
+
+<CodeGroup>
+```ts app/api/chat/route.ts
+// Your Next.js backend: forwards one chat turn to AgentOS and streams the answer back.
+export async function POST(req: Request) {
+  const { messages } = await req.json();
+  const upstream = await fetch(
+    `${process.env.AGENTOS}/v0/envs/default/agents/support-agent/capabilities/chat/runs?passthrough=true`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.AGENTOS_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ input: { messages } }),
+    },
+  );
+  const headers = new Headers();
+  for (const name of ["content-type", "cache-control", "x-vercel-ai-ui-message-stream", "x-agentos-run-id"]) {
+    const value = upstream.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+  return new Response(upstream.body, { status: upstream.status, headers });
+}
+```
+
+```tsx app/page.tsx
+"use client";
+import { useChat } from "@ai-sdk/react";
+import { useState } from "react";
+
+export default function Chat() {
+  const { messages, sendMessage } = useChat(); // posts to /api/chat
+  const [text, setText] = useState("");
+  return (
+    <div>
+      {messages.map((m) => (
+        <p key={m.id}>
+          <b>{m.role}:</b> {m.parts.map((p) => (p.type === "text" ? p.text : "")).join("")}
+        </p>
+      ))}
+      <form onSubmit={(e) => { e.preventDefault(); sendMessage({ text }); setText(""); }}>
+        <input value={text} onChange={(e) => setText(e.target.value)} />
+      </form>
+    </div>
+  );
+}
+```
+</CodeGroup>
+
+`useChat` sends the whole conversation each turn, so the agent needs no history of its own. To tie a conversation to one of your customers, create a [session](/agentos/api/sessions) with `{"user": "<their id>"}` and pass its `session_id` in the run body; the agent then sees `inv.user` and can keep [memory](/agentos/build/memory) per user.
+
+From a terminal, the same call shows the stream:
+
+```bash
+curl -sS -N -X POST "$AGENTOS/v0/envs/default/agents/support-agent/capabilities/chat/runs?passthrough=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"messages": [{"id": "m1", "role": "user", "parts": [{"type": "text", "text": "hello"}]}]}}'
+# data: {"type":"start"}
+# data: {"type":"text-delta","id":"txt-0","delta":"Hello"}
+# ...
+# data: [DONE]
+```
+
+Before the stream ends the agent reports the run's outcome, so the run is `completed` with `{"text": ...}` as its output (see [Streaming answers](/agentos/build/streaming)).
+
+## Approve a tool call
+
+`runWithApprovals` is `generateText` with the SDK's approval handling. When the model calls `pay`, the conversation so far is kept in run state and one hold asks a person about every pending call (approve, edit its input, or reject). On the resume the decisions become tool-approval responses: an approved call runs once, a rejected one tells the model why, and `generateText` continues.
+
+<Steps>
+  <Step title="Start the run">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/support-agent/capabilities/pay_supplier/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -d '{"input": {"request": "Pay Acme 120.00 for the October invoice"}}'
+    # 200 {"run_id": "r_41", "status": "held", "hold": {"hold_id": "h_9", "intent": "Pay a supplier", ...}, ...}
+    ```
+  </Step>
+  <Step title="Decide">
+    A reviewer decides in the panel's [Review queue](/agentos/platform/review-queue), or through the API. Each item's `id` is the tool call's id; read it from the hold:
+
+    ```bash
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/holds/h_9
+    # {"items": [{"id": "call_abc", "title": "pay(payee=Acme, amount=120.00)", "data": {"payee": "Acme", "amount": "120.00"}}], ...}
+
+    curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      $AGENTOS/v0/envs/default/holds/h_9/decision \
+      -d '{"items": [{"id": "call_abc", "action": "edit", "data": {"payee": "Acme", "amount": "100.00"}}]}'
+    ```
+  </Step>
+  <Step title="Read the result">
+    The run continues with the decision and completes:
+
+    ```bash
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_41
+    # {"status": "completed", "output": {"answer": "..."}, ...}
+    ```
+  </Step>
+</Steps>
+
+## Good to know
+
+- **Errors in a stream.** `streamText` only logs errors by default, including a guardrail's block. The example passes `onError` to both `streamText` and `toUIMessageStreamResponse`: the browser gets the guardrail's message as an `error` part, and the run fails with `blocked_by_guardrail` instead of completing with a cut answer. See [Guardrails](/agentos/platform/guardrails).
+- **Report before the stream ends.** Call `inv.setOutput(...)` before the last chunk. A stream that ends without it fails the run with `missing_output`.
+- **A held run's resume isn't streamed.** A streaming capability that asks a person ends its stream; read the resumed run's output with `GET …/runs/{run_id}`.
+- **Run state is at most 1 MiB.** `runWithApprovals` keeps the conversation in run state while the run is held, and it grows with the transcript.
+- **Code before the ask runs again on the resume.** `runWithApprovals` handles its own calls; keep anything else you do before it idempotent (see [Human approvals](/agentos/build/human-approvals)).
+
+Tested with `ai` 7.0.138, `@ai-sdk/openai-compatible` 3.0.68 and Node 24, with the [conformance kit](/agentos/build/conformance). More frameworks: [Framework examples](/agentos/frameworks/overview).

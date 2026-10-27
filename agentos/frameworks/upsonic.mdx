@@ -1,0 +1,283 @@
+---
+title: "Upsonic"
+description: "Run an Upsonic agent on AgentOS: models through the gateway, and a refund tool that waits for a person's approval."
+---
+
+This example is a support agent built with the [Upsonic framework](/get-started/introduction). It looks orders up with a tool, and when the model decides to refund an order, Upsonic pauses the run and AgentOS asks a person. The reviewer approves the refund, changes the amount, or rejects it, and the agent continues with that decision.
+
+<Info>
+Tested with Upsonic 0.77.3 and Python 3.13, using the [conformance kit](/agentos/build/conformance): 25 checks passed, including an approved, an edited and a rejected refund.
+</Info>
+
+## The bundle
+
+<CodeGroup>
+```python app.py
+"""An Upsonic support agent on AgentOS. The refund tool is an external-execution tool: Upsonic pauses the run when
+the model calls it, AgentOS asks a person, and on the resume the agent issues the refund as decided (approved,
+edited or rejected) and hands Upsonic the result. Upsonic keeps a paused run in its database; here that database is
+a SQLite file that travels in the run's state, so the resume works in whichever container answers it."""
+import base64
+import hashlib
+import json
+import os
+import tempfile
+
+import agentos
+from openai import AsyncOpenAI
+from upsonic import Agent, Task
+from upsonic.db.database import SqliteDatabase
+from upsonic.models.openai import OpenAIChatModel
+from upsonic.providers.openai import OpenAIProvider
+from upsonic.run.requirements import RunRequirement
+from upsonic.tools import tool
+
+ORDERS = {  # stands in for your order system
+    "A-1001": {"status": "delivered", "total": "49.90", "items": ["Desk lamp"], "delivered": "2026-10-02"},
+    "A-1002": {"status": "in transit", "total": "129.00", "items": ["Office chair"], "delivered": None},
+}
+
+
+def lookup_order(order_id: str) -> str:
+    """Look an order up by its id (like A-1001): its status, items, total and delivery date."""
+    order = ORDERS.get(order_id.strip().upper())
+    return json.dumps(order) if order else f"There is no order {order_id}."
+
+
+@tool(external_execution=True)
+def issue_refund(order_id: str, amount: str, reason: str) -> str:
+    """Refund `amount` (a decimal string like 49.90) on an order. A person approves every refund first."""
+    raise NotImplementedError  # never called by Upsonic: the agent runs refunds itself, once a person decided
+
+
+def refund(run_id: str, order_id: str, amount: str) -> str:
+    """Stands in for your payment provider; key the real call by run id so a retried run never pays twice."""
+    refund_id = "rf_" + hashlib.sha256(f"{run_id}:{order_id}:{amount}".encode()).hexdigest()[:12]
+    return f"Refunded {amount} on {order_id}: {refund_id}"
+
+
+def build_agent(inv: agentos.Invocation, db_file: str) -> Agent:
+    """Built per invocation: the model client carries this run's token."""
+    model = OpenAIChatModel(
+        inv.llm.model("main"),  # config.models.main, sent to the gateway as it is
+        provider=OpenAIProvider(openai_client=AsyncOpenAI(**inv.llm.openai_kwargs(asynchronous=True), max_retries=0)),
+    )
+    db = SqliteDatabase(db_file=db_file, session_id=inv.run_id, user_id=inv.user or "anonymous")
+    return Agent(model, name="support", db=db, system_prompt=inv.config["prompts"]["system"])
+
+
+async def support(inv: agentos.Invocation):
+    db_file = os.path.join(tempfile.gettempdir(), f"upsonic-{inv.run_id}.db")
+    paused = await inv.state.run.aget("upsonic")  # set while a person decides
+    if paused:  # the resume: put Upsonic's database back where it was
+        with open(db_file, "wb") as f:
+            f.write(base64.b64decode(paused["db"]))
+    agent = build_agent(inv, db_file)
+    try:
+        if not paused:  # the start
+            output = await agent.do_async(Task(inv.input["message"], tools=[lookup_order, issue_refund]),
+                                          return_output=True)
+        else:  # run the refunds as decided, then let Upsonic continue with their results
+            requirements = [RunRequirement.from_dict(r) for r in paused["requirements"]]
+            for requirement in requirements:
+                if requirement.needs_external_execution:
+                    requirement.set_external_execution_result(decided(inv, requirement))
+            output = await agent.continue_run_async(run_id=paused["run_id"], requirements=requirements,
+                                                    return_output=True)
+    except Exception as error:
+        if block := agentos.guardrail_block(error):
+            raise block  # the run fails with blocked_by_guardrail and the guardrail's message
+        raise
+
+    if output.is_paused:  # the model wants to refund: keep the paused run, ask a person
+        with open(db_file, "rb") as f:
+            await inv.state.run.aput("upsonic", {"run_id": output.run_id, "db": base64.b64encode(f.read()).decode(),
+                                                 "requirements": [r.to_dict() for r in output.requirements]})
+        calls = [r.tool_execution for r in output.active_requirements if r.needs_external_execution]
+        await inv.aask("Approve these refunds?",
+                       [{"id": call.tool_call_id, "title": f"Refund {call.tool_args['amount']} on "
+                                                           f"{call.tool_args['order_id']}",
+                         "data": call.tool_args} for call in calls],
+                       actions=["approve", "edit", "reject"])
+    await inv.state.run.adelete("upsonic")
+    return {"answer": str(output.output)}
+
+
+def decided(inv: agentos.Invocation, requirement: RunRequirement) -> str:
+    """What the refund tool returns to the model: the refund as approved or edited, or why it didn't happen."""
+    item = inv.resume.item(requirement.tool_execution.tool_call_id)
+    if item is None:  # the ask expired
+        return "Nobody approved this refund in time; it was not issued."
+    if item.action == "reject":
+        return f"A person rejected this refund. {item.comment or ''}".strip()
+    return refund(inv.run_id, item.data["order_id"], item.data["amount"])  # as approved, or as edited
+
+
+agentos.serve({"support": support}, port=8080)
+```
+
+```yaml agentos.yaml
+name: upsonic-support
+title: Support agent (Upsonic)
+description: Answers order questions with a lookup tool; refunds go through a person first.
+runtime: stateless
+port: 8080
+capabilities:
+  support:
+    description: Handles a customer's message. A refund the model wants to issue waits for a person's approval.
+    input:
+      type: object
+      properties: {message: {type: string, minLength: 1}}
+      required: [message]
+    output:
+      type: object
+      properties: {answer: {type: string}}
+      required: [answer]
+    timeout: 120s
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5    # a model from your Models page: <provider slug>/<model ID>
+  prompts:
+    system: >-
+      You are a support agent for an online shop. Look orders up with lookup_order before you
+      answer anything about an order. Use issue_refund only for delivered orders that arrived
+      damaged. Answer in at most three sentences.
+```
+
+```dockerfile Dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+# the AgentOS SDK wheel, from the bundle's vendor/ folder
+COPY vendor/ vendor/
+RUN pip install --no-cache-dir vendor/*.whl
+COPY app.py .
+USER nobody
+EXPOSE 8080
+CMD ["python", "-u", "app.py"]
+```
+
+```text requirements.txt
+upsonic[sqlite-storage]==0.77.3
+```
+</CodeGroup>
+
+The SDK wheel goes in the bundle's `vendor/` folder; see [SDKs](/agentos/build/sdks). The `sqlite-storage` extra is what Upsonic needs for `SqliteDatabase`.
+
+## How the model is wired
+
+Upsonic's `OpenAIChatModel` takes any OpenAI client, so the agent hands it one made from `inv.llm.openai_kwargs(asynchronous=True)`: the gateway's base URL, the run token in the `x-agentos-run-token` header, and an HTTP client that never sends the token anywhere else. The model name from `config.models` reaches the gateway exactly as written (`anthropic/claude-sonnet-4-5` here); Upsonic doesn't read a provider out of it.
+
+The agent is built inside the handler, on every invocation, because the token belongs to one invocation. `max_retries=0` stops the OpenAI client from retrying a call a guardrail blocked; if one does, `agentos.guardrail_block(error)` finds the block inside Upsonic's `ModelHTTPError` and the run fails with `blocked_by_guardrail` and the guardrail's message. See [Guardrails](/agentos/platform/guardrails).
+
+## How the approval works
+
+`issue_refund` is an Upsonic [external-execution tool](/concepts/hitl/external-tool-execution): when the model calls it, Upsonic pauses the run instead of running the function.
+
+<Steps>
+  <Step title="The run pauses">
+    `do_async` returns a paused output. The agent keeps what Upsonic needs to continue in the run's state (Upsonic's SQLite database, the run id and the requirements), then asks one AgentOS hold with an item per refund call: its arguments are the item's data, so a reviewer can edit the amount. The invocation answers `suspended`.
+  </Step>
+  <Step title="A person decides">
+    The run is held until someone decides in the **Review queue** or through the [Holds API](/agentos/api/holds). The container may stop meanwhile.
+  </Step>
+  <Step title="The run continues">
+    AgentOS invokes the agent again with the decision. It writes the database back, issues each refund as decided (or explains why it didn't), hands the results to Upsonic with `set_external_execution_result`, and calls `continue_run_async`. The model reads the results and answers.
+  </Step>
+</Steps>
+
+<Note>
+Upsonic's `@tool(requires_confirmation=True)` pauses too, but on a resume in a new process it runs the tool with the arguments it stored, so a reviewer's edit wouldn't reach the refund. An external-execution tool lets the agent run the refund with the decided arguments.
+</Note>
+
+## Run it
+
+<Steps>
+  <Step title="Zip and deploy">
+    Put the SDK wheel in `vendor/` (see [SDKs](/agentos/build/sdks)), set `config.models.main` to a model from your **Models** page, then zip the folder's contents and upload them:
+
+    ```bash
+    cd upsonic-support && zip -r ../upsonic-support.zip . && cd ..
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@upsonic-support.zip \
+      $AGENTOS/v0/envs/default/agents/upsonic-support/versions
+    ```
+  </Step>
+  <Step title="Ask a question">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/upsonic-support/capabilities/support/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" -d '{"input": {"message": "Where is my order A-1002?"}}'
+    # 200 {"run_id": "r_40", "status": "completed", "output": {"answer": "Your office chair is in transit..."}, ...}
+    ```
+  </Step>
+  <Step title="Ask for a refund">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/upsonic-support/capabilities/support/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" \
+      -d '{"input": {"message": "My desk lamp from order A-1001 arrived broken. Can I get my 49.90 back?"}}'
+    # 200 {"run_id": "r_41", "status": "held", "hold": {"hold_id": "h_12", ...}, ...}
+    ```
+
+    The run is **held**: the refund waits in the **Review queue**. A reviewer approves it, edits the amount, or rejects it there, or through the [Holds API](/agentos/api/holds). The item's id is the model's tool call id: read it from the hold (`GET …/holds/h_12`).
+
+    ```bash
+    curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      $AGENTOS/v0/envs/default/holds/h_12/decision \
+      -d '{"items": [{"id": "toolu_01…", "action": "approve"}]}'
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_41
+    # {"status": "completed", "output": {"answer": "Your refund of 49.90 for order A-1001 is on its way..."}, ...}
+    ```
+  </Step>
+</Steps>
+
+## Test it before you deploy
+
+The [conformance kit](/agentos/build/conformance) builds the bundle and runs it against a mock platform whose model follows `call:<tool> {arguments}` in a message, so these cases drive the tools and every decision without a real model:
+
+```yaml conformance.yaml
+# The mock model answers `call:<tool> {arguments}` in a user message with that tool call (its id is call_1).
+cases:
+  - capability: support
+    name: lookup
+    input: {message: "Where is my order? call:lookup_order {\"order_id\": \"A-1002\"}"}
+  - capability: support
+    name: no-tool
+    input: {message: "What is your return policy?"}
+  - capability: support
+    name: refund-approved
+    input: {message: "My lamp arrived broken. call:issue_refund {\"order_id\": \"A-1001\", \"amount\": \"49.90\", \"reason\": \"damaged\"}"}
+    expect: suspended
+  - capability: support
+    name: refund-edited
+    input: {message: "My lamp arrived broken. call:issue_refund {\"order_id\": \"A-1001\", \"amount\": \"49.90\", \"reason\": \"damaged\"}"}
+    expect: suspended
+    decision: [{id: call_1, action: edit, data: {order_id: A-1001, amount: "20.00", reason: partial refund}}]
+  - capability: support
+    name: refund-rejected
+    input: {message: "Refund please. call:issue_refund {\"order_id\": \"A-1002\", \"amount\": \"129.00\", \"reason\": \"changed mind\"}"}
+    expect: suspended
+    decision: [{id: call_1, action: reject, comment: not delivered yet}]
+```
+
+```bash
+agentos-conformance check upsonic-support/
+```
+
+## Things to know
+
+- **The database travels in run state.** A run's state value can be at most 1 MiB. Upsonic's SQLite file for a short conversation was about 320 KB (430 KB as base64). For long conversations, give `Agent` a database outside the container instead, such as Upsonic's Postgres database, and allow its address in `network.allow` (see [Network access](/agentos/build/network-access)).
+- **Keep the default `retry=1`.** A higher `retry` on `Agent` runs the whole task again after an error, model calls and tools included.
+- **Upsonic's own memory and storage** live wherever its database lives. For memory that outlasts a run, use [AgentOS memory](/agentos/build/memory).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Human approvals" icon="user-check" href="/agentos/build/human-approvals">
+    Everything an ask can carry: several items, details, files, an expiry.
+  </Card>
+  <Card title="More frameworks" icon="layer-group" href="/agentos/frameworks/overview">
+    The same agent in other frameworks and languages.
+  </Card>
+</CardGroup>
