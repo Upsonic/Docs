@@ -1,0 +1,267 @@
+---
+title: "CrewAI"
+description: "Run a CrewAI crew on AgentOS, and a CrewAI Flow that stops to ask a person and continues where it stopped."
+---
+
+A CrewAI crew runs on AgentOS mostly unchanged. You add a capability handler around `kickoff()` and point CrewAI's `LLM` at the AgentOS gateway. Every model call then goes through the environment's models and guardrails, and its tokens and cost are recorded on the run. For human approval, use a **Flow**: the run stops at a step boundary, waits for a person in the Review queue, and the resume continues from the step after it.
+
+<Info>
+Tested with CrewAI 1.15.30 and Python 3.12, using the [conformance kit](/agentos/build/conformance): 25 checks passed, including approve, edit and reject of the Flow's hold.
+</Info>
+
+## The bundle
+
+The example has two capabilities: `answer`, a crew of two agents, and `refund`, a Flow that asks a person before a refund above `params.refund_limit`.
+
+<CodeGroup>
+```python app.py
+"""CrewAI on AgentOS: a Crew (`answer`) and a Flow that waits for a person before a large refund (`refund`)."""
+
+from decimal import Decimal
+
+from crewai import LLM, Agent, Crew, Task
+from crewai.flow.flow import Flow, listen, router, start
+from pydantic import BaseModel
+
+import agentos
+
+
+def gateway_llm(inv: agentos.Invocation, role: str = "main") -> LLM:
+    """CrewAI's LLM pointed at the AgentOS gateway, with this invocation's run token.
+
+    provider="openai" makes CrewAI use its OpenAI-compatible client and send the model name exactly as
+    agentos.yaml's config.models gives it (`openai/gpt-4o-mini`, `anthropic/claude-sonnet-4-5`, …).
+    Build it inside the handler: the run token belongs to this invocation only."""
+    return LLM(model=inv.llm.model(role), provider="openai", base_url=inv.llm.base_url,
+               api_key=inv.llm.api_key, default_headers=inv.llm.headers, temperature=0)
+
+
+# --- a Crew: runs start to finish, no pause -------------------------------------------------------------------
+
+def answer(inv: agentos.Invocation):
+    llm = gateway_llm(inv)
+    researcher = Agent(role="Support researcher", goal="Find what the customer needs to know",
+                       backstory="You know the product and its policies well.", llm=llm, verbose=False)
+    writer = Agent(role="Support writer", goal="Write a short, friendly answer",
+                   backstory="You turn research notes into replies customers understand.", llm=llm, verbose=False)
+    research = Task(description="Research this customer question: {question}",
+                    expected_output="Bullet-point notes", agent=researcher)
+    write = Task(description="Write the reply to the customer from the notes.",
+                 expected_output="A reply of at most 120 words", agent=writer, context=[research])
+    result = Crew(agents=[researcher, writer], tasks=[research, write], verbose=False).kickoff(
+        inputs={"question": inv.input["question"]})
+    return {"answer": result.raw}
+
+
+# --- a Flow: stops at a step boundary to ask a person, continues on the resume ----------------------------------
+
+class RefundState(BaseModel):
+    order_id: str = ""
+    amount: str = ""
+    customer_message: str = ""
+    limit: str = "0"
+    summary: str = ""            # written by the model in the first invocation, kept in run state
+    decision: str = ""           # "", "approve", "edit" or "reject": filled in from the resume
+    status: str = ""
+    reply: str = ""
+
+
+class RefundFlow(Flow[RefundState]):
+    def __init__(self, inv: agentos.Invocation, **kwargs):
+        super().__init__(**kwargs)
+        self.inv = inv
+
+    @start()
+    def summarise(self):
+        if self.state.summary:   # the resume: the model already did this step in the first invocation
+            return
+        agent = Agent(role="Refund assistant", goal="Summarise refund requests for the finance team",
+                      backstory="You are precise and brief.", llm=gateway_llm(self.inv), verbose=False)
+        self.state.summary = agent.kickoff(
+            f"Summarise in one sentence why the customer wants a refund: {self.state.customer_message}").raw
+
+    @router(summarise)
+    def route(self):
+        if self.state.decision == "reject":
+            return "rejected"
+        if self.state.decision or Decimal(self.state.amount) <= Decimal(self.state.limit):
+            return "approved"
+        return "needs_review"
+
+    @listen("needs_review")
+    def wait_for_review(self):
+        self.state.status = "needs_review"   # the handler asks a person after the flow returns
+
+    @listen("approved")
+    def issue_refund(self):
+        # Your side effect goes here; key it by run_id so a retried invocation can't refund twice.
+        self.state.status = "refunded"
+        self.state.reply = f"We refunded {self.state.amount} for order {self.state.order_id}."
+
+    @listen("rejected")
+    def decline(self):
+        self.state.status = "declined"
+        self.state.reply = "We couldn't approve this refund. A colleague will contact you."
+
+
+def refund(inv: agentos.Invocation):
+    if inv.resume is None:
+        state = RefundState(**inv.input, limit=str(inv.config["params"]["refund_limit"]))
+    else:
+        state = RefundState(**inv.state.run.get("refund_flow"))
+        decided = inv.resume.decided_items[0] if inv.resume.decided_items else None
+        if decided is None or decided.action == "reject":
+            state.decision = "reject"
+        else:
+            state.decision = decided.action
+            state.amount = decided.data["amount"]   # a reviewer's edit wins
+
+    flow = RefundFlow(inv)
+    flow.kickoff(inputs=state.model_dump())
+
+    if flow.state.status == "needs_review":
+        inv.state.run.put("refund_flow", flow.state.model_dump())   # what the resume continues from
+        inv.ask(f"Refund {flow.state.amount} for order {flow.state.order_id}?",
+                [{"id": flow.state.order_id, "title": f"Order {flow.state.order_id} · {flow.state.amount}",
+                  "data": {"amount": flow.state.amount, "summary": flow.state.summary}}],
+                actions=["approve", "edit", "reject"],
+                details="Approve, **edit** the amount, or reject.")
+    return {"status": flow.state.status, "amount": flow.state.amount, "reply": flow.state.reply}
+
+
+if __name__ == "__main__":
+    agentos.serve({"answer": answer, "refund": refund}, port=8080)
+```
+
+```yaml agentos.yaml
+name: crewai-support
+title: CrewAI support agent
+description: A CrewAI crew that answers support questions, and a CrewAI Flow that asks a person before a large refund.
+runtime: stateless
+port: 8080
+capabilities:
+  answer:
+    description: A crew of two agents researches a support question and writes the answer.
+    input:
+      type: object
+      properties: {question: {type: string}}
+      required: [question]
+    output:
+      type: object
+      properties: {answer: {type: string}}
+      required: [answer]
+    timeout: 5m
+  refund:
+    description: Drafts a refund; refunds above the limit wait for a person's approval.
+    input:
+      type: object
+      properties:
+        order_id: {type: string}
+        amount: {type: string}
+        customer_message: {type: string}
+      required: [order_id, amount, customer_message]
+    output:
+      type: object
+      properties:
+        status: {type: string}
+        amount: {type: string}
+        reply: {type: string}
+      required: [status, reply]
+    timeout: 5m
+config:
+  models: {main: openai/gpt-4o-mini}
+  params: {refund_limit: "100.00"}
+```
+
+```dockerfile Dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+# CrewAI writes its storage under HOME and phones home unless told not to
+ENV HOME=/tmp CREWAI_STORAGE_DIR=/tmp/crewai CREWAI_DISABLE_TELEMETRY=true CREWAI_TRACING_ENABLED=false \
+    OTEL_SDK_DISABLED=true PYTHONUNBUFFERED=1
+COPY requirements.txt .
+COPY vendor/ vendor/
+RUN pip install --no-cache-dir -r requirements.txt vendor/*.whl
+COPY app.py .
+USER nobody
+EXPOSE 8080
+CMD ["python", "app.py"]
+```
+
+```text requirements.txt
+crewai==1.15.30
+```
+</CodeGroup>
+
+The SDK wheel goes into `vendor/`, as described in [SDKs](/agentos/build/sdks#putting-the-sdk-in-your-bundle). Zip the folder's contents and deploy it (see [Deploying](/agentos/platform/deploying)).
+
+## Wire CrewAI's model to the gateway
+
+```python
+LLM(model=inv.llm.model(), provider="openai", base_url=inv.llm.base_url,
+    api_key=inv.llm.api_key, default_headers=inv.llm.headers)
+```
+
+- **`provider="openai"`** makes CrewAI use its OpenAI-compatible client for any model name. The name goes to the gateway exactly as `config.models` gives it (`openai/gpt-4o-mini`, `anthropic/claude-sonnet-4-5`, `bedrock-prod/…`).
+- **`default_headers=inv.llm.headers`** adds the run token, `x-agentos-run-token`, to every call. The gateway ignores the API key.
+- **Build the `LLM`, agents and crews inside the handler.** The run token belongs to one invocation and stops working when it answers.
+
+<Warning>
+Don't use `custom_openai=True` instead. It strips a leading `openai/` from the model name, so a model whose provider slug is `openai` reaches the gateway as `gpt-4o-mini`, a name the gateway refuses.
+</Warning>
+
+## Asking a person from a Flow
+
+A crew's `kickoff()` can't pause: a CrewAI agent's tool hooks can only allow or block a call, so stopping in the middle means running the whole crew again from the start on the resume. Put the decision at a **Flow step boundary** instead:
+
+<Steps>
+  <Step title="The first invocation runs the Flow up to the decision">
+    `summarise` asks the model for a summary and `route` sends a refund above the limit to `wait_for_review`, which only marks the state. The handler then saves the Flow's state in [run state](/agentos/build/state-and-sessions) and calls `inv.ask()`. The run is **held** and the container may stop.
+  </Step>
+  <Step title="A person decides">
+    The hold shows the order, the amount and the model's summary in the [Review queue](/agentos/platform/review-queue), with **approve**, **edit** (for example a lower amount) and **reject**.
+  </Step>
+  <Step title="The resume continues after the decision">
+    The handler loads the saved state, writes the decision into it and runs the Flow again. `summarise` sees its summary is already there and skips the model, and `route` now goes to `issue_refund` or `decline`. Only the steps after the decision run.
+  </Step>
+</Steps>
+
+Keep side effects such as the refund after the decision, and key them by `run_id`. Code before `inv.ask()` runs again on the resume, so it must be safe to repeat. See [Human approvals](/agentos/build/human-approvals).
+
+## Run it
+
+```bash
+# a refund over the limit: the run is held for a person
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/crewai-support/capabilities/refund/runs?wait=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"order_id": "A-1002", "amount": "250.00", "customer_message": "The jacket never arrived."}}'
+# 200 {"run_id": "r_41", "status": "held", "hold": {"hold_id": "h_12", ...}, ...}
+
+# decide it (or use the Review queue): a smaller refund
+curl -sS -X POST "$AGENTOS/v0/envs/default/holds/h_12/decision" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"items": [{"id": "A-1002", "action": "edit", "data": {"amount": "120.00", "summary": "Partial refund agreed."}}]}'
+
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_41
+# {"status": "completed", "output": {"status": "refunded", "amount": "120.00", "reply": "We refunded 120.00 for order A-1002."}, ...}
+```
+
+An edit carries the item's full `data`, so send every key the hold asked with. See the [Holds API](/agentos/api/holds).
+
+## Things to know
+
+- **Guardrail blocks are retried.** When a [guardrail](/agentos/platform/guardrails) blocks a model call, the gateway answers 400, and CrewAI runs the whole agent step again, up to `max_retry_limit` more times (2 by default), tools included. Set `max_retry_limit=0` on agents whose tools have side effects.
+- **Turn off telemetry.** The `Dockerfile` sets `CREWAI_DISABLE_TELEMETRY`, `CREWAI_TRACING_ENABLED=false` and `OTEL_SDK_DISABLED`. Agents reach nothing outside the platform unless [network access](/agentos/build/network-access) allows it, so telemetry calls would only fail.
+- **Give CrewAI somewhere to write.** The container runs as `nobody`. `HOME=/tmp` and `CREWAI_STORAGE_DIR` give CrewAI a writable directory.
+- **Allow time to start.** CrewAI is heavy: expect a slower start and more memory than a plain agent. Each container gets 1 CPU and 1 GB.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Human approvals" icon="user-check" href="/agentos/build/human-approvals">
+    Holds, actions, edits and the resume in detail.
+  </Card>
+  <Card title="Framework examples" icon="cubes" href="/agentos/frameworks/overview">
+    The same patterns in other frameworks.
+  </Card>
+</CardGroup>

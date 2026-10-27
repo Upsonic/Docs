@@ -1,0 +1,57 @@
+---
+title: "Files API"
+sidebarTitle: "Files"
+description: "Upload documents for runs to use and download the files agents produce."
+---
+
+Runs never carry file bytes. Upload a file first, then pass its `file_id` in a run's input; the agent downloads it with its run token. Agents upload files the same way — a report they produced, an image to show a reviewer in an ask — and hand you back the id. Files belong to the **environment**: every agent of the environment can read any of its files by id. For the agent side, see [Files and events](/agentos/build/files-and-events).
+
+## Upload a file
+
+`POST /v0/envs/{env}/files`
+
+`multipart/form-data` with the file in the field `file`, at most 100 MiB. Needs the **member** or **admin** role.
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F file=@contract.pdf $AGENTOS/v0/envs/default/files
+```
+
+```json
+201 {"file_id": "f_9", "name": "contract.pdf", "content_type": "application/pdf", "size": 48213,
+     "sha256": "9f2c…", "created_at": "2026-10-27T09:00:00Z"}
+```
+
+| Status | Code | When |
+|---|---|---|
+| `403` | `forbidden` | No member or admin role in the environment |
+| `413` | `too_large` | The file is over 100 MiB |
+| `422` | `invalid_request` | No `file` field in a `multipart/form-data` body |
+| `503` | `unavailable` | The file couldn't be stored; try again |
+
+## Pass it to a run
+
+A file id is a plain string to the input schema. Name the field however your capability wants it:
+
+```bash
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/documents/capabilities/check/runs" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"file_id": "f_9"}}'
+```
+
+The agent downloads it with `GET {api_url}/v0/files/f_9` and its run token, or `inv.files.download("f_9")` with an [SDK](/agentos/build/sdks).
+
+## Download a file
+
+`GET /v0/envs/{env}/files/{file_id}`
+
+Any role in the environment. The bytes come as an attachment, with the file's content type, `Content-Disposition: attachment` and `X-Content-Type-Options: nosniff`.
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -o contract.pdf $AGENTOS/v0/envs/default/files/f_9
+```
+
+An agent's output, or an ask's `files`, name files by id the same way; download them with this route.
+
+<Note>
+Files are kept: there is no deletion or retention policy yet.
+</Note>

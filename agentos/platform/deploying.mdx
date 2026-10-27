@@ -1,0 +1,102 @@
+---
+title: "Deploying agents"
+sidebarTitle: "Deploying"
+description: "Upload a bundle, follow the build, promote candidates and roll back from the agent's Deploy tab."
+---
+
+A deploy turns a **bundle** (a zip with a `Dockerfile` and an `agentos.yaml` at its top level) into a new **version** of an agent. Deploying is an **admin** action in the environment. Everything on this page can also be done with the [Deploy API](/agentos/api/deploys).
+
+## Deploy a new agent
+
+Open **Agents → Deploy agent** and drop your zip on the page. The first upload of a name creates the agent: the bundle is checked, built and health-checked, and becomes **v1**. Click **Build v1** to start.
+
+`agentos.yaml` is read on upload, before anything is built: the name, capabilities, schemas and the models in `config.models` must all resolve. If anything is wrong the page shows **The bundle was not accepted** with one line per problem (`port: must be a whole number between 1 and 65535`, `capabilities.triage.timeout: …`), and nothing is built.
+
+## Update an agent
+
+Open the agent's **Deploy** tab (or **Update agent** in the bar at the top of the agent page) and drop the new zip. You get two buttons:
+
+| Button | What happens |
+|---|---|
+| **Deploy live** | The version is built and health-checked, then becomes the live version. The current version keeps serving until then. |
+| **Deploy as candidate** | The version is built and health-checked the same way, but the live version **stays live**. A candidate only runs in [experiments](/agentos/platform/evals) until you promote it. Its container stops when idle and starts again when an experiment needs it. |
+
+Only one deploy of an agent runs at a time; the upload button says why it is disabled while another one is running.
+
+### Promotion checks and the deploy log
+
+While a version builds, the **Promotion checks** card ticks through its steps:
+
+1. **Spec valid**: the bundle and `agentos.yaml` were accepted.
+2. **Image built**: AgentOS built the image from your `Dockerfile`. The build has internet access but no secrets.
+3. **Pushed to the registry**: the image is stored, so the version can be started again later.
+4. **Container healthy**: the container answered `GET /health` with a 2xx.
+
+The **Deploy log** below streams the build output live. If the container exits before it is healthy, the deploy fails at once with its exit code and last output, so the log usually tells you what went wrong.
+
+<Note>
+The health check polls `GET /health` for up to 60 seconds after the container starts. The build itself may take up to 15 minutes. See [agentos.yaml](/agentos/build/agentos-yaml) for the bundle limits and the limits of each agent container.
+</Note>
+
+### When the config differs from the live version
+
+A version's config (`models.<role>`, `prompts.<name>`, `params.<key>` in `agentos.yaml`) can be changed in the panel without a new upload, for example from the [Prompts tab](/agentos/platform/prompts) or an [experiment](/agentos/platform/evals). So when you upload a bundle whose config differs from the live version's, AgentOS doesn't silently overwrite one with the other. Instead the upload card shows a table:
+
+| Key | Live (v3) | This upload | v4 uses |
+|---|---|---|---|
+| `models.reader` | `bedrock-prod/qwen-vl-72b` | `bedrock-prod/qwen-vl-35b` | ● live ○ uploaded |
+
+Choose per key which value the new version uses (**live** is pre-selected), then click **Deploy live** or **Deploy as candidate**. Your choice is written into the new version's config; the stored `agentos.yaml` text stays exactly as uploaded. A key that only one side has isn't a difference: your code decides which keys exist. The upload waits for your choice for up to an hour.
+
+### Missing secrets
+
+If the version declares names under `secrets:` in `agentos.yaml` that have no value yet, the deploy still succeeds, but it is marked: a warning in the deploy log and a **MISSING SECRETS** badge on the Deploy and Secrets tabs. Set the values on the agent's **Secrets** tab; they apply from the next invocation, with no new deploy. See [Secrets](/agentos/build/secrets).
+
+## Versions
+
+The **Version history** lists every version, newest first, with its image digest, status, how many capabilities it has, its port and who deployed it. **log** opens the deploy that produced it.
+
+| Status | Meaning |
+|---|---|
+| **live** | The version that serves new runs. Exactly one version is live. |
+| **candidate** | Built and healthy, used only by experiments until promoted. |
+| **previous** | The version that was live before the current one. |
+| **archived** | An older version. It keeps its image. |
+| **building** | Its deploy is still running. |
+| **failed** | Its deploy failed. It can't be promoted. |
+
+Runs always finish on the version they started on. An older version's container that was stopped is started again if one of its runs still needs it (for example a run that was waiting for an approval).
+
+## Roll back and promote
+
+Older versions keep their image, so going back is fast and needs no rebuild:
+
+- **Roll back**: pick an older version in the history (or in the version picker of the bar at the top of the agent page) and click **Roll back to vN**.
+- **Promote**: a candidate has a **Promote** link in the history.
+
+Either way the version's container is started and health-checked first, and only then becomes live. If the check fails, the live version stays live.
+
+<Tip>
+Candidates are the safe way to change a model or a prompt: deploy as a candidate, compare it with the live version in an [experiment](/agentos/platform/evals), then promote it if it scores better.
+</Tip>
+
+## Keeping the live version running
+
+You don't need to babysit containers. If the live version's container is missing or stopped, AgentOS starts it again within about 30 seconds.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="agentos.yaml" icon="file-code" href="/agentos/build/agentos-yaml">
+    Every key of the file, and the bundle limits.
+  </Card>
+  <Card title="Deploy API" icon="terminal" href="/agentos/api/deploys">
+    Upload, follow and promote from CI.
+  </Card>
+  <Card title="Evals" icon="chart-line" href="/agentos/platform/evals">
+    Score a candidate against the live version before promoting it.
+  </Card>
+  <Card title="Secrets" icon="key" href="/agentos/build/secrets">
+    Give a version its API keys and passwords.
+  </Card>
+</CardGroup>

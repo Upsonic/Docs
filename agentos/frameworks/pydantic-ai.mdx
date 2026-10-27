@@ -1,0 +1,265 @@
+---
+title: "Pydantic AI"
+description: "Run a Pydantic AI agent on AgentOS: models through the gateway, and a tool that needs approval paused for a person."
+---
+
+This example is a support agent built with [Pydantic AI](https://ai.pydantic.dev). It looks orders up with a tool, and its refund tool is declared with `requires_approval=True`: Pydantic AI defers that call, AgentOS asks a person, and the run continues with the approval, the edited arguments or the rejection.
+
+<Info>
+Tested with `pydantic-ai-slim` 2.62.0 and Python 3.13, using the [conformance kit](/agentos/build/conformance): 22 checks passed, including an approved, an edited and a rejected refund.
+</Info>
+
+## The bundle
+
+<CodeGroup>
+```python app.py
+"""A Pydantic AI support agent on AgentOS. Its refund tool needs approval: Pydantic AI defers the call, AgentOS asks
+a person, and the run continues with the decision, in whichever container answers the resume."""
+import hashlib
+import json
+
+import agentos
+from openai import AsyncOpenAI
+from pydantic_ai import (Agent, DeferredToolRequests, DeferredToolResults, ModelMessagesTypeAdapter, ToolApproved,
+                         ToolDenied)
+from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.providers.openai import OpenAIProvider
+
+ORDERS = {  # stands in for your order system
+    "A-1001": {"status": "delivered", "total": "49.90", "items": ["Desk lamp"], "delivered": "2026-10-02"},
+    "A-1002": {"status": "in transit", "total": "129.00", "items": ["Office chair"], "delivered": None},
+}
+
+
+def build_agent(inv: agentos.Invocation, refunds: list[str]) -> Agent:
+    """Built per invocation: the model client carries this run's token. Refunds it issues go into `refunds`."""
+    model = OpenAIChatModel(
+        inv.llm.model("main"),  # config.models.main, sent to the gateway as it is
+        provider=OpenAIProvider(openai_client=AsyncOpenAI(**inv.llm.openai_kwargs(asynchronous=True), max_retries=0)),
+    )
+    agent = Agent(model, instructions=inv.config["prompts"]["system"],
+                  output_type=[str, DeferredToolRequests])  # a call that needs approval ends the run for now
+
+    @agent.tool_plain
+    def lookup_order(order_id: str) -> str:
+        """Look an order up by its id (like A-1001): its status, items, total and delivery date."""
+        order = ORDERS.get(order_id.strip().upper())
+        return json.dumps(order) if order else f"There is no order {order_id}."
+
+    @agent.tool_plain(requires_approval=True)
+    def issue_refund(order_id: str, amount: str, reason: str) -> str:
+        """Refund `amount` (a decimal string like 49.90) on an order. A person approves every refund."""
+        # Stands in for your payment provider; key the real call by run id so a retried run never pays twice.
+        refund_id = "rf_" + hashlib.sha256(f"{inv.run_id}:{order_id}:{amount}".encode()).hexdigest()[:12]
+        refunds.append(refund_id)
+        return f"Refunded {amount} on {order_id}: {refund_id}"
+
+    return agent
+
+
+async def support(inv: agentos.Invocation):
+    issued: list[str] = []
+    agent = build_agent(inv, issued)
+    try:
+        if inv.resume is None:  # the start
+            result = await agent.run(inv.input["message"])
+        else:  # a person decided: continue the same conversation with their decisions
+            history = ModelMessagesTypeAdapter.validate_python(await inv.state.run.aget("history"))
+            pending = await inv.state.run.aget("pending")
+            result = await agent.run(message_history=history, deferred_tool_results=decisions(inv.resume, pending))
+    except Exception as error:
+        if block := agentos.guardrail_block(error):
+            raise block  # the run fails with blocked_by_guardrail and the guardrail's message
+        raise
+
+    if isinstance(result.output, DeferredToolRequests):  # the model wants to refund: ask a person
+        await inv.state.run.aput("history", json.loads(ModelMessagesTypeAdapter.dump_json(result.all_messages())))
+        items = []
+        for call in result.output.approvals:  # one item per tool call waiting for approval
+            args = call.args_as_dict()
+            items.append({"id": call.tool_call_id, "title": f"Refund {args.get('amount')} on {args.get('order_id')}",
+                          "data": args})
+        await inv.state.run.aput("pending", [item["id"] for item in items])
+        await inv.aask("Approve these refunds?", items, actions=["approve", "edit", "reject"])
+    refunds = (await inv.state.run.aget("refunds", [])) + issued
+    await inv.state.run.aput("refunds", refunds)
+    return {"answer": result.output, "refunds": refunds}
+
+
+def decisions(resume: agentos.Resume, pending: list[str]) -> DeferredToolResults:
+    """The reviewer's decisions as Pydantic AI approvals: approve, edit (run with the edited arguments) or reject."""
+    if resume.expired:  # nobody decided in time: deny every waiting call
+        return DeferredToolResults(approvals={i: ToolDenied("Nobody approved this refund in time.") for i in pending})
+    approvals = {}
+    for item in resume.decided_items:
+        if item.action == "approve":
+            approvals[item.id] = True
+        elif item.action == "edit":
+            approvals[item.id] = ToolApproved(override_args=item.data)
+        else:
+            approvals[item.id] = ToolDenied(item.comment or "A person rejected this refund.")
+    return DeferredToolResults(approvals=approvals)
+
+
+agentos.serve({"support": support}, port=8080)
+```
+
+```yaml agentos.yaml
+name: pydantic-ai-support
+title: Support agent (Pydantic AI)
+description: Answers order questions with a lookup tool; refunds go through a person first.
+runtime: stateless
+port: 8080
+capabilities:
+  support:
+    description: Handles a customer's message. A refund the model wants to issue waits for a person's approval.
+    input:
+      type: object
+      properties: {message: {type: string, minLength: 1}}
+      required: [message]
+    output:
+      type: object
+      properties:
+        answer: {type: string}
+        refunds: {type: array, items: {type: string}}
+      required: [answer, refunds]
+    timeout: 120s
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5    # a model from your Models page: <provider slug>/<model ID>
+  prompts:
+    system: >-
+      You are a support agent for an online shop. Look orders up with lookup_order before you
+      answer anything about an order. Use issue_refund only for delivered orders that arrived
+      damaged. Answer in at most three sentences.
+```
+
+```dockerfile Dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+# the AgentOS SDK wheel, from the bundle's vendor/ folder
+COPY vendor/ vendor/
+RUN pip install --no-cache-dir vendor/*.whl
+COPY app.py .
+ENV PYDANTIC_AI_NO_BANNER=1
+USER nobody
+EXPOSE 8080
+CMD ["python", "-u", "app.py"]
+```
+
+```text requirements.txt
+pydantic-ai-slim[openai]==2.62.0
+```
+</CodeGroup>
+
+The SDK wheel goes in the bundle's `vendor/` folder; see [SDKs](/agentos/build/sdks). `PYDANTIC_AI_NO_BANNER=1` keeps Pydantic AI's start-up banner out of the container's log.
+
+## How the model is wired
+
+`OpenAIProvider` takes an OpenAI client, so the agent hands it one made from `inv.llm.openai_kwargs(asynchronous=True)`: the gateway's base URL, the run token in the `x-agentos-run-token` header, and an HTTP client that never sends the token anywhere else. The model name from `config.models` reaches the gateway exactly as written (`anthropic/claude-sonnet-4-5`); Pydantic AI shows it as `openai:anthropic/claude-sonnet-4-5` in its own logs, but sends the name unchanged.
+
+The agent is built inside the handler, on every invocation, because the token belongs to one invocation. The handler is `async`, which the SDK supports, so it uses the async state and ask calls (`aget`, `aput`, `aask`). With `max_retries=0` a guardrail block isn't retried; `agentos.guardrail_block(error)` finds it inside Pydantic AI's `ModelRequestRejectedError`, and the run fails with `blocked_by_guardrail`. See [Guardrails](/agentos/platform/guardrails).
+
+## How the approval works
+
+<Steps>
+  <Step title="Pydantic AI defers the call">
+    The agent's `output_type` includes `DeferredToolRequests`, so a call to `issue_refund` ends the run with those requests instead of running the tool. The handler keeps the conversation in the run's state (`ModelMessagesTypeAdapter`, as JSON) and asks one AgentOS hold with an item per call: the item's id is the tool call id and its data the call's arguments.
+  </Step>
+  <Step title="A person decides">
+    The run is held until someone decides in the **Review queue** or through the [Holds API](/agentos/api/holds).
+  </Step>
+  <Step title="The run continues">
+    The handler loads the conversation and runs the agent again with `deferred_tool_results`: `True` for an approval, `ToolApproved(override_args=…)` for an edit, `ToolDenied(comment)` for a rejection. Pydantic AI runs the approved calls and the model answers. If the model asks for another refund, the same steps repeat.
+  </Step>
+</Steps>
+
+## Run it
+
+<Steps>
+  <Step title="Zip and deploy">
+    Put the SDK wheel in `vendor/` (see [SDKs](/agentos/build/sdks)), set `config.models.main` to a model from your **Models** page, then zip the folder's contents and upload them:
+
+    ```bash
+    cd pydantic-ai-support && zip -r ../pydantic-ai-support.zip . && cd ..
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@pydantic-ai-support.zip \
+      $AGENTOS/v0/envs/default/agents/pydantic-ai-support/versions
+    ```
+  </Step>
+  <Step title="Ask a question">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/pydantic-ai-support/capabilities/support/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" -d '{"input": {"message": "Where is my order A-1002?"}}'
+    # 200 {"run_id": "r_40", "status": "completed", "output": {"answer": "Your office chair is in transit..."}, ...}
+    ```
+  </Step>
+  <Step title="Ask for a refund">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/pydantic-ai-support/capabilities/support/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" \
+      -d '{"input": {"message": "My desk lamp from order A-1001 arrived broken. Can I get my 49.90 back?"}}'
+    # 200 {"run_id": "r_41", "status": "held", "hold": {"hold_id": "h_12", ...}, ...}
+    ```
+
+    The run is **held**: the refund waits in the **Review queue**. A reviewer approves it, edits the amount, or rejects it there, or through the [Holds API](/agentos/api/holds). The item's id is the model's tool call id: read it from the hold (`GET …/holds/h_12`).
+
+    ```bash
+    curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      $AGENTOS/v0/envs/default/holds/h_12/decision \
+      -d '{"items": [{"id": "toolu_01…", "action": "approve"}]}'
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_41
+    # {"status": "completed", "output": {"answer": "Your refund of 49.90 for order A-1001 is on its way..."}, ...}
+    ```
+  </Step>
+</Steps>
+
+## Test it before you deploy
+
+The [conformance kit](/agentos/build/conformance) builds the bundle and runs it against a mock platform whose model follows `call:<tool> {arguments}` in a message, so these cases drive the tools and every decision without a real model:
+
+```yaml conformance.yaml
+# The mock model answers `call:<tool> {arguments}` in a user message with that tool call (its id is call_1).
+cases:
+  - capability: support
+    name: lookup
+    input: {message: "Where is my order? call:lookup_order {\"order_id\": \"A-1002\"}"}
+  - capability: support
+    name: refund-approved
+    input: {message: "My lamp arrived broken. call:issue_refund {\"order_id\": \"A-1001\", \"amount\": \"49.90\", \"reason\": \"damaged\"}"}
+    expect: suspended
+  - capability: support
+    name: refund-edited
+    input: {message: "My lamp arrived broken. call:issue_refund {\"order_id\": \"A-1001\", \"amount\": \"49.90\", \"reason\": \"damaged\"}"}
+    expect: suspended
+    decision: [{id: call_1, action: edit, data: {order_id: A-1001, amount: "20.00", reason: partial refund}}]
+  - capability: support
+    name: refund-rejected
+    input: {message: "Refund please. call:issue_refund {\"order_id\": \"A-1002\", \"amount\": \"129.00\", \"reason\": \"changed mind\"}"}
+    expect: suspended
+    decision: [{id: call_1, action: reject, comment: not delivered yet}]
+```
+
+```bash
+agentos-conformance check pydantic-ai-support/
+```
+
+## Things to know
+
+- **The conversation travels in run state.** A run's state value can be at most 1 MiB, so a very long conversation needs trimming before it is kept.
+- **Code before the ask runs once.** A start is invoked once; the resume continues from the kept conversation, so the model isn't asked the first question again.
+- **An expired ask** has no decided items, so the example keeps the waiting call ids in run state and denies every one of them; the model then explains that nothing was refunded. Change `decisions()` if expiry should mean something else for you.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Human approvals" icon="user-check" href="/agentos/build/human-approvals">
+    Everything an ask can carry: several items, details, files, an expiry.
+  </Card>
+  <Card title="More frameworks" icon="layer-group" href="/agentos/frameworks/overview">
+    The same agent in other frameworks and languages.
+  </Card>
+</CardGroup>

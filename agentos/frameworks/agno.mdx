@@ -1,0 +1,203 @@
+---
+title: "Agno"
+description: "Run an Agno agent on AgentOS: models through the gateway, and a tool with requires_confirmation=True paused for a person."
+---
+
+This example is a support agent built with [Agno](https://docs.agno.com). It looks orders up with one tool, and its `refund` tool is declared with `requires_confirmation=True`. When the model calls it, Agno pauses the run, AgentOS asks a person, and the run continues with the approval, the edited arguments or the rejection, in whichever container answers the resume.
+
+The SDK's `agno` adapter does the work: it keeps the paused `RunOutput` in run state, asks one hold for every call waiting for confirmation, and calls `continue_run` with the decisions on the resume. See [Agent frameworks](/agentos/build/frameworks).
+
+<Info>
+Tested with `agno` 3.1.3 and Python 3.13, using the [conformance kit](/agentos/build/conformance): 22 checks passed, including an approved, an edited and a rejected refund.
+</Info>
+
+## The bundle
+
+<CodeGroup>
+```python app.py
+from agno.agent import Agent
+from agno.run.base import RunStatus
+from agno.tools import tool
+
+import agentos
+from agentos.adapters import agno
+
+ORDERS = {"A-1001": {"status": "delivered", "total": "49.90", "currency": "EUR"}}
+
+
+@tool
+def lookup_order(order_id: str) -> dict:
+    """Look an order up by its id, e.g. A-1001."""
+    return ORDERS.get(order_id, {"error": f"no order {order_id}"})
+
+
+@tool(requires_confirmation=True)
+def refund(order_id: str, amount: str) -> str:
+    """Refund an order. The amount is text, e.g. "49.90". A person approves every refund first."""
+    return f"refunded {amount} for order {order_id}"
+
+
+def support(inv: agentos.Invocation):
+    agent = Agent(
+        model=agno.model(inv),  # config.models.main, through the gateway with the run token
+        instructions=inv.config["prompts"]["system"],
+        tools=[lookup_order, refund],
+        telemetry=False,  # Agno's telemetry would call out of the container
+    )
+    output = agno.run(inv, agent, inv.input["message"], intent="Approve a refund")
+    if output.status == RunStatus.error:  # Agno doesn't raise: a refused model call ends the run with ERROR
+        raise agentos.Fail("model_call_failed", str(output.content or "the model call failed"))
+    return {"answer": str(output.content)}
+
+
+if __name__ == "__main__":
+    agentos.serve({"support": support}, port=8080)
+```
+
+```yaml agentos.yaml
+name: support-agno
+title: Support agent (Agno)
+description: Answers order questions with a lookup tool; refunds go through a person first.
+runtime: stateless
+port: 8080
+capabilities:
+  support:
+    description: Handles a customer's message. A refund the model wants to issue waits for a person's approval.
+    input:
+      type: object
+      properties: {message: {type: string, minLength: 1}}
+      required: [message]
+    output:
+      type: object
+      properties: {answer: {type: string}}
+      required: [answer]
+    timeout: 120s
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5    # a model from your Models page: <provider slug>/<model ID>
+  prompts:
+    system: >-
+      You are a support agent for an online shop. Look orders up with lookup_order before you
+      answer anything about an order. Refund only with the refund tool. Never refund more than the order's total.
+```
+
+```dockerfile Dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY vendor/ vendor/
+COPY requirements.txt .
+RUN pip install --no-cache-dir "$(ls vendor/*.whl)[agno]" -r requirements.txt
+COPY app.py .
+USER nobody
+EXPOSE 8080
+CMD ["python", "-u", "app.py"]
+```
+
+```text requirements.txt
+agno==3.1.3
+openai==3.29.0
+```
+</CodeGroup>
+
+The SDK wheel goes in the bundle's `vendor/` folder and is installed with its `agno` extra; see [SDKs](/agentos/build/sdks).
+
+## How the model is wired
+
+`agno.model(inv)` is an `OpenAILike` model for `config.models.main`: the gateway's base URL, the run token in the `x-agentos-run-token` header, and OpenAI clients that never send the token anywhere else. The model name reaches the gateway exactly as written in `agentos.yaml` (`anthropic/claude-sonnet-4-5`). Pass a role for another model: `agno.model(inv, "judge")`.
+
+The agent is built inside the handler, on every invocation, because the token belongs to one invocation. `telemetry=False` keeps Agno from calling its telemetry service, which an agent can't reach anyway unless you allow it (see [Network access](/agentos/build/network-access)).
+
+**Agno doesn't raise when a model call fails.** A guardrail block ends the Agno run with status `ERROR` and the gateway's message as its content, so the handler checks `output.status` and fails the AgentOS run with that message instead of returning it as an answer. See [Guardrails](/agentos/platform/guardrails).
+
+## How the approval works
+
+<Steps>
+  <Step title="Agno pauses the run">
+    The model calls `refund`. Because the tool has `requires_confirmation=True`, Agno pauses instead of running it. `agno.run` keeps the paused `RunOutput` and asks one hold: one item per waiting call, its id the tool call id, its data the call's arguments, with **approve**, **edit** and **reject**.
+  </Step>
+  <Step title="A person decides">
+    The run is held until someone decides in the **Review queue** or through the [Holds API](/agentos/api/holds). An **edit** changes the call's arguments, for example a smaller amount.
+  </Step>
+  <Step title="The run continues">
+    On the resume the adapter restores the `RunOutput`, confirms or rejects each call (with the edited arguments for an edit), and Agno's `continue_run` goes on. A rejected call gets the reviewer's comment (or "A person rejected this tool call.") as its note, and the model answers the customer.
+  </Step>
+</Steps>
+
+## Run it
+
+<Steps>
+  <Step title="Zip and deploy">
+    Put the SDK wheel in `vendor/` (see [SDKs](/agentos/build/sdks)), set `config.models.main` to a model from your **Models** page, then zip the folder's contents and upload them:
+
+    ```bash
+    cd support-agno && zip -r ../support-agno.zip . && cd ..
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@support-agno.zip \
+      $AGENTOS/v0/envs/default/agents/support-agno/versions
+    ```
+  </Step>
+  <Step title="Ask for a refund">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/support-agno/capabilities/support/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" \
+      -d '{"input": {"message": "Order A-1001 arrived broken. Can I get my 49.90 back?"}}'
+    # 200 {"run_id": "r_41", "status": "held", "hold": {"hold_id": "h_12", ...}, ...}
+    ```
+
+    The run is **held**: the refund waits in the **Review queue**. Decide it there, or through the [Holds API](/agentos/api/holds). The item's id is the model's tool call id: read it from the hold (`GET …/holds/h_12`). An edit carries the item's full data:
+
+    ```bash
+    curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      $AGENTOS/v0/envs/default/holds/h_12/decision \
+      -d '{"items": [{"id": "call_…", "action": "edit", "data": {"order_id": "A-1001", "amount": "20.00"}}]}'
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_41
+    # {"status": "completed", "output": {"answer": "I've refunded 20.00 for order A-1001."}, ...}
+    ```
+  </Step>
+</Steps>
+
+## Test it before you deploy
+
+The [conformance kit](/agentos/build/conformance) builds the bundle and runs it against a mock platform whose model follows `call:<tool> {arguments}` in a message, so these cases drive the tools and every decision without a real model:
+
+```yaml conformance.yaml
+# The mock model answers `call:<tool> {arguments}` in a user message with that tool call (its id is call_1).
+cases:
+  - capability: support
+    name: lookup
+    input: {message: 'call:lookup_order {"order_id": "A-1001"}'}
+  - capability: support
+    name: refund-approved
+    input: {message: 'call:refund {"order_id": "A-1001", "amount": "49.90"}'}
+    expect: suspended
+  - capability: support
+    name: refund-rejected
+    input: {message: 'call:refund {"order_id": "A-1001", "amount": "49.90"}'}
+    expect: suspended
+    decision: [{id: call_1, action: reject}]
+  - capability: support
+    name: refund-edited
+    input: {message: 'call:refund {"order_id": "A-1001", "amount": "49.90"}'}
+    expect: suspended
+    decision: [{id: call_1, action: edit, data: {order_id: A-1001, amount: "20.00"}}]
+```
+
+```bash
+agentos-conformance check support-agno/
+```
+
+## Things to know
+
+- **Only confirmations are mapped.** The adapter turns `requires_confirmation=True` into a hold. Agno's other pauses (asking the user for input, external execution) aren't mapped; use the core SDK's `inv.ask` for those.
+- **The `RunOutput` travels in run state.** A value there can be at most 1 MiB, and the `RunOutput` grows with the conversation.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Human approvals" icon="user-check" href="/agentos/build/human-approvals">
+    Everything an ask can carry: several items, details, files, an expiry.
+  </Card>
+  <Card title="More frameworks" icon="layer-group" href="/agentos/frameworks/overview">
+    The same agent in other frameworks and languages.
+  </Card>
+</CardGroup>

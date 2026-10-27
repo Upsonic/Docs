@@ -1,0 +1,251 @@
+---
+title: "LangChain"
+description: "Run a LangChain agent on AgentOS: models through the gateway, and a tool that stops for a person's approval with interrupt()."
+---
+
+This example is a support agent built with LangChain's `create_agent`. It looks orders up with a tool, and its refund tool asks a person with LangGraph's `interrupt()`: `create_agent` builds a LangGraph graph, so the SDK's LangGraph adapter turns the interrupt into an AgentOS approval and continues the graph with the decision.
+
+<Info>
+Tested with `langchain` 1.4.7, `langchain-openai` 1.7.3 and LangGraph 1.2.18 on Python 3.13, using the [conformance kit](/agentos/build/conformance): 25 checks passed, including an approved, an edited and a rejected refund.
+</Info>
+
+## The bundle
+
+<CodeGroup>
+```python app.py
+"""A LangChain support agent on AgentOS. `create_agent` builds a LangGraph graph, so the refund tool asks a person
+with LangGraph's `interrupt()`, and the SDK's LangGraph adapter turns that into an AgentOS approval."""
+import hashlib
+import json
+
+import agentos
+from agentos.adapters import langgraph
+from langchain.agents import create_agent
+from langchain.tools import tool
+from langchain_openai import ChatOpenAI
+from langgraph.types import interrupt
+
+ORDERS = {  # stands in for your order system
+    "A-1001": {"status": "delivered", "total": "49.90", "items": ["Desk lamp"], "delivered": "2026-10-02"},
+    "A-1002": {"status": "in transit", "total": "129.00", "items": ["Office chair"], "delivered": None},
+}
+
+
+@tool
+def lookup_order(order_id: str) -> str:
+    """Look an order up by its id (like A-1001): its status, items, total and delivery date."""
+    order = ORDERS.get(order_id.strip().upper())
+    return json.dumps(order) if order else f"There is no order {order_id}."
+
+
+def refund_tool(run_id: str):
+    @tool
+    def issue_refund(order_id: str, amount: str, reason: str) -> str:
+        """Refund `amount` (a decimal string like 49.90) on an order. A person approves every refund."""
+        # Everything before interrupt() runs again on the resume: keep it free of side effects.
+        decision = interrupt({
+            "intent": f"Refund {amount} on order {order_id}?",
+            "items": [{"id": order_id, "title": f"{order_id} · {amount}",
+                       "data": {"order_id": order_id, "amount": amount}}],
+            "actions": ["approve", "edit", "reject"],
+            "details": f"Reason given by the agent: {reason}",
+        })
+        item = decision["items"][0] if decision["items"] else None  # no items: the ask expired
+        if item is None or item["action"] == "reject":
+            return f"The refund was not approved. {(item or {}).get('comment') or ''}".strip()
+        amount = item["data"]["amount"]  # as approved, or as the reviewer edited it
+        # Stands in for your payment provider; key the real call by run id so a retried run never pays twice.
+        refund_id = "rf_" + hashlib.sha256(f"{run_id}:{order_id}:{amount}".encode()).hexdigest()[:12]
+        return f"Refunded {amount} on {order_id}: {refund_id}"
+
+    return issue_refund
+
+
+def support(inv: agentos.Invocation):
+    # The model and the agent are built per invocation: the client carries this run's token.
+    model = ChatOpenAI(
+        model=inv.llm.model("main"),          # config.models.main, sent to the gateway as it is
+        base_url=inv.llm.base_url,            # the AgentOS model gateway
+        api_key=inv.llm.api_key,              # ignored by the gateway
+        default_headers=inv.llm.headers,      # x-agentos-run-token
+        http_client=inv.llm.httpx_client(),   # no redirects; the token never leaves the platform
+        max_retries=0,                        # a guardrail block is a 400: don't retry it
+    )
+    agent = create_agent(model, tools=[lookup_order, refund_tool(inv.run_id)], system_prompt=inv.config["prompts"]["system"],
+                         checkpointer=langgraph.checkpointer())  # kept in the run's state while a person decides
+    try:
+        state = langgraph.run(inv, agent, {"messages": [{"role": "user", "content": inv.input["message"]}]})
+    except Exception as error:
+        if block := agentos.guardrail_block(error):
+            raise block  # the run fails with blocked_by_guardrail and the guardrail's message
+        raise
+    return {"answer": state["messages"][-1].text}
+
+
+agentos.serve({"support": support}, port=8080)
+```
+
+```yaml agentos.yaml
+name: langchain-support
+title: Support agent (LangChain)
+description: Answers order questions with a lookup tool; refunds go through a person first.
+runtime: stateless
+port: 8080
+capabilities:
+  support:
+    description: Handles a customer's message. A refund the model wants to issue waits for a person's approval.
+    input:
+      type: object
+      properties: {message: {type: string, minLength: 1}}
+      required: [message]
+    output:
+      type: object
+      properties: {answer: {type: string}}
+      required: [answer]
+    timeout: 120s
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5    # a model from your Models page: <provider slug>/<model ID>
+  prompts:
+    system: >-
+      You are a support agent for an online shop. Look orders up with lookup_order before you
+      answer anything about an order. Use issue_refund only for delivered orders that arrived
+      damaged. Answer in at most three sentences.
+```
+
+```dockerfile Dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+# the AgentOS SDK wheel from the bundle's vendor/ folder, with its LangGraph adapter
+COPY vendor/ vendor/
+RUN pip install --no-cache-dir "$(ls vendor/*.whl)[langgraph]"
+COPY app.py .
+USER nobody
+EXPOSE 8080
+CMD ["python", "-u", "app.py"]
+```
+
+```text requirements.txt
+langchain==1.4.7
+langchain-openai==1.7.3
+```
+</CodeGroup>
+
+The SDK wheel goes in the bundle's `vendor/` folder, installed with its `langgraph` extra; see [SDKs](/agentos/build/sdks).
+
+## How the model is wired
+
+`ChatOpenAI` gets the gateway's base URL, the run token in `default_headers` (`x-agentos-run-token`) and `inv.llm.httpx_client()`, an HTTP client that never follows redirects and never sends the token to another host. The API key is ignored by the gateway. The model name from `config.models` reaches the gateway exactly as written (`anthropic/claude-sonnet-4-5`).
+
+The model and the agent are built inside the handler, on every invocation, because the token belongs to one invocation. With `max_retries=0` a guardrail block isn't retried; `agentos.guardrail_block(error)` finds it inside LangChain's error, and the run fails with `blocked_by_guardrail` and the guardrail's message. See [Guardrails](/agentos/platform/guardrails).
+
+## How the approval works
+
+<Steps>
+  <Step title="The tool interrupts">
+    `issue_refund` calls `interrupt()` with an ask: an intent, one item (the order and amount, which a reviewer can edit), the actions and details. The agent is compiled with `langgraph.checkpointer()`, and `langgraph.run()` keeps the graph's checkpoint in the run's state and asks the hold. The invocation answers `suspended`.
+  </Step>
+  <Step title="A person decides">
+    The run is held until someone decides in the **Review queue** or through the [Holds API](/agentos/api/holds).
+  </Step>
+  <Step title="The graph continues">
+    On the resume `langgraph.run()` restores the checkpoint and continues the graph. The tool runs again from its start, and this time `interrupt()` returns the decision: `items` with each item's `action`, `data` (as approved or edited) and `comment`. An empty `items` means the ask expired.
+  </Step>
+</Steps>
+
+<Warning>
+Everything in the tool before `interrupt()` runs again on the resume. Keep it free of side effects: look things up, but pay, send or write only after the decision.
+</Warning>
+
+## Run it
+
+<Steps>
+  <Step title="Zip and deploy">
+    Put the SDK wheel in `vendor/` (see [SDKs](/agentos/build/sdks)), set `config.models.main` to a model from your **Models** page, then zip the folder's contents and upload them:
+
+    ```bash
+    cd langchain-support && zip -r ../langchain-support.zip . && cd ..
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@langchain-support.zip \
+      $AGENTOS/v0/envs/default/agents/langchain-support/versions
+    ```
+  </Step>
+  <Step title="Ask a question">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/langchain-support/capabilities/support/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" -d '{"input": {"message": "Where is my order A-1002?"}}'
+    # 200 {"run_id": "r_40", "status": "completed", "output": {"answer": "Your office chair is in transit..."}, ...}
+    ```
+  </Step>
+  <Step title="Ask for a refund">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/langchain-support/capabilities/support/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" \
+      -d '{"input": {"message": "My desk lamp from order A-1001 arrived broken. Can I get my 49.90 back?"}}'
+    # 200 {"run_id": "r_41", "status": "held", "hold": {"hold_id": "h_12", ...}, ...}
+    ```
+
+    The run is **held**: the refund waits in the **Review queue**. A reviewer approves it, edits the amount, or rejects it there, or through the [Holds API](/agentos/api/holds). The item's id is the order id.
+
+    ```bash
+    curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      $AGENTOS/v0/envs/default/holds/h_12/decision \
+      -d '{"items": [{"id": "A-1001", "action": "approve"}]}'
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_41
+    # {"status": "completed", "output": {"answer": "Your refund of 49.90 for order A-1001 is on its way..."}, ...}
+    ```
+  </Step>
+</Steps>
+
+## Test it before you deploy
+
+The [conformance kit](/agentos/build/conformance) builds the bundle and runs it against a mock platform whose model follows `call:<tool> {arguments}` in a message, so these cases drive the tools and every decision without a real model:
+
+```yaml conformance.yaml
+# The mock model answers `call:<tool> {arguments}` in a user message with that tool call.
+cases:
+  - capability: support
+    name: lookup
+    input: {message: "Where is my order? call:lookup_order {\"order_id\": \"A-1002\"}"}
+  - capability: support
+    name: no-tool
+    input: {message: "What is your return policy?"}
+  - capability: support
+    name: refund-approved
+    input: {message: "My lamp arrived broken. call:issue_refund {\"order_id\": \"A-1001\", \"amount\": \"49.90\", \"reason\": \"damaged\"}"}
+    expect: suspended
+  - capability: support
+    name: refund-edited
+    input: {message: "My lamp arrived broken. call:issue_refund {\"order_id\": \"A-1001\", \"amount\": \"49.90\", \"reason\": \"damaged\"}"}
+    expect: suspended
+    decision: [{id: A-1001, action: edit, data: {order_id: A-1001, amount: "20.00"}}]
+  - capability: support
+    name: refund-rejected
+    input: {message: "Refund please. call:issue_refund {\"order_id\": \"A-1002\", \"amount\": \"129.00\", \"reason\": \"changed mind\"}"}
+    expect: suspended
+    decision: [{id: A-1002, action: reject, comment: not delivered yet}]
+```
+
+```bash
+agentos-conformance check langchain-support/
+```
+
+## Things to know
+
+- **The checkpoint travels in run state.** A run's state value can be at most 1 MiB, so a very long conversation needs trimming.
+- **Build the agent per invocation.** Building the model or the agent at module level would keep the first invocation's token, which stops working when that invocation answers.
+- More about the adapter, including several graphs in one handler: [Frameworks](/agentos/build/frameworks).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Human approvals" icon="user-check" href="/agentos/build/human-approvals">
+    Everything an ask can carry: several items, details, files, an expiry.
+  </Card>
+  <Card title="More frameworks" icon="layer-group" href="/agentos/frameworks/overview">
+    The same agent in other frameworks and languages.
+  </Card>
+</CardGroup>

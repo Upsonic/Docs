@@ -1,0 +1,198 @@
+---
+title: "Evals"
+description: "Score a version of an agent on a dataset before it takes traffic, and compare models, prompts and params."
+---
+
+Evals answer one question: is this version of the agent good enough, and is it better than the one that is live? You collect test cases, decide what to check on each answer, and run the agent over them. AgentOS keeps every run, score and cost, so you can compare versions, models and prompts side by side and turn a winner into a new version.
+
+| Term | What it is |
+|---|---|
+| **Dataset** | A list of test cases (**items**): an `input`, an optional `expected` answer, and `metadata`. It belongs to the environment, not to one agent. |
+| **Draft** and **version** | You edit a dataset's draft in place. **Publish** freezes it into a numbered version (`v1`, `v2`…) that never changes. |
+| **Evaluator** | A check that gives each run one or more named scores: rules on the output, a field-by-field match with the expected answer, or an AI judge. |
+| **Eval** | A dataset + an agent's capability + a **mapping** from item to input + evaluators + how many **repeats**. |
+| **Experiment** | One run of an eval on one version of the agent, optionally with a **temporary override** of its models, prompts or params. Every item becomes a run, and every run is scored. |
+
+<Info>
+Experiment runs are real runs of your agent's code, on the version you pick, but they stay out of the way: they are not in the dashboard, metrics, the runs list, the Review queue or webhooks, and they get a temporary, empty memory. Your agent can tell it is being evaluated from `context.eval` and should skip side effects such as payments or emails. See [Agent contract](/agentos/build/agent-contract).
+</Info>
+
+## Set up your first eval
+
+The fastest path starts on the agent's page.
+
+<Steps>
+  <Step title="Open Set up an eval">
+    On the agent, open the **Eval** tab and choose **Set up an eval**. If the agent has several capabilities, pick the one to test at the top.
+  </Step>
+  <Step title="Add test cases">
+    Under **1 · Test cases**, each row is one case: the input fields on the left, and the **right answer** (optional) on the right. Fill rows any of these ways:
+
+    - **Type or paste**, including rows copied from a spreadsheet.
+    - **Recent runs**: pick completed runs of the capability. Each becomes a row, its output the answer to check.
+    - **A file**: a CSV or JSONL file. You match each column to a field.
+    - **Documents**: for capabilities that take files, each chosen document becomes a row.
+
+    Rows without an answer can be filled in place with **Fill empty answers**, using the agent itself or a stronger model. Nothing is saved until you create the eval, and the answers in the table count as yours. If the environment already has datasets, **Use test cases you already have** adds the rows to one of them instead.
+  </Step>
+  <Step title="Choose what to check">
+    Under **2 · What to check**, add a row per check. Each row names an output field (or the whole answer) and one of: **is the right answer**, **is present**, **contains**, **doesn't contain**, **matches a pattern**, **is at most N words**, or **AI judge** (pick the judge model below the list). Each row gets its own score.
+  </Step>
+  <Step title="Create and run">
+    Name the eval. The **Runs** line shows the version, model and number of repeats of the first experiment; **change** picks others. **Create and run** saves the eval and its test cases and starts the first experiment.
+  </Step>
+</Steps>
+
+The experiment page refreshes itself until it finishes. From there you compare, iterate and ship, as below.
+
+## Compare and ship
+
+<Steps>
+  <Step title="Run a new experiment">
+    On the eval's page, **New experiment** picks the model first, then the version (live, then candidates, then the previous version). Under **More options**: prompts, params and repeats. The override table is filled from that version's own config keys, so you can only change values the agent actually reads. AgentOS estimates the cost from the last experiment on that version.
+  </Step>
+  <Step title="Read the results">
+    The experiment page shows the pass rate per score, items passed, cost and tokens per item, p95 duration and judge tokens. Every item is listed with ✓ / ✗ per score and its outcome, and the scores are compared with the eval's previous completed experiment on the live version without overrides.
+
+    <Warning>
+    If the page warns that an overridden model was never called, the agent's code doesn't read `context.config.models`, so the override changed nothing.
+    </Warning>
+  </Step>
+  <Step title="Make a candidate">
+    When an experiment with an override wins, an admin clicks **Make a candidate**. That creates a new version with the same image and the override written into its config, without a rebuild. It is a **candidate**: the live version stays live.
+  </Step>
+  <Step title="Promote it">
+    Promote the candidate from the agent's **Deploy** tab, or with the [Deploy API](/agentos/api/deploys). See [Deploying](/agentos/platform/deploying).
+  </Step>
+</Steps>
+
+<Tip>
+To change a prompt and see what it fixes and breaks before deploying it, use the agent's [Prompts tab](/agentos/platform/prompts). It runs the same experiments for you.
+</Tip>
+
+## The Eval matrix
+
+The **Eval matrix** (in the rail) compares an eval's newest experiments, up to six, score by score. Each pass rate is coloured against the oldest column, and the datasets are listed beside it. An agent's **Eval** tab shows the same matrix and the experiments of its own evals.
+
+## Datasets
+
+A **dataset** page shows the draft or a published version and its items. From it you can:
+
+- add items by hand or import JSONL,
+- **publish** the draft as the next version,
+- export the draft or a version as JSONL,
+- see the items that don't fit an eval's capability (**needs fix**),
+- accept the **candidates** waiting for review,
+- see the evals that use the dataset, and set its **collect rule** (admins).
+
+An item's `input` is what the capability receives (after the mapping), `expected` is the right answer, and `metadata` is anything you want to keep with it. A dataset can have an optional **item schema**, a JSON Schema every item's `{input, expected}` must fit.
+
+### Adding items from runs
+
+A run page has **Add to dataset**. It copies the run's input, its final output as the editable expected answer, and the holds it asked with their decisions, so the eval can replay the person's answers. Runs that belong to a session, and runs that didn't complete, can't be added.
+
+### Importing JSONL
+
+One `{"input": …, "expected": …, "metadata": …}` object per line, at most 1,000 lines and 10 MB, all or nothing. Other keys are ignored, so Langfuse and LangSmith exports import as they are.
+
+### The collect rule
+
+A collect rule copies runs into a dataset automatically. Choose an agent and capability, and whether to collect runs where a person **decided** a hold, or only those where they **edited** an item. Collected runs land either as **candidates** to accept by hand, or straight into the draft. An item that doesn't fit the item schema is always a candidate, with the problem shown. Experiment runs and session runs are never collected.
+
+### Labelling with a strong model
+
+To build expected answers quickly, run an experiment with a strong model as an override, then **Save outputs as expected** on its page. Each item's input and its output (first repeat) are added to a dataset's draft, or to a new dataset. Review them before you publish.
+
+## Evaluators
+
+Every evaluator gives one or more named scores per run. A score passes, fails, or gives no score (neither).
+
+<AccordionGroup>
+  <Accordion title="assertion: rules on the output">
+    One score per check, 1-50 checks. Paths are `output` or `output.a.b` (list items by index, `output.items.0`).
+
+    | op | passes when |
+    |---|---|
+    | `exists` | the path is there and not null |
+    | `equals` | the value equals `value` (JSON equality) |
+    | `matches` | the whole string matches the regular expression `value` |
+    | `schema` | the whole output fits the capability's output schema (no `path` or `value`) |
+    | `contains` / `not_contains` | the string has / hasn't the text `value`, ignoring case and extra spaces |
+    | `max_words` | the string has at most `value` words |
+
+    ```json
+    {"checks": [
+      {"name": "schema", "op": "schema"},
+      {"name": "id_number", "path": "output.id_number", "op": "matches", "value": "[0-9]{11}"}
+    ]}
+    ```
+  </Accordion>
+  <Accordion title="reference: compare with the expected answer">
+    One score per compared field of the item's expected answer, named by its path. `fields` is `"all"` (every key of the expected value) or a list of paths such as `address.city`. Each field's `mode`:
+
+    - `exact`: JSON equality (the default)
+    - `normalized`: ignores case and extra whitespace, Turkish-aware (`ALİ` matches `ali`)
+    - `number`: equal within `tolerance` (one number for every field, or one per path)
+
+    ```json
+    {"fields": "all", "mode": {"full_name": "normalized", "total": "number"}, "tolerance": 0.01}
+    ```
+
+    An item without an expected answer gets no scores from it. Use the eval's mapping to compare with part of the output only (below).
+  </Accordion>
+  <Accordion title="ai_judge: a model grades each answer">
+    One score per criterion, 1-10 criteria with rubrics of up to 2,000 characters. The judge sees the input, the whole output and the expected answer as data (files are named by id, not sent), at temperature 0. Pick any model from the Models page.
+
+    ```json
+    {"model": "bedrock-prod/us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+     "criteria": [{"name": "no_invention", "rubric": "Every field is read from the card; nothing is made up."}]}
+    ```
+
+    Judge tokens are counted in the experiment's **judge tokens**, not on the Models page. When the judge can't be reached or doesn't answer properly, its scores are "no score".
+  </Accordion>
+</AccordionGroup>
+
+Changing an evaluator raises its version. An experiment keeps the evaluator versions it started with.
+
+## Evals
+
+An eval page sets the **mapping**, shows the draft's **fit** against each version an experiment can run on, edits the evaluators, title and repeats, and lists its experiments.
+
+- **Mapping.** "As is" means the item's input is the capability's input, and its expected answer is compared with the whole output. A custom mapping is a JSON template: a string that is exactly `{{ item.input.file_id }}` (or `item.expected.…`, `item.metadata.…`) is replaced by that value, any JSON type; every other string is literal. `expected` can point at part of the output, such as `output.fields`.
+
+  ```json
+  {"input": {"document": "{{ item.input.file_id }}"}, "expected": "output.fields"}
+  ```
+
+- **Fit check.** Every item, after the mapping, is checked against the version's input schema. An experiment can't start while items don't fit; the needs-fix list names each problem.
+- **Repeats.** 1-10 runs per item, to measure how stable the agent is.
+
+Changing an eval doesn't change experiments that already started.
+
+## Experiments
+
+An experiment runs on the agent's **live**, **previous** or a **candidate** version, over the dataset's latest published version (a draft with changes is published when the experiment starts). Each item × repeat is one run.
+
+Each item row ends as one of:
+
+| outcome | meaning |
+|---|---|
+| `passed` | every score passed |
+| `failed` | at least one score failed |
+| `asked` | the run asked a person; experiments never wait for people |
+| `error` | the run failed, was cancelled or couldn't start (no scores) |
+| `no_scores` | it completed, but no evaluator gave a score |
+
+<Note>
+An experiment never sends a hold to the Review queue. If an item was copied from a run whose holds were decided, the agent gets those decisions in `context.eval.recorded_holds` and can use them instead of asking. An experiment run that asks anyway ends as `asked`.
+</Note>
+
+**Cancel** stops an experiment at once: items not started become errors and its unfinished runs are cancelled.
+
+## Who can do what
+
+Members and admins of the environment read, create and change datasets, items, evaluators and evals, and start, cancel and save experiments. The collect rule and **Make a candidate** need the admin role, since a candidate is a deploy. Datasets, evaluators and evals can't be deleted yet.
+
+## API
+
+Everything on this page is also available over HTTP: datasets, items, JSONL import and export, evaluators, evals, fit checks, experiments and candidates. See [Evals API](/agentos/api/evals).

@@ -1,0 +1,149 @@
+---
+title: "Agent contract"
+description: "The two HTTP endpoints every agent serves, what each run sends, and how to answer."
+---
+
+An AgentOS agent is any container that serves two endpoints on the `port` from [agentos.yaml](/agentos/build/agentos-yaml):
+
+- `GET /health` — answers any `2xx` once the agent is ready.
+- `POST /invoke` — runs one capability and answers with the result.
+
+That is the whole contract. Any language that can serve HTTP works; the [SDKs](/agentos/build/sdks) implement it for you in Python and TypeScript, and the [conformance kit](/agentos/build/conformance) checks an agent written in anything else.
+
+## GET /health
+
+After a container starts, AgentOS polls `GET /health` every 0.5 seconds (2 seconds per request, only the status line is read) for up to 60 seconds. Any `2xx` means healthy, and only then does a new version go live. If the container exits first, the deploy fails at once with its exit code and last output.
+
+## POST /invoke
+
+One endpoint serves every capability; the body names which one:
+
+```json
+{
+  "capability": "echo",
+  "run_id": "r_501",
+  "session_id": null,
+  "user": null,
+  "input": {"text": "hi"},
+  "invocation": {"id": "r_501:1", "seq": 1, "attempt": 1, "kind": "start"},
+  "resume": null,
+  "context": {
+    "token": "tok_...",
+    "api_url": "http://web:8000",
+    "config": {"models": {"reader": "anthropic/claude-sonnet-4-5"}, "prompts": {}, "params": {}},
+    "agent_id": "...",
+    "version": "v3",
+    "llm": {"base_url": "http://litellm:4000/v1", "api_key": "anything (ignored)"},
+    "secrets": {"CRM_API_KEY": "..."},
+    "eval": null
+  }
+}
+```
+
+<ResponseField name="capability" type="string">The capability to run, one of those in `agentos.yaml`.</ResponseField>
+<ResponseField name="run_id" type="string">The run this invocation belongs to.</ResponseField>
+<ResponseField name="session_id" type="string | null">The run's [session](/agentos/build/state-and-sessions), if it has one.</ResponseField>
+<ResponseField name="user" type="string | null">The end user the run is for (from its session; a child run keeps its parent's), or `null`.</ResponseField>
+<ResponseField name="input" type="object">The run's input, already checked against the capability's `input` schema.</ResponseField>
+<ResponseField name="invocation" type="object">
+  `id`, `seq`, `attempt` and `kind`. `kind` is `start` for the first invocation and `resume` after a person decided a [hold](/agentos/build/human-approvals). `seq` counts invocations of the run; `attempt` counts retries of one invocation.
+</ResponseField>
+<ResponseField name="resume" type="object | null">On a `resume` invocation, the decision. `null` on `start`.</ResponseField>
+<ResponseField name="context" type="object">
+  Everything the agent needs to use the platform during this invocation:
+  `token` (the [run token](#the-run-token)), `api_url` (the platform's address as seen from inside your container; platform calls go to `{api_url}/v0/...`), `config` (models, prompts, params of this version), `agent_id`, `version`, `llm` (the [model gateway](/agentos/build/models)), `secrets` (see [Secrets](/agentos/build/secrets)), and `eval` (`null` except in [experiment runs](#experiment-runs)).
+</ResponseField>
+
+<Note>
+New fields may be added to the invoke body over time. Ignore what you don't know.
+</Note>
+
+## Answering
+
+Answer `200` with JSON in one of three shapes:
+
+<CodeGroup>
+```json completed
+{"status": "completed", "output": {"labels": ["billing"]}}
+```
+
+```json failed
+{"status": "failed", "error": {"code": "crm_unreachable", "message": "The CRM didn't answer in 10 s."}}
+```
+
+```json suspended
+{"status": "suspended", "hold_id": "h_7"}
+```
+</CodeGroup>
+
+- **`completed`** — `output` must match the capability's `output` schema, otherwise the run fails with `invalid_output` (the output is kept on the run so you can see what was wrong).
+- **`failed`** — `error.code` is your own code. Use lowercase letters, digits and `_`, starting with a letter, at most 63 characters, and a message that isn't empty; anything else is recorded as `agent_failed`.
+- **`suspended`** — after you [asked a person](/agentos/build/human-approvals) with `POST /v0/holds`. `hold_id` must name the open hold this invocation created, otherwise the run fails with `invalid_response`.
+
+You can also answer with a stream instead of JSON. See [Streaming answers](/agentos/build/streaming).
+
+## How runs are invoked
+
+For each run, AgentOS calls `POST /invoke` once, on the version the run was started on (an older version's stopped container is started again for it), and waits up to the capability's `timeout` for the answer.
+
+- **Before your agent gets the request** (connection refused, container not ready yet), the call is retried for 30 seconds.
+- **Once your agent got the request**, nothing is retried. A timeout, a crash, or any non-`2xx` status fails the run with `agent_interrupted`. Start a new run to try again.
+
+After a person decides a hold, the same run is invoked again with `invocation.kind: "resume"`, the next `seq` and a new token. A run has at most 100 invocations (its start and one resume per decision); after that it fails with `too_many_resumes`.
+
+### Make side effects happen once
+
+Code before an `ask` runs again on the resume, and `invocation.id` changes on every resume. So key anything that must happen once per run — a payment, an email, a [child run](/agentos/build/child-runs) — by `run_id` plus a stable step name, never by `invocation.id`:
+
+```python
+key = f"{body['run_id']}:pay:{invoice_id}"   # e.g. "r_501:pay:INV-1"
+```
+
+Keep progress in [run state](/agentos/build/state-and-sessions) before you suspend, so the resume knows what was already done.
+
+## The run token
+
+`context.token` belongs to this invocation only. It works while your agent is answering, and stops working as soon as it has answered (or the run is cancelled): at once on the platform, within 5 seconds at the model gateway.
+
+Send it as the `x-agentos-run-token` header on every platform call:
+
+| Call | Endpoint | Page |
+|---|---|---|
+| Call a model | `{context.llm.base_url}/chat/completions` and other gateway routes | [Calling models](/agentos/build/models) |
+| Ask a person | `POST {api_url}/v0/holds` | [Human approvals](/agentos/build/human-approvals) |
+| Keep state | `GET/PUT/DELETE {api_url}/v0/state/{scope}/{key}` | [State and sessions](/agentos/build/state-and-sessions) |
+| Memory | `{api_url}/v0/memory/...` | [Memory](/agentos/build/memory) |
+| Files | `GET/POST {api_url}/v0/files` | [Files and events](/agentos/build/files-and-events) |
+| Timeline events | `POST {api_url}/v0/runs/{run_id}/events` | [Files and events](/agentos/build/files-and-events) |
+| Child runs | `POST {api_url}/v0/capabilities/{capability}/runs` | [Child runs](/agentos/build/child-runs) |
+| Report a streamed result | `POST {api_url}/v0/runs/{run_id}/result` | [Streaming answers](/agentos/build/streaming) |
+
+<Warning>
+Never store or log the run token, and never send it anywhere but `api_url` and the gateway. The SDKs enforce this for you.
+</Warning>
+
+## Experiment runs
+
+When an [eval](/agentos/platform/evals) runs your agent on a dataset, each item is a normal invocation with two differences:
+
+- `context.config` is the version's config with the experiment's temporary override merged in (for example another model for `models.reader`).
+- `context.eval` is `{"recorded_holds": [...]}` instead of `null`: the decisions people made on the run the item was copied from, each `{intent, actions, items, details, decision}` (`decision` is `null` for a hold that expired).
+
+Nobody reviews holds in an experiment. A run that asks anyway ends as failed with `asked_for_human`, and the item counts as "asked for a human". Use the recorded decisions or skip the human step, and check `context.eval` to keep side effects (payments, emails) out of experiment runs. Memory in an experiment run is a temporary, empty one that is deleted when the item's run ends.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Calling models" icon="brain" href="/agentos/build/models">
+    Use the environment's models through the gateway.
+  </Card>
+  <Card title="Human approvals" icon="user-check" href="/agentos/build/human-approvals">
+    Ask a person and continue with their decision.
+  </Card>
+  <Card title="SDKs" icon="code" href="/agentos/build/sdks">
+    Let the SDK speak the contract for you.
+  </Card>
+  <Card title="Conformance kit" icon="list-check" href="/agentos/build/conformance">
+    Check an agent in any language against the contract.
+  </Card>
+</CardGroup>

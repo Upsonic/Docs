@@ -1,0 +1,253 @@
+---
+title: "Google ADK"
+description: "Run a Google Agent Development Kit agent on AgentOS: models through the gateway with LiteLlm, and refunds approved by a person before any money moves."
+---
+
+This example is a support agent built with Google's [Agent Development Kit](https://google.github.io/adk-docs/) (ADK). ADK reaches models other than Gemini through its `LiteLlm` wrapper, which here points at the AgentOS gateway, so the agent can use any model on your **Models** page.
+
+The model never moves money itself. Its `request_refund` tool only writes the refund down; when the model is done, the handler asks a person with the core SDK's `inv.ask`, and on the resume the code refunds what was approved, with the edited amount if the reviewer changed it.
+
+<Info>
+Tested with `google-adk` 2.13.0, `litellm` 1.105.5 and Python 3.13, using the [conformance kit](/agentos/build/conformance): 22 checks passed, including an approved, an edited and a rejected refund.
+</Info>
+
+## The bundle
+
+<CodeGroup>
+```python app.py
+from google.adk.agents import Agent
+from google.adk.models.lite_llm import LiteLlm
+from google.adk.runners import InMemoryRunner
+from google.genai import types
+
+import agentos
+import agentos.asgi
+
+ORDERS = {"A-1001": {"status": "delivered", "total": "49.90", "currency": "EUR"}}
+
+
+def lookup_order(order_id: str) -> dict:
+    """Look an order up by its id, e.g. A-1001."""
+    return ORDERS.get(order_id, {"error": f"no order {order_id}"})
+
+
+def refund(order_id: str, amount: str) -> str:
+    """Moves the money. Called by our code, after a person approved, never by the model."""
+    return f"refunded {amount} for order {order_id}"
+
+
+async def ask_the_model(inv: agentos.Invocation, tools: list) -> str:
+    model = LiteLlm(
+        model="openai/" + inv.llm.model(),  # "openai/": the gateway speaks the OpenAI API, whatever the model
+        api_base=inv.llm.base_url,
+        api_key=inv.llm.api_key,
+        extra_headers=inv.llm.headers,  # the run token
+    )
+    agent = Agent(name="support", model=model, instruction=inv.config["prompts"]["system"], tools=tools)
+    runner = InMemoryRunner(agent=agent, app_name="support")
+    session = await runner.session_service.create_session(app_name="support", user_id="customer")
+    message = types.Content(role="user", parts=[types.Part(text=inv.input["message"])])
+    answer = ""
+    async for event in runner.run_async(user_id="customer", session_id=session.id, new_message=message):
+        if event.is_final_response() and event.content and event.content.parts:
+            answer = "".join(part.text or "" for part in event.content.parts)
+    return answer
+
+
+async def support(inv: agentos.Invocation):
+    if inv.resume is None:
+        requested = []
+
+        def request_refund(order_id: str, amount: str) -> dict:
+            """Request a refund for an order. The amount is text, e.g. "49.90". A person approves it later."""
+            requested.append({"order_id": order_id, "amount": amount})
+            return {"status": "requested: a person approves refunds before any money moves"}
+
+        try:
+            answer = await ask_the_model(inv, [lookup_order, request_refund])
+        except Exception as error:
+            if block := agentos.guardrail_block(error):  # a guardrail refused a model call
+                raise block from error
+            raise
+        if not requested:
+            return {"answer": answer}
+        await inv.aask(
+            "Approve a refund",
+            [{"id": f"refund-{i}", "title": f"Refund {r['amount']} for order {r['order_id']}", "data": r}
+             for i, r in enumerate(requested, 1)],
+            actions=["approve", "edit", "reject"],
+        )  # the run is held here; once a person decided, the handler runs again with inv.resume
+
+    done = []
+    for item in inv.resume.items:
+        if item.action in ("approve", "edit"):
+            done.append(refund(item.data["order_id"], item.data["amount"]))
+        else:
+            done.append(f"refund for order {item.data['order_id']} not approved: {item.comment or 'rejected'}")
+    return {"answer": "; ".join(done)}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    # one long-lived event loop for ADK and LiteLLM (agentos.serve runs each async handler in a loop of its own)
+    uvicorn.run(agentos.asgi.app({"support": support}), host="0.0.0.0", port=8080)
+```
+
+```yaml agentos.yaml
+name: support-google-adk
+title: Support agent (Google ADK)
+description: Answers order questions with a lookup tool; refunds go through a person first.
+runtime: stateless
+port: 8080
+capabilities:
+  support:
+    description: Handles a customer's message. A refund the model wants to issue waits for a person's approval.
+    input:
+      type: object
+      properties: {message: {type: string, minLength: 1}}
+      required: [message]
+    output:
+      type: object
+      properties: {answer: {type: string}}
+      required: [answer]
+    timeout: 120s
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5    # a model from your Models page: <provider slug>/<model ID>
+  prompts:
+    system: >-
+      You are a support agent for an online shop. Look orders up with lookup_order before you
+      answer anything about an order. Ask for refunds with the request_refund tool. Never refund more than the order's total.
+```
+
+```dockerfile Dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+# LiteLLM would download its model price list at import; agents reach nothing outside AgentOS by default
+ENV LITELLM_LOCAL_MODEL_COST_MAP=True
+COPY vendor/ vendor/
+COPY requirements.txt .
+RUN pip install --no-cache-dir "$(ls vendor/*.whl)[starlette]" -r requirements.txt
+COPY app.py .
+USER nobody
+EXPOSE 8080
+CMD ["python", "-u", "app.py"]
+```
+
+```text requirements.txt
+google-adk==2.13.0
+litellm==1.105.5
+uvicorn==0.54.0
+```
+</CodeGroup>
+
+The SDK wheel goes in the bundle's `vendor/` folder and is installed with its `starlette` extra, which serves the agent as an ASGI app; see [SDKs](/agentos/build/sdks).
+
+## How the model is wired
+
+`LiteLlm` takes LiteLLM's settings, so the handler gives it the gateway: `api_base` is `inv.llm.base_url`, `extra_headers` carries the run token (`inv.llm.headers`), and the model name is `config.models.main` with `openai/` in front. The prefix tells LiteLLM that the gateway speaks the OpenAI API; LiteLLM removes it, so the name reaches the gateway exactly as written in `agentos.yaml` (`anthropic/claude-sonnet-4-5`). The agent is built inside the handler, on every invocation, because the token belongs to one invocation.
+
+Two settings keep LiteLLM working inside an AgentOS container:
+
+- **`LITELLM_LOCAL_MODEL_COST_MAP=True`** (in the `Dockerfile`): LiteLLM otherwise downloads its model price list when it is imported, and an agent reaches nothing outside AgentOS unless you allow it (see [Network access](/agentos/build/network-access)). AgentOS records each call's cost itself.
+- **One event loop.** `agentos.serve` runs every async handler in an event loop of its own, and LiteLLM keeps background tasks on the loop it started on. Serving the handler as an ASGI app with `uvicorn` gives ADK and LiteLLM one long-lived loop.
+
+When a guardrail blocks a model call, LiteLLM raises `BadRequestError` with the gateway's answer, and ADK passes it on. `agentos.guardrail_block(error)` finds the block in it, and raising that block fails the run with `blocked_by_guardrail` and the guardrail's message. See [Guardrails](/agentos/platform/guardrails).
+
+## How the approval works
+
+<Steps>
+  <Step title="The model requests a refund">
+    On the start, the handler gives the agent `lookup_order` and `request_refund`. `request_refund` is defined inside the handler: it adds the refund to a list and tells the model that a person approves it. Nothing is paid.
+  </Step>
+  <Step title="The handler asks a person">
+    When the agent is done and the list isn't empty, `inv.aask` creates one hold with an item per requested refund (`refund-1`, `refund-2`…), offering **approve**, **edit** and **reject**. The run is held, and nothing in the handler after the ask runs on the start.
+  </Step>
+  <Step title="The code refunds what was approved">
+    Once a person decided, the handler runs again with `inv.resume`. It doesn't call the model again: it goes through the decided items, refunds the approved ones (an edit with the reviewer's data) and returns what happened.
+  </Step>
+</Steps>
+
+<Note>
+ADK has its own tool confirmation (`FunctionTool(require_confirmation=True)`), but it continues inside ADK's session, which `InMemoryRunner` keeps in the container's memory. AgentOS may resume the run in another container, so this example keeps the model's work on the start and the decision on the resume, with nothing ADK needs in between.
+</Note>
+
+## Run it
+
+<Steps>
+  <Step title="Zip and deploy">
+    Put the SDK wheel in `vendor/` (see [SDKs](/agentos/build/sdks)), set `config.models.main` to a model from your **Models** page, then zip the folder's contents and upload them:
+
+    ```bash
+    cd support-google-adk && zip -r ../support-google-adk.zip . && cd ..
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@support-google-adk.zip \
+      $AGENTOS/v0/envs/default/agents/support-google-adk/versions
+    ```
+  </Step>
+  <Step title="Ask for a refund">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/support-google-adk/capabilities/support/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" \
+      -d '{"input": {"message": "Order A-1001 arrived broken. Can I get my 49.90 back?"}}'
+    # 200 {"run_id": "r_41", "status": "held", "hold": {"hold_id": "h_12", ...}, ...}
+    ```
+
+    The run is **held**: the refund waits in the **Review queue**. Decide it there, or through the [Holds API](/agentos/api/holds):
+
+    ```bash
+    curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      $AGENTOS/v0/envs/default/holds/h_12/decision \
+      -d '{"items": [{"id": "refund-1", "action": "edit", "data": {"order_id": "A-1001", "amount": "20.00"}}]}'
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_41
+    # {"status": "completed", "output": {"answer": "refunded 20.00 for order A-1001"}, ...}
+    ```
+  </Step>
+</Steps>
+
+## Test it before you deploy
+
+The [conformance kit](/agentos/build/conformance) builds the bundle and runs it against a mock platform whose model follows `call:<tool> {arguments}` in a message, so these cases drive the tools and every decision without a real model:
+
+```yaml conformance.yaml
+# The mock model answers `call:<tool> {arguments}` in a user message with that tool call (its id is call_1).
+cases:
+  - capability: support
+    name: lookup
+    input: {message: 'call:lookup_order {"order_id": "A-1001"}'}
+  - capability: support
+    name: refund-approved
+    input: {message: 'call:request_refund {"order_id": "A-1001", "amount": "49.90"}'}
+    expect: suspended
+  - capability: support
+    name: refund-edited
+    input: {message: 'call:request_refund {"order_id": "A-1001", "amount": "49.90"}'}
+    expect: suspended
+    decision: [{id: refund-1, action: edit, data: {order_id: A-1001, amount: "20.00"}}]
+  - capability: support
+    name: refund-rejected
+    input: {message: 'call:request_refund {"order_id": "A-1001", "amount": "49.90"}'}
+    expect: suspended
+    decision: [{id: refund-1, action: reject}]
+```
+
+```bash
+agentos-conformance check support-google-adk/
+```
+
+## Things to know
+
+- **Pin LiteLLM.** `litellm` 1.106 imports the `mcp` package whenever a request carries tools and fails without it; 1.105.5 doesn't. With a newer LiteLLM, add `mcp` to `requirements.txt` or check that a call with tools works.
+- **The final answer comes from code.** After the decision the handler reports what it did instead of asking the model again. Call the model on the resume as well if you want it to word the answer, for example with `inv.llm.chat(...)`.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Human approvals" icon="user-check" href="/agentos/build/human-approvals">
+    Everything an ask can carry: several items, details, files, an expiry.
+  </Card>
+  <Card title="More frameworks" icon="layer-group" href="/agentos/frameworks/overview">
+    The same agent in other frameworks and languages.
+  </Card>
+</CardGroup>

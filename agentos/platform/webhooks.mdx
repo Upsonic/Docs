@@ -1,0 +1,130 @@
+---
+title: "Webhooks"
+description: "Tell your other systems when a run completes, fails, waits for a person or is blocked by a guardrail."
+---
+
+A webhook endpoint receives an HTTPS `POST` every time one of an agent's runs changes state in a way you care about. Use them to update a ticket when a run completes, alert someone when one fails, or notify a reviewer that a run is waiting for them.
+
+## Add an endpoint
+
+<Steps>
+  <Step title="Open the Webhooks tab">
+    Open the agent and its **Webhooks** tab. Environment admins add endpoints; members see them.
+  </Step>
+  <Step title="Add the endpoint">
+    Click **Add endpoint**, enter the receiver URL (it must be `https://`) and pick the events it should receive.
+  </Step>
+  <Step title="Copy the signing secret">
+    AgentOS shows the endpoint's signing secret (`whsec_…`) **once**. Store it with your receiver: you need it to verify every delivery.
+  </Step>
+</Steps>
+
+<Warning>
+Members of the environment can see the endpoints' URLs. Don't put a token in the URL; authenticate deliveries by their signature instead.
+</Warning>
+
+## Events
+
+| Event | Sent when |
+|---|---|
+| `run.completed` | a run completed; `data` has its output |
+| `run.failed` | a run failed |
+| `run.cancelled` | a run was cancelled |
+| `run.held` | a run is waiting for a person to decide a hold |
+| `run.resumed` | a held run continues after the decision (or the hold expired) |
+| `hold.decided` | someone decided a hold |
+| `guardrail.blocked` | a [guardrail](/agentos/platform/guardrails) blocked something in a run |
+
+Runs of [evals](/agentos/platform/evals) never send webhooks.
+
+## The payload
+
+Each event is posted as JSON:
+
+```json
+{"id": "ev_1042", "type": "run.completed", "at": "2026-10-12T12:00:00.123Z", "agent": "claims-reader",
+ "environment": "default", "run_id": "r_501", "metadata": {"ticket": "T-42"}, "data": {"output": {"…": "…"}}}
+```
+
+- `metadata` is the run's own `metadata`, as the caller passed it when starting the run. Use it to carry your own ids (a ticket, an order) through to the webhook.
+- `data` is the event's own data. A `hold.decided` event's `data` has the `hold_id`, the decided `items` (`id`, `action`) and `reviewer_kind` (`person` or `service_account`). Its `by` names the reviewer only when that name isn't an email address (a service account's name); a person's email is left out.
+
+Each request also carries these headers:
+
+| Header | Value |
+|---|---|
+| `X-AgentOS-Event-Id` | the event id, the same on every retry |
+| `X-AgentOS-Delivery-Attempt` | 1 for the first attempt, then 2, 3… |
+| `X-AgentOS-Signature` | `t=<unix seconds>,v1=<signature>` |
+
+## Verify the signature
+
+The signature is the hex HMAC-SHA256 of `"<t>.<raw body>"`, keyed with the endpoint's signing secret. Verify it on the **raw** body bytes, before you parse or trust them, and refuse old timestamps:
+
+<CodeGroup>
+```python Python
+import hashlib, hmac, time
+
+def verified(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
+    parts = [p.split("=", 1) for p in header.split(",") if "=" in p]
+    t = int(next((v for k, v in parts if k == "t"), "0"))
+    expected = hmac.new(secret.encode(), f"{t}.".encode() + body, hashlib.sha256).hexdigest().encode()
+    return abs(time.time() - t) <= tolerance and any(
+        hmac.compare_digest(expected, v.encode()) for k, v in parts if k == "v1")  # any v1 may match
+```
+
+```javascript Node.js
+import crypto from "node:crypto";
+
+// body: the raw request body as a Buffer (e.g. express.raw({ type: "application/json" }))
+export function verified(secret, header, body, tolerance = 300) {
+  const parts = header.split(",").filter((p) => p.includes("="))
+    .map((p) => [p.slice(0, p.indexOf("=")), p.slice(p.indexOf("=") + 1)]);
+  const t = Number(parts.find(([k]) => k === "t")?.[1] ?? 0);
+  if (!Number.isInteger(t) || Math.abs(Date.now() / 1000 - t) > tolerance) return false;
+  const expected = Buffer.from(
+    crypto.createHmac("sha256", secret).update(`${t}.`).update(body).digest("hex"));
+  return parts.some(([k, v]) => {  // any v1 may match
+    const got = Buffer.from(v);
+    return k === "v1" && got.length === expected.length && crypto.timingSafeEqual(got, expected);
+  });
+}
+```
+</CodeGroup>
+
+### Rotating the secret
+
+**Rotate secret** on the endpoint shows a new secret once. The previous one stays valid for 24 hours: until then every request carries two signatures, `t=…,v1=<new>,v1=<previous>`. A receiver that accepts any matching `v1`, as both examples above do, keeps working while you switch it to the new secret.
+
+## Answering, retries and dead deliveries
+
+Answer with any `2xx` status. Only the status is read, never the body.
+
+Anything else is a failed attempt: another status, a timeout (10 seconds to connect or between bytes, 15 seconds for the whole answer), a refused connection, or a redirect (redirects are never followed). A failed delivery is retried **10 s, 1 min, 5 min and 30 min** later. After the fifth attempt it is **dead** until someone replays it.
+
+<Note>
+Delivery is **at least once** and **unordered**. The same event can arrive more than once, and a later event can arrive before an earlier one: deduplicate on the event id, and use `at` to order.
+</Note>
+
+Each endpoint has at most one delivery in flight, so a receiver that hangs or fails only delays its own events, never other endpoints'.
+
+## Monitoring endpoints
+
+The **Endpoints** list shows each endpoint's status and how many of its attempted deliveries of the last 30 days arrived:
+
+| Status | Meaning |
+|---|---|
+| **ACTIVE** | its latest delivery arrived |
+| **RETRYING** | deliveries are failing and being retried |
+| **FAILING** | deliveries went dead |
+| **PAUSED** | the endpoint is disabled |
+
+**Recent deliveries** lists the latest deliveries with their endpoint, event, attempt and, for failures, why (`HTTP 503`, a timeout, `blocked: …`). The **Dead** filter lists every dead delivery of the agent.
+
+- **Replay** on a delivery sends it again (a delivered one too).
+- **Replay all dead** on an endpoint re-sends its dead deliveries, the latest 500 at a time.
+- **Disable** pauses an endpoint: its events are still queued, and sent once you **Enable** it again.
+
+## Where a receiver may live
+
+A receiver must be reachable from AgentOS over HTTPS on a public or private address. Loopback and link-local addresses, and AgentOS's own internal networks, are refused, both when you save the endpoint and again before every delivery. Your installation may refuse other internal ranges too; a refused delivery shows `blocked: …` with the reason.

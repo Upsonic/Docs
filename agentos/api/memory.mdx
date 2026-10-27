@@ -1,0 +1,138 @@
+---
+title: "Memory API"
+sidebarTitle: "Memory"
+description: "Read, search and audit what agents remember, and erase it — for one fact, a folder, or an end user."
+---
+
+Every agent has its own memory: short facts its code saves under paths it chooses, kept across runs with every earlier version. Agents write their memory with their run token (see [Memory](/agentos/build/memory)); this API is for **people and your systems**: browse and search it, see who wrote what, and delete or erase it — including everything about one end user, for privacy requests.
+
+Reading needs any role in the environment and shows **every** fact of the agent, end users' included. Deleting and erasing need the **admin** role. Deletes are for good: there is no undo and no soft delete.
+
+## The fact object
+
+```json
+{"id": "m_812", "path": "companies/6120095417/", "text": "Ayşe Yılmaz is the sole director.",
+ "tags": ["director"], "confidence": 0.95, "version": 2,
+ "created_at": "2026-10-20T08:15:02Z", "updated_at": "2026-10-24T13:40:11Z",
+ "source": {"run_id": "r_502", "written_by": "code", "person": null}}
+```
+
+<ResponseField name="path" type="string">The folder it is under, with one trailing slash (`companies/77/`). The root is `""`. An end user's facts are under `users/<user>/`.</ResponseField>
+<ResponseField name="version" type="integer">Goes up each time the fact is rewritten; earlier versions are kept.</ResponseField>
+<ResponseField name="source" type="object">
+  Who wrote this version: `run_id` (the run, or `null` for a panel edit), `written_by` (`code`, `model` for a model's tool call, or `person` for a panel edit) and `person` (who edited it in the panel).
+</ResponseField>
+
+## List or search facts
+
+`GET /v0/envs/{env}/agents/{agent}/memory/facts`
+
+<CodeGroup>
+```bash Browse a folder
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" \
+  "$AGENTOS/v0/envs/default/agents/kyb-onboarding/memory/facts?path=companies/"
+# {"facts": [...], "next": "m_790"}
+```
+
+```bash Search
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" \
+  "$AGENTOS/v0/envs/default/agents/kyb-onboarding/memory/facts?path=companies/&q=director"
+# {"facts": [{..., "score": 0.61}, ...], "next": null}
+```
+</CodeGroup>
+
+<ParamField query="path" type="string">Only facts under this path. A path matches whole segments: `companies/7/` doesn't match `companies/77/`. Write it as stored (`users/cust-123/`, not `{user}`).</ParamField>
+<ParamField query="q" type="string">
+  Search: the best matches first, each with a `score`. Full-text, case-insensitive, Turkish and English alike; every word counts and matches as a prefix (`direct` finds `directors`).
+</ParamField>
+<ParamField query="tags" type="string">Comma-separated: only facts with every one of these tags.</ParamField>
+<ParamField query="limit" type="integer" default="50">1–200.</ParamField>
+<ParamField query="before" type="string">The previous page's `next`. Ignored when `q` is given (a search is one page).</ParamField>
+
+Without `q` the facts are newest first, and `next` is the value to pass as `before` for the next page (`null` on the last).
+
+## Get a fact
+
+`GET /v0/envs/{env}/agents/{agent}/memory/facts/{fact_id}`
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" \
+  $AGENTOS/v0/envs/default/agents/kyb-onboarding/memory/facts/m_812
+```
+
+## Get a fact's versions
+
+`GET /v0/envs/{env}/agents/{agent}/memory/facts/{fact_id}/versions`
+
+Every version, newest first, each with who wrote it and when.
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" \
+  $AGENTOS/v0/envs/default/agents/kyb-onboarding/memory/facts/m_812/versions
+# {"versions": [{"id": "m_812", "version": 2, "path": "...", "text": "...", "source": {...}, ...}, ...]}
+```
+
+## Delete a fact
+
+`DELETE /v0/envs/{env}/agents/{agent}/memory/facts/{fact_id}`
+
+Deletes the fact and all its versions. Admins only.
+
+```bash
+curl -sS -X DELETE -H "Authorization: Bearer $AGENTOS_API_KEY" \
+  $AGENTOS/v0/envs/default/agents/kyb-onboarding/memory/facts/m_812
+# 204
+```
+
+## Erase a path
+
+`POST /v0/envs/{env}/agents/{agent}/memory/erase`
+
+Erases every fact, with every version, under a path of one agent's memory. `{"path": ""}` erases the agent's whole memory. Admins only.
+
+```bash
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"path": "companies/6120095417/"}' \
+  $AGENTOS/v0/envs/default/agents/kyb-onboarding/memory/erase
+```
+
+```json
+{"receipt_id": "er_…", "scope": "/default/agents/kyb-onboarding/companies/6120095417/",
+ "facts": 3, "versions": 5, "erased_at": "2026-10-27T10:02:13Z", "erased_by": "privacy-bot"}
+```
+
+An invalid path is a `422` and erases nothing — never the root.
+
+## Erase an end user
+
+`POST /v0/envs/{env}/memory/erase-user`
+
+Erases `users/<user>/` in the memory of **every agent** of the environment: what agents remembered about one end user. Use it to answer a deletion request. Admins only.
+
+```bash
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"user": "cust-123"}' $AGENTOS/v0/envs/default/memory/erase-user
+```
+
+```json
+{"receipt_id": "er_…", "scope": "/default/agents/*/users/cust-123/", "facts": 4, "versions": 6,
+ "erased_at": "2026-10-27T10:05:40Z", "erased_by": "privacy-bot"}
+```
+
+<Warning>
+This erases the end user's **memory** only. Their runs' input and output, run and session records, and agents' state values are not touched.
+</Warning>
+
+## Receipts
+
+Every erase answers a **receipt**: what was erased (`scope`), how many facts and versions it removed, when, and by whom. The receipt is also written to the environment's [audit log](/agentos/platform/audit-log) — with the counts, never the facts' text, and an end user's id only as a fingerprint — and listed on the panel's **Govern → Memory** page.
+
+An erase locks the facts before it removes them, so a write that was in progress is waited for and its version removed too.
+
+## Errors
+
+| Status | Code | When |
+|---|---|---|
+| `403` | `forbidden` | No role in the environment, or deleting or erasing without the admin role |
+| `404` | `not_found` | No such agent or fact |
+| `422` | `invalid_request` | An invalid path, tag, user or query parameter |

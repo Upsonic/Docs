@@ -1,0 +1,298 @@
+---
+title: "MCP servers as tools"
+sidebarTitle: "MCP"
+description: "Give an AgentOS agent the tools of MCP servers, bundled in its container or remote, with a person's approval before risky calls."
+---
+
+An agent on AgentOS can use any MCP server's tools. The agent runs the MCP client itself, the model is called through the AgentOS gateway, and each tool the model picks is called through MCP. So every model call is checked by the environment's guardrails and recorded on the run, a remote MCP server is reachable only if the agent's network rules allow it, and a risky tool can wait for a person's approval first.
+
+<Info>
+Tested with the MCP Python SDK (`mcp`) 2.3.0 and Python 3.12, using the [conformance kit](/agentos/build/conformance): 24 checks passed, including approve, edit and reject of a tool call. The remote part was also run against the real DeepWiki server from a machine with internet access.
+</Info>
+
+## The bundle
+
+The example has two capabilities:
+
+- **`support`** uses a small MCP server bundled in the container. The agent starts it as a subprocess and talks to it over stdio. Its `cancel_order` tool waits for a person.
+- **`ask_docs`** uses a remote MCP server over Streamable HTTP: [DeepWiki](https://mcp.deepwiki.com), which answers questions about public GitHub repositories. Its host is in `network.allow`.
+
+<CodeGroup>
+```python app.py
+"""MCP servers as tools on AgentOS: the model runs through the gateway, the MCP tools run inside the agent."""
+
+import json
+import sys
+from contextlib import asynccontextmanager
+
+from mcp import Client, StdioServerParameters
+
+import agentos
+
+ORDERS_SERVER = StdioServerParameters(command=sys.executable, args=["orders_server.py"])
+NEEDS_APPROVAL = {"cancel_order"}   # tools a person must approve before they run
+MAX_TURNS = 10
+
+
+@asynccontextmanager
+async def mcp_client(server):
+    """An MCP client that lets errors through as they are. The client's task group wraps whatever is raised in
+    its block (the SDK's ask, a Fail, a guardrail block) in an ExceptionGroup, which the SDK can't read."""
+    try:
+        async with Client(server) as client:
+            yield client
+    except BaseExceptionGroup as group:
+        error = group
+        while isinstance(error, BaseExceptionGroup) and len(error.exceptions) == 1:
+            error = error.exceptions[0]
+        raise error from None
+
+
+def definitions(tools) -> list[dict]:
+    """MCP tools as OpenAI function tools for the gateway."""
+    return [{"type": "function", "function": {"name": t.name, "description": t.description or "",
+                                              "parameters": t.input_schema}} for t in tools]
+
+
+def as_text(result) -> str:
+    if result.structured_content is not None:
+        return json.dumps(result.structured_content)
+    return "\n".join(getattr(part, "text", "") for part in result.content)
+
+
+async def tool_loop(inv: agentos.Invocation, mcp: Client, saved: dict) -> str:
+    """Model → MCP tool calls → model, until the model answers. `saved` (messages and the tool calls not run yet)
+    is kept in run state when the loop stops to ask a person, so the resume continues where it stopped."""
+    tools = definitions((await mcp.list_tools()).tools)
+    messages, pending = saved["messages"], saved["pending"]
+    decision = inv.resume                       # on a resume: the decision about the first pending call
+    for _ in range(MAX_TURNS):
+        while pending:
+            call = pending[0]
+            name, args = call["function"]["name"], json.loads(call["function"]["arguments"] or "{}")
+            if name in NEEDS_APPROVAL:
+                if decision is None:
+                    await inv.state.run.aput("conversation", {"messages": messages, "pending": pending})
+                    await inv.aask(f"Run {name}?", [{"id": call["id"], "title": name, "data": args}],
+                                   actions=["approve", "edit", "reject"])   # the run waits for a person here
+                item = decision.decided_items[0] if decision.decided_items else None
+                decision = None
+                if item is None or item.action == "reject":
+                    result = "A person declined this tool call."
+                else:
+                    result = as_text(await mcp.call_tool(name, item.data))   # an edit's arguments win
+            else:
+                result = as_text(await mcp.call_tool(name, args))
+            messages.append({"role": "tool", "tool_call_id": call["id"], "content": result})
+            pending.pop(0)
+
+        message = (await inv.llm.achat(messages, tools=tools))["choices"][0]["message"]
+        messages.append({"role": "assistant", "content": message.get("content"),
+                         **({"tool_calls": message["tool_calls"]} if message.get("tool_calls") else {})})
+        pending = list(message.get("tool_calls") or [])
+        if not pending:
+            return message.get("content") or ""
+    raise agentos.Fail("too_many_turns", f"no answer after {MAX_TURNS} model turns")
+
+
+async def support(inv: agentos.Invocation):
+    """A stdio MCP server bundled in the container."""
+    if inv.resume is None:
+        saved = {"messages": [{"role": "system", "content": "You help customers with their orders."},
+                              {"role": "user", "content": inv.input["message"]}], "pending": []}
+    else:
+        saved = await inv.state.run.aget("conversation")
+    async with mcp_client(ORDERS_SERVER) as mcp:
+        return {"answer": await tool_loop(inv, mcp, saved)}
+
+
+async def ask_docs(inv: agentos.Invocation):
+    """A remote MCP server over Streamable HTTP. Its host must be in network.allow (agentos.yaml)."""
+    saved = {"messages": [{"role": "system", "content": "Answer with the DeepWiki tools. Name the repository."},
+                          {"role": "user", "content": inv.input["question"]}], "pending": []}
+    async with mcp_client(inv.config["params"]["docs_mcp_url"]) as mcp:
+        return {"answer": await tool_loop(inv, mcp, saved)}
+
+
+if __name__ == "__main__":
+    agentos.serve({"support": support, "ask_docs": ask_docs}, port=8080)
+```
+
+```python orders_server.py
+"""A small MCP server bundled with the agent. The agent starts it as a subprocess and talks to it over stdio."""
+
+from mcp.server.mcpserver import MCPServer
+
+server = MCPServer("orders")
+
+ORDERS = {"A-1001": {"status": "shipped", "total": "84.90"}, "A-1002": {"status": "processing", "total": "250.00"}}
+
+
+@server.tool()
+def lookup_order(order_id: str) -> dict:
+    """Look up an order's status and total."""
+    return {"order_id": order_id, **ORDERS.get(order_id, {"status": "not found"})}
+
+
+@server.tool()
+def cancel_order(order_id: str, reason: str) -> dict:
+    """Cancel an order. Irreversible."""
+    if order_id not in ORDERS:
+        return {"order_id": order_id, "cancelled": False, "error": "not found"}
+    ORDERS[order_id]["status"] = "cancelled"
+    return {"order_id": order_id, "cancelled": True, "reason": reason}
+
+
+if __name__ == "__main__":
+    server.run()  # stdio
+```
+
+```yaml agentos.yaml
+name: mcp-support
+title: MCP support agent
+description: Uses MCP servers as tools - one bundled in the container, one remote - and asks a person before a risky tool call.
+runtime: stateless
+port: 8080
+capabilities:
+  support:
+    description: Answers order questions with the bundled orders MCP server; cancelling an order needs a person's approval.
+    input:
+      type: object
+      properties: {message: {type: string}}
+      required: [message]
+    output:
+      type: object
+      properties: {answer: {type: string}}
+      required: [answer]
+    timeout: 5m
+  ask_docs:
+    description: Answers questions about a GitHub repository with the remote DeepWiki MCP server.
+    input:
+      type: object
+      properties: {question: {type: string}}
+      required: [question]
+    output:
+      type: object
+      properties: {answer: {type: string}}
+      required: [answer]
+    timeout: 5m
+config:
+  models: {main: openai/gpt-4o-mini}
+  params: {docs_mcp_url: "https://mcp.deepwiki.com/mcp"}
+network:
+  allow: [mcp.deepwiki.com]
+```
+
+```dockerfile Dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1
+COPY requirements.txt .
+COPY vendor/ vendor/
+RUN pip install --no-cache-dir -r requirements.txt vendor/*.whl
+COPY app.py orders_server.py ./
+USER nobody
+EXPOSE 8080
+CMD ["python", "app.py"]
+```
+
+```text requirements.txt
+mcp==2.3.0
+```
+</CodeGroup>
+
+The SDK wheel goes into `vendor/`, as described in [SDKs](/agentos/build/sdks#putting-the-sdk-in-your-bundle).
+
+## How it works
+
+<Steps>
+  <Step title="List the MCP tools">
+    The agent connects to the MCP server and turns each tool's `input_schema` into an OpenAI function tool.
+  </Step>
+  <Step title="Call the model through the gateway">
+    `inv.llm.achat(messages, tools=…)` sends the conversation and the tools to the model in `config.models.main`, with the run token.
+  </Step>
+  <Step title="Run the tools the model picks">
+    Each tool call goes to the MCP server and its result goes back to the model, until the model answers in text.
+  </Step>
+</Steps>
+
+## Approve a tool call before it runs
+
+Tools in `NEEDS_APPROVAL` don't run until a person decides. When the model asks for one, the agent saves the conversation and the tool calls not run yet in [run state](/agentos/build/state-and-sessions), then asks with the tool's arguments as the item's data:
+
+- **approve** runs the tool with the model's arguments,
+- **edit** runs it with the arguments the reviewer changed,
+- **reject** doesn't run it. The model is told that a person declined it and answers accordingly.
+
+The resume loads the saved conversation, runs the tool (or not), and continues the loop. Nothing before the decision runs again, so no tool runs twice.
+
+<Warning>
+**Use `mcp_client()` from the example, not a bare `Client`.** The MCP client's `async with` block wraps anything raised inside it in an `ExceptionGroup`: the SDK's `ask()`, an `agentos.Fail` or a guardrail block. The SDK can't read the group, so the agent closes the connection without answering and the run fails with `agent_interrupted`, even after a successful ask. `mcp_client()` in the example unwraps it.
+</Warning>
+
+## Remote MCP servers and network access
+
+Agents reach nothing outside the platform by default. To use a remote MCP server, add its host to `network.allow` in `agentos.yaml`, or ask an admin to allow it on the agent's Guardrails tab (see [Network access](/agentos/build/network-access)). The MCP client honours the egress proxy settings the container gets, so no code is needed for that.
+
+When the host isn't allowed or the server is down, the connection fails and the run fails with the connection error. If an MCP server needs a token, keep it as a [secret](/agentos/build/secrets), not in `params`, and send it in the MCP client's HTTP headers. In the Python SDK that means an `httpx2.AsyncClient` with the header, passed to the Streamable HTTP transport as `http_client`.
+
+<Note>
+Run MCP tools in the agent, as here, not as provider-hosted tools (Anthropic `mcp_servers`, the Responses API's `mcp` tool). When a guardrail blocks or masks at `tool_call` or `tool_result`, the gateway refuses requests that ask the provider to call tools itself, because it couldn't check the call or its result. See [Guardrails](/agentos/platform/guardrails).
+</Note>
+
+## Run it
+
+```bash
+# a tool call that needs approval: the run is held
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/mcp-support/capabilities/support/runs?wait=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"message": "Please cancel order A-1002, I ordered it twice."}}'
+# 200 {"run_id": "r_51", "status": "held", "hold": {"hold_id": "h_20", "intent": "Run cancel_order?", ...}, ...}
+
+# the remote MCP server
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/mcp-support/capabilities/ask_docs/runs?wait=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"question": "Which transports does modelcontextprotocol/python-sdk support?"}}'
+```
+
+## Testing it with the conformance kit
+
+The kit's mock model calls a tool when the message says `call:<tool> {arguments}`, so a `conformance.yaml` can drive the tool loop and the approval without a real model. The kit's container has no internet, so the remote capability is expected to fail there:
+
+```yaml conformance.yaml
+# The mock model calls a tool when the message says call:<tool> {arguments}.
+cases:
+  - capability: support
+    name: lookup
+    input: {message: 'call:lookup_order {"order_id": "A-1001"}'}
+  - capability: support
+    name: cancel-approved
+    input: {message: 'call:cancel_order {"order_id": "A-1002", "reason": "duplicate"}'}
+    expect: suspended
+  - capability: support
+    name: cancel-edited
+    input: {message: 'call:cancel_order {"order_id": "A-1002", "reason": "duplicate"}'}
+    expect: suspended
+    decision: [{id: call_1, action: edit, data: {order_id: A-1001, reason: wrong order}}]
+  - capability: support
+    name: cancel-rejected
+    input: {message: 'call:cancel_order {"order_id": "A-1002", "reason": "duplicate"}'}
+    expect: suspended
+    decision: [{id: call_1, action: reject}]
+  - capability: ask_docs
+    name: ask-docs-offline
+    input: {question: "What transports does the MCP Python SDK support?"}
+    expect: failed     # the kit's container has no internet, so the remote MCP server can't be reached
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Network access" icon="globe" href="/agentos/build/network-access">
+    Which hosts an agent may reach, and how to allow more.
+  </Card>
+  <Card title="Framework examples" icon="cubes" href="/agentos/frameworks/overview">
+    The same patterns in other frameworks.
+  </Card>
+</CardGroup>

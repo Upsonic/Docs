@@ -1,0 +1,67 @@
+---
+title: "Child runs"
+description: "Split work into runs of your agent's other capabilities."
+---
+
+A run can start **child runs**: runs of a capability of the same agent, on the same version. Use them to fan out work (one child per document), or to make independent decisions independent — each child can [ask a person](/agentos/build/human-approvals) on its own, while one run can only have one open hold at a time.
+
+## Start a child run
+
+```bash
+POST {api_url}/v0/capabilities/{capability}/runs
+x-agentos-run-token: <context.token>
+Idempotency-Key: r_501:split:0
+
+{"input": {"document": "f_9"}, "metadata": {"page": 1}}
+```
+
+It answers `202 {"run_id": "r_502", "parent_run_id": "r_501", "status": "queued"}`. The input is checked against the capability's input schema, as for any run.
+
+- The child runs on the parent's version, with the parent's caller.
+- The parent doesn't wait for it. Follow it, or have the child do its part on its own.
+- The child has no session, but keeps the parent's end user (`user`).
+- A child can only be started while the invocation is running (`401` once it has answered).
+- The request takes no query parameters (`422`).
+
+## The Idempotency-Key
+
+An `Idempotency-Key` is **required** and must be unique per parent run. Derive it from `run_id` and a stable step name, such as `r_501:split:0`.
+
+<Warning>
+Never derive it from `invocation.id`. That changes on every resume, so a resumed run would start its children again.
+</Warning>
+
+Code before an ask runs again on the resume; with a stable key, the same request returns the child that already exists.
+
+## With the SDKs
+
+The SDKs build the key for you from `run_id` and the `key` you pass (`<run_id>:<key>`), so a resumed run gets the same child:
+
+<CodeGroup>
+```python Python
+for n, file_id in enumerate(inv.input["files"]):
+    inv.start("read_page", {"file_id": file_id}, key=f"split:{n}")
+```
+
+```ts TypeScript
+for (const [n, fileId] of inv.input.files.entries()) {
+  await inv.start("read_page", { file_id: fileId }, { key: `split:${n}` });
+}
+```
+</CodeGroup>
+
+## Limits
+
+| Limit | Value | Error |
+|---|---|---|
+| Depth | 5 levels | `409 too_deep` |
+| Children of one run | 100 | `too_many_children` |
+| Runs in one run tree | 1,000 | `too_many_runs` |
+
+## Cancelling
+
+Cancelling a run cancels its unfinished child runs at every depth too — queued, running or held — each with a `run.cancelled` event saying `because: "parent r_N was cancelled"`. A parent that completes or fails leaves its children running.
+
+## In experiments
+
+Child runs started from an [experiment run](/agentos/build/agent-contract#experiment-runs) get the same `config` override and `context.eval`, and share the item's temporary memory.

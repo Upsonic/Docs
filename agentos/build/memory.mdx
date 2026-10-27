@@ -1,0 +1,110 @@
+---
+title: "Memory"
+description: "Short facts an agent keeps across runs, organised in folders, with a private folder per end user."
+---
+
+Every agent has its own **memory**: short facts it saves under paths it chooses, kept across runs, with every earlier version of each fact. There is nothing to configure (a `memory:` key in `agentos.yaml` is refused) and nothing is written for you: your code, or the model through [memory tools](#memory-tools-for-the-model), decides what to remember.
+
+People can browse, edit and erase an agent's memory in the panel. See [Memory in the panel](/agentos/platform/memory).
+
+## Facts and paths
+
+A fact looks like this:
+
+```json
+{"id": "m_812", "path": "companies/6120095417/", "text": "Ayşe Yılmaz is the sole director.",
+ "tags": ["director"], "confidence": 0.95, "version": 2,
+ "created_at": "…", "updated_at": "…", "source": {"run_id": "r_502", "written_by": "code"}}
+```
+
+- **Paths** are folders relative to the agent's memory: `/`-separated segments of 1–100 letters, digits and `. _ : @ - { }`, at most 300 characters, stored with one trailing slash (`companies/77/`). The root is `""` (also written `"/"`). A path filter matches whole segments: `companies/7/` doesn't match `companies/77/`.
+- **`text`** is 1–4000 characters. **`tags`**: at most 20, each 1–50 of `[A-Za-z0-9._:-]`; filtering by tags needs every tag given. **`confidence`** is 0 to 1.
+- **`written_by`** is `code` (the default) or `model` (a tool call), and shows in the panel's history.
+
+### A folder per end user
+
+`users/{user}/` is the run's [end user](/agentos/build/state-and-sessions#end-users)'s own folder: the platform fills in `{user}` from the run's session. A run reaches only its own user's folder:
+
+- `{user}` is allowed only as `users/{user}/`; anywhere else is 422.
+- Another user's folder is 403 `other_user`, and their facts answer 404.
+- A run without an end user gets 409 `no_user` for `users/{user}/`.
+- A fact can't be moved into, out of or between users' folders, so erasing an end user removes all of theirs.
+
+## The API
+
+All calls take the run token as `x-agentos-run-token`. Writes need the invocation to be running (401 otherwise).
+
+| Call | Body / query | Answer |
+|---|---|---|
+| `POST {api_url}/v0/memory/facts` | `{path, text, tags?, confidence?, replaces?, key?, written_by?}` | 201 the fact; 200 when the same `key` was already written in this run |
+| `POST {api_url}/v0/memory/search` | `{query, path?, tags?, k?}` | `{"facts": [...]}`, best first, each with a `score` |
+| `GET {api_url}/v0/memory/facts` | `?path=&tags=a,b&limit=&before=` | `{"facts": [...], "next": "<fact id>" \| null}`, newest first |
+| `GET {api_url}/v0/memory/facts/{id}` | | the fact; 404 |
+| `GET {api_url}/v0/memory/facts/{id}/versions` | | `{"versions": [...]}`, newest first |
+| `DELETE {api_url}/v0/memory/facts/{id}` | | 204: the fact and all its versions |
+
+- **`replaces: <fact id>`** writes a new version of that fact: same id, `version + 1`, moved to `path`. Tags and confidence you leave out are kept.
+- **`key`** (1–200 of `[A-Za-z0-9._:-]`) makes a write idempotent per run: the same key in the same run answers what was written the first time. Use it so a run resumed after an approval doesn't save twice.
+- **Search** is full-text: every word OR-ed and prefix-matched (`direct` finds `directors`), case-insensitive, Turkish and English alike, no stemming. Ranked, newest first on ties. An empty query lists the newest (`score` is null). `k` is 1–50 (default 5).
+- `limit` is 1–200 (default 50). A request body is at most 64 KiB (413). An agent holds at most 100,000 facts (409 `memory_full`).
+
+## With the SDKs
+
+`inv.memory.at(path)` gives a folder with `search`, `list` and `remember`. `inv.memory` itself has `search`, `list`, `get`, `versions` and `forget` over the whole memory.
+
+<CodeGroup>
+```python Python
+def notes(inv: agentos.Invocation):
+    mem = inv.memory.at("users/{user}/" if inv.user else "notes/")
+    if inv.input.get("note"):
+        mem.remember(inv.input["note"], tags=["note"], key="note")  # key: a resumed run saves once
+    found = mem.search(inv.input["query"], k=5)
+    return {"found": [fact.text for fact in found]}
+```
+
+```ts TypeScript
+async notes(inv) {
+  const mem = inv.memory.at(inv.user ? "users/{user}/" : "notes/");
+  if (inv.input.note) await mem.remember(inv.input.note, { tags: ["note"], key: "note" });
+  const found = await mem.search(inv.input.query, { k: 5 });
+  return { found: found.map((fact) => fact.text) };
+},
+```
+</CodeGroup>
+
+A `Fact` has `id`, `path`, `text`, `tags`, `confidence`, `version`, `created_at` / `createdAt`, `updated_at`, `run_id` / `runId`, `written_by` / `writtenBy` and `score`. Refusals raise as usual: `NotFound`, `Forbidden` (`other_user`), `Conflict` (`no_user`, `memory_full`), `InvalidRequest`.
+
+### Memory in the prompt
+
+`inv.memory.context(query, paths=[...], k=8)` builds a `<memory>…</memory>` block for your prompt: under each path, the facts best matching `query` (the newest when it is empty) as `- text (date, id)` lines.
+
+```python
+system = "You are a support agent.\n\n" + inv.memory.context(question, paths=["users/{user}/"])
+```
+
+- `paths` is a list. Left out, it is the whole memory. A string or an empty list raises instead of quietly widening to everything.
+- It returns `""` when nothing matches. A fact's text can't close the block early: `<memory` inside a fact is escaped.
+
+### Memory tools for the model
+
+`inv.memory.tools(paths=[...])` gives three OpenAI function tools the model can call: `search_memory {query, k?}`, `save_memory {text, tags?, replaces?}` and `forget_memory {id}`. With several paths they also take a `path` argument restricted to exactly those paths, so the model never names a user or another folder.
+
+```python
+tools = inv.memory.tools(paths=["users/{user}/"])
+messages = [{"role": "user", "content": inv.input["message"]}]
+while True:
+    message = inv.llm.chat(messages, tools=tools.definitions)["choices"][0]["message"]
+    messages.append(message)
+    if not message.get("tool_calls"):
+        return {"reply": message["content"]}
+    for call in message["tool_calls"]:
+        messages.append(tools.call(call))   # a {"role": "tool", ...} message
+```
+
+- Saves made through the tools are recorded as `written_by: "model"`. `forget_memory` and `replaces` only reach facts under the given paths.
+- A refusal comes back to the model as a short `error: <code>: <message>` text, never an exception. Only `InvocationEnded` raises (your code used the invocation after it answered).
+- Framework versions: `agentos.adapters.openai_agents.memory_tools(inv, paths=…)` gives OpenAI Agents SDK `FunctionTool`s, and `memoryTools(inv, {paths})` from `@agentos/sdk/ai-sdk` gives Vercel AI SDK tools. See [Frameworks](/agentos/build/frameworks).
+
+## Memory in evals
+
+An [experiment](/agentos/platform/evals) run gets a **temporary memory of its own**, empty at the start, shared with its child runs and deleted when the item's run ends. The same calls work unchanged, but they never read or change the agent's real memory, and people never see those facts.

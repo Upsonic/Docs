@@ -1,0 +1,116 @@
+---
+title: "Streaming answers"
+description: "Answer a run with a stream that reaches your caller as it is written, and report the outcome."
+---
+
+An agent can answer `POST /invoke` with a stream instead of JSON: a Vercel AI SDK UI message stream, AG-UI, server-sent events, NDJSON, plain text — any format. A caller who started the run with `?passthrough=true` receives it byte for byte as you write it, so a chat UI can read your agent's own stream format with no mapping in between.
+
+## How AgentOS tells JSON from a stream
+
+- An answer whose `Content-Type` is `application/json` (or that has none) is the [contract's JSON](/agentos/build/agent-contract#answering).
+- Any other `Content-Type` is a stream. AgentOS doesn't read into it; it relays it to a passthrough caller.
+
+Because AgentOS doesn't read your stream, **your agent reports the run's outcome itself**, before the stream ends.
+
+## Report the result
+
+Post the same JSON you would have answered, with the run token:
+
+```bash
+POST {api_url}/v0/runs/{run_id}/result
+x-agentos-run-token: <context.token>
+
+{"status": "completed", "output": {"text": "..."}}
+```
+
+It answers `202 {"status": "accepted"}`. The body is one of:
+
+- `{"status": "completed", "output": {...}}` — the output is checked against the capability's `output` schema at once; a mismatch answers `422 invalid_output` with `errors`, so you can correct it and post again;
+- `{"status": "failed", "error": {"code": "...", "message": "..."}}`;
+- `{"status": "suspended", "hold_id": "h_7"}` — after [asking a person](#asking-a-person-mid-stream).
+
+A result is at most 1 MiB and is accepted once per invocation: the same result again is accepted too, a different one is `409 result_already_reported`. It is scrubbed of secrets like a JSON answer, and recorded when the stream ends.
+
+<Warning>
+Post the result **before your stream ends**, or at the latest within 3 seconds of its end. A later one is refused with `401`: the invocation's token has ended.
+</Warning>
+
+## With the SDKs
+
+Return a stream and set the output; the SDK posts the result for you before the stream ends:
+
+<CodeGroup>
+```python Python
+import agentos
+
+def tell(inv: agentos.Invocation):
+    def pieces():
+        text = ""
+        for delta in inv.llm.stream([{"role": "user", "content": inv.input["topic"]}]):
+            text += delta
+            yield delta
+        inv.set_output({"text": text})          # reported as the run's output
+
+    return agentos.Stream(pieces(), "text/plain; charset=utf-8")
+
+agentos.serve({"tell": tell}, port=8080)
+```
+
+```ts TypeScript
+import { serve, stream } from "@agentos/sdk";
+
+await serve({
+  tell(inv) {
+    return stream((async function* () {
+      let text = "";
+      for await (const delta of inv.llm.stream([{ role: "user", content: inv.input.topic }])) {
+        text += delta;
+        yield delta;
+      }
+      inv.setOutput({ text });                   // reported as the run's output
+    })(), { contentType: "text/plain; charset=utf-8" });
+  },
+}, { port: 8080 });
+```
+</CodeGroup>
+
+If the platform refuses the result (an output that doesn't match the schema), the SDK reports `failed` instead, so a run never completes silently with a bad output. A caller that goes away ends the stream and fails the run.
+
+## Without a result
+
+If no result arrives, AgentOS waits those 3 seconds after the stream ends, then decides:
+
+- A `2xx` body of at most 1 MiB that is the contract's JSON (`{"status": "completed" | "failed" | "suspended", ...}`) but sent with another `Content-Type` — some frameworks send JSON as `text/html` — is read as the contract, at once.
+- A stream that ended cleanly with a `2xx` status **holds** the run if this invocation asked a person, and otherwise **completes** it with `output: {"streamed": true, "bytes": ..., "content_type": "..."}`. That output isn't checked against the output schema, and the run page marks the run "streamed".
+- Anything else fails the run with `agent_interrupted`, a non-`2xx` error page included.
+
+## Limits
+
+- A stream may pause up to the capability's `timeout` between writes.
+- A stream may be at most 10 MiB; more fails the run with `invalid_response`.
+
+## Asking a person mid-stream
+
+To [ask a person](/agentos/build/human-approvals) in the middle of a stream: create the hold, end your stream the way your format ends it, and report `{"status": "suspended", "hold_id": "h_7"}`. The resume that follows the decision isn't streamed to anyone; answer it with JSON, or with a stream and a result, and callers read its output from the run.
+
+## Never stream secrets
+
+<Warning>
+What you stream reaches the caller exactly as you wrote it. Unlike the output, error and events AgentOS stores, **a stream is not scrubbed** of secrets. Never write `context.token`, a secret or the invoke body into it.
+</Warning>
+
+## Reading the stream as a caller
+
+Start the run with `?passthrough=true`. The response is exactly what the agent answered — its status code, `Content-Type`, and body as it arrives — plus an `X-AgentOS-Run-Id` header:
+
+```bash
+curl -sS -N -D - -X POST "$AGENTOS/v0/envs/default/agents/stream-agent/capabilities/chat/runs?passthrough=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"message": "What is AgentOS?"}}'
+```
+
+A chat app's backend calls this with its API key and hands the response to the browser unchanged, so a UI built on the AI SDK's `useChat`, for example, reads it directly. Never put an API key in a browser. Closing the connection doesn't stop the run; cancel it. After the stream, `GET` the run for its outcome. See the [Runs API](/agentos/api/runs) for headers, replays and limits.
+
+<Tip>
+`examples/stream-agent` streams a model's answer as a Vercel AI SDK UI message stream, asks a person mid-stream, and turns a guardrail block into a clean `failed` run. See [Examples](/agentos/build/examples).
+</Tip>

@@ -1,0 +1,76 @@
+---
+title: "Prompts"
+description: "See how an agent's prompts changed across versions, try an edit on an eval, and deploy it without a rebuild."
+---
+
+The agent's **Prompts** tab is where prompt changes are made with evidence. For each prompt the agent declares, it shows the history across versions, what changed between any two, and how each one scored. You can edit a prompt, try the edit on an eval, see which cases it fixed and which it broke, and deploy it as a new version on the same image.
+
+## Declare your prompts
+
+The tab works with prompts declared in `agentos.yaml` under `config.prompts` and read from the run's config, not with prompts written into the code:
+
+```yaml agentos.yaml
+config:
+  prompts:
+    system: |
+      You are a careful assistant that reads invoices.
+      Answer only with the fields you can read.
+```
+
+```python
+system_prompt = inv.config["prompts"]["system"]
+```
+
+An agent that declares no prompts shows a short note saying how to declare them. The next version you deploy then appears on the tab. See [agentos.yaml](/agentos/build/agentos-yaml).
+
+## History
+
+On the left, **History** lists the chosen prompt, newest first. If the agent declares several prompts, chips at the top switch between them. The list has two kinds of entries:
+
+- **Versions.** Consecutive versions with the same text are grouped into one row (`v3 – v5`). Each row is marked **live**, **candidate** or **previous**.
+- **Edits tried.** Every edit you tried on an eval, marked **try**, with who tried it, when, and its pass rate (or `running`, `failed`, `cancelled`).
+
+## Compare any two
+
+Click an entry to show it. **compared with** picks any other entry, and the text becomes a diff: added and removed lines, with the changed words of an edited line marked. Long unchanged stretches are folded. Switch between inline and side-by-side views.
+
+By default an edit is compared with the version it was tried on, and a version with the text before it.
+
+## Edit and try it
+
+<Steps>
+  <Step title="Edit">
+    Click **Edit** on any entry, the live one or an older text. A box opens with that text, and the diff below it follows your typing. Nothing is saved yet.
+  </Step>
+  <Step title="Try it">
+    Pick the eval to try it on and click **Try it**. AgentOS runs an experiment of the **live version** with your text as a temporary override of that prompt. If that eval has never scored the live version as it is, it scores it too, so there is something to compare with. The tab refreshes itself while the experiment runs.
+
+    To try an edit the agent needs an eval. If it has none, **Set up an eval** takes you there. See [Evals](/agentos/platform/evals).
+  </Step>
+  <Step title="Read the result">
+    Under the text, one line says how the entry scored: the pass rate, how many cases passed, the change in points against the entry it is compared with, and how many cases it **fixed** and **broke**. Open it to see:
+
+    - every score before and after, with the change,
+    - the cases, filterable by **All**, **Fixed** and **Broke**, listed as on the experiment page.
+  </Step>
+</Steps>
+
+## Side by side
+
+When an eval has scored two or more prompts, **Side by side** shows up to eight of them as columns: a row for "passed every score", then a row per score. Each cell is coloured against the live prompt (or the oldest column). Click a column to show that entry.
+
+## Deploy as a new version
+
+Environment admins can deploy any entry that isn't live. The button says what will happen:
+
+| Entry | Button | What happens |
+|---|---|---|
+| An edit you tried | **Deploy as vN** | A new version with the code of the version the edit ran on, and this prompt. |
+| An older text | **Deploy as vN** | A new version with the live version's code, and this prompt. |
+| A candidate version | **Deploy vN** | That candidate becomes the live version. |
+
+There is no rebuild: the new version uses the same image with the prompt written into its config, and it is promoted at once. The live version stays live until the new one is healthy, and you can roll back from the **Deploy** tab as with any deploy. While another deploy of the agent is running, the button waits.
+
+<Note>
+Members can edit and try prompts. Deploying needs the admin role in the environment. A prompt deploy is recorded in the [audit log](/agentos/platform/audit-log) as a config change and a promote.
+</Note>

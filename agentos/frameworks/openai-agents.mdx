@@ -1,0 +1,203 @@
+---
+title: "OpenAI Agents SDK"
+description: "Run an OpenAI Agents SDK agent on AgentOS: models through the gateway, and a tool with needs_approval=True paused for a person."
+---
+
+This example is a support agent built with the [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/). It looks orders up with one tool, and its `refund` tool is declared with `needs_approval=True`. When the model calls it, the run stops, AgentOS asks a person, and the run continues where it stopped with their decision, in whichever container answers the resume.
+
+The SDK's `openai_agents` adapter does the work: it keeps the agent's `RunState` in run state, asks one hold for every call waiting for approval, and applies the decisions on the resume. See [Agent frameworks](/agentos/build/frameworks).
+
+<Info>
+Tested with `openai-agents` 0.23.1 and Python 3.13, using the [conformance kit](/agentos/build/conformance): 17 checks passed, including an approved and a rejected refund.
+</Info>
+
+## The bundle
+
+<CodeGroup>
+```python app.py
+from agents import Agent, function_tool
+
+import agentos
+from agentos.adapters import openai_agents
+
+ORDERS = {"A-1001": {"status": "delivered", "total": "49.90", "currency": "EUR"}}
+
+
+@function_tool
+def lookup_order(order_id: str) -> dict:
+    """Look an order up by its id, e.g. A-1001."""
+    return ORDERS.get(order_id, {"error": f"no order {order_id}"})
+
+
+@function_tool(needs_approval=True)
+def refund(order_id: str, amount: str) -> str:
+    """Refund an order. The amount is text, e.g. "49.90". A person approves every refund first."""
+    return f"refunded {amount} for order {order_id}"
+
+
+async def support(inv: agentos.Invocation):
+    agent = Agent(
+        name="support",
+        instructions=inv.config["prompts"]["system"],
+        tools=[lookup_order, refund],
+        model=openai_agents.model(inv),  # config.models.main, through the gateway with the run token
+    )
+    try:
+        result = await openai_agents.run(inv, agent, inv.input["message"], intent="Approve a refund")
+    except Exception as error:
+        if block := agentos.guardrail_block(error):  # a guardrail refused a model call
+            raise block from error
+        raise
+    return {"answer": str(result.final_output)}
+
+
+if __name__ == "__main__":
+    agentos.serve({"support": support}, port=8080)
+```
+
+```yaml agentos.yaml
+name: support-openai-agents
+title: Support agent (OpenAI Agents SDK)
+description: Answers order questions with a lookup tool; refunds go through a person first.
+runtime: stateless
+port: 8080
+capabilities:
+  support:
+    description: Handles a customer's message. A refund the model wants to issue waits for a person's approval.
+    input:
+      type: object
+      properties: {message: {type: string, minLength: 1}}
+      required: [message]
+    output:
+      type: object
+      properties: {answer: {type: string}}
+      required: [answer]
+    timeout: 120s
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5    # a model from your Models page: <provider slug>/<model ID>
+  prompts:
+    system: >-
+      You are a support agent for an online shop. Look orders up with lookup_order before you
+      answer anything about an order. Refund only with the refund tool. Never refund more than the order's total.
+```
+
+```dockerfile Dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY vendor/ vendor/
+COPY requirements.txt .
+RUN pip install --no-cache-dir "$(ls vendor/*.whl)[openai-agents]" -r requirements.txt
+COPY app.py .
+USER nobody
+EXPOSE 8080
+CMD ["python", "-u", "app.py"]
+```
+
+```text requirements.txt
+openai-agents==0.23.1
+```
+</CodeGroup>
+
+The SDK wheel goes in the bundle's `vendor/` folder and is installed with its `openai-agents` extra; see [SDKs](/agentos/build/sdks).
+
+## How the model is wired
+
+`openai_agents.model(inv)` is an `OpenAIChatCompletionsModel` for `config.models.main`, on an `AsyncOpenAI` client made from `inv.llm.openai_kwargs(asynchronous=True)`: the gateway's base URL, the run token in the `x-agentos-run-token` header, and an HTTP client that never sends the token anywhere else. The model name reaches the gateway exactly as written in `agentos.yaml` (`anthropic/claude-sonnet-4-5`). Pass a role for another model: `openai_agents.model(inv, "judge")`.
+
+The agent is built inside the handler, on every invocation, because the token belongs to one invocation. The adapter turns the SDK's tracing off, since it would send traces to OpenAI.
+
+When a guardrail blocks a model call, the OpenAI client raises `BadRequestError`. `agentos.guardrail_block(error)` finds the block in it, and raising that block fails the run with `blocked_by_guardrail` and the guardrail's message. See [Guardrails](/agentos/platform/guardrails).
+
+## How the approval works
+
+<Steps>
+  <Step title="The run stops for approval">
+    The model calls `refund`. Because the tool has `needs_approval=True`, the SDK stops the run with an interruption instead of running it. `openai_agents.run` keeps the run's `RunState` and asks one hold: one item per waiting call, its id the tool call id, its data the call's arguments, with **approve** and **reject**.
+  </Step>
+  <Step title="A person decides">
+    The run is held until someone decides in the **Review queue** or through the [Holds API](/agentos/api/holds).
+  </Step>
+  <Step title="The run continues">
+    On the resume the adapter restores the `RunState`, approves or rejects each call, and continues the run. An approved refund runs; a rejected one returns the reviewer's comment (or "A person rejected this tool call.") to the model as the tool's result, and the model answers the customer.
+  </Step>
+</Steps>
+
+<Note>
+The OpenAI Agents SDK can't run a call with changed arguments, so this adapter offers **approve** and **reject**, not **edit**. Use [LangGraph](/agentos/frameworks/langgraph) or [Agno](/agentos/frameworks/agno) when reviewers should change the amount.
+</Note>
+
+## Run it
+
+<Steps>
+  <Step title="Zip and deploy">
+    Put the SDK wheel in `vendor/` (see [SDKs](/agentos/build/sdks)), set `config.models.main` to a model from your **Models** page, then zip the folder's contents and upload them:
+
+    ```bash
+    cd support-openai-agents && zip -r ../support-openai-agents.zip . && cd ..
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@support-openai-agents.zip \
+      $AGENTOS/v0/envs/default/agents/support-openai-agents/versions
+    ```
+  </Step>
+  <Step title="Ask for a refund">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/support-openai-agents/capabilities/support/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" \
+      -d '{"input": {"message": "Order A-1001 arrived broken. Can I get my 49.90 back?"}}'
+    # 200 {"run_id": "r_41", "status": "held", "hold": {"hold_id": "h_12", ...}, ...}
+    ```
+
+    The run is **held**: the refund waits in the **Review queue**. Decide it there, or through the [Holds API](/agentos/api/holds). The item's id is the model's tool call id: read it from the hold (`GET …/holds/h_12`).
+
+    ```bash
+    curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      $AGENTOS/v0/envs/default/holds/h_12/decision \
+      -d '{"items": [{"id": "call_…", "action": "approve"}]}'
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_41
+    # {"status": "completed", "output": {"answer": "Your refund of 49.90 for order A-1001 is on its way."}, ...}
+    ```
+  </Step>
+</Steps>
+
+## Test it before you deploy
+
+The [conformance kit](/agentos/build/conformance) builds the bundle and runs it against a mock platform whose model follows `call:<tool> {arguments}` in a message, so these cases drive the tools and both decisions without a real model:
+
+```yaml conformance.yaml
+# The mock model answers `call:<tool> {arguments}` in a user message with that tool call (its id is call_1).
+cases:
+  - capability: support
+    name: lookup
+    input: {message: 'call:lookup_order {"order_id": "A-1001"}'}
+  - capability: support
+    name: refund-approved
+    input: {message: 'call:refund {"order_id": "A-1001", "amount": "49.90"}'}
+    expect: suspended
+  - capability: support
+    name: refund-rejected
+    input: {message: 'call:refund {"order_id": "A-1001", "amount": "49.90"}'}
+    expect: suspended
+    decision: [{id: call_1, action: reject}]
+```
+
+```bash
+agentos-conformance check support-openai-agents/
+```
+
+## Things to know
+
+- **Chat Completions, not the Responses API.** The adapter's model uses `/v1/chat/completions`, which every provider behind the gateway supports.
+- **The `RunState` travels in run state.** A value there can be at most 1 MiB, and the `RunState` grows with the conversation; keep very long conversations short.
+- **A finished run isn't run again.** If the same AgentOS run invokes the handler after the agent finished, `openai_agents.run` returns what it kept (`result.final_output`) instead of calling the model and the tools again.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Human approvals" icon="user-check" href="/agentos/build/human-approvals">
+    Everything an ask can carry: several items, details, files, an expiry.
+  </Card>
+  <Card title="More frameworks" icon="layer-group" href="/agentos/frameworks/overview">
+    The same agent in other frameworks and languages.
+  </Card>
+</CardGroup>

@@ -1,0 +1,223 @@
+---
+title: "Deploys API"
+sidebarTitle: "Deploys"
+description: "Upload agent versions, follow their builds, promote and roll back, from CI or a script."
+---
+
+A **deploy** builds a bundle into a new version of an agent, or promotes an existing version. Upload and promote need the **admin** role in the environment; reading agents and deploys needs any role. For what goes into a bundle, see [agentos.yaml](/agentos/build/agentos-yaml); for the panel side, see [Deploying](/agentos/platform/deploying).
+
+## Version statuses
+
+| Status | Meaning |
+|---|---|
+| `building` | The image is being built and health-checked. |
+| `latest` | The live version: new runs use it. |
+| `draining` | The previous live version. Its container is stopped but its image is kept, so you can promote it back. |
+| `retired` | An older version. It can still be promoted. |
+| `candidate` | Built and healthy but not live. Only [experiments](/agentos/api/evals#experiments) run it, until you promote it. |
+| `failed` | The build or the health check failed. |
+
+## List agents
+
+`GET /v0/envs/{env}/agents`
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/agents
+```
+
+```json
+[{"name": "hello-agent", "title": "Hello Agent", "description": "Echoes its input back.",
+  "latest_version": "v2", "last_deploy_at": "2026-10-27T09:12:44.501Z"}]
+```
+
+## Get an agent
+
+`GET /v0/envs/{env}/agents/{agent}`
+
+The agent with every version and the deploy that produced each one.
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/agents/hello-agent
+```
+
+```json
+{"name": "hello-agent", "title": "Hello Agent", "description": "Echoes its input back.",
+ "latest_version": "v2", "last_deploy_at": "2026-10-27T09:12:44.501Z",
+ "versions": [
+   {"label": "v2", "status": "latest", "image_digest": "sha256:…", "deploy_id": "d_14", "created_at": "…"},
+   {"label": "v1", "status": "draining", "image_digest": "sha256:…", "deploy_id": "d_9", "created_at": "…"}]}
+```
+
+## Upload a version
+
+`POST /v0/envs/{env}/agents/{agent}/versions`
+
+Upload a bundle as the agent's next version, as `multipart/form-data` in the field `bundle`. The first upload of a name creates the agent. The `name` in the bundle's `agentos.yaml` must equal `{agent}` in the URL.
+
+<CodeGroup>
+```bash Live (default)
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@hello-agent.zip \
+  $AGENTOS/v0/envs/default/agents/hello-agent/versions
+# 202 {"deploy_id": "d_1", "status": "building"}
+```
+
+```bash Candidate
+# built and health-checked; the live version stays live
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@ocr-agent.zip \
+  "$AGENTOS/v0/envs/default/agents/ocr-agent/versions?as=candidate"
+# 202 {"deploy_id": "d_7", "status": "building"}
+```
+</CodeGroup>
+
+<ParamField query="as" type="string" default="live">
+  `live`: the version becomes the latest once it is healthy, and the previous one stops (its image is kept). `candidate`: it becomes a candidate; the live version stays live.
+</ParamField>
+
+<ParamField query="config" type="string">
+  `live` or `uploaded`. Only matters when the upload's config differs from the live version's (see below).
+</ParamField>
+
+The answer is `202` with the `deploy_id`. Follow the build with [Follow a deploy](#follow-a-deploy). Once healthy, a live upload becomes the latest version; if the build or the health check fails, the live version is untouched.
+
+### When the config differs from the live version
+
+The config in `agentos.yaml` (`models.<role>`, `prompts.<name>`, `params.<key>`) may have been changed since the live version was deployed — for example, a prompt edited on the [Prompts](/agentos/platform/prompts) tab, or a model chosen by an eval. To keep such a change from being overwritten by accident, an upload whose config differs from the live version's is refused until you say which values to keep:
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@ocr-agent.zip \
+  $AGENTOS/v0/envs/default/agents/ocr-agent/versions
+```
+
+```json
+409 {"code": "config_mismatch",
+     "message": "This upload's config differs from the live version's; send config=live or config=uploaded.",
+     "keys": [{"key": "models.reader", "live": "bedrock-prod/qwen-vl-72b", "uploaded": "bedrock-prod/qwen-vl-35b"}]}
+```
+
+Nothing is stored. Upload again with `config=live` to keep the live values in the new version's config, or `config=uploaded` to use the uploaded ones:
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@ocr-agent.zip \
+  "$AGENTOS/v0/envs/default/agents/ocr-agent/versions?config=live"
+# 202 {"deploy_id": "d_8", "status": "building"}
+```
+
+Only keys that both sides have and whose values differ count; a key only one side has is not a difference. The stored `agentos.yaml` text stays as uploaded either way. Without a live version, or without a difference, `config` is ignored.
+
+### Errors
+
+| Status | Code | When |
+|---|---|---|
+| `403` | `forbidden` | No admin role in the environment |
+| `409` | `config_mismatch` | The config differs from the live version's, with `keys` (above) |
+| `409` | `deploy_busy` | Another deploy of this agent is running |
+| `413` | `too_large` | The zip is over 100 MiB |
+| `422` | `invalid_bundle` | The bundle or its `agentos.yaml` is invalid; recorded as a failed deploy with a `deploy_id` |
+| `422` | `invalid_request` | An invalid agent name in the URL, or another query parameter or value |
+| `503` | `storage_unavailable` | The bundle couldn't be stored; try again |
+
+An invalid bundle lists every problem at once, one per field:
+
+```json
+{"code": "invalid_bundle", "message": "the bundle or agentos.yaml is invalid", "deploy_id": "d_81",
+ "errors": [{"field": "port", "message": "must be a whole number between 1 and 65535"},
+            {"field": "capabilities.triage.timeout", "message": "must be like 30s, 5m or 1h, at most 24h"}]}
+```
+
+## Follow a deploy
+
+`GET /v0/deploys/{deploy_id}/events`
+
+The build as [server-sent events](/agentos/api/overview#server-sent-events): `deploy.log` (`{line}`), `deploy.step` (`{step, status}`: the steps are `spec`, `build`, `push` and `health`, each `running`, `passed` or `failed`) and, last, `deploy.finished` (`{status, error?}`, `succeeded` or `failed`). The stream ends after `deploy.finished`.
+
+```bash
+curl -sS -N -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/deploys/d_1/events
+```
+
+```text
+id: 3
+event: deploy.step
+data: {"seq": 3, "type": "deploy.step", "at": "…", "data": {"step": "build", "status": "running"}}
+
+id: 4
+event: deploy.log
+data: {"seq": 4, "type": "deploy.log", "at": "…", "data": {"line": "#5 [2/3] WORKDIR /app"}}
+
+id: 41
+event: deploy.finished
+data: {"seq": 41, "type": "deploy.finished", "at": "…", "data": {"status": "succeeded"}}
+```
+
+Reconnect with `Last-Event-ID` to resume; `204` once you have seen `deploy.finished`.
+
+<Tip>
+In CI, follow the events until `deploy.finished`, then fail the job unless its `status` is `succeeded`. Or poll [Get a deploy](#get-a-deploy) until `status` is no longer `building`.
+</Tip>
+
+## Get a deploy
+
+`GET /v0/deploys/{deploy_id}`
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/deploys/d_14
+```
+
+```json
+{"deploy_id": "d_14", "kind": "upload", "status": "succeeded", "agent": "hello-agent", "version": "v2",
+ "error": "", "errors": [], "warnings": ["missing secrets: CRM_API_KEY"],
+ "created_at": "2026-10-27T09:12:44.501Z", "finished_at": "2026-10-27T09:13:20.118Z"}
+```
+
+<ResponseField name="kind" type="string">
+  `upload`, `promote`, or `config` (a candidate made from an experiment's override; see [Evals](/agentos/api/evals#make-a-candidate)).
+</ResponseField>
+<ResponseField name="status" type="string">
+  `building`, `succeeded` or `failed`.
+</ResponseField>
+<ResponseField name="version" type="string | null">
+  The version it built or promoted; `null` for a refused upload.
+</ResponseField>
+<ResponseField name="error" type="string">
+  Why it failed; empty otherwise.
+</ResponseField>
+<ResponseField name="errors" type="array">
+  A refused upload's field errors (`[{field, message}]`, as in the `422` above); empty otherwise.
+</ResponseField>
+<ResponseField name="warnings" type="array">
+  Things to fix that didn't stop the deploy, such as secrets the version declares that have no value yet (see [Secrets](/agentos/build/secrets)).
+</ResponseField>
+
+## List deploys
+
+`GET /v0/envs/{env}/agents/{agent}/deploys`
+
+The agent's deploys — uploads (refused ones included), promotes and config deploys — newest first.
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" "$AGENTOS/v0/envs/default/agents/hello-agent/deploys?limit=20"
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" "$AGENTOS/v0/envs/default/agents/hello-agent/deploys?limit=20&before=d_40"
+```
+
+<ParamField query="limit" type="integer" default="20">1–100.</ParamField>
+<ParamField query="before" type="string">A `deploy_id`: only older deploys.</ParamField>
+
+Each item has the shape of [Get a deploy](#get-a-deploy).
+
+## Promote a version
+
+`POST /v0/envs/{env}/agents/{agent}/versions/{version}/promote`
+
+Make a version the latest: roll back to the previous (`draining`) or a `retired` version, or make a `candidate` live. Its container is started and health-checked first, without a new build; only then does it take traffic.
+
+```bash
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" \
+  $AGENTOS/v0/envs/default/agents/ocr-agent/versions/v4/promote
+# 202 {"deploy_id": "d_9", "status": "building"}
+```
+
+| Status | Code | When |
+|---|---|---|
+| `403` | `forbidden` | No admin role in the environment |
+| `404` | `not_found` | No such agent or version |
+| `409` | `not_promotable` | The version is already the latest, still building, or failed |
+| `409` | `deploy_busy` | Another deploy of this agent is running |

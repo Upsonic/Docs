@@ -1,0 +1,262 @@
+---
+title: "LlamaIndex"
+description: "Run a LlamaIndex FunctionAgent on AgentOS: models through the gateway, and a tool that waits for a person's approval."
+---
+
+This example is a support agent built with LlamaIndex's `FunctionAgent`. It looks orders up with a tool, and its refund tool waits for a person with the workflow's own `wait_for_event`. The handler keeps the workflow's context in the run's state, asks through AgentOS, and on the resume sends the decision back in as a `HumanResponseEvent`.
+
+<Info>
+Tested with `llama-index-core` 0.14.25 (workflows 2.26.1) and `llama-index-llms-openai-like` 0.8.1 on Python 3.13, using the [conformance kit](/agentos/build/conformance): 25 checks passed, including an approved, an edited and a rejected refund.
+</Info>
+
+## The bundle
+
+<CodeGroup>
+```python app.py
+"""A LlamaIndex support agent on AgentOS. The refund tool waits for a person with the workflow's own
+`wait_for_event`; the agent keeps the workflow's context in run state, asks through AgentOS, and on the resume
+sends the decision back in as a HumanResponseEvent."""
+import hashlib
+import json
+
+import agentos
+from llama_index.core.agent.workflow import FunctionAgent
+from llama_index.core.workflow import Context, HumanResponseEvent, InputRequiredEvent, JsonPickleSerializer
+from llama_index.llms.openai_like import OpenAILike
+
+ORDERS = {  # stands in for your order system
+    "A-1001": {"status": "delivered", "total": "49.90", "items": ["Desk lamp"], "delivered": "2026-10-02"},
+    "A-1002": {"status": "in transit", "total": "129.00", "items": ["Office chair"], "delivered": None},
+}
+
+
+def build_agent(inv: agentos.Invocation) -> FunctionAgent:
+    """Built per invocation: the model client carries this run's token."""
+    llm = OpenAILike(
+        model=inv.llm.model("main"),          # config.models.main, sent to the gateway as it is
+        api_base=inv.llm.base_url,            # the AgentOS model gateway
+        api_key=inv.llm.api_key,              # ignored by the gateway
+        default_headers=inv.llm.headers,      # x-agentos-run-token
+        async_http_client=inv.llm.httpx_client(asynchronous=True),  # the token never leaves the platform
+        is_chat_model=True, is_function_calling_model=True, context_window=200_000,
+        max_retries=0,                        # a guardrail block is a 400: don't retry it
+    )
+
+    async def lookup_order(order_id: str) -> str:
+        """Look an order up by its id (like A-1001): its status, items, total and delivery date."""
+        order = ORDERS.get(order_id.strip().upper())
+        return json.dumps(order) if order else f"There is no order {order_id}."
+
+    async def issue_refund(ctx: Context, order_id: str, amount: str, reason: str) -> str:
+        """Refund `amount` (a decimal string like 49.90) on an order. A person approves every refund."""
+        # The step runs again from here when the answer arrives: keep this part free of side effects.
+        answer = await ctx.wait_for_event(
+            HumanResponseEvent, waiter_id=f"refund:{order_id}",
+            waiter_event=InputRequiredEvent(prefix="refund", order_id=order_id, amount=amount, reason=reason))
+        decision = json.loads(answer.response)
+        if decision["action"] in ("reject", "expired"):
+            return f"The refund was not approved. {decision.get('comment') or ''}".strip()
+        amount = decision["data"]["amount"]  # as approved, or as the reviewer edited it
+        # Stands in for your payment provider; key the real call by run id so a retried run never pays twice.
+        refund_id = "rf_" + hashlib.sha256(f"{inv.run_id}:{order_id}:{amount}".encode()).hexdigest()[:12]
+        return f"Refunded {amount} on {order_id}: {refund_id}"
+
+    return FunctionAgent(tools=[lookup_order, issue_refund], llm=llm, system_prompt=inv.config["prompts"]["system"])
+
+
+async def support(inv: agentos.Invocation):
+    agent = build_agent(inv)
+    if inv.resume is None:  # the start
+        handler = agent.run(user_msg=inv.input["message"])
+    else:  # a person decided: restore the workflow and hand it their decision
+        ctx = Context.from_dict(agent, await inv.state.run.aget("context"), serializer=JsonPickleSerializer())
+        handler = agent.run(ctx=ctx)
+        item = inv.resume.decided_items[0] if inv.resume.decided_items else None
+        decision = ({"action": item.action, "data": item.data, "comment": item.comment} if item
+                    else {"action": "expired"})
+        handler.ctx.send_event(HumanResponseEvent(response=json.dumps(decision)))
+    try:
+        async for event in handler.stream_events():
+            if isinstance(event, InputRequiredEvent):  # the refund tool waits: keep the context, ask a person
+                await inv.state.run.aput("context", handler.ctx.to_dict(serializer=JsonPickleSerializer()))
+                await handler.cancel_run()
+                await inv.aask(f"Refund {event.amount} on order {event.order_id}?",
+                               [{"id": event.order_id, "title": f"{event.order_id} · {event.amount}",
+                                 "data": {"order_id": event.order_id, "amount": event.amount}}],
+                               actions=["approve", "edit", "reject"],
+                               details=f"Reason given by the agent: {event.reason}")
+        response = await handler
+    except Exception as error:
+        if block := agentos.guardrail_block(error):
+            raise block  # the run fails with blocked_by_guardrail and the guardrail's message
+        raise
+    return {"answer": str(response)}
+
+
+agentos.serve({"support": support}, port=8080)
+```
+
+```yaml agentos.yaml
+name: llamaindex-support
+title: Support agent (LlamaIndex)
+description: Answers order questions with a lookup tool; refunds go through a person first.
+runtime: stateless
+port: 8080
+capabilities:
+  support:
+    description: Handles a customer's message. A refund the model wants to issue waits for a person's approval.
+    input:
+      type: object
+      properties: {message: {type: string, minLength: 1}}
+      required: [message]
+    output:
+      type: object
+      properties: {answer: {type: string}}
+      required: [answer]
+    timeout: 120s
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5    # a model from your Models page: <provider slug>/<model ID>
+  prompts:
+    system: >-
+      You are a support agent for an online shop. Look orders up with lookup_order before you
+      answer anything about an order. Use issue_refund only for delivered orders that arrived
+      damaged. Answer in at most three sentences.
+```
+
+```dockerfile Dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+# the AgentOS SDK wheel, from the bundle's vendor/ folder
+COPY vendor/ vendor/
+RUN pip install --no-cache-dir vendor/*.whl
+COPY app.py .
+USER nobody
+EXPOSE 8080
+CMD ["python", "-u", "app.py"]
+```
+
+```text requirements.txt
+llama-index-core==0.14.25
+llama-index-llms-openai-like==0.8.1
+```
+</CodeGroup>
+
+The SDK wheel goes in the bundle's `vendor/` folder; see [SDKs](/agentos/build/sdks).
+
+## How the model is wired
+
+`OpenAILike` gets the gateway's base URL, the run token in `default_headers` (`x-agentos-run-token`) and `inv.llm.httpx_client(asynchronous=True)`, an HTTP client that never follows redirects and never sends the token to another host. `is_chat_model` and `is_function_calling_model` must be on for `FunctionAgent` to use tools, and `context_window` tells LlamaIndex how much it can send. The model name from `config.models` reaches the gateway exactly as written (`anthropic/claude-sonnet-4-5`). `FunctionAgent` streams its model calls, which the gateway supports.
+
+The agent is built inside the handler, on every invocation, because the token belongs to one invocation. With `max_retries=0` a guardrail block isn't retried; `agentos.guardrail_block(error)` finds it inside the OpenAI client's `BadRequestError`, and the run fails with `blocked_by_guardrail`. See [Guardrails](/agentos/platform/guardrails).
+
+## How the approval works
+
+<Steps>
+  <Step title="The tool waits">
+    `issue_refund` calls `ctx.wait_for_event(HumanResponseEvent, waiter_event=InputRequiredEvent(...))`. The handler sees the `InputRequiredEvent` in the event stream, keeps `handler.ctx.to_dict(...)` in the run's state, stops the workflow and asks one AgentOS hold. The invocation answers `suspended`.
+  </Step>
+  <Step title="A person decides">
+    The run is held until someone decides in the **Review queue** or through the [Holds API](/agentos/api/holds).
+  </Step>
+  <Step title="The workflow continues">
+    On the resume the handler rebuilds the context with `Context.from_dict`, runs the agent on it and sends the decision as a `HumanResponseEvent`. The tool's step runs again from its start, `wait_for_event` returns the decision, and the tool refunds as approved or edited, or reports the rejection.
+  </Step>
+</Steps>
+
+<Warning>
+Use `JsonPickleSerializer` for the context. `JsonSerializer` leaves out values it can't write as JSON, the agent's memory among them, and the resumed workflow then fails with `Path 'memory' not found in state`.
+</Warning>
+
+## Run it
+
+<Steps>
+  <Step title="Zip and deploy">
+    Put the SDK wheel in `vendor/` (see [SDKs](/agentos/build/sdks)), set `config.models.main` to a model from your **Models** page, then zip the folder's contents and upload them:
+
+    ```bash
+    cd llamaindex-support && zip -r ../llamaindex-support.zip . && cd ..
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@llamaindex-support.zip \
+      $AGENTOS/v0/envs/default/agents/llamaindex-support/versions
+    ```
+  </Step>
+  <Step title="Ask a question">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/llamaindex-support/capabilities/support/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" -d '{"input": {"message": "Where is my order A-1002?"}}'
+    # 200 {"run_id": "r_40", "status": "completed", "output": {"answer": "Your office chair is in transit..."}, ...}
+    ```
+  </Step>
+  <Step title="Ask for a refund">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/llamaindex-support/capabilities/support/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" \
+      -d '{"input": {"message": "My desk lamp from order A-1001 arrived broken. Can I get my 49.90 back?"}}'
+    # 200 {"run_id": "r_41", "status": "held", "hold": {"hold_id": "h_12", ...}, ...}
+    ```
+
+    The run is **held**: the refund waits in the **Review queue**. A reviewer approves it, edits the amount, or rejects it there, or through the [Holds API](/agentos/api/holds). The item's id is the order id.
+
+    ```bash
+    curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      $AGENTOS/v0/envs/default/holds/h_12/decision \
+      -d '{"items": [{"id": "A-1001", "action": "approve"}]}'
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_41
+    # {"status": "completed", "output": {"answer": "Your refund of 49.90 for order A-1001 is on its way..."}, ...}
+    ```
+  </Step>
+</Steps>
+
+## Test it before you deploy
+
+The [conformance kit](/agentos/build/conformance) builds the bundle and runs it against a mock platform whose model follows `call:<tool> {arguments}` in a message, so these cases drive the tools and every decision without a real model:
+
+```yaml conformance.yaml
+# The mock model answers `call:<tool> {arguments}` in a user message with that tool call.
+cases:
+  - capability: support
+    name: lookup
+    input: {message: "Where is my order? call:lookup_order {\"order_id\": \"A-1002\"}"}
+  - capability: support
+    name: no-tool
+    input: {message: "What is your return policy?"}
+  - capability: support
+    name: refund-approved
+    input: {message: "My lamp arrived broken. call:issue_refund {\"order_id\": \"A-1001\", \"amount\": \"49.90\", \"reason\": \"damaged\"}"}
+    expect: suspended
+  - capability: support
+    name: refund-edited
+    input: {message: "My lamp arrived broken. call:issue_refund {\"order_id\": \"A-1001\", \"amount\": \"49.90\", \"reason\": \"damaged\"}"}
+    expect: suspended
+    decision: [{id: A-1001, action: edit, data: {order_id: A-1001, amount: "20.00"}}]
+  - capability: support
+    name: refund-rejected
+    input: {message: "Refund please. call:issue_refund {\"order_id\": \"A-1002\", \"amount\": \"129.00\", \"reason\": \"changed mind\"}"}
+    expect: suspended
+    decision: [{id: A-1002, action: reject, comment: not delivered yet}]
+```
+
+```bash
+agentos-conformance check llamaindex-support/
+```
+
+## Things to know
+
+- **The context travels in run state.** A run's state value can be at most 1 MiB, so a very long conversation needs trimming. The pickled context is written and read only by your agent, with its own run token.
+- **Everything before `wait_for_event` runs again** on the resume: keep it free of side effects.
+- **One refund per model answer.** A run has one open hold at a time, and this example asks for the first `InputRequiredEvent` it sees. It was tested with one refund call per answer; if your model calls the tool several times at once, collect the events before you ask, as one hold with an item per call.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Human approvals" icon="user-check" href="/agentos/build/human-approvals">
+    Everything an ask can carry: several items, details, files, an expiry.
+  </Card>
+  <Card title="More frameworks" icon="layer-group" href="/agentos/frameworks/overview">
+    The same agent in other frameworks and languages.
+  </Card>
+</CardGroup>

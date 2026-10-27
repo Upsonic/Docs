@@ -1,0 +1,67 @@
+---
+title: "Network access"
+description: "Which hosts your agent can reach outside the platform, and how to ask for more."
+---
+
+An agent reaches **nothing outside the platform** by default. The model gateway and the platform API (`context.api_url`) always work; everything else — a public API, your CRM, a database — must be allowed by a rule.
+
+You list what your agent needs in `agentos.yaml`. Environment admins can add or block hosts live on the agent's **Guardrails** tab; see [Network guardrails](/agentos/platform/network-guardrails).
+
+## Allow hosts in agentos.yaml
+
+```yaml agentos.yaml
+network:
+  allow:
+    - api.example.com          # that host on ports 80 and 443
+    - "*.wikipedia.org"        # any subdomain
+    - "10.20.0.0/16:5432"      # a private network on one port
+```
+
+The list belongs to the version: it is fixed when you deploy, like its config. `network` has only the `allow` key; block rules and the log-only switch are for admins, so an agent's own file can't switch the checks off. At most 200 rules.
+
+## Rule syntax
+
+| Rule | Covers |
+|---|---|
+| `api.example.com` | That host on ports 80 and 443. |
+| `*.example.com` | Any subdomain, not `example.com` itself. |
+| `api.example.com:8443` | Another port. |
+| `api.example.com:*` | Any port. |
+| `10.20.0.5:5432` | An IP address. |
+| `10.20.0.0/16:5432` | A network (CIDR). |
+| `[2001:db8::1]:443`, `2001:db8::/32` | IPv6 addresses and networks. |
+| `*` | Any public host on ports 80 and 443. |
+
+<Warning>
+A host that resolves to a **private address** (10/8, 172.16/12, 192.168/16, fc00::/7, 100.64/10) is only allowed by an IP or network rule that covers it, never by a host name. A public name pointing inside your network is how SSRF attacks work.
+</Warning>
+
+Some addresses can never be opened by any rule: loopback, link-local (including cloud metadata at `169.254.169.254`), the Docker host, the platform's own services and other agents.
+
+## How your code connects
+
+Every agent container gets proxy variables when it is created:
+
+| Variable | Value |
+|---|---|
+| `HTTP_PROXY`, `HTTPS_PROXY` (and lowercase) | The AgentOS egress proxy. |
+| `NO_PROXY` | The platform and the gateway, which are reached directly. |
+| `NODE_USE_ENV_PROXY` | `1` |
+
+Most HTTP clients follow these on their own: Python's `requests`, `httpx`, `urllib` and `aiohttp` (with `trust_env=True`), curl, Go, and Node 24+ `fetch`. A client that ignores them simply reaches nothing outside the platform.
+
+HTTPS goes through as an end-to-end encrypted tunnel: the proxy sees the host and port, never a path, header or body.
+
+## When a connection is blocked
+
+The proxy answers `403` with a sentence naming the host and why:
+
+```
+AgentOS network guardrail: api.example.com:443 is blocked (not on any allow list). An admin can allow it on the agent's Guardrails tab, or the agent can list it under network.allow in agentos.yaml.
+```
+
+Every connection your agent tries — allowed or blocked — appears on the agent's Guardrails tab under **Where it connected**, where an admin can allow a blocked host with one click.
+
+<Tip>
+Not sure what a new agent needs? An admin can put the agent in **log only** mode: connections no rule allows go through and are recorded as WOULD BLOCK. Copy what you see into `network.allow`, then switch back to enforce.
+</Tip>

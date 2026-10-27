@@ -1,0 +1,188 @@
+---
+title: "Mastra"
+description: "Run a Mastra workflow on AgentOS: a step that calls a model through the gateway, and a step that suspends for a person's approval."
+---
+
+This example is a [Mastra](https://mastra.ai) workflow with two steps:
+
+1. **`draft`**: a Mastra `Agent` writes a one-line note for the payment, through the AgentOS gateway.
+2. **`review`**: the step calls `suspend()`. On AgentOS that becomes a hold in the [Review queue](/agentos/platform/review-queue); once a person approves, edits or rejects, the workflow resumes at `review` with the decision. `draft` doesn't run again.
+
+The SDK's Mastra adapter, `runWorkflow` from `@agentos/sdk/mastra`, does the pause and resume: it keeps the workflow's snapshot in run state, so the resume works in any process, after the container was stopped, with no database of your own.
+
+## The bundle
+
+<CodeGroup>
+```ts agent.ts
+import { serve, type Invocation } from "@agentos/sdk";
+import { agentosModel } from "@agentos/sdk/ai-sdk";
+import { runWorkflow } from "@agentos/sdk/mastra";
+import { Mastra } from "@mastra/core";
+import { Agent } from "@mastra/core/agent";
+import { InMemoryStore } from "@mastra/core/storage";
+import { createStep, createWorkflow } from "@mastra/core/workflows";
+import { z } from "zod";
+
+const payment = z.object({ payee: z.string(), amount: z.string() });
+const drafted = payment.extend({ note: z.string() });
+const result = drafted.extend({ paid: z.boolean() });
+const decision = z.object({
+  resolvedBy: z.string(),
+  comment: z.string().nullable(),
+  items: z.array(z.object({
+    id: z.string(), action: z.string(), comment: z.string().nullable(),
+    data: z.record(z.string(), z.unknown()).nullable(),
+  })),
+});
+
+// Built per invocation: the model carries this invocation's run token, and the store starts empty
+// (the adapter restores the workflow's snapshot from run state on the resume).
+function payments(inv: Invocation) {
+  const writer = new Agent({
+    id: "writer", name: "writer",
+    instructions: "Write a one-line note for a supplier payment.",
+    model: agentosModel(inv),
+  });
+
+  const draft = createStep({
+    id: "draft", inputSchema: payment, outputSchema: drafted,
+    execute: async ({ inputData }) => {
+      const answer = await writer.generate(`Payment of ${inputData.amount} to ${inputData.payee}.`);
+      return { ...inputData, note: answer.text };
+    },
+  });
+
+  const review = createStep({
+    id: "review", inputSchema: drafted, outputSchema: result, resumeSchema: decision,
+    execute: async ({ inputData, resumeData, suspend }) => {
+      if (!resumeData) {
+        // becomes a hold in the Review queue; the run waits for the decision
+        return await suspend({
+          intent: `Pay ${inputData.payee}`,
+          actions: ["approve", "edit", "reject"],
+          items: [{ id: "payment", title: `${inputData.payee} · ${inputData.amount}`, data: inputData }],
+        });
+      }
+      const item = resumeData.items[0];
+      if (!item || !["approve", "edit"].includes(item.action)) return { ...inputData, paid: false };
+      return { ...inputData, ...(item.data as z.infer<typeof drafted>), paid: true };
+    },
+  });
+
+  const workflow = createWorkflow({ id: "payments", inputSchema: payment, outputSchema: result })
+    .then(draft).then(review).commit();
+  return new Mastra({ workflows: { payments: workflow }, storage: new InMemoryStore(), logger: false });
+}
+
+await serve({
+  approve_payment: async (inv) => {
+    const run = await runWorkflow(inv, payments(inv), "payments", inv.input);
+    return run.result;
+  },
+}, { port: 8080 });
+```
+
+```yaml agentos.yaml
+name: payments-agent
+title: Payments Agent (Mastra)
+description: A Mastra workflow that drafts a payment note with a model and waits for a person's approval before paying.
+runtime: stateless
+port: 8080
+capabilities:
+  approve_payment:
+    description: Drafts the payment's note, asks a person to approve, edit or reject it, then pays.
+    input:
+      type: object
+      properties:
+        payee: {type: string}
+        amount: {type: string}
+      required: [payee, amount]
+    output:
+      type: object
+      properties:
+        payee: {type: string}
+        amount: {type: string}
+        note: {type: string}
+        paid: {type: boolean}
+      required: [payee, amount, note, paid]
+    timeout: 60s
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5
+```
+
+```json package.json
+{
+  "name": "payments-agent",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@agentos/sdk": "file:vendor/agentos-sdk-0.1.0.tgz",
+    "@ai-sdk/openai-compatible": "3.0.68",
+    "@mastra/core": "1.76.0",
+    "ai": "7.0.138",
+    "zod": "4.6.7"
+  }
+}
+```
+
+```dockerfile Dockerfile
+FROM node:24-slim
+WORKDIR /app
+COPY package.json .
+COPY vendor/ vendor/
+RUN npm install --omit=dev --no-audit --no-fund
+COPY agent.ts .
+USER node
+EXPOSE 8080
+CMD ["node", "agent.ts"]
+```
+</CodeGroup>
+
+The folder also holds `vendor/agentos-sdk-0.1.0.tgz`, the TypeScript SDK (see [SDKs](/agentos/build/sdks): it isn't on npm yet and ships with AgentOS). Set `config.models.main` to a model from your environment's [Models page](/agentos/platform/models-and-providers), zip the folder with `vendor/` in it and [deploy](/agentos/platform/deploying) it.
+
+## How the model is wired
+
+Mastra agents take AI SDK models, so the `writer` agent uses `agentosModel(inv)` from `@agentos/sdk/ai-sdk`: the model for the role `main` in `config.models`, served by the gateway, with the run token added to its requests while the invocation runs. That is why `payments(inv)` builds the agent, the workflow and the `Mastra` instance inside the handler, once per invocation.
+
+## Approve the payment
+
+In a step, call Mastra's own `suspend()`, not `inv.ask()`. A payload shaped like an ask (`intent`, `items`, optional `actions`, `details`, `expiresIn`) is asked as it is, and the step resumes with `{resolvedBy, items: [{id, action, data, comment}], comment}`. Any other payload becomes one item named after the step, and the step resumes with that item's `{action, data, comment}` (`action` is `"expired"` when nobody decided in time).
+
+<Steps>
+  <Step title="Start the run">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/payments-agent/capabilities/approve_payment/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -d '{"input": {"payee": "Acme", "amount": "120.00"}}'
+    # 200 {"run_id": "r_51", "status": "held", "hold": {"hold_id": "h_12", "intent": "Pay Acme", ...}, ...}
+    ```
+
+    The hold shows the drafted note with the payee and amount, so the reviewer can correct any of them.
+  </Step>
+  <Step title="Decide">
+    In the [Review queue](/agentos/platform/review-queue), or through the API. An `edit` carries the item's full data:
+
+    ```bash
+    curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      $AGENTOS/v0/envs/default/holds/h_12/decision \
+      -d '{"items": [{"id": "payment", "action": "edit",
+                      "data": {"payee": "Acme", "amount": "100.00", "note": "October invoice, paid in part."}}]}'
+    ```
+  </Step>
+  <Step title="Read the result">
+    ```bash
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_51
+    # {"status": "completed", "output": {"payee": "Acme", "amount": "100.00", "note": "October invoice, paid in part.", "paid": true}, ...}
+    ```
+  </Step>
+</Steps>
+
+## Good to know
+
+- **Give the `Mastra` instance an `InMemoryStore`.** The adapter writes the saved snapshot into it on the resume; without a storage `runWorkflow` throws.
+- **Steps before the suspension don't run again.** The workflow resumes at the suspended step, so the model call in `draft` happens once per run.
+- **A finished workflow isn't run twice.** Once it succeeds, its result replaces the snapshot in run state, and a later invocation of the same run gets that result back. Pass `{ fresh: true }` to `runWorkflow` to run it anew, and `{ name: "..." }` to give each workflow call in one handler its own checkpoint.
+- **Run state is at most 1 MiB.** A snapshot larger than that is refused before asking (`too_large`).
+
+Tested with `@mastra/core` 1.76.0, `ai` 7.0.138 and Node 24, with the [conformance kit](/agentos/build/conformance). More frameworks: [Framework examples](/agentos/frameworks/overview).

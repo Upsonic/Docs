@@ -1,0 +1,142 @@
+---
+title: "Quickstart"
+description: "Deploy a small agent to AgentOS and run it, in the panel and with the API."
+---
+
+This guide deploys **Hello Agent**, the smallest agent that follows the AgentOS contract: one capability, `echo`, that returns its input. You need an AgentOS account with the **admin** role in an environment, because deploying is an admin action. You don't need Docker on your machine: AgentOS builds the image.
+
+<Steps>
+  <Step title="Write the agent">
+    Create a folder `hello-agent/` with three files.
+
+    <CodeGroup>
+    ```python app.py
+    import json, signal, sys
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+
+    class Handler(BaseHTTPRequestHandler):
+        def answer(self, status, body):
+            data = json.dumps(body).encode()
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def do_GET(self):  # AgentOS polls this until the container is ready
+            self.answer(200 if self.path == "/health" else 404, {"status": "ok"})
+
+        def do_POST(self):  # every run of every capability arrives here
+            body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+            if body.get("capability") != "echo":
+                return self.answer(200, {"status": "failed", "error": {
+                    "code": "unknown_capability", "message": f"no capability {body.get('capability')!r}"}})
+            self.answer(200, {"status": "completed", "output": body["input"]})
+
+
+    if __name__ == "__main__":
+        signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))  # stop quickly on `docker stop`
+        ThreadingHTTPServer(("0.0.0.0", 8080), Handler).serve_forever()
+    ```
+
+    ```dockerfile Dockerfile
+    FROM python:3.13-slim
+    WORKDIR /app
+    COPY app.py .
+    USER nobody
+    EXPOSE 8080
+    CMD ["python", "-u", "app.py"]
+    ```
+
+    ```yaml agentos.yaml
+    name: hello-agent
+    title: Hello Agent
+    description: Echoes its input back.
+    runtime: stateless
+    port: 8080
+    capabilities:
+      echo:
+        description: Returns the input unchanged.
+        input:
+          type: object
+          properties: {message: {type: string}}
+          required: [message]
+        output: {type: object}
+        timeout: 30s
+    ```
+    </CodeGroup>
+
+    `agentos.yaml` names the agent, the port it listens on, and its capabilities with their input and output schemas. See [agentos.yaml](/agentos/build/agentos-yaml) for every key.
+  </Step>
+
+  <Step title="Zip it">
+    The `Dockerfile` and `agentos.yaml` must be at the top level of the zip, not inside a folder:
+
+    ```bash
+    cd hello-agent && zip -r ../hello-agent.zip . && cd ..
+    ```
+  </Step>
+
+  <Step title="Deploy it">
+    <Tabs>
+      <Tab title="Panel">
+        Open **Agents → Deploy agent**, choose `hello-agent.zip` and click **Build v1**. The build log streams on the page. When the container answers `/health`, the version becomes **v1** and the agent is live.
+      </Tab>
+      <Tab title="API">
+        Create an API key first (see [Users and API keys](/agentos/platform/users-and-api-keys)), then upload the bundle to your environment:
+
+        ```bash
+        export AGENTOS=https://agentos.example.com
+        export AGENTOS_API_KEY=aos_...
+
+        curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" -F bundle=@hello-agent.zip \
+          $AGENTOS/v0/envs/default/agents/hello-agent/versions
+        # 202 {"deploy_id": "d_1", "status": "building"}
+
+        # follow the build until deploy.finished
+        curl -sS -N -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/deploys/d_1/events
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Run it">
+    <Tabs>
+      <Tab title="Panel">
+        Open the agent's **Run** tab, pick `echo`, enter `{"message": "hi"}` and run it. The run page shows its input, output, timeline and duration.
+      </Tab>
+      <Tab title="API">
+        ```bash
+        curl -sS -X POST "$AGENTOS/v0/envs/default/agents/hello-agent/capabilities/echo/runs?wait=true" \
+          -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+          -H "Idempotency-Key: $(uuidgen)" -d '{"input": {"message": "hi"}}'
+        # 200 {"run_id": "r_1", "status": "completed", "output": {"message": "hi"}, ...}
+        ```
+
+        An input that doesn't match the capability's input schema is refused with `422` before any run is created.
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Ship a change">
+    Edit the agent, zip it again and upload it on the agent's **Deploy** tab (**Deploy live**) or to the same API URL. It becomes **v2** once it is healthy, and v1 stops but keeps its image: roll back from the agent's **Deploy** tab at any time.
+  </Step>
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Call a model" icon="brain" href="/agentos/build/models">
+    Use the environment's models through the gateway with the run token.
+  </Card>
+  <Card title="Ask a person" icon="user-check" href="/agentos/build/human-approvals">
+    Pause a run for an approval and continue with the decision.
+  </Card>
+  <Card title="Use an SDK" icon="code" href="/agentos/build/sdks">
+    The same agent in a few lines of Python or TypeScript.
+  </Card>
+  <Card title="Examples" icon="folder-open" href="/agentos/build/examples">
+    Working agents for models, approvals, streaming, memory and frameworks.
+  </Card>
+</CardGroup>

@@ -1,0 +1,150 @@
+---
+title: "Human approvals"
+description: "Pause a run to ask a person, then continue with their decision."
+---
+
+An agent can stop in the middle of a run and ask a person: approve these payments, check this extracted field, confirm this email before it goes out. AgentOS calls this a **hold**. While the hold is open the run is `held`: nothing runs, no token exists, and the agent's container may even be stopped. When a reviewer decides, AgentOS invokes the same run again with the decision.
+
+Reviewers decide in the panel's **Review queue** or through the [Holds API](/agentos/api/holds). See [Review queue](/agentos/platform/review-queue) for the reviewer's side.
+
+## The flow
+
+<Steps>
+  <Step title="Ask">
+    With the run token, `POST {api_url}/v0/holds` with what you want decided. It answers `201 {"hold_id": "h_7", "status": "pending"}`.
+  </Step>
+  <Step title="Suspend">
+    Answer the invoke with `{"status": "suspended", "hold_id": "h_7"}`. The run becomes `held`.
+  </Step>
+  <Step title="Resume">
+    Once a person decides (or the hold expires), AgentOS calls `POST /invoke` again for the same run, on the same version, with `invocation.kind: "resume"` and the decision in `resume`. Your code continues and answers `completed` or `failed` as usual.
+  </Step>
+</Steps>
+
+## Asking
+
+```json
+POST {api_url}/v0/holds
+x-agentos-run-token: tok_...
+
+{"intent": "Pay 2 invoices",
+ "actions": ["approve", "edit", "reject"],
+ "items": [{"id": "INV-1", "title": "Aksa Lojistik · 18400.00",
+            "data": {"payee": "Aksa Lojistik", "amount": "18400.00"},
+            "confidence": {"amount": 0.68}}],
+ "details": "Approve to pay as shown, **edit** the payee or amount first, or reject.",
+ "expires_in": 86400}
+```
+
+| Field | Required | What it is |
+|---|---|---|
+| `intent` | yes | One sentence saying what the person is deciding. |
+| `items` | yes | 1–100 items decided together. Each has an `id`, a `title` and `data` (an object). `confidence` optionally maps a field of `data` to a number from 0 to 1, so the reviewer sees which values the agent is unsure of. |
+| `actions` | no | Any of `approve`, `edit`, `reject`, `feedback`. Defaults to approve and reject. |
+| `details` | no | Markdown shown with the ask. |
+| `expires_in` | no | Seconds, from 60 s to 30 days. Without it the hold never expires. |
+| `files` | no | Up to 20 file ids of the run's environment, listed with the ask with a download link (images and PDFs also open in the browser). See [Files and events](/agentos/build/files-and-events). |
+
+An ask is at most 1 MiB (413). A wrong one is 422 with `errors` naming the fields.
+
+<Note>
+A run has **one open hold at a time** (a second ask is 409 `hold_open`). To get several approvals at once, put them in one hold as several items. For decisions that are independent of each other, start [child runs](/agentos/build/child-runs) and let each ask on its own.
+</Note>
+
+## The resume
+
+The resume invocation has the next `seq`, a new run token, and:
+
+```json
+"resume": {
+  "hold_id": "h_7",
+  "resolved_by": "human",
+  "items": [
+    {"id": "INV-1", "action": "edit", "data": {"payee": "Aksa Lojistik A.Ş.", "amount": "18400.00"}, "comment": null},
+    {"id": "INV-2", "action": "reject", "data": {"payee": "Acme", "amount": "120.00"}, "comment": "paid last week"}
+  ],
+  "comment": "one of two"
+}
+```
+
+- `data` is each item as decided: the reviewer's full data for an `edit`, the item as you asked it for every other action.
+- `comment` on an item is the reviewer's comment for that item. The Review queue has one comment box, which is copied onto every item decided `edit`, `reject` or `feedback`, so read the item's comment.
+- When `expires_in` passes before anyone decides, `resolved_by` is `"expired"` and `items` is empty.
+
+## Write the code before the ask so it can run twice
+
+On the resume your handler runs again from the top. Everything before the ask runs a second time, so keep it idempotent:
+
+- Keep progress in [run state](/agentos/build/state-and-sessions) before you ask, and read it back on the resume.
+- Key side effects that must happen once per run by `run_id` plus a stable step name (`r_501:pay:INV-1`), not by `invocation.id`: the invocation id changes on every resume.
+- Start child runs with an `Idempotency-Key` derived the same way, so a resumed run gets the same children.
+
+## With the SDKs
+
+The [SDKs](/agentos/build/sdks) create the hold and answer `suspended` for you. `ask()` ends the invocation; on the resume, `inv.resume` holds the decision.
+
+<CodeGroup>
+```python Python
+import agentos
+
+def pay_invoices(inv: agentos.Invocation):
+    if inv.resume is None:                                   # the start
+        inv.state.run.put("progress", {"step": "asked"})
+        inv.ask("Pay 2 invoices",
+                [{"id": "INV-1", "title": "Acme · 120.00", "data": {"payee": "Acme", "amount": "120.00"}}],
+                actions=["approve", "edit", "reject"],
+                details="Approve to pay as shown, **edit** the payee or amount first, or reject.")
+    paid = [{"id": d.id, **d.data} for d in inv.resume.approved]   # approved or edited
+    return {"paid": paid, "rejected": [d.id for d in inv.resume.rejected]}
+
+agentos.serve({"pay_invoices": pay_invoices}, port=8080)
+```
+
+```ts TypeScript
+import { serve } from "@agentos/sdk";
+
+await serve({
+  pay_invoices: async (inv) => {
+    if (!inv.resume) {
+      await inv.state.run.put("progress", { step: "asked" });
+      await inv.ask({
+        intent: "Pay 2 invoices",
+        actions: ["approve", "edit", "reject"],
+        items: [{ id: "INV-1", title: "Acme · 120.00", data: { payee: "Acme", amount: "120.00" } }],
+      });
+    }
+    return {
+      paid: inv.resume!.approved.map((d) => ({ id: d.id, ...d.data })),
+      rejected: inv.resume!.rejected.map((d) => d.id),
+    };
+  },
+}, { port: 8080 });
+```
+</CodeGroup>
+
+`inv.resume` has `approved` (approved or edited items, with `data` as decided), `edited`, `rejected`, `feedback`, `decided_items` / `decidedItems`, `item(id)`, `comment`, `resolved_by` / `resolvedBy` and `expired`. Each decided item has `id`, `action`, `data` and `comment`.
+
+`ask()` also takes `details`, `expires_in` / `expiresIn` and `files`. With `suspend=False` (Python) it returns the hold id instead of ending the invocation, which a streaming handler uses to end its stream first (see [Streaming](/agentos/build/streaming)).
+
+<Tip>
+Using LangGraph, the OpenAI Agents SDK, Agno, the Vercel AI SDK or Mastra? Their own pause (`interrupt()`, tools that need approval, `suspend()`) becomes a hold through the [framework adapters](/agentos/build/frameworks).
+</Tip>
+
+## Who may decide
+
+Each capability names the roles that may decide its holds, in [agentos.yaml](/agentos/build/agentos-yaml):
+
+```yaml
+capabilities:
+  pay_invoices:
+    input: schemas/pay-input.json
+    output: schemas/pay-output.json
+    timeout: 30s
+    approvers: [admin]          # or [admin, member], the default
+```
+
+`approvers` applies to people and service accounts alike. A person who started the run may decide it too, if their role is an approver.
+
+## Holds in evals
+
+An [experiment](/agentos/platform/evals) never sends a hold to a person. Each run gets the holds recorded for its dataset item in `context.eval.recorded_holds` (with the decisions people made back then); an experiment run that asks anyway ends at once, counted as "asked for a human". Check `context.eval` (or `inv.eval` in the SDKs) to use the recorded decisions or skip the human step, and to keep side effects such as payments or emails out of eval runs.

@@ -1,0 +1,181 @@
+---
+title: "OpenAI Agents SDK (JavaScript)"
+sidebarTitle: "OpenAI Agents SDK (JS)"
+description: "Run an OpenAI Agents SDK for JavaScript agent on AgentOS, with its tool approvals turned into AgentOS holds."
+---
+
+This example is an agent written with the [OpenAI Agents SDK for JavaScript](https://openai.github.io/openai-agents-js/) (`@openai/agents`). Its `pay` tool has `needsApproval: true`. When the model calls it, the agent saves the paused run, asks a person through AgentOS, and on the resume approves or rejects the call and lets the run continue.
+
+The TypeScript SDK has no adapter for this framework, so the example maps the approval itself, in about twenty lines: the Agents SDK's `RunState` goes into AgentOS [run state](/agentos/build/state-and-sessions), and its interruptions become one [hold](/agentos/build/human-approvals). The Python SDK has a ready-made adapter for the Python version; see [Framework adapters](/agentos/build/frameworks).
+
+## The bundle
+
+<CodeGroup>
+```ts agent.ts
+import { serve, type Invocation } from "@agentos/sdk";
+import { Agent, OpenAIChatCompletionsModel, RunState, run, setTracingDisabled, tool } from "@openai/agents";
+import OpenAI from "openai";
+import { z } from "zod";
+
+setTracingDisabled(true); // traces stay in AgentOS: every model call is on the run's timeline
+
+const pay = tool({
+  name: "pay",
+  description: "Pay a supplier. Amounts are text, e.g. \"120.00\".",
+  parameters: z.object({ payee: z.string(), amount: z.string() }),
+  needsApproval: true,
+  execute: async ({ payee, amount }) => `paid ${amount} to ${payee}`,
+});
+
+// Built per invocation: the client sends this invocation's run token to the gateway.
+function payments(inv: Invocation) {
+  const client = new OpenAI({ baseURL: inv.llm.baseURL, apiKey: inv.llm.apiKey, fetch: inv.fetch.bind(inv) });
+  return new Agent({
+    name: "Payments",
+    instructions: "Pay suppliers with the pay tool.",
+    model: new OpenAIChatCompletionsModel(client, inv.llm.model("main")),
+    tools: [pay],
+  });
+}
+
+const STATE = "openai_agents.run_state";
+
+await serve({
+  pay_supplier: async (inv) => {
+    const agent = payments(inv);
+    let input: string | RunState<any, any> = inv.input.request;
+
+    if (inv.resume) {
+      // continue the paused run with the person's decisions
+      const state = await RunState.fromString(agent, await inv.state.run.get(STATE));
+      for (const call of state.getInterruptions()) {
+        const decision = inv.resume.item((call.rawItem as { callId: string }).callId);
+        if (decision?.action === "approve") state.approve(call);
+        else state.reject(call, { message: decision?.comment ?? "A person did not approve this payment." });
+      }
+      input = state;
+    }
+
+    const result = await run(agent, input);
+    if (result.interruptions?.length) {
+      // the agent wants to call a tool that needs approval: keep the run and ask a person
+      await inv.state.run.put(STATE, result.state.toString());
+      await inv.ask({
+        intent: "Pay a supplier",
+        actions: ["approve", "reject"],
+        items: result.interruptions.map((call) => ({
+          id: (call.rawItem as { callId: string }).callId,
+          title: `${call.name}(${call.arguments})`.slice(0, 200),
+          data: JSON.parse(call.arguments ?? "{}"),
+        })),
+      });
+    }
+    return { answer: String(result.finalOutput ?? "") };
+  },
+}, { port: 8080 });
+```
+
+```yaml agentos.yaml
+name: payments-agent-js
+title: Payments Agent (OpenAI Agents SDK for JavaScript)
+description: An OpenAI Agents SDK agent whose pay tool waits for a person's approval.
+runtime: stateless
+port: 8080
+capabilities:
+  pay_supplier:
+    description: Pays a supplier with the pay tool; every payment waits for a person's approval.
+    input:
+      type: object
+      properties: {request: {type: string}}
+      required: [request]
+    output:
+      type: object
+      properties: {answer: {type: string}}
+      required: [answer]
+    timeout: 60s
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5
+```
+
+```json package.json
+{
+  "name": "payments-agent-js",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@agentos/sdk": "file:vendor/agentos-sdk-0.1.0.tgz",
+    "@openai/agents": "0.21.0",
+    "openai": "7.45.0",
+    "zod": "4.6.7"
+  }
+}
+```
+
+```dockerfile Dockerfile
+FROM node:24-slim
+WORKDIR /app
+COPY package.json .
+COPY vendor/ vendor/
+RUN npm install --omit=dev --no-audit --no-fund
+COPY agent.ts .
+USER node
+EXPOSE 8080
+CMD ["node", "agent.ts"]
+```
+</CodeGroup>
+
+The folder also holds `vendor/agentos-sdk-0.1.0.tgz`, the TypeScript SDK (see [SDKs](/agentos/build/sdks): it isn't on npm yet and ships with AgentOS). Set `config.models.main` to a model from your environment's [Models page](/agentos/platform/models-and-providers), zip the folder with `vendor/` in it and [deploy](/agentos/platform/deploying) it.
+
+## How the model is wired
+
+The agent uses an `OpenAI` client pointed at the gateway: `baseURL` and `apiKey` from `inv.llm` (the gateway ignores the key), the model name from `config.models` with `inv.llm.model("main")`, and `fetch: inv.fetch.bind(inv)`, which adds the run token to requests for the gateway and the platform only, and only while the invocation runs. Build the client and the agent inside the handler, once per invocation.
+
+`OpenAIChatCompletionsModel` makes the agent call `/v1/chat/completions`, which every provider behind the gateway serves. `setTracingDisabled(true)` keeps traces from being sent to OpenAI; AgentOS records each model call, its tokens and its cost on the run.
+
+## Approve a tool call
+
+1. The model calls `pay`. Because the tool has `needsApproval: true`, `run()` stops with `result.interruptions`.
+2. The agent saves `result.state.toString()` in run state and calls `inv.ask()` with one item per interrupted call, named by the call's id. `ask()` creates the hold and ends the invocation as `suspended`.
+3. A person decides. AgentOS invokes the same run again with the decision in `inv.resume`.
+4. The agent restores the `RunState`, approves or rejects each interrupted call (a rejection passes the reviewer's comment to the model), and runs again from that state. An approved call runs once.
+
+If the model asks for another approval later in the run, the same code asks again on that resume.
+
+<Steps>
+  <Step title="Start the run">
+    ```bash
+    curl -sS -X POST "$AGENTOS/v0/envs/default/agents/payments-agent-js/capabilities/pay_supplier/runs?wait=true" \
+      -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      -d '{"input": {"request": "Pay Acme 120.00 for the October invoice"}}'
+    # 200 {"run_id": "r_61", "status": "held", "hold": {"hold_id": "h_14", "intent": "Pay a supplier", ...}, ...}
+    ```
+  </Step>
+  <Step title="Decide">
+    In the [Review queue](/agentos/platform/review-queue), or through the API with the item ids from the hold:
+
+    ```bash
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/holds/h_14
+    # {"items": [{"id": "call_abc", "title": "pay({\"payee\":\"Acme\",\"amount\":\"120.00\"})", ...}], ...}
+
+    curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+      $AGENTOS/v0/envs/default/holds/h_14/decision \
+      -d '{"items": [{"id": "call_abc", "action": "approve"}]}'
+    ```
+  </Step>
+  <Step title="Read the result">
+    ```bash
+    curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_61
+    # {"status": "completed", "output": {"answer": "..."}, ...}
+    ```
+  </Step>
+</Steps>
+
+## Good to know
+
+- **Approve or reject only.** The Agents SDK approves or rejects a call as the model made it, so the example offers no `edit`. To let reviewers change the amount, ask before the agent runs, or give the tool its own `inv.ask()`.
+- **An expired hold rejects.** When nobody decides before the hold's `expires_in`, `inv.resume.item(...)` finds no decision and the call is rejected.
+- **Run state is at most 1 MiB.** The saved `RunState` grows with the run's transcript, so keep long conversations out of a run that waits for approvals.
+- **Guardrail blocks.** A model call a guardrail blocks fails with HTTP 400 and the guardrail object in the error body; uncaught, the run fails. See [Guardrails](/agentos/platform/guardrails).
+
+Tested with `@openai/agents` 0.21.0, `openai` 7.45.0 and Node 24, with the [conformance kit](/agentos/build/conformance). More frameworks: [Framework examples](/agentos/frameworks/overview).

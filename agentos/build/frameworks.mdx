@@ -1,0 +1,227 @@
+---
+title: "Agent frameworks"
+sidebarTitle: "Framework adapters"
+description: "Run OpenAI Agents SDK, LangGraph, Agno, Vercel AI SDK and Mastra agents on AgentOS, with their pauses turned into human approvals."
+---
+
+Any framework that can make HTTP calls works on AgentOS: point its OpenAI-compatible model client at the gateway with the run token (see [Models](/agentos/build/models)) and serve the [agent contract](/agentos/build/agent-contract), for example with the [SDKs](/agentos/build/sdks).
+
+The hard part is **pausing**. A framework that waits for a person keeps its paused state in memory, but on AgentOS the run is held, the container may stop, and the resume may arrive at a different process. The SDKs' optional **framework adapters** solve that: each one turns its framework's own pause into one [hold](/agentos/build/human-approvals), keeps what the framework needs to continue in run state, and continues where the run stopped on the resume, in any process, with no database of your own.
+
+| Framework | Install / import | What asks a person | On the resume |
+|---|---|---|---|
+| OpenAI Agents SDK 0.23 | `agentos-sdk[openai-agents]`, `agentos.adapters.openai_agents` | tools with `needs_approval=True` (approve or reject) | the run's `RunState` is restored and the run continues (tracing is turned off) |
+| LangGraph 1.2 | `agentos-sdk[langgraph]`, `agentos.adapters.langgraph` | `interrupt()`: a value shaped like an ask is asked as is, other values become one item each | the thread's checkpoints are restored and the graph continues with `Command(resume=…)` |
+| Agno 3.1 | `agentos-sdk[agno]`, `agentos.adapters.agno` | tools with `requires_confirmation=True` (approve, edit the arguments, reject) | the paused `RunOutput` is restored and `continue_run` goes on |
+| Vercel AI SDK 7 | `@agentos/sdk/ai-sdk` (with `ai`, `@ai-sdk/openai-compatible`) | `toolApproval: {tool: "user-approval"}` (approve, edit the input, reject) | the conversation is restored, the decisions are added as approval responses, `generateText` continues |
+| Mastra 1.76 | `@agentos/sdk/mastra` (with `@mastra/core`) | a workflow step's `suspend()` | the run's snapshot goes back into the Mastra instance's `InMemoryStore` and the run resumes at that step |
+
+Each adapter also gives a model helper that is the gateway with the run token: `openai_agents.model(inv)`, `agno.model(inv)` and `agentosModel(inv)` (all take a role, `"main"` by default).
+
+## Examples
+
+<Tabs>
+  <Tab title="OpenAI Agents SDK">
+    ```python
+    from agents import Agent, function_tool
+
+    import agentos
+    from agentos.adapters import openai_agents
+
+
+    @function_tool(needs_approval=True)
+    def pay(payee: str, amount: str) -> str:
+        """Pay a supplier. Amounts are text, e.g. "120.00"."""
+        return f"paid {amount} to {payee}"
+
+
+    async def pay_supplier(inv: agentos.Invocation):
+        agent = Agent(name="payer", instructions="Pay suppliers with the pay tool.", tools=[pay],
+                      model=openai_agents.model(inv))
+        result = await openai_agents.run(inv, agent, inv.input["request"], intent="Pay a supplier")
+        return {"answer": result.final_output}
+
+
+    agentos.serve({"pay_supplier": pay_supplier}, port=8080)
+    ```
+  </Tab>
+  <Tab title="LangGraph">
+    ```python
+    from typing import TypedDict
+
+    from langgraph.graph import END, START, StateGraph
+    from langgraph.types import interrupt
+
+    import agentos
+    from agentos.adapters import langgraph
+
+
+    class Payment(TypedDict, total=False):
+        payee: str
+        amount: str
+        decision: dict
+        paid: bool
+
+
+    def review(state: Payment) -> Payment:
+        decision = interrupt({"intent": f"Pay {state['payee']}", "actions": ["approve", "edit", "reject"],
+                              "items": [{"id": "payment", "title": f"{state['payee']} · {state['amount']}",
+                                         "data": {"payee": state["payee"], "amount": state["amount"]}}]})
+        return {"decision": decision}
+
+
+    def pay(state: Payment) -> Payment:
+        item = (state["decision"]["items"] or [{}])[0]
+        if item.get("action") not in ("approve", "edit"):
+            return {"paid": False}
+        return {"paid": True, **item["data"]}
+
+
+    builder = StateGraph(Payment)          # building the graph at module level is fine
+    builder.add_node(review)
+    builder.add_node(pay)
+    builder.add_edge(START, "review")
+    builder.add_edge("review", "pay")
+    builder.add_edge("pay", END)
+
+
+    def approve_payment(inv: agentos.Invocation):
+        graph = builder.compile(checkpointer=langgraph.checkpointer())   # compile per invocation
+        state = langgraph.run(inv, graph, dict(inv.input))
+        return {"paid": state["paid"]}
+
+
+    agentos.serve({"approve_payment": approve_payment}, port=8080)
+    ```
+  </Tab>
+  <Tab title="Agno">
+    ```python
+    from agno.agent import Agent
+    from agno.tools import tool
+
+    import agentos
+    from agentos.adapters import agno
+
+
+    @tool(requires_confirmation=True)
+    def pay(payee: str, amount: str) -> str:
+        """Pay a supplier. Amounts are text, e.g. "120.00"."""
+        return f"paid {amount} to {payee}"
+
+
+    def pay_supplier(inv: agentos.Invocation):
+        agent = Agent(model=agno.model(inv), tools=[pay], instructions="Pay suppliers with the pay tool.",
+                      telemetry=False)
+        output = agno.run(inv, agent, inv.input["request"], intent="Pay a supplier")
+        return {"answer": output.content}
+
+
+    agentos.serve({"pay_supplier": pay_supplier}, port=8080)
+    ```
+  </Tab>
+  <Tab title="Vercel AI SDK">
+    ```ts
+    import { serve, type Handlers } from "@agentos/sdk";
+    import { agentosModel, runWithApprovals } from "@agentos/sdk/ai-sdk";
+    import { stepCountIs, tool } from "ai";
+    import { z } from "zod";
+
+    const pay = tool({
+      description: "Pay a supplier. Amounts are text, e.g. \"120.00\".",
+      inputSchema: z.object({ payee: z.string(), amount: z.string() }),
+      execute: async ({ payee, amount }) => `paid ${amount} to ${payee}`,
+    });
+
+    const handlers: Handlers = {
+      pay_supplier: async (inv) => {
+        const result = await runWithApprovals(inv, {
+          model: agentosModel(inv), tools: { pay }, toolApproval: { pay: "user-approval" },
+          stopWhen: stepCountIs(5), system: "Pay suppliers with the pay tool.",
+          messages: [{ role: "user", content: inv.input.request }], intent: "Pay a supplier",
+        });
+        return { answer: result.text };
+      },
+    };
+
+    await serve(handlers, { port: 8080 });
+    ```
+  </Tab>
+  <Tab title="Mastra">
+    ```ts
+    import { serve, type Handlers } from "@agentos/sdk";
+    import { runWorkflow } from "@agentos/sdk/mastra";
+    import { Mastra } from "@mastra/core";
+    import { InMemoryStore } from "@mastra/core/storage";
+    import { createStep, createWorkflow } from "@mastra/core/workflows";
+    import { z } from "zod";
+
+    const payment = z.object({ payee: z.string(), amount: z.string() });
+    const decision = z.object({ resolvedBy: z.string(), comment: z.string().nullable(), items: z.array(z.object({
+      id: z.string(), action: z.string(), data: z.record(z.string(), z.unknown()).nullable(),
+      comment: z.string().nullable() })) });
+
+    const review = createStep({
+      id: "review", inputSchema: payment, resumeSchema: decision,
+      outputSchema: payment.extend({ paid: z.boolean() }),
+      execute: async ({ inputData, resumeData, suspend }) => {
+        if (!resumeData) {
+          return await suspend({ intent: `Pay ${inputData.payee}`, actions: ["approve", "edit", "reject"],
+            items: [{ id: "payment", title: `${inputData.payee} · ${inputData.amount}`, data: inputData }] });
+        }
+        const item = resumeData.items[0];
+        if (!item || !["approve", "edit"].includes(item.action)) return { ...inputData, paid: false };
+        return { ...inputData, ...(item.data as { payee: string; amount: string }), paid: true };
+      },
+    });
+
+    // built per invocation: a fresh in-memory store, as in a new process
+    function payments() {
+      const workflow = createWorkflow({ id: "payments", inputSchema: payment,
+        outputSchema: payment.extend({ paid: z.boolean() }) }).then(review).commit();
+      return new Mastra({ workflows: { payments: workflow }, storage: new InMemoryStore(), logger: false });
+    }
+
+    const handlers: Handlers = {
+      approve_payment: async (inv) => (await runWorkflow(inv, payments(), "payments", inv.input)).result,
+    };
+
+    await serve(handlers, { port: 8080 });
+    ```
+  </Tab>
+</Tabs>
+
+## How checkpoints and results work
+
+- A paused framework's state is kept in run state under `agentos.<adapter>.<name>` (keys starting `agentos.` belong to the SDKs). Pass `name=` / `{name}` to give each framework call of one handler its own key; the default is `default`.
+- A checkpoint belongs to the hold it asked and is used only on that hold's resume. One larger than 1 MiB is refused before asking (`too_large`). An OpenAI Agents `RunState` or an AI SDK conversation grows with the run's transcript, so watch long runs.
+- Once the framework call finishes, its result (JSON) replaces the checkpoint. A later invocation of the same run gets that result back instead of running the framework again, which would repeat its side effects. In Python it is a `Stored` (a dict whose keys are also attributes, with `stored` true); in TypeScript an object with `stored: true`. Pass `fresh=True` / `{fresh: true}` to run it anew.
+- In Python a result over 1 MiB isn't kept, but the call is still remembered as finished: later invocations get an empty `Stored` with `dropped` true, never a second run.
+
+<Warning>
+**Build model clients, agents and compiled graphs inside the handler, per invocation, not at module level.** The model client carries this invocation's run token, which stops working when the invocation answers, and the LangGraph checkpointer is per run. Building a LangGraph `StateGraph` itself at module level is fine; compile it in the handler with `langgraph.checkpointer()`.
+</Warning>
+
+## Memory tools
+
+`agentos.adapters.openai_agents.memory_tools(inv, paths=[...])` gives the agent's [memory tools](/agentos/build/memory#memory-tools-for-the-model) as OpenAI Agents SDK `FunctionTool`s, and `memoryTools(inv, {paths})` from `@agentos/sdk/ai-sdk` as Vercel AI SDK tools.
+
+## Frameworks without an adapter
+
+- **CrewAI Flows:** use the core SDK. Ask in a flow step and keep the flow's state in run state.
+- **CrewAI Crews** (`Crew.kickoff`) can't pause without running again from the start. Move the approval into a Flow step.
+- **Plain tool loops**, Upsonic and anything else: use the core SDK's `ask()` and state directly.
+
+## When a guardrail blocks a model call
+
+A [guardrail](/agentos/platform/guardrails) block is an HTTP 400 from the gateway with `code: content_filter` and an `agentos_guardrail` object. How frameworks surface it with their default settings:
+
+| Framework | What happens | What to do |
+|---|---|---|
+| openai-python / openai-node, OpenAI Agents SDK, LangChain / LangGraph, pydantic-ai, Upsonic | Raises an error whose body is the gateway's error object. | Catch it; `agentos.guardrail_block(error)` / `guardrailBlocked(error)` returns the block or null. |
+| CrewAI | Re-runs the whole agent step 3 times on a 400, tools included. | Set `max_retry_limit=0` on agents whose tools have side effects, or catch `content_filter` yourself. |
+| Agno | Doesn't raise: the run ends with `status=ERROR` and the message as its content. | Check the run's status. |
+| OpenAI .NET / Microsoft.Extensions.AI | Ignores in-stream error events: the stream just ends. | Check the answer, or don't stream when a guardrail watches output. |
+| Vercel AI SDK `streamText` | Only logs in-stream errors (and a 400 before the stream). | Pass `onError`. |
+| litellm SDK | Reports an in-stream error as `MidStreamFallbackError` with status 500. | Look for the guardrail object in it. |
+
+Through the SDKs' own `inv.llm.chat()` and `stream()`, a block raises `GuardrailBlocked`; uncaught, the invocation answers `failed` with `blocked_by_guardrail`.
