@@ -1,0 +1,76 @@
+---
+title: "Sessions API"
+sidebarTitle: "Sessions"
+description: "Group runs into a conversation, and name the end user it is for."
+---
+
+A **session** groups runs into a conversation: each turn is one run, and the agent keeps the conversation's history in session-scoped state (see [State and sessions](/agentos/build/state-and-sessions)). A session can also name the **end user** of your app the conversation is about, so that the agent's [memory](/agentos/build/memory) keeps that person's facts in their own folder and you can find, or erase, everything about them.
+
+Creating and using sessions needs the **member** or **admin** role. A session belongs to the caller that created it; the environment's admins can use every session.
+
+## Create a session
+
+`POST /v0/envs/{env}/sessions`
+
+```bash
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"user": "cust-123"}' $AGENTOS/v0/envs/default/sessions
+```
+
+```json
+201 {"session_id": "s_3", "user": "cust-123", "created_at": "2026-10-27T09:00:00Z"}
+```
+
+<ParamField body="user" type="string">
+  The end user the conversation is about: 1–200 letters, digits and `. _ : @ -`. Optional; it can't be changed later. Without it (or without a body) the session has no end user.
+</ParamField>
+
+Your backend often serves many customers with one API key, so any caller may name any end user. Use your own stable id for them, not an email or a name.
+
+## Run a turn
+
+Pass the `session_id` when you [start a run](/agentos/api/runs#start-a-run). The run is the session's next turn:
+
+```bash
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/support-agent/capabilities/chat/runs?wait=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"message": "hi"}, "session_id": "s_3"}'
+```
+
+- **One turn at a time.** Starting a turn while another turn of the session is queued or running is a `409 session_busy`. A turn that is `held` for a person doesn't block the next one.
+- **The end user travels with every run.** Each run of the session has the session's `user` (in the run, and in the body the agent receives); a [child run](/agentos/build/child-runs) keeps its parent's.
+- A session can hold runs of different agents and capabilities of the environment; its session-scoped state is kept per agent.
+- A `session_id` that isn't yours (and you aren't an admin) is a `422` on the run's start, as if it didn't exist.
+- Sessions don't end or expire.
+
+## Get a session
+
+`GET /v0/envs/{env}/sessions/{session_id}`
+
+The session and its runs (its turns), oldest first. Each run has the shape of [the run object](/agentos/api/runs#the-run-object).
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/sessions/s_3
+```
+
+```json
+{"session_id": "s_3", "user": "cust-123", "created_at": "2026-10-27T09:00:00Z", "created_by": "support-backend",
+ "runs": [{"run_id": "r_40", "capability": "chat", "status": "completed", "input": {"message": "hi"}, ...}]}
+```
+
+A session of another caller is a `404` unless you are an admin of the environment.
+
+## Find an end user's runs
+
+Every run carries its end user, so you can list one person's runs of an agent with the `user` filter:
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" \
+  "$AGENTOS/v0/envs/default/agents/support-agent/runs?user=cust-123"
+```
+
+To erase what agents remember about an end user, see [Erase an end user](/agentos/api/memory#erase-an-end-user).
+
+<Tip>
+In the panel, the agent's **Run** tab has an optional **End user** field: a run started with one is the first turn of a new session for that user.
+</Tip>

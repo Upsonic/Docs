@@ -1,0 +1,75 @@
+---
+title: "Models and providers"
+description: "Connect model providers to an environment and choose which models its agents may use."
+---
+
+Agents never hold provider API keys. An environment's **admins** add **providers** (an OpenAI account, a Bedrock region, a vLLM server…) on the **Models** page and tick the models agents may use. Agents then call those models through the AgentOS gateway with their run token. See [Call a model](/agentos/build/models) for the agent's side.
+
+Each environment has its own providers and models: a run only ever reaches the models of its own environment.
+
+## Supported providers
+
+| Provider type | Connects to | You enter |
+|---|---|---|
+| **OpenAI** | OpenAI's API, or a proxy in front of it | API key; optional Base URL (a proxy's URL ends in `/v1`) |
+| **Anthropic** | Anthropic's API | API key; optional Base URL |
+| **AWS Bedrock** | Models enabled in your AWS account | Region, and either a Bedrock API key (`ABSK…`) or an access key ID and secret access key |
+| **Azure OpenAI** | Deployments in your Azure OpenAI resource | Endpoint URL, API version, API key |
+| **OpenAI-compatible** | vLLM, Ollama, LM Studio and other servers with an OpenAI-style API | Base URL ending in `/v1` (Ollama: `http://<host>:11434/v1`); API key optional |
+
+Keys are **write-only**: they are stored encrypted and never shown again. To change one, enter a new value. For Bedrock, saving one way of signing in removes the other's stored keys.
+
+## Add a provider
+
+<Steps>
+  <Step title="Choose the type">
+    Open **Models → Add provider** and choose a provider type.
+  </Step>
+  <Step title="Name it and enter its settings">
+    Give it a name. Its **slug** (lowercase letters, digits and `-`, such as `bedrock-prod`) is filled in from the name and **can't be changed once saved**, because agents use it in model names. Enter the settings and keys from the table above.
+  </Step>
+  <Step title="Tick the models">
+    After saving you land on the provider's **Edit models** page. AgentOS asks the provider which models it serves and lists them. Tick the ones agents may use and click **Save and sync**. Ticked models are pushed to the gateway; unticked ones are removed from it.
+  </Step>
+</Steps>
+
+<Note>
+Azure OpenAI deployments can't be listed, and some servers don't answer the list. In that case use **Add model** and type the model ID (for Azure, the deployment name). Model IDs can't contain spaces or commas.
+</Note>
+
+## Model names
+
+Every model is named **`<provider slug>/<model ID>`**, exactly as the Models page lists it:
+
+```text
+anthropic/claude-sonnet-4-5
+bedrock-prod/us.anthropic.claude-sonnet-4-5-20250929-v1:0
+vllm/qwen2.5-72b-instruct
+```
+
+That is the name agents put in `config.models` in [agentos.yaml](/agentos/build/agentos-yaml), and the name experiments use to try another model:
+
+```yaml agentos.yaml
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5
+    judge: bedrock-prod/us.anthropic.claude-sonnet-4-5-20250929-v1:0
+```
+
+Every model named in `config.models` must exist on the Models page of the environment you deploy to, or the upload is refused.
+
+## Models in use
+
+A model can't be unticked or deleted while something depends on it: a live version, a candidate or a version still building that names it in its config, an AI judge evaluator, or an experiment that hasn't finished and overrides with it. Move those to another model first.
+
+Each model row shows its sync state with the gateway (**SYNCED**, **SYNCING**, **SYNC FAILED**). If a sync failed, fix the cause and click **Sync** to try again.
+
+## Usage
+
+The Models page shows each model's calls, tokens and cost over the last 30 days. Cost comes from a public price table; models it doesn't price, such as models on your own servers, are shown as **on-prem** at $0. The same numbers per run are on each run's page, and per agent on its **Overview** tab. See [Metrics](/agentos/platform/metrics).
+
+## Privacy
+
+The gateway doesn't store prompts or responses. For each model call AgentOS keeps only the model, token counts, cost, latency and the names of the tools the model asked for.
+
+To control *what* reaches a model (national IDs, card numbers, secrets…), add [guardrails](/agentos/platform/guardrails).

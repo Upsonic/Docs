@@ -1,0 +1,65 @@
+---
+title: "Audit log"
+description: "Who did what, when and from where: an append-only, tamper-evident record of every action in an environment."
+---
+
+AgentOS records every action people, service accounts, agents and the platform take, in one audit log per tenant. Deploys, runs started and cancelled, review decisions, secrets, guardrails, memory erasures, webhooks, models, evals, users, roles, keys and sign-ins all write an event. The event is written together with the change itself: if the event can't be written, the change doesn't happen either.
+
+Nobody can change or delete an event, and the log can prove it.
+
+## Where to find it
+
+- **Govern → Audit**: every event in the environment. A tenant admin also sees the tenant's own events here: users, roles, service accounts, API keys and sign-ins.
+- The agent's **Audit** tab: that agent's events only.
+
+Both pages show the same list, newest first, 50 at a time, with times in UTC.
+
+<Note>
+Only **admins** of the environment can read the audit log, since it holds other people's IP addresses and browsers. Members see a line saying so.
+</Note>
+
+## Reading an event
+
+Each row reads as a sentence: who, what, and on what, for example *ayse@example.com promoted v4* or *deploy-bot started run r_812*. Runs and agents link to their pages. Open a row to see:
+
+- **What changed**, from → to, field by field.
+- **Context**: the action's name (`version.promoted`), how it came in (`panel`, `api`, `agent`, `system`), the API key used, on whose behalf an agent acted, the IP address, the browser, the request id, and any details of the action.
+- **Chain position**: the event's number in the tenant's chain and the start of its hash.
+
+Secrets and long texts such as prompts and memory facts are never stored. A changed secret is shown as its length and a **fingerprint**: the same value always gives the same fingerprint, so you can see whether it changed, but the value can't be read back from it. People are stored by id, so the log never has to be edited to forget someone.
+
+## Filters
+
+- **Category** chips: All · Deploys · Runs & reviews · Secrets & guardrails · Memory · Webhooks · Models · Evals · Access.
+- **Who**: a person or service account, or *AgentOS (automatic)*, *Agents' code*, or *Not signed in* (for example a failed sign-in).
+
+The export uses the same filters.
+
+## What is recorded
+
+| Category | Events |
+|---|---|
+| **Deploys** | agent created; version uploaded, promoted, rolled back; config changed (an eval candidate or a [prompt deploy](/agentos/platform/prompts)); deploy finished or failed |
+| **Runs & reviews** | run started and cancelled, by people and by agents; review decided; review expired |
+| **Secrets & guardrails** | secret set or deleted; guardrail created, edited, enabled, disabled, deleted; network mode switched; network rule added or removed |
+| **Memory** | fact edited or deleted (by people and by agents); folder erased; end user erased (counts only) |
+| **Webhooks** | endpoint added, enabled, disabled, deleted; signing secret rotated; deliveries replayed |
+| **Models** | provider added, edited, deleted; its models changed; model added or removed |
+| **Evals** | dataset created and published; collect rule set; evaluator and eval created and edited; experiment started and cancelled |
+| **Access** | signed in, signed out, **failed sign-ins**; password changed, reset or set; user created, deactivated, reactivated; roles changed; service account created, roles changed, deactivated, reactivated; API key issued and revoked; tenant and environment created; tenant admin added; **requests refused** for lack of permission; audit log exported |
+
+**Not recorded:** reads; the facts agents write to memory (memory keeps its own record of who wrote each fact); individual edits to dataset items; experiment runs one by one (`experiment.started` covers them); the steps inside a run (the run's timeline has them).
+
+## Tamper evidence
+
+Three things protect the log:
+
+1. **Append-only.** The database itself refuses to update or delete an event, whatever the application asks.
+2. **A hash chain.** Each tenant's events are numbered 1, 2, 3… and every event carries an HMAC over its own fields and the previous event's hash. Changing, removing or reordering any event breaks every hash after it.
+3. **A check on every visit.** Both audit pages recompute the tenant's chain when they load and say either **Log intact**, with how many events were checked, or **Log altered**, naming the first event that can't be trusted. Very long chains (over 100,000 events) are checked by your AgentOS operator instead of on every visit.
+
+## Export
+
+**Export CSV** and **Export JSON** (JSON Lines, one event per line) download the filtered events, oldest first, up to 100,000 at a time. Every field is included, hashes too, so the chain can be checked outside AgentOS. Each export is itself recorded as an `audit.exported` event.
+
+To feed a SIEM or keep a copy elsewhere, pull the events over HTTP instead: see [Audit API](/agentos/api/audit).

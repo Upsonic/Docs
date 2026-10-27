@@ -1,0 +1,164 @@
+---
+title: "Python and TypeScript SDKs"
+sidebarTitle: "SDKs"
+description: "Small libraries that speak the agent contract for you: serving, approvals, state, memory, files, models and streaming."
+---
+
+The AgentOS SDKs serve the [agent contract](/agentos/build/agent-contract) (`GET /health` and `POST /invoke`) and wrap every platform call an agent makes. You write one function per capability; the SDK calls it with the invocation and turns what it returns into the right answer.
+
+Everything the SDKs do is one of the documented HTTP calls, so an agent in any other language loses nothing by using plain HTTP. Check either way with the [conformance kit](/agentos/build/conformance).
+
+| | Python | TypeScript |
+|---|---|---|
+| Package | `agentos-sdk`, imported as `agentos` (typed) | `@agentos/sdk`, ESM only (`import`, not `require`) |
+| Runtime | Python 3.11+ (depends on `httpx`) | Node 20+ (no dependencies; Node 22.18+ and 24 run `.ts` files directly) |
+| Framework extras | `starlette`, `openai-agents`, `langgraph`, `agno` | `@agentos/sdk/ai-sdk`, `@agentos/sdk/mastra` |
+
+## A first handler
+
+<CodeGroup>
+```python Python
+import agentos
+
+def pay_invoices(inv: agentos.Invocation):
+    if inv.resume is None:                       # the start
+        inv.state.run.put("progress", {"step": "asked"})
+        inv.ask("Pay 2 invoices", [{"id": "INV-1", "title": "Acme · 120.00", "data": {"amount": "120.00"}}],
+                actions=["approve", "edit", "reject"])   # creates the hold; the run waits for a person
+    paid = [d.data for d in inv.resume.approved]  # the resume, once a person decided
+    return {"paid": paid}                         # completed, with this output
+
+agentos.serve({"pay_invoices": pay_invoices}, port=8080)
+```
+
+```ts TypeScript
+import { serve } from "@agentos/sdk";
+
+await serve({
+  pay_invoices: async (inv) => {
+    if (!inv.resume) {
+      await inv.state.run.put("progress", { step: "asked" });
+      await inv.ask({ intent: "Pay 2 invoices", actions: ["approve", "edit", "reject"],
+        items: [{ id: "INV-1", title: "Acme · 120.00", data: { amount: "120.00" } }] });
+    }
+    return { paid: inv.resume!.approved.map((d) => d.data) };
+  },
+}, { port: 8080 });
+```
+</CodeGroup>
+
+## Putting the SDK in your bundle
+
+The SDKs aren't published on PyPI or npm yet. They ship with AgentOS as a Python wheel (`agentos_sdk-0.1.0-py3-none-any.whl`) and an npm tarball (`agentos-sdk-0.1.0.tgz`). Put the file in a `vendor/` folder of your bundle and install it from there in your `Dockerfile`:
+
+<Tabs>
+  <Tab title="Python">
+    ```dockerfile Dockerfile
+    FROM python:3.13-slim
+    WORKDIR /app
+    # pip fetches the SDK's one dependency (httpx) while the image builds
+    COPY vendor/ vendor/
+    RUN pip install --no-cache-dir vendor/*.whl
+    COPY app.py .
+    USER nobody
+    EXPOSE 8080
+    CMD ["python", "-u", "app.py"]
+    ```
+
+    With an extra, for example LangGraph: `RUN pip install "$(ls vendor/*.whl)[langgraph]"`.
+
+    For local development and tests, `pip install vendor/agentos_sdk-0.1.0-py3-none-any.whl` into your virtual environment.
+  </Tab>
+  <Tab title="TypeScript">
+    ```json package.json
+    {
+      "name": "my-agent",
+      "private": true,
+      "type": "module",
+      "dependencies": {
+        "@agentos/sdk": "file:vendor/agentos-sdk-0.1.0.tgz"
+      }
+    }
+    ```
+
+    ```dockerfile Dockerfile
+    FROM node:24-slim
+    WORKDIR /app
+    COPY package.json .
+    COPY vendor/ vendor/
+    RUN npm install --omit=dev --no-audit --no-fund
+    COPY app.ts .
+    USER node
+    EXPOSE 8080
+    # Node 24 runs TypeScript directly
+    CMD ["node", "app.ts"]
+    ```
+  </Tab>
+</Tabs>
+
+Zip the folder with `vendor/` in it and [deploy](/agentos/platform/deploying) as usual.
+
+## The invocation
+
+A handler gets the invocation, `inv`, with `input`, `capability`, `run_id` / `runId`, `session_id` / `sessionId`, `user`, `kind`, `id`, `seq`, `attempt`, `config`, `secrets`, `resume` and `eval`, plus these helpers:
+
+| Python | TypeScript | What it does |
+|---|---|---|
+| `inv.ask(intent, items, actions=, details=, expires_in=, files=)` | `await inv.ask({intent, items, actions, details, expiresIn, files})` | Asks a person and ends the invocation as `suspended`. On the resume, `inv.resume` has `approved`, `edited`, `rejected`, `feedback`, `decided_items`, `item(id)`, `comment`, `resolved_by`, `expired`. See [Human approvals](/agentos/build/human-approvals). |
+| `inv.state.run` / `.session` / `.agent`: `get`, `get_versioned`, `put(…, if_version=)`, `delete`, `append`, `update(key, fn, default=)` | the same in camelCase | The state store. See [State and sessions](/agentos/build/state-and-sessions). |
+| `inv.memory.at(path)`: `search`, `list`, `remember`; `inv.memory`: `search`, `list`, `get`, `versions`, `forget`, `context`, `tools` | the same, options as an object | The agent's memory. See [Memory](/agentos/build/memory). |
+| `inv.llm`: `chat(messages, role=, model=, **params)`, `stream(messages, …)`, `model(role)`, `openai_kwargs()`, `base_url`, `api_key`, `headers` | `inv.llm`: `chat`, `stream`, `model`, `baseURL`, `apiKey`, `headers` | The model gateway with the run token. See [Models](/agentos/build/models). |
+| `inv.start(capability, input, key="split:0")` | `await inv.start(capability, input, {key})` | A child run, with the Idempotency-Key `<run_id>:<key>` so a resumed run gets the same child. See [Child runs](/agentos/build/child-runs). |
+| `inv.event(type, data)` | `await inv.event(type, data)` | Adds `agent.<type>` to the run's timeline. |
+| `inv.files.upload(name, data, content_type)`, `inv.files.download(file_id)` | the same | Files of the environment. See [Files and events](/agentos/build/files-and-events). |
+| `return agentos.Stream(chunks, content_type)` + `inv.set_output(…)` | `return stream(chunks, {contentType})` + `inv.setOutput(…)` | A streaming answer. See [Streaming](/agentos/build/streaming). |
+
+Python's platform calls are synchronous, each with an async twin (`aask`, `astart`, `aevent`, `state.run.aget` …), and async handlers work too.
+
+`inv.eval` is `None` / `null` on a normal run. On an [experiment](/agentos/platform/evals) run it holds the holds recorded for the dataset item. Keeping side effects (payments, emails) out of eval runs is your code's job: check it.
+
+## Answers and errors
+
+| Your handler… | The invocation answers |
+|---|---|
+| returns a value | `completed`, with that value as the output |
+| calls `ask()` | `suspended`, whatever happens after (a framework that catches the SDK's `Suspend` can't hide it) |
+| raises `agentos.Fail(code, message)` / throws `new Fail(…)` | `failed` with your code and message |
+| lets a platform refusal escape (`NotFound`, `Conflict` …) | `failed` with the platform's code |
+| lets a guardrail block escape (`GuardrailBlocked`) | `failed` with `blocked_by_guardrail` |
+| raises anything else | `failed` with `agent_error` (`"TypeError: …"`); the traceback goes to the container's output |
+| is called for an unknown capability | `failed` with `unknown_capability` |
+
+A `Fail` code is lowercase letters, digits and `_`, starting with a letter, at most 63 characters, with a non-empty message (the platform would record anything else as `agent_failed`, so Python's `Fail` refuses it with a `ValueError`).
+
+Platform refusals raise `AgentOSError` subclasses: `InvalidRequest` (and `GuardrailBlocked`, with `guardrail`, `at`, `hit`), `Unauthorized`, `Forbidden`, `NotFound`, `Conflict` (and `VersionConflict`, with `current_version`), `TooLarge`, and `InvocationEnded` when your code uses the invocation after it answered. `agentos.guardrail_block(error)` / `guardrailBlocked(error)` find a guardrail block inside another client's error (see [Guardrails](/agentos/platform/guardrails)).
+
+<Warning>
+There is no "run once" helper. Code before `ask()` runs again on the resume, so keep it idempotent and key side effects by `run_id` and a step name.
+</Warning>
+
+## Serving
+
+| | |
+|---|---|
+| Python, standard library | `agentos.serve(handlers, port=8080)`: a thread per request |
+| Python, Starlette or FastAPI | `agentos.asgi.routes(handlers)` or `agentos.asgi.app(handlers)` (extra `agentos-sdk[starlette]`; `import agentos.asgi` first, `import agentos` alone doesn't load it) |
+| Node `http` | `serve(handlers, {port})` |
+| Express | `nodeHandler(handlers)` |
+| Hono, Bun, Deno | `fetchHandler(handlers)` |
+
+## The run token in your own HTTP clients
+
+The SDK sends the run token only to the platform and the model gateway, and only while the invocation runs; afterwards it raises `InvocationEnded` instead of sending it. Your own clients should follow the same rule:
+
+- **Python:** `httpx.Client(event_hooks=agentos.httpx_event_hooks())` (`async_httpx_event_hooks()` for `AsyncClient`) adds the token to requests for the platform's hosts and takes it off any request to another host, redirect hops included: once a request has left the platform, its later hops never get the token. A thread pool doesn't inherit the invocation: submit `agentos.bind(fn)`.
+- **TypeScript:** `inv.fetch(url, init)` or `platformFetch(url, init)` follow redirects themselves with the same rule. The invocation follows awaits and timers, not worker threads.
+
+```python
+with httpx.Client(event_hooks=agentos.httpx_event_hooks(), follow_redirects=True, timeout=10) as client:
+    page = client.get(inv.input["context_url"]).text
+```
+
+## Frameworks
+
+Adapters for the OpenAI Agents SDK, LangGraph, Agno, the Vercel AI SDK and Mastra turn each framework's own pause into a hold and continue where it stopped on the resume. See [Frameworks](/agentos/build/frameworks).

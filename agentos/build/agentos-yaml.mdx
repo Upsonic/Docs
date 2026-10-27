@@ -1,0 +1,129 @@
+---
+title: "agentos.yaml"
+description: "The file that describes your agent: its name, port, capabilities, config, secrets and network access."
+---
+
+Every bundle has an `agentos.yaml` at its top level, next to the `Dockerfile`. It tells AgentOS what the agent is called, where its container listens, which capabilities it offers and what each one takes and returns.
+
+```yaml agentos.yaml
+name: hello-agent              # required
+title: Hello Agent             # optional, default ""
+description: Echoes its input  # optional, default ""
+runtime: stateless             # required; the only accepted value
+port: 8080                     # required
+capabilities:                  # required, at least one
+  echo:
+    description: Returns the input unchanged.   # optional, default ""
+    input: schemas/echo.json                     # required: a file in the bundle...
+    output: {type: object}                       # ...or an inline JSON Schema
+    timeout: 30s                                 # required
+    approvers: [admin, member]                   # optional, default [admin, member]
+config:                        # optional, every key optional
+  models: {reader: anthropic/claude-sonnet-4-5}
+  prompts: {system: "You label support tickets."}
+  params: {greeting: hello, max_labels: 3}
+secrets: [CRM_API_KEY]         # optional, default []
+network:                       # optional, default: no access outside the platform
+  allow: [api.example.com, "*.wikipedia.org", "10.20.0.0/16:5432"]
+```
+
+## Keys
+
+| Key | Rules |
+|---|---|
+| `name` | Lowercase letters, digits and hyphens, 1–63 characters, starting and ending with a letter or digit. When you deploy through the API it must equal the `{agent}` in the upload URL. |
+| `title`, `description` | Free text, shown in the panel. |
+| `runtime` | `stateless`. `stateful` is refused (not supported yet). Keep anything that must outlive an invocation in [state](/agentos/build/state-and-sessions) or [memory](/agentos/build/memory). |
+| `port` | A whole number from 1 to 65535. Your container must serve `GET /health` and `POST /invoke` on this port, on `0.0.0.0`. The container gets no `PORT` variable, so the image itself must listen there. |
+| `capabilities` | A mapping of capability name to `{description, input, output, timeout, approvers}`. Names are lowercase letters, digits and underscores, start with a letter, and are at most 63 characters. |
+| `input`, `output` | A JSON Schema (draft 2020-12), either inline as a YAML mapping or the path of a JSON file in the bundle (see [Schema files](#schema-files)). Run inputs are checked against `input` before a run is created; `completed` outputs are checked against `output`. |
+| `timeout` | `<n>s`, `<n>m` or `<n>h` (`30s`, `5m`, `1h`), or a whole number of seconds; from 1 second to 24 hours. This is how long AgentOS waits for one answer from your agent. |
+| `approvers` | `[admin]` or `[admin, member]` (the default): the roles in the environment that may decide this capability's [approvals](/agentos/build/human-approvals), people and service accounts alike. |
+| `config.models` | Role → model name, written `<provider slug>/<model ID>` as the environment's **Models** page lists it (`anthropic/claude-sonnet-4-5`). Every model must exist on the Models page of the environment you deploy to. See [Calling models](/agentos/build/models). |
+| `config.prompts` | Name → text. |
+| `config.params` | Name → any JSON value. |
+| `secrets` | A list of names matching `[A-Z][A-Z0-9_]*`, at most 128 characters each (`CRM_API_KEY`). The values are set on the agent's **Secrets** tab. See [Secrets](/agentos/build/secrets). |
+| `network.allow` | A list of host rules: what this version's container may connect to outside the platform. Without it, nothing. See [Network access](/agentos/build/network-access). |
+
+There is no `memory:` key: every agent already has [its own memory](/agentos/build/memory), and a `memory:` key is refused.
+
+### config
+
+Your code receives `config` on every invocation (`context.config`), so models, prompts and parameters live in `agentos.yaml` instead of being hard-coded. That is what lets AgentOS:
+
+- run an [eval](/agentos/platform/evals) with another model or prompt as a temporary override, without a new build;
+- turn a winning override into a new version, or edit a prompt on the [Prompts tab](/agentos/platform/prompts) and deploy it;
+- ask you which value to keep when an upload's config differs from the live version's (see [Deploying](/agentos/platform/deploying)).
+
+Read model names, prompts and parameters from `context.config` rather than from constants, or overrides won't reach your code.
+
+### Schema files
+
+An `input` or `output` written as a string names a JSON file in the bundle, exactly as it is stored in the zip: `schemas/in.json`, with no leading `/` or `./`, no `.`, `..` or empty segments, and no backslashes. A schema file must be UTF-8 JSON (no `NaN` or `Infinity`) and at most 1 MiB. One file may serve several fields. `$ref` to other files is not followed; keep references local (`#/$defs/...`).
+
+## Strict parsing
+
+`agentos.yaml` is read strictly, so mistakes surface at upload time instead of at run time:
+
+- The file must be UTF-8 and at most 1 MiB.
+- Unknown keys are refused at every level, and the error lists the allowed ones.
+- YAML anchors and aliases, duplicate keys and non-text keys are refused. `on:`, `yes:` and dates are not text in YAML: quote them.
+- Values must be plain JSON: unquoted dates, binary, sets, `.nan` and `.inf` are refused.
+
+Every problem is reported at once, one per field, so a single upload shows you everything to fix:
+
+```json
+{"code": "invalid_bundle", "message": "the bundle or agentos.yaml is invalid", "deploy_id": "d_81",
+ "errors": [{"field": "port", "message": "must be a whole number between 1 and 65535"},
+            {"field": "capabilities.triage.timeout", "message": "must be like 30s, 5m or 1h, at most 24h"}]}
+```
+
+## Bundle limits
+
+A bundle is a zip with the `Dockerfile` and `agentos.yaml` at its top level.
+
+| Limit | Value |
+|---|---|
+| Zip size | 100 MiB (a bigger upload is cut off with `413`) |
+| Unpacked size | 500 MiB |
+| Entries | 10,000 (folders count) |
+| Names | Up to 1024 bytes, 255 bytes per segment |
+| Not allowed | Absolute or Windows paths, `.`, `..` or empty segments, symlinks, duplicate names |
+| Build time | 15 minutes; the last 5,000 log lines are kept |
+| Health check | 60 seconds for the container to answer `GET /health` |
+
+The build has internet access but no secrets: never put credentials in your `Dockerfile` or bundle.
+
+## Container limits
+
+Each agent container runs with:
+
+- 1 CPU and 1 GB of memory;
+- at most 512 processes;
+- all Linux capabilities dropped and `no-new-privileges`;
+- a restart unless it was stopped on purpose.
+
+When a container stops, it gets `SIGTERM` and 10 seconds before it is killed. As PID 1 in its container your process has no default action for `SIGTERM`, so handle it and exit:
+
+<CodeGroup>
+```python Python
+import signal, sys
+
+signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+```
+
+```ts TypeScript
+process.on("SIGTERM", () => process.exit(0));
+```
+</CodeGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Agent contract" icon="handshake" href="/agentos/build/agent-contract">
+    The two endpoints your container serves and what each run sends.
+  </Card>
+  <Card title="Deploying" icon="upload" href="/agentos/platform/deploying">
+    Live and candidate deploys, rollbacks and config differences.
+  </Card>
+</CardGroup>

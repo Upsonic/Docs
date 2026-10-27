@@ -1,0 +1,104 @@
+---
+title: "Conformance kit"
+description: "Check that an agent, in any language, follows the AgentOS contract before you deploy it, locally or in CI."
+---
+
+The conformance kit runs your agent the way AgentOS does, against a **mock platform**, and checks every answer. Use it while you build an agent without the SDKs, and in CI for every agent.
+
+It is a command-line tool, `agentos-conformance` (Python 3.11+). Like the [SDKs](/agentos/build/sdks), it isn't published on PyPI yet: it ships with AgentOS as a Python package you install with `pip` or `uv`. Running an agent from its bundle needs Docker.
+
+## Run it
+
+```bash
+# build the bundle's Dockerfile and run the agent in Docker
+agentos-conformance check ./my-agent
+
+# or check an agent you already run
+agentos-conformance check ./my-agent --url http://127.0.0.1:8080
+
+# or a prebuilt image
+agentos-conformance check ./my-agent --image my-agent:dev
+```
+
+`./my-agent` is the bundle folder with `agentos.yaml`. In Docker the agent runs on an internal network of its own with the platform's container limits, and gets a mock of the agent-facing platform API, an OpenAI-compatible mock model gateway, and a host that isn't the platform's.
+
+The kit invokes every case in the bundle's `conformance.yaml`, plus one case per capability that has none (its input made from the input schema), and prints a `PASS`, `FAIL` or `SKIP` line per check, then `N passed, N failed, N skipped`. On a failure in Docker, the container's last output follows.
+
+| Option | |
+|---|---|
+| `--url URL` | Check an agent that already serves `/health` and `/invoke` there. |
+| `--image IMAGE` | Run this image instead of building the bundle's `Dockerfile`. |
+| `--cases FILE` | The cases file (default: `conformance.yaml` in the bundle). |
+| `--timeout SECONDS` | How long an invocation may take (default 60). |
+| `--wait SECONDS` | How long to wait for `/health` (default 60). |
+| `--junit FILE` | Also write the checks as JUnit XML, for CI. |
+
+**Exit codes:** `0` all passed, `1` a check failed, `2` it couldn't run (a bad bundle or `conformance.yaml`, no Docker).
+
+## What it checks
+
+- `GET /health` answers, and an unknown capability answers `failed`.
+- Every answer has the contract's shape and the expected status. A `completed` output matches the capability's output schema; a `failed` one has a code and message the platform keeps; a `suspended` one names the hold the invocation asked for, and the resume after a decision answers too.
+- A streaming answer reports its result, and a stream whose result the platform refuses reports `failed`.
+- The run token goes only to platform hosts and only while its invocation runs, every model call carries it, and it isn't carried along a redirect off the platform.
+- A compare-and-set write that meets a conflict is retried (the mock answers each case's first conditional write with 409 `version_conflict`).
+- Child runs started again by a later invocation of the run keep their Idempotency-Keys, and child inputs and reported outputs match the bundle's schemas.
+
+<Note>
+Invoke bodies from the kit carry an extra field in `context`. Agents must ignore fields they don't know, as AgentOS may add more.
+</Note>
+
+## conformance.yaml
+
+Put it next to `agentos.yaml`:
+
+```yaml conformance.yaml
+cases:
+  - capability: pay_invoices
+    input: {invoices: [{id: INV-1, payee: Acme, amount: "120.00"}]}
+    expect: suspended                                   # completed (default), failed or suspended
+    decision: [{id: INV-1, action: edit, data: {payee: Acme, amount: "100.00"}}]   # default: approve every item
+    resumed: completed                                  # what the resume must answer (default)
+  - capability: chat
+    input: {message: hello}
+    session: true                                       # the run belongs to a session
+  - capability: ask
+    input: {question: Why?, context_url: "{outside_url}/page"}   # a URL on the host that isn't the platform's
+  - capability: ask
+    name: ask-redirect                                  # names the case in the report (default: the capability)
+    input: {question: Why?, context_url: "{redirect_url}"}       # a platform URL that redirects off the platform
+```
+
+| Key | |
+|---|---|
+| `capability` | The capability to invoke. |
+| `input` | Its input. `{outside_url}` is a host that isn't the platform's; `{redirect_url}` is a platform URL that redirects to it. |
+| `expect` | `completed` (default), `failed` or `suspended`. |
+| `decision` | For `suspended`: the reviewer's decision, one entry per asked item (default: approve every item). It must be one the platform would accept: every item once, an action the ask offered, an edit's `data` with the item's keys. |
+| `resumed` | What the resume must answer (default `completed`). |
+| `session` | `true` makes the run part of a session. |
+| `name` | The case's name in the report. |
+
+Other keys are errors.
+
+## In CI
+
+```yaml .github/workflows/agent.yml
+- name: AgentOS conformance
+  run: agentos-conformance check ./my-agent --junit conformance.xml
+```
+
+## The mock platform for your own tests
+
+`agentos-conformance mock` serves the mock platform alone and prints its URLs as one JSON line, so an agent's own tests, in any language, can drive it:
+
+| Mock route | |
+|---|---|
+| `POST /_mock/invocations {capability, input, run_id?, session_id?, resume?}` | An invoke body with a live run token, to send to your agent. |
+| `POST /_mock/holds/{id}/decide {items?, comment?, expired?}` | The resume body for a hold (422 for a decision the platform would refuse). |
+| `POST /_mock/end {token}` | Ends a token. |
+| `POST /_mock/conflict {token}` | Makes the token's next conditional write meet a conflict. |
+| `GET /_mock/redirect?to=<url>[&status=307]` | Answers a redirect (302 by default), on any of its servers. |
+| `GET /_mock/requests`, `/holds`, `/state`, `/runs`, `/events`, `/files`, `/results` | What the agent did. |
+
+`--spec ./my-agent` gives the mock the bundle's capabilities, so it checks child runs and reported outputs against their schemas. Without it, only capabilities it has issued invocations for can be started as child runs. `--reply TEXT` sets what the mock model answers.

@@ -1,0 +1,139 @@
+---
+title: "Calling models"
+description: "Use the environment's models through the AgentOS gateway with the run token."
+---
+
+Your agent never holds a provider API key. It calls models through the AgentOS **gateway**, an OpenAI-compatible endpoint, with the invocation's run token. The gateway routes the call to the environment's provider, applies the environment's [guardrails](/agentos/platform/guardrails), and records tokens, cost and latency on the run.
+
+## 1. Name the models in agentos.yaml
+
+Give each model a **role** under `config.models`. The value is the model's name as the environment's **Models** page lists it, `<provider slug>/<model ID>`:
+
+```yaml agentos.yaml
+config:
+  models:
+    main: anthropic/claude-sonnet-4-5
+    judge: bedrock-prod/us.anthropic.claude-sonnet-4-5-20250929-v1:0
+```
+
+Every model must exist on the Models page of the environment you deploy to, or the upload is refused. An admin adds providers and ticks the models agents may use; see [Models and providers](/agentos/platform/models-and-providers).
+
+## 2. Call the gateway
+
+On each invocation, `context.llm.base_url` is the gateway and `context.config.models` holds the names. Send the run token as `x-agentos-run-token`; the API key can be anything.
+
+<CodeGroup>
+```python openai-python
+from openai import OpenAI
+
+def handle(body):
+    ctx = body["context"]
+    client = OpenAI(
+        base_url=ctx["llm"]["base_url"],
+        api_key="unused",                                   # the gateway ignores it
+        default_headers={"x-agentos-run-token": ctx["token"]},
+    )
+    answer = client.chat.completions.create(
+        model=ctx["config"]["models"]["main"],              # exactly as in config.models
+        messages=[{"role": "user", "content": body["input"]["question"]}],
+    )
+    return {"status": "completed", "output": {"answer": answer.choices[0].message.content}}
+```
+
+```python Python SDK
+import agentos
+
+def ask(inv: agentos.Invocation):
+    answer = inv.llm.chat([{"role": "user", "content": inv.input["question"]}])   # role "main"
+    return {"answer": answer["choices"][0]["message"]["content"]}
+
+agentos.serve({"ask": ask}, port=8080)
+```
+
+```ts TypeScript SDK
+import { serve } from "@agentos/sdk";
+
+await serve({
+  ask: async (inv) => {
+    const answer = await inv.llm.chat([{ role: "user", content: inv.input.question }]);
+    return { answer: answer.choices[0].message.content };
+  },
+}, { port: 8080 });
+```
+</CodeGroup>
+
+With the SDKs, `inv.llm` is the gateway with the token already attached:
+
+| Python | TypeScript | What |
+|---|---|---|
+| `inv.llm.chat(messages, role="main", model=None, **params)` | `await inv.llm.chat(messages, {role, model, ...params})` | One chat completion, returned as the gateway answers it. |
+| `inv.llm.stream(messages, ...)` | `inv.llm.stream(messages, ...)` | The answer's text, delta by delta (`for text in ...` / `for await (const text of ...)`). |
+| `inv.llm.model(role)` | `inv.llm.model(role)` | The model name `config.models` gives the role. A role it doesn't name fails with `model_not_configured`. |
+| `openai.OpenAI(**inv.llm.openai_kwargs())` | `inv.llm.baseURL`, `inv.llm.apiKey`, `inv.llm.headers` | Your own OpenAI client, or any OpenAI-compatible library. In Python, `openai_kwargs(asynchronous=True)` for `AsyncOpenAI`. |
+
+Other parameters (`temperature`, `tools`, …) go into the request body. Framework adapters give you a ready model for the OpenAI Agents SDK, Agno and the Vercel AI SDK; see [Frameworks](/agentos/build/frameworks).
+
+<Tip>
+Create the model client inside the handler, per invocation, not at module level: it carries this invocation's run token, which stops working when the invocation answers.
+</Tip>
+
+## Which names to send
+
+Send exactly the names in `config.models`. A run only reaches its own environment's models, so a name from another environment, a bare model ID (`claude-sonnet-4-5`) or a provider path answers `400`.
+
+`GET {base_url}/models` lists the environment's models with the environment's number in front (`3/anthropic/claude-sonnet-4-5`). Send them without that prefix.
+
+## Supported routes
+
+The run token reaches these gateway routes; every other route answers `403`.
+
+| Route | Notes |
+|---|---|
+| `/v1/chat/completions`, `/chat/completions` | OpenAI chat completions, streamed or not. |
+| `/v1/completions`, `/completions` | Text completions. |
+| `/v1/embeddings`, `/embeddings` | Embeddings. |
+| `/v1/messages` | Anthropic Messages. |
+| `/v1/responses`, `/responses` | OpenAI Responses. |
+| `/v1/models`, `/models` | The environment's models. |
+| `/openai/deployments/<name>/chat/completions` | Azure-style chat completions. |
+| `/bedrock/model/<slug>/<model ID>/converse`, `converse-stream` | Bedrock Converse. Needs a provider set up with an access key pair (a Bedrock API key provider works through `/v1/chat/completions` only). Model ARNs contain `/`: call them through chat completions. |
+
+## What a call can't carry
+
+The gateway decides which provider and credentials a call uses, so a request is refused with `400` naming the key when it carries:
+
+- more than one model (a `,` in the model name);
+- routing settings: `fallbacks`, `context_window_fallbacks`, `content_policy_fallbacks`, `router_settings_override`, `specific_deployment`, `model_info`;
+- credentials: `api_key`, `aws_access_key_id` and the like.
+
+## When a guardrail blocks a call
+
+The environment's [guardrails](/agentos/platform/guardrails) check each call. A block fails **only that call** with HTTP `400`; the run goes on and your code decides what to do — try differently, skip the step, or [ask a person](/agentos/build/human-approvals):
+
+```json
+{"error": {"message": "No national IDs to the model. (event gh_01M4VJ3C14H3DNEKQE4PFDWYPJ)",
+           "type": "invalid_request_error", "code": "content_filter", "param": null,
+           "agentos_guardrail": {"guardrail": "no-tckn", "at": "model_input",
+                                 "hit": "gh_01M4VJ3C14H3DNEKQE4PFDWYPJ", "code": "content_filter"}}}
+```
+
+Branch on `agentos_guardrail`. The SDKs raise `GuardrailBlocked` (with `guardrail`, `at` and `hit`); left uncaught, the run fails with `blocked_by_guardrail`. A route a guardrail can't be enforced on answers `403 agentos_forbidden`. Streams, framework behaviour and every other case are on the [Guardrails](/agentos/platform/guardrails) page.
+
+## What is recorded
+
+Each call becomes an `llm.call` event on the run's timeline with its model, tokens, cost and latency, and the tools the model asked for become `tool.call` events. The run's `usage` adds them up (`llm_calls`, `input_tokens`, `output_tokens`, `cost`), and the Dashboard and Models page show the totals; see [Metrics](/agentos/platform/metrics).
+
+<Info>
+Prompts and responses are never stored. Only the model, token counts, cost, latency and the names of the tools the model asked for are kept.
+</Info>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Streaming answers" icon="wave-pulse" href="/agentos/build/streaming">
+    Stream a model's answer straight to your caller.
+  </Card>
+  <Card title="Evals" icon="flask" href="/agentos/platform/evals">
+    Compare models and prompts on a dataset without a new build.
+  </Card>
+</CardGroup>

@@ -1,0 +1,80 @@
+---
+title: "State and sessions"
+description: "Keep progress, conversation history and counters in the platform, so your agent stays stateless."
+---
+
+Agents on AgentOS are stateless: a container can be stopped while a run waits for a person, a resume may land on a fresh container, and several runs share one container. Anything that must outlive one invocation goes into the platform's **state store**.
+
+## Scopes
+
+| Scope | Shared by | Use it for |
+|---|---|---|
+| `run` | every invocation of one run (its start and each resume) | Progress you need after a [human approval](/agentos/build/human-approvals): save it before you ask. |
+| `session` | every run of the run's [session](#sessions), for this agent | A conversation's history. A run without a session gets 409 `no_session`. |
+| `agent` | every run of the agent | Counters, caches, settings the agent keeps for itself. |
+
+For long-lived knowledge that you want to search, use [memory](/agentos/build/memory) instead.
+
+## The API
+
+All calls take the run token as `x-agentos-run-token` and work only while the invocation is running (401 otherwise).
+
+| Call | Body | Answer |
+|---|---|---|
+| `GET {api_url}/v0/state/{scope}/{key}` | | `{value, version}`; 404 when absent |
+| `PUT {api_url}/v0/state/{scope}/{key}` | `{value, if_version?}` | `{version}` |
+| `DELETE {api_url}/v0/state/{scope}/{key}` | | 204 |
+| `POST {api_url}/v0/state/{scope}/{key}/append` | `{items: [...]}` | `{version, length}` |
+
+- **Keys** are 1–200 letters, digits and `. _ : -`.
+- **Values** are any JSON up to 1 MiB (413 `too_large`). Write ids and amounts as strings: JSON numbers lose precision. `NaN`, numbers that overflow and strings containing NUL are refused.
+- **Compare-and-set:** `if_version` makes a `PUT` conditional. `0` means "only if absent". A mismatch is 409 `version_conflict` with the `current_version`; read again and retry.
+- **Append** adds items to a list atomically, creating it if needed. 409 `not_a_list` when the value isn't a list, 413 when the list would pass 1 MiB. Use it for conversation history, so two turns never overwrite each other.
+
+## With the SDKs
+
+`inv.state.run`, `inv.state.session` and `inv.state.agent` each have `get`, `get_versioned`, `put`, `delete`, `append` and `update` (camelCase in TypeScript).
+
+<CodeGroup>
+```python Python
+def chat(inv: agentos.Invocation):
+    message = inv.input["message"]
+    history = inv.state.session.append("history", [{"role": "user", "content": message}])
+    reply = f"turn {(history.length + 1) // 2}: you said {message!r}"
+    inv.state.session.append("history", [{"role": "assistant", "content": reply}])
+
+    # compare-and-set loop: read, change, write; again if another run wrote in between
+    visits = inv.state.agent.update("visits", lambda n: n + 1, default=0)
+    return {"reply": reply, "visits": visits}
+```
+
+```ts TypeScript
+async chat(inv) {
+  const message: string = inv.input.message;
+  const history = await inv.state.session.append("history", [{ role: "user", content: message }]);
+  const reply = `turn ${Math.floor((history.length + 1) / 2)}: you said '${message}'`;
+  await inv.state.session.append("history", [{ role: "assistant", content: reply }]);
+
+  const visits = await inv.state.agent.update<number>("visits", (n) => n + 1, { default: 0 });
+  return { reply, visits };
+},
+```
+</CodeGroup>
+
+- `get(key, default)` returns the value, or the default when the key is absent.
+- `get_versioned` / `getVersioned` returns the value and its version. A key with no value gives `(None, 0)` / `{value: undefined, version: 0}`, and `put(…, if_version=0)` then writes only if it is still absent.
+- `put(key, value, if_version=…)` raises `VersionConflict` (with `current_version`) on a mismatch.
+- `update(key, fn, default=…)` is a compare-and-set loop: it reads, applies `fn`, and writes if nobody wrote in between, otherwise it tries again.
+
+## Sessions
+
+A **session** groups the runs of one conversation: one turn is one run. The caller creates the session and passes its `session_id` when starting each run (see the [Sessions API](/agentos/api/sessions)). Your agent sees it in the invoke body as `session_id` (`inv.session_id` / `inv.sessionId`) and gets the `session` state scope for it.
+
+- **One turn runs at a time.** Starting a turn while another is queued or running is refused with 409 `session_busy`. A held turn doesn't block the session: once it is decided its resume may run while a newer turn runs, which is why history should be kept with `append`.
+- The caller that created a session owns it; environment admins can use every session.
+
+### End users
+
+When the caller is a backend serving many customers, it names the **end user** on the session (`{"user": "cust-123"}`). Every run of the session carries it as `user` in the invoke body (`inv.user` in the SDKs), and a child run keeps its parent's. It is `null` for runs without one.
+
+Use it to keep each customer's data apart. The agent's memory has a folder per end user, `users/{user}/`, which the platform fills in with the run's user, so one customer's facts never reach another's run. See [Memory](/agentos/build/memory).

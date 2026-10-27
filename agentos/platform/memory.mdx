@@ -1,0 +1,69 @@
+---
+title: "Memory in the panel"
+sidebarTitle: "Memory"
+description: "Browse what each agent remembers, correct or delete facts, and erase an end user's memory."
+---
+
+Every agent has its own memory: short facts its code saves under paths it chooses, kept across runs with every earlier version. This page is about reading and governing that memory in the panel. To write and search memory from your agent, see [Memory](/agentos/build/memory); to do the same from your own systems, see [Memory API](/agentos/api/memory).
+
+## The agent's Memory tab
+
+Open an agent and its **Memory** tab.
+
+- **Folders.** A folder is a shared path prefix (`companies/`, `users/cust-123/`). The full path, `/<environment>/agents/<agent>/…`, is shown at the top, and you click through folders like a file browser.
+- **Facts.** The facts under the current folder, newest first, each with its text, tags, confidence, version and where it came from: the run that wrote it, and whether it was written by the agent's code, by the model through a tool, or by a person in the panel.
+- **Search.** Searches the facts under the current folder, best matches first. Search is full-text, case-insensitive, and matches word prefixes (`direct` finds `directors`), in Turkish and English alike.
+- **History.** A fact's every version, newest first.
+
+Admins of the environment can also:
+
+- **Edit** a fact: its text, tags and confidence. This writes a new version, recorded as written by you.
+- **Delete** a fact, with all its versions.
+- **Erase this folder**: every fact under the folder, in this agent. Erasing the root erases the agent's whole memory.
+
+<Warning>
+Deletes and erasures are permanent. There is no undo and no soft delete.
+</Warning>
+
+## Govern → Memory
+
+**Govern → Memory** is the environment-wide view. It lists the agents (a row opens that agent's memory), lets admins **erase an end user**, and lists the **erase receipts**, latest first.
+
+### Erasing an end user
+
+When a person asks to be forgotten, erase them by their end-user id, the `user` your app put on their sessions (for example `cust-123`):
+
+<Steps>
+  <Step title="Enter the id">
+    Under **Erase an end user**, enter the end-user id and click **Continue**.
+  </Step>
+  <Step title="Confirm">
+    The confirmation says what will go: every fact under `users/<user>/`, in every agent of the environment.
+  </Step>
+  <Step title="Keep the receipt">
+    AgentOS removes the facts and all their versions, and shows a receipt: the scope, how many facts and versions were removed, when, and by whom. The receipt is also kept in the environment's [audit log](/agentos/platform/audit-log), with counts only, never what was erased.
+  </Step>
+</Steps>
+
+```json
+{"receipt_id": "er_…", "scope": "/default/agents/*/users/cust-123/", "facts": 4, "versions": 6,
+ "erased_at": "…", "erased_by": "privacy-bot"}
+```
+
+### What erasing removes, and what it doesn't
+
+Erasing an end user removes **their memory only**: the facts under `users/<user>/` in every agent. It does not remove:
+
+- the input and output of their runs,
+- run and session records,
+- values in the state store.
+
+<Tip>
+This is why an agent should keep personal facts about an end user under `users/{user}/`. The platform fills in `{user}` with the run's end user, so those facts are kept apart from other users' and erased with theirs. See [Memory](/agentos/build/memory).
+</Tip>
+
+## Who can do what
+
+Anyone with a role in the environment can read every agent's memory, end users' folders included. Editing, deleting, erasing a folder and erasing an end user need the admin role.
+
+Memory written during an [eval](/agentos/platform/evals) is temporary and never appears here.

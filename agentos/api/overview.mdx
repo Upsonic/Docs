@@ -1,0 +1,185 @@
+---
+title: "API overview"
+sidebarTitle: "Overview"
+description: "Authentication, environments, roles, errors, pagination and streaming for the AgentOS HTTP API."
+---
+
+Everything you can do in the AgentOS panel — deploy agents, start runs, decide approvals, run evals, read memory and the audit log — is also an HTTP API under `/v0`. This section is the reference for callers: your backend, scripts and CI.
+
+<Info>
+Agents themselves talk to a different set of routes with their **run token** (`x-agentos-run-token`): holds, state, memory, files, events, child runs and results. Those are described with the agent contract in [Build](/agentos/build/agent-contract).
+</Info>
+
+## Base URL
+
+Every route lives under your installation's address plus `/v0`:
+
+```bash
+export AGENTOS=https://agentos.example.com
+export AGENTOS_API_KEY=aos_...
+
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/agents
+```
+
+Most routes name an **environment** in the path: `/v0/envs/{env}/…`, where `{env}` is the environment's name (`default`, `staging`, `prod`…). An object of another environment is a `404` there, even when you can see it elsewhere. A few routes are addressed by an id that already belongs to one environment, such as `/v0/deploys/{deploy_id}`.
+
+The OpenAPI description is at `/v0/openapi.json`, browsable at `/v0/docs`. Both need you to be signed in to the panel.
+
+## Authentication
+
+<Tabs>
+  <Tab title="API key (recommended)">
+    Scripts and other systems use a **service account**. A tenant admin creates one on the **Users** page, gives it a role in each environment it calls, and issues an API key. The key is shown once.
+
+    ```bash
+    curl -sS -H "Authorization: Bearer aos_..." $AGENTOS/v0/envs/default/agents
+    ```
+
+    No CSRF token is needed with a key. Revoking the key or deactivating the service account takes effect at once. See [Users and API keys](/agentos/platform/users-and-api-keys).
+  </Tab>
+  <Tab title="Panel session">
+    The panel's login session works on the same API. A script without a key can sign in like a browser: fetch `/accounts/login/` to get the `csrftoken` cookie, post the form with `login`, `password` and `csrfmiddlewaretoken`, keep the cookie jar, and send the `csrftoken` cookie back as `X-CSRFToken` on every `POST`, `PUT`, `PATCH` and `DELETE`.
+
+    ```bash
+    JAR=$(mktemp)
+    csrf() { awk '$6 == "csrftoken" {print $7}' "$JAR"; }
+    curl -fsS -c "$JAR" -o /dev/null "$AGENTOS/accounts/login/"
+    curl -fsS -b "$JAR" -c "$JAR" -o /dev/null -H "Referer: $AGENTOS/accounts/login/" \
+      --data-urlencode "csrfmiddlewaretoken=$(csrf)" \
+      --data-urlencode "login=$AGENTOS_EMAIL" --data-urlencode "password=$AGENTOS_PASSWORD" \
+      "$AGENTOS/accounts/login/"
+    grep -q sessionid "$JAR" || { echo "sign-in failed" >&2; exit 1; }
+    CSRF=$(csrf)   # read it again: signing in rotates the token
+
+    curl -sS -b "$JAR" -H "X-CSRFToken: $CSRF" -F bundle=@hello-agent.zip \
+      $AGENTOS/v0/envs/default/agents/hello-agent/versions
+    ```
+
+    A wrong password answers `200` with the login form again and no `sessionid` cookie, hence the `grep`.
+  </Tab>
+</Tabs>
+
+A request with neither answers `401 unauthorized`.
+
+## Roles
+
+Access is decided per environment. Without any role there, every route of that environment answers `403 forbidden`.
+
+| You need | To |
+|---|---|
+| **Any role** (member or admin) | Read agents, versions, deploys, runs, holds, sessions, files, datasets, evals, experiments and memory. |
+| **Member or admin** | Start and cancel runs, create sessions, upload files, edit datasets, evaluators and evals, start and cancel experiments. |
+| **Admin** | Deploy and promote versions, make a candidate from an experiment, set a dataset's collect rule, delete and erase memory, read the audit log. |
+| **An approver role of the capability** | Decide a hold. A capability's `approvers` in [agentos.yaml](/agentos/build/agentos-yaml) say which roles may, `[admin, member]` by default. |
+
+## Errors
+
+Every error under `/v0` has the same JSON shape:
+
+```json
+{"code": "not_found", "message": "No such agent."}
+```
+
+A `422` also lists every problem it found, one per field:
+
+```json
+{"code": "invalid_request", "message": "The request is invalid.",
+ "errors": [{"field": "input.message", "message": "required"},
+            {"field": "limit", "message": "unknown query parameter"}]}
+```
+
+Some errors carry more keys, such as `deploy_id` on a refused upload or `keys` on a `config_mismatch`; each page lists them. Branch on `code`, not on `message`: messages are written for people and may change.
+
+| Status | Common codes |
+|---|---|
+| `400` | A decision that doesn't match its hold (`unknown_item`, `missing_item`…) |
+| `401` | `unauthorized`: no session or API key, or a revoked one |
+| `403` | `forbidden`: no role in the environment, or not the role this action needs |
+| `404` | `not_found`: no such environment, agent, run, hold… (also an unknown route) |
+| `405` | `method_not_allowed` |
+| `409` | A conflict with the current state: `deploy_busy`, `session_busy`, `already_decided`, `run_finished`… |
+| `413` | `too_large`: a body over the route's limit |
+| `415` | `unsupported_media_type` |
+| `422` | `invalid_request` (with `errors`), and route-specific codes such as `invalid_bundle` or `blocked_by_guardrail` |
+| `503` | `unavailable` / `storage_unavailable`: try again later |
+
+A body that isn't valid JSON, contains `NaN` or `Infinity`, has a number too large to represent, or has a NUL character (`\u0000`) in a string is a `422 invalid_request`.
+
+## Unknown query parameters
+
+Query parameters a route doesn't know are refused with `422`, naming each one, so a misspelt filter never silently returns everything:
+
+```json
+{"code": "invalid_request", "message": "The request is invalid.",
+ "errors": [{"field": "stauts", "message": "unknown query parameter"}]}
+```
+
+## Pagination
+
+Lists are newest first and take `limit` and `before`. Pass the id of the last item you received as `before` to get the next page:
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" "$AGENTOS/v0/envs/default/agents/hello-agent/runs?limit=50"
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" "$AGENTOS/v0/envs/default/agents/hello-agent/runs?limit=50&before=r_812"
+```
+
+A page shorter than `limit` is the last one. Memory and the audit log page with a `next` value in the answer instead; their pages say how.
+
+## Idempotency
+
+Starting a run takes an optional `Idempotency-Key` header (up to 200 characters). The same key from the same caller with the same body returns the same run instead of starting a second one, so a retry after a network error is safe. Reusing a key with a different body is a `409 idempotency_key_reused`. See [Runs](/agentos/api/runs#idempotency).
+
+## Server-sent events
+
+Deploys and runs can be followed live as [server-sent events](https://html.spec.whatwg.org/multipage/server-sent-events.html):
+
+```bash
+curl -sS -N -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_13/events
+```
+
+```text
+id: 1
+event: run.queued
+data: {"seq": 1, "type": "run.queued", "at": "2026-10-27T09:00:00.120Z", "data": {}}
+
+id: 2
+event: run.started
+data: {"seq": 2, "type": "run.started", "at": "2026-10-27T09:00:00.310Z", "data": {...}}
+```
+
+Each event has an `id` (its sequence number), an `event` (its type) and `data` (`{seq, type, at, data}`). The stream ends after the final event (`deploy.finished`, or `run.completed` / `run.failed` / `run.cancelled`). To resume after a dropped connection, reconnect with the header `Last-Event-ID: <the last id you saw>`; the stream replays what came after it. Once you have seen the final event, the route answers `204`, so a browser `EventSource` stops reconnecting.
+
+## Endpoints
+
+| Area | Method and path | |
+|---|---|---|
+| **Deploys** | `GET /v0/envs/{env}/agents` | [List agents](/agentos/api/deploys#list-agents) |
+| | `GET /v0/envs/{env}/agents/{agent}` | [Get an agent](/agentos/api/deploys#get-an-agent) |
+| | `POST /v0/envs/{env}/agents/{agent}/versions` | [Upload a version](/agentos/api/deploys#upload-a-version) |
+| | `POST /v0/envs/{env}/agents/{agent}/versions/{version}/promote` | [Promote a version](/agentos/api/deploys#promote-a-version) |
+| | `GET /v0/envs/{env}/agents/{agent}/deploys` | [List deploys](/agentos/api/deploys#list-deploys) |
+| | `GET /v0/deploys/{deploy_id}` | [Get a deploy](/agentos/api/deploys#get-a-deploy) |
+| | `GET /v0/deploys/{deploy_id}/events` | [Follow a deploy](/agentos/api/deploys#follow-a-deploy) |
+| **Runs** | `POST /v0/envs/{env}/agents/{agent}/capabilities/{capability}/runs` | [Start a run](/agentos/api/runs#start-a-run) |
+| | `GET /v0/envs/{env}/runs/{run_id}` | [Get a run](/agentos/api/runs#get-a-run) |
+| | `GET /v0/envs/{env}/agents/{agent}/runs` | [List runs](/agentos/api/runs#list-runs) |
+| | `GET /v0/envs/{env}/runs/{run_id}/events` | [Follow a run](/agentos/api/runs#follow-a-run) |
+| | `POST /v0/envs/{env}/runs/{run_id}/cancel` | [Cancel a run](/agentos/api/runs#cancel-a-run) |
+| **Holds** | `GET /v0/envs/{env}/holds` | [List holds](/agentos/api/holds#list-holds) |
+| | `GET /v0/envs/{env}/holds/{hold_id}` | [Get a hold](/agentos/api/holds#get-a-hold) |
+| | `POST /v0/envs/{env}/holds/{hold_id}/decision` | [Decide a hold](/agentos/api/holds#decide-a-hold) |
+| **Sessions** | `POST /v0/envs/{env}/sessions` | [Create a session](/agentos/api/sessions#create-a-session) |
+| | `GET /v0/envs/{env}/sessions/{session_id}` | [Get a session](/agentos/api/sessions#get-a-session) |
+| **Memory** | `GET /v0/envs/{env}/agents/{agent}/memory/facts` | [List or search facts](/agentos/api/memory#list-or-search-facts) |
+| | `GET /v0/envs/{env}/agents/{agent}/memory/facts/{fact_id}` | [Get a fact](/agentos/api/memory#get-a-fact) |
+| | `GET /v0/envs/{env}/agents/{agent}/memory/facts/{fact_id}/versions` | [Get a fact's versions](/agentos/api/memory#get-a-facts-versions) |
+| | `DELETE /v0/envs/{env}/agents/{agent}/memory/facts/{fact_id}` | [Delete a fact](/agentos/api/memory#delete-a-fact) |
+| | `POST /v0/envs/{env}/agents/{agent}/memory/erase` | [Erase a path](/agentos/api/memory#erase-a-path) |
+| | `POST /v0/envs/{env}/memory/erase-user` | [Erase an end user](/agentos/api/memory#erase-an-end-user) |
+| **Files** | `POST /v0/envs/{env}/files` | [Upload a file](/agentos/api/files#upload-a-file) |
+| | `GET /v0/envs/{env}/files/{file_id}` | [Download a file](/agentos/api/files#download-a-file) |
+| **Evals** | `/v0/envs/{env}/datasets…` | [Datasets and items](/agentos/api/evals#datasets) |
+| | `/v0/envs/{env}/evaluators…` | [Evaluators](/agentos/api/evals#evaluators) |
+| | `/v0/envs/{env}/evals…` | [Evals](/agentos/api/evals#evals) |
+| | `/v0/envs/{env}/experiments…` | [Experiments](/agentos/api/evals#experiments) |
+| **Audit** | `GET /v0/envs/{env}/audit` | [Read the audit log](/agentos/api/audit#read-the-audit-log) |

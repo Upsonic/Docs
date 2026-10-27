@@ -1,0 +1,70 @@
+---
+title: "Example agents"
+sidebarTitle: "Examples"
+description: "Working agents that show each part of the contract: models, approvals, state, sessions, streaming, files, memory, evals and the SDKs."
+---
+
+AgentOS comes with a set of example agents. Each is a complete bundle (`Dockerfile`, `agentos.yaml`, code) you can zip and [deploy](/agentos/platform/deploying) as it is, then read to see how a feature is done.
+
+<Note>
+Agents that call a model name one in `config.models` (for example `main: anthropic/claude-sonnet-4-5`). Before you upload one, change it to a model from your environment's **Models** page: `<provider slug>/<model ID>`. See [Models](/agentos/build/models).
+</Note>
+
+## Without an SDK (plain HTTP)
+
+These use only the Python standard library, so they show every platform call as raw HTTP. Read them if you are writing an agent in a language without an SDK.
+
+<CardGroup cols={2}>
+  <Card title="hello-agent" icon="hand">
+    The smallest agent that follows the contract: one capability, `echo`, that returns its input. Used in the [Quickstart](/agentos/get-started/quickstart).
+  </Card>
+  <Card title="llm-agent" icon="brain">
+    `ask`: answers a question with one model call through the gateway, using the run token, and posts an event to the run's timeline. See [Models](/agentos/build/models).
+  </Card>
+  <Card title="review-agent" icon="user-check">
+    `pay_invoices` asks a person to approve, edit or reject payments and keeps its progress in run state; `chat` keeps a conversation's history in session state; `split` starts one child run per invoice. See [Human approvals](/agentos/build/human-approvals).
+  </Card>
+  <Card title="stream-agent" icon="wave-square">
+    `chat` streams a model's answer as a Vercel AI SDK UI message stream and reports the run's result itself; `confirm` asks a person mid-stream. Start it with `?passthrough=true` and a chat UI reads the stream as it is. See [Streaming](/agentos/build/streaming).
+  </Card>
+</CardGroup>
+
+## With the SDKs
+
+<CardGroup cols={2}>
+  <Card title="py-sdk-agent" icon="python">
+    review-agent and llm-agent rewritten with the [Python SDK](/agentos/build/sdks): approvals, run, session and agent state (with compare-and-set), child runs, a model call, an event, a file upload, a streamed answer (`tell`) and notes kept per end user in memory (`notes`).
+  </Card>
+  <Card title="ts-sdk-agent" icon="js">
+    The same capabilities with the [TypeScript SDK](/agentos/build/sdks), on Node 24.
+  </Card>
+  <Card title="file-agent" icon="file">
+    `inspect` takes any file (and an optional second one), downloads it with the run token and returns its type, size, SHA-256 and the start of its text. No model call. Good for trying file inputs on the Run tab. See [Files and events](/agentos/build/files-and-events).
+  </Card>
+  <Card title="ocr-agent" icon="magnifying-glass">
+    `extract` reads a (fake) Turkish company document image with a vision model and returns its fields. The model is `config.models.reader`, so an experiment can compare vision models. Comes with a script that generates sample documents and their expected answers. See [Evals](/agentos/platform/evals).
+  </Card>
+  <Card title="math-agent" icon="calculator">
+    `solve` answers a math question with a single number, so a reference evaluator can compare it as a number. A minimal agent for trying [evals](/agentos/platform/evals) and model comparisons.
+  </Card>
+</CardGroup>
+
+## Framework examples
+
+The SDKs also include one small agent per [framework adapter](/agentos/build/frameworks), each with a payment that waits for a person:
+
+| Framework | Capability | How it asks |
+|---|---|---|
+| OpenAI Agents SDK | `pay_supplier` | a `pay` tool with `needs_approval=True` |
+| LangGraph | `approve_payment` | `interrupt()` in a review node |
+| Agno | `pay_supplier` | a `pay` tool with `requires_confirmation=True` |
+| Vercel AI SDK | `pay_supplier` | `toolApproval: {pay: "user-approval"}` |
+| Mastra | `approve_payment` | a workflow step's `suspend()` |
+
+## File inputs
+
+`file-agent` and `ocr-agent` declare their file inputs as `{type: string, format: file}` in the input schema (`ocr-agent` adds `contentMediaType: "image/*"`). The panel's **Run** tab then shows an upload for the field, and the value the agent receives is a file id it downloads with the run token.
+
+## Conformance cases
+
+`llm-agent`, `review-agent`, `stream-agent`, `py-sdk-agent` and `ts-sdk-agent` each have a `conformance.yaml` next to their `agentos.yaml`: a good starting point for your own. See [Conformance kit](/agentos/build/conformance).

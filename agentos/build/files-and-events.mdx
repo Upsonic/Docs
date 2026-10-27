@@ -1,0 +1,84 @@
+---
+title: "Files and events"
+description: "Read and write files from inside an agent, and add steps to a run's timeline."
+---
+
+## Files
+
+Files belong to the environment: a caller uploads a document and passes its id in a run's input, and every agent of the environment can download it by id. Agents can upload files too, and pass those ids on — in their output, in an [ask](/agentos/build/human-approvals), or in a [child run](/agentos/build/child-runs)'s input.
+
+<Info>
+Pass file ids around, never the bytes. A file id in an input is a plain string to the input schema.
+</Info>
+
+### Download
+
+```bash
+GET {api_url}/v0/files/{file_id}
+x-agentos-run-token: <context.token>
+```
+
+Any file of the run's environment, whether a caller or an agent uploaded it.
+
+### Upload
+
+```bash
+POST {api_url}/v0/files
+x-agentos-run-token: <context.token>
+Content-Type: multipart/form-data   # field "file", at most 100 MiB
+```
+
+It answers:
+
+```json
+{"file_id": "f_9", "name": "report.pdf", "content_type": "application/pdf", "size": 48213,
+ "sha256": "...", "created_at": "..."}
+```
+
+### With the SDKs
+
+<CodeGroup>
+```python Python
+data = inv.files.download(inv.input["file_id"])
+uploaded = inv.files.upload("summary.txt", b"...", "text/plain")
+return {"summary_file": uploaded["file_id"]}
+```
+
+```ts TypeScript
+const data = await inv.files.download(inv.input.file_id);
+const uploaded = await inv.files.upload("summary.txt", bytes, "text/plain");
+return { summary_file: uploaded.file_id };
+```
+</CodeGroup>
+
+Callers upload and download files with an API key through the [Files API](/agentos/api/files). Files are kept; there is no deletion or retention policy yet.
+
+## Events
+
+Add your own steps to a run's timeline — what was extracted, which tool ran, how many items were found — so the run page tells the story of the run:
+
+```bash
+POST {api_url}/v0/runs/{run_id}/events
+x-agentos-run-token: <context.token>
+
+{"type": "extracted", "data": {"fields": 12, "pages": 3}}
+```
+
+It answers `201 {"seq": 7}` and the event appears on the run's timeline as `agent.extracted`, and is streamed to anyone following the run.
+
+- `type` is a short lowercase name: a letter, then letters, digits, `_`, `.` or `-`, at most 40 characters.
+- `data` is a JSON object; the whole request is at most 64 KiB.
+- An event can only be added while the invocation is running, and only to the token's own run.
+- A secret of the agent (8 or more characters) in `data` is stored as `***`.
+
+<CodeGroup>
+```python Python
+inv.event("extracted", {"fields": 12, "pages": 3})
+```
+
+```ts TypeScript
+await inv.event("extracted", { fields: 12, pages: 3 });
+```
+</CodeGroup>
+
+Model calls and tool calls appear on the timeline on their own (`llm.call`, `tool.call`); you don't need to post them.

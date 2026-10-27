@@ -1,0 +1,194 @@
+---
+title: "Guardrails"
+description: "Check what runs and models send and receive: personal data, secrets, keywords and your own patterns."
+---
+
+Guardrails are the environment's policy on content. They check a run's input and output and every model call an agent makes through the gateway, and **flag**, **block** or **mask** what they find: Turkish national IDs (TCKN), IBANs, card numbers, emails, phone numbers, secrets and API keys, keywords, or your own patterns.
+
+Guardrails live on **GOVERN → Guardrails**, not in `agentos.yaml`. They belong to the environment, so a change reaches running agents within seconds, with no redeploy, and an agent's own files can't switch them off. **Admins** create and change them; **members** see the list, each guardrail's hits and history, and can use **Test the policy**.
+
+All checks are deterministic: no model is called to decide.
+
+## Create your first guardrail
+
+This example stops national ID numbers from reaching any model.
+
+<Steps>
+  <Step title="Start a new guardrail">
+    Open **GOVERN → Guardrails → New guardrail** and give it a name such as `no-tckn`. The name is shown to the agent when it blocks, and on the run's timeline.
+  </Step>
+  <Step title="Choose the check">
+    Under **Check**, pick **Personal data** and tick **TCKN**.
+  </Step>
+  <Step title="Choose where it looks">
+    Under **Where it looks**, tick **model input**: the text of every message sent to a model.
+  </Step>
+  <Step title="Choose the action and message">
+    Choose **Block** and write a message, for example `No national IDs to the model.` That is what the agent's code receives.
+  </Step>
+  <Step title="Choose the scope">
+    Leave **Applies to** on **The whole environment**, or pick some agents or capabilities.
+  </Step>
+  <Step title="Try it, then save">
+    Paste a sample into **Try it** to see what the guardrail would do if it were enforced. Then save it.
+  </Step>
+  <Step title="Watch it in log only, then enforce">
+    A new guardrail starts in **log only**: it records what it *would* have blocked or masked and changes nothing. When its hits look right, open its edit page and switch the mode to **Enforce**.
+  </Step>
+</Steps>
+
+<Tip>
+Starting in log only is deliberate: you see what a guardrail would catch on real traffic before it can break a run.
+</Tip>
+
+## How a guardrail is built
+
+A guardrail is one **check**, the **checkpoints** it watches, an **action**, a **mode** and a **scope**.
+
+### Checks
+
+| Check | Finds |
+|---|---|
+| **Personal data** | Tick any of: **TCKN** (11 digits with both checksum digits valid), **IBAN** (the country's length and mod 97, compact or in groups of single spaces), **card number** (13–19 digits, optionally grouped by spaces or dashes, passing Luhn), **email address**, **phone number** (Turkish mobile and landline numbers written with `0` or `+90`, and international `+` numbers). |
+| **Secrets** | A fixed list: AWS access key IDs, private key blocks, JWTs, `sk-…` keys, GitHub tokens (`ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`), Slack `xox…` tokens, Stripe live keys, Google API keys, AgentOS's own credentials (`aos_` API keys, `tok_` run tokens, `whsec_` webhook secrets), `api_key = …` / `password: …` style assignments and `Bearer …` tokens. |
+| **Keywords** | Up to 200 words or phrases, one per line. Whole words, any case. |
+| **Your own patterns** | Up to 20 regular expressions (Python syntax, at most 500 characters each), optionally with a validator each match must pass: **Luhn**, **mod 97** or **TCKN checksum**. |
+
+<Accordion title="How text is read">
+- Personal data, secrets and keywords read a text the way it looks: no-break and other Unicode spaces and tabs count as a space, full-width letters and digits as ASCII, and zero-width characters, word joiners and soft hyphens as nothing. The finding, and a mask, still cover the text as it was written.
+- Case-insensitive matching treats `i`, `I`, `ı` and `İ` as one letter, so a Turkish keyword can match a little more than it says.
+- Your own patterns read the text exactly as written.
+- In JSON input and output, every string, every number and every key is checked on its own.
+- Not recognised: digits of other scripts (Arabic-Indic…), a TCKN written in groups (`100 000 001 46`), an IBAN with dashes or double spaces.
+- A pattern runs at most 0.1 s per text, and all of a guardrail's patterns 0.5 s per text. A check reads at most 256 KiB of one text. A pattern that runs out of time, or a text longer than that, **counts as a finding**, so an enforced block or mask blocks it.
+</Accordion>
+
+### Checkpoints
+
+| Checkpoint | What it checks |
+|---|---|
+| **run input** | A run's input when it starts, from the API, the panel or a parent run. Its metadata too, read only. |
+| **model input** | The text of every message of each model request, earlier tool calls included. |
+| **tool results** | Tool results in a model request, including results of tools the provider ran (web search, MCP…). |
+| **tool calls** | Each tool the model asks for: its name and arguments. |
+| **model output** | The model's answer, streamed or not. |
+| **run output** | A run's output, before the run completes. A failed run's error message is checked here too. |
+
+### Actions
+
+| Action | Effect |
+|---|---|
+| **Flag** | Record it, change nothing. |
+| **Block** | Fail that model call, or refuse the run's start, or fail the run at its end. |
+| **Mask** | Replace each finding with `[TCKN]`, `[IBAN]`, `[CARD]`, `[EMAIL]`, `[PHONE]`, `[SECRET]`, or `[REDACTED]` for keywords and patterns. Not available at tool calls. |
+
+A mask that finds something it can't rewrite **blocks instead**: a JSON key, a masked number that would no longer fit the capability's schema, tool-call arguments that wouldn't stay valid JSON, or text the gateway can only read and not change.
+
+### Modes
+
+- **Log only** (the default for a new guardrail): records what it would have done (`would have blocked`, `would have masked`).
+- **Enforce**: does it.
+
+Every change (an edit, on/off, a mode switch, delete) raises the guardrail's revision and is in its change history. If someone else changed the guardrail while you were editing, your save is refused: reload and edit again.
+
+### Scope
+
+**Applies to** is one of:
+
+- **The whole environment**, optionally with exceptions (**Except**: agents, or capabilities of agents, it leaves alone).
+- **Some agents**.
+- **Some capabilities of agents**.
+
+### When several guardrails apply
+
+All guardrails that cover a run apply at each checkpoint. An enforced **block wins**; if several block, the first one created gives its message. Otherwise the enforced masks are applied together, and overlapping masks become one.
+
+## Try it and Test the policy
+
+- **Try it**, on the guardrail form, runs the unsaved guardrail on a sample as if it were enforced.
+- **Test the policy**, on the list, sends a text through every enabled guardrail, for one agent and capability or for any, at the checkpoint you choose.
+
+Neither records anything. Both take up to 20,000 characters.
+
+## What the agent sees
+
+A blocked **model call** fails, and only that call: the run goes on and your code decides what to do (try differently, skip the step, ask a person). The gateway answers **HTTP 400**:
+
+```json
+{"error": {"message": "No national IDs to the model. (event gh_01M4VJ3C14H3DNEKQE4PFDWYPJ)",
+           "type": "invalid_request_error", "code": "content_filter", "param": null,
+           "agentos_guardrail": {"guardrail": "no-tckn", "at": "model_input",
+                                 "hit": "gh_01M4VJ3C14H3DNEKQE4PFDWYPJ", "code": "content_filter"}}}
+```
+
+The message is the guardrail's own (up to 300 characters; `Blocked by guardrail` if you left it empty), followed by the event id. The matched text is never in it. Branch on `agentos_guardrail`. The Python and TypeScript SDKs raise `GuardrailBlocked` with `guardrail`, `at` and `hit`; see [Call a model](/agentos/build/models).
+
+A block at the run's edges reaches the caller instead:
+
+- **run input**: the start is refused with **422 `blocked_by_guardrail`**, and no run is created. A masked input is stored masked.
+- **run output**: the run fails with `blocked_by_guardrail`. Its output is kept for the environment's admins in the panel, but members, callers and webhooks get `output: null`. A masked output is stored masked.
+
+<AccordionGroup>
+  <Accordion title="Tokens and cost of blocked calls">
+    A call blocked before it was sent (model input, tool results) isn't a model call: it has no row in the run's model calls and costs nothing. A block after the model answered (model output, tool calls) has already spent the tokens, so the call and its cost stay on the run. A stream a block ends midway is recorded as a failed call without tokens or cost, but the provider may still bill what it generated.
+  </Accordion>
+  <Accordion title="Streams are held back">
+    With an enforced block or mask at model output, the last characters of a streamed answer are held back until a check has seen what follows them, so nothing of a finding is sent before it is checked. The window is the longest thing those guardrails look for plus 2 characters (13 for a TCKN, 62 with IBANs, at most 258 for emails, secrets and your own patterns), so the first words arrive a little later. Measured on a mock model streaming 6 characters every 30 ms: 120 ms to the first words without guardrails, 220 ms with a TCKN guardrail, 451 ms with TCKN and IBAN, 1,425 ms with secrets.
+
+    A block before anything was sent is the same HTTP 400 (with `"code": "400"`). After some text was sent, the stream ends with an error event carrying the same object. A match longer than 256 characters (a private key's body, a very long token) can be partly sent before it is checked; it is still blocked, and a mask is recorded as a flag.
+  </Accordion>
+  <Accordion title="Conversation history">
+    Agents re-send their conversation, so every message of every request is checked again. A masked value is masked again each time, and a conversation that once contained a blocked value stays blocked until the agent leaves that message out. With a mask at model output, the agent's history holds the masked text.
+  </Accordion>
+  <Accordion title="Routes a guardrail can't be enforced on (403)">
+    When the gateway can't enforce a guardrail on a kind of call, it refuses that call with **403 `agentos_forbidden`** naming the guardrail, rather than letting it through unchecked:
+
+    - Masks at model output on streamed `/v1/messages` and `/v1/responses`, and on Bedrock converse; blocks and masks at model output and blocks at tool calls on Bedrock converse-stream. Use `/v1/chat/completions` instead.
+    - With an enforced guardrail at model input or tool results: a call type the gateway can't read.
+    - With an enforced block or mask at tool calls or tool results: requests that ask the provider to run tools itself (Anthropic `mcp_servers` and server tools such as `web_search`, `web_fetch`, `code_execution`; Responses API hosted tools such as `mcp`, `web_search`, `file_search`, `code_interpreter`; chat `web_search_options`; a Converse `systemTool`). The provider would call the tool and read its result before the gateway could check either. Tools your agent runs itself are fine: their calls and results pass the gateway.
+
+    Flags and log-only guardrails are allowed on those routes.
+  </Accordion>
+  <Accordion title="503 and time limits">
+    Each request and each response gets 2 seconds of checking. A guardrail that could block and is still unchecked when the time runs out blocks. The gateway answers **503 `agentos_unavailable`** (no verdict, nothing recorded) if it can't read the environment's guardrails or its checks are too busy to start within 2 seconds. It never answers a block with 5xx or 429, so clients don't retry a block.
+  </Accordion>
+  <Accordion title="What isn't checked">
+    - A finding split across two messages or content blocks (each text is checked on its own).
+    - Prompts sent as token ids, and tool definitions.
+    - Binary or base64-encoded images, files and audio, whatever their media type. Plain-text document sources are read, and audio transcripts are read.
+    - What doesn't pass through the gateway or the run's start and end: state, events, holds, decisions and files.
+    - A streaming (passthrough) run's bytes reach the caller before the run output check, so they can't be recalled. Get the run afterwards to learn how it ended.
+  </Accordion>
+  <Accordion title="Framework notes">
+    Most clients (openai-python and openai-node, OpenAI Agents, LangChain/LangGraph, pydantic-ai, Upsonic) raise an error whose body is the object above. Some need care:
+
+    - **CrewAI** re-runs a whole agent step 3 times on a 400, tools included: set `max_retry_limit=0` on agents whose tools have side effects, or catch `content_filter` yourself.
+    - **Agno** doesn't raise: the run ends with `status=ERROR` and the message as its content.
+    - **OpenAI .NET / Microsoft.Extensions.AI** ignore in-stream error events: the stream just ends. Check the answer, or don't stream when a guardrail watches output.
+    - **Vercel AI SDK `streamText`** only logs in-stream errors: pass `onError`.
+    - **The litellm SDK** reports an in-stream error as `MidStreamFallbackError` with status 500.
+  </Accordion>
+</AccordionGroup>
+
+## What is recorded
+
+Every verdict is a **hit** on the guardrail's page and, for a run, an event on its timeline: `guardrail.blocked`, `guardrail.masked` or `guardrail.flagged` (log-only verdicts are marked as what they would have done). The run page shows how many blocks it had. A refused start has no run, so its hit names the caller and the agent and capability it asked for.
+
+A hit keeps the finding types, counts and positions, the guardrail's revision, whether the model was already called and how much of a stream was already sent. It **never keeps the matched text**. If a framework re-sends a blocked call, the repeats are folded into one hit with a count.
+
+`guardrail.blocked` is also a [webhook](/agentos/platform/webhooks) event, and blocks appear in the failures of the [Dashboard](/agentos/platform/metrics), grouped by message.
+
+### Find an event
+
+A block's message names its event (`gh_…`). Paste it into **Find an event** on the Guardrails page to open the guardrail with that hit on top. That is how you go from an agent's error log to the exact rule and revision that blocked it.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Network guardrails" icon="network-wired" href="/agentos/platform/network-guardrails">
+    Decide which hosts each agent may reach.
+  </Card>
+  <Card title="Call a model" icon="brain" href="/agentos/build/models">
+    Handle a blocked call in your agent's code.
+  </Card>
+</CardGroup>

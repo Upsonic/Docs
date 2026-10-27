@@ -1,0 +1,366 @@
+---
+title: "Evals API"
+sidebarTitle: "Evals"
+description: "Datasets, evaluators, evals and experiments: score an agent version before it takes traffic."
+---
+
+Evals measure an agent version on a fixed set of cases before it goes live, and compare models, prompts and params without a redeploy. For the concepts and the panel, see [Evals](/agentos/platform/evals). The pieces:
+
+- A **dataset** is a list of items: an `input`, an optional `expected` answer, `metadata`, and the holds of the run it came from. Its **draft** is edited in place; **publish** freezes the draft into a numbered version (`v1`, `v2`…) that never changes.
+- An **evaluator** scores a run's output: checks on the output, a field-by-field comparison with the expected answer, or an AI judge.
+- An **eval** is a dataset + an agent's capability + a **mapping** from item to capability input + evaluators + `repeats`.
+- An **experiment** runs an eval on one version of the agent (live, previous or a candidate) over the dataset's latest published version, optionally with a **temporary config override** (other models, prompts or params), and scores every run. A winning override becomes a **candidate** version that you promote.
+
+All routes are under `/v0/envs/{env}/`. Datasets, evaluators and evals are addressed by name; items by `i_N`, dataset and agent versions by `vN`, experiments by `e_N`.
+
+**Roles.** Members and admins read, create and change datasets, items, evaluators and evals, and start, cancel and save experiments. Setting a dataset's collect rule and making a candidate need the **admin** role (a candidate is a deploy). Datasets, evaluators and evals can't be deleted yet.
+
+## A complete example
+
+```bash
+E="$AGENTOS/v0/envs/default"
+H=(-H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json")
+
+# 1. a dataset with items, then publish the draft as v1
+curl -sS -X POST "${H[@]}" $E/datasets -d '{"name": "id-cards", "description": "Turkish ID cards"}'
+curl -sS -X POST "${H[@]}" $E/datasets/id-cards/items \
+  -d '{"input": {"file_id": "f_9"}, "expected": {"full_name": "AYŞE YILMAZ", "id_number": "12345678901"}}'
+curl -sS -X POST "${H[@]}" $E/datasets/id-cards/items -d '{"run_id": "r_501"}'      # copy a real run
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/x-ndjson" \
+  --data-binary @cards.jsonl $E/datasets/id-cards/import                             # 201 {"added": 40}
+curl -sS -X POST "${H[@]}" $E/datasets/id-cards/publish                              # 201 {"version": "v1", "items": 42}
+
+# 2. evaluators
+curl -sS -X POST "${H[@]}" $E/evaluators -d '{"name": "fields", "kind": "reference",
+  "config": {"fields": "all", "mode": {"full_name": "normalized"}}}'
+curl -sS -X POST "${H[@]}" $E/evaluators -d '{"name": "judge", "kind": "ai_judge", "config": {
+  "model": "bedrock-prod/us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+  "criteria": [{"name": "no_invention", "rubric": "Every field is read from the card; nothing is made up."}]}}'
+
+# 3. an eval: dataset + capability + mapping + evaluators
+curl -sS -X POST "${H[@]}" $E/evals -d '{"name": "id-cards-read", "dataset": "id-cards",
+  "agent": "ocr-agent", "capability": "read",
+  "mapping": {"input": {"document": "{{ item.input.file_id }}"}, "expected": null},
+  "evaluators": ["fields", "judge"], "repeats": 1}'
+
+# 4. experiments: the live version as it is, and with another model
+curl -sS -X POST "${H[@]}" $E/experiments -d '{"eval": "id-cards-read", "version": "v3"}'
+curl -sS -X POST "${H[@]}" $E/experiments -d '{"eval": "id-cards-read", "version": "v3",
+  "overrides": {"models": {"reader": "bedrock-prod/qwen-vl-35b"}}}'                  # 202 {"experiment_id": "e_8", ...}
+curl -sS "${H[@]}" $E/experiments/e_8
+
+# 5. the override won: make it a candidate, then promote it
+curl -sS -X POST "${H[@]}" $E/experiments/e_8/candidate                              # 201 {"version": "v4"}
+curl -sS -X POST "${H[@]}" $AGENTOS/v0/envs/default/agents/ocr-agent/versions/v4/promote
+```
+
+## Datasets
+
+| Route | What |
+|---|---|
+| `GET datasets` | List the environment's datasets, by name |
+| `POST datasets` | Create one: `{name, description?, item_schema?}` → `201` |
+| `GET datasets/{name}` | Read one |
+| `PUT datasets/{name}/collect` | Set the [collect rule](#collect-rule) (admin) |
+| `POST datasets/{name}/publish` | Publish the draft: `{note?}` → `201 {version, items}` |
+| `GET datasets/{name}/versions/{vN}/items` | A published version's frozen items |
+| `POST datasets/{name}/import` | Add items from JSONL → `201 {added}` |
+| `GET datasets/{name}/export?version=draft\|vN` | Items as JSONL |
+
+```json
+{"name": "id-cards", "description": "Turkish ID cards", "item_schema": null,
+ "items": 42, "candidates": 3, "versions": ["v2", "v1"], "latest_version": "v2",
+ "collect": {"agent": "ocr-agent", "capability": "read", "which": "edited", "into": "candidates", "enabled": true},
+ "updated_at": "2026-10-27T09:00:00Z"}
+```
+
+<ResponseField name="name" type="string">1–63 lowercase letters, digits and dashes, starting with a letter or digit, unique in the environment. `new` is reserved. The same rule applies to evaluators and evals.</ResponseField>
+<ResponseField name="item_schema" type="object | null">An optional JSON Schema (draft 2020-12) that every item's `{input, expected}` must fit. An item without an expected answer is checked without the key.</ResponseField>
+<ResponseField name="items" type="integer">Active items in the draft.</ResponseField>
+<ResponseField name="candidates" type="integer">Collected items waiting to be accepted.</ResponseField>
+<ResponseField name="versions" type="array">Published versions, newest first.</ResponseField>
+
+Publishing an empty draft is a `409 empty_draft`. A published version never changes; editing the draft afterwards only affects the next version.
+
+### JSONL import and export
+
+Import one `{"input", "expected"?, "metadata"?}` per line. Other keys are ignored, so Langfuse and LangSmith exports import as they are. Send it as `application/x-ndjson`, `application/jsonl` or `text/plain`; at most 1,000 lines and 10 MB. It is all or nothing: a `422` names every wrong line and adds none.
+
+Export writes the draft's active items (`version=draft`, the default) or a published version's, one `{"input", "expected", "metadata"}` per line.
+
+## Items
+
+| Route | What |
+|---|---|
+| `GET datasets/{name}/items` | The draft's items, newest first. `status=active\|candidate`, `limit` 1–200 (default 50), `before=i_N` |
+| `POST datasets/{name}/items` | Add one (below) → `201` |
+| `PATCH datasets/{name}/items/{item_id}` | Change `input`, `expected` or `metadata` — the fields you send; `expected: null` clears it |
+| `DELETE datasets/{name}/items/{item_id}` | Remove it from the draft → `204`. Published versions keep their copies. |
+| `POST datasets/{name}/items/{item_id}/accept` | A collected candidate joins the draft |
+| `POST datasets/{name}/items/{item_id}/confirm` | Keep a [suggested answer](#suggest-answers) as it is |
+
+Add an item by hand, or copy a run:
+
+<CodeGroup>
+```bash By hand
+curl -sS -X POST "${H[@]}" $E/datasets/id-cards/items \
+  -d '{"input": {"file_id": "f_9"}, "expected": {"full_name": "AYŞE YILMAZ"}, "metadata": {"source": "branch-12"}}'
+```
+
+```bash From a run
+curl -sS -X POST "${H[@]}" $E/datasets/id-cards/items -d '{"run_id": "r_501"}'
+# the run's input, its final output as `expected` (or the `expected` you send; null for none),
+# and its answered holds with their decisions
+```
+</CodeGroup>
+
+A run must have completed (`409 not_finished`) and not belong to a session (`409 session_run`). Experiment runs may be added too. The run itself is never changed.
+
+```json
+{"item_id": "i_2", "input": {...}, "expected": {...}, "metadata": {},
+ "holds": [{"intent": "Check the extracted fields", "actions": ["approve", "edit"], "items": [...], "details": "",
+            "decision": {"items": [...], "comment": ""}}],
+ "source": "run", "source_run": "r_501", "source_experiment": "", "status": "active", "problem": "",
+ "edited": false, "needs_review": false, "suggested_by": "", "created_at": "…"}
+```
+
+<ResponseField name="source" type="string">`hand-written`, `run`, `import`, `collect` or `experiment`.</ResponseField>
+<ResponseField name="holds" type="array">The holds of the run it came from, with their decisions. Experiments hand them to the agent, so it can replay the human step without asking anyone (see [Evals](/agentos/platform/evals)).</ResponseField>
+<ResponseField name="status" type="string">`active` (in the draft) or `candidate` (collected, waiting to be accepted).</ResponseField>
+<ResponseField name="problem" type="string">Why a collected candidate doesn't fit the item schema.</ResponseField>
+<ResponseField name="edited" type="boolean">Its expected answer was changed by hand.</ResponseField>
+<ResponseField name="needs_review" type="boolean">A suggested answer nobody has confirmed or corrected yet. A `PATCH` of `expected` or `confirm` clears it.</ResponseField>
+
+### Collect rule
+
+`PUT datasets/{name}/collect` (admin) turns reviewed production runs into dataset items automatically:
+
+```bash
+curl -sS -X PUT "${H[@]}" $E/datasets/id-cards/collect \
+  -d '{"agent": "ocr-agent", "capability": "read", "which": "edited", "into": "candidates", "enabled": true}'
+```
+
+When a run of that capability completes after a person decided at least one of its holds (`which: "decided"`), or edited at least one item (`which: "edited"`), it is copied in as an item with `source: collect`: as a candidate to accept by hand (`into: "candidates"`), or straight into the draft (`into: "draft"`). An item that doesn't fit the item schema is always a candidate, with its `problem`. Experiment runs and session runs are never collected.
+
+## Evaluators
+
+| Route | What |
+|---|---|
+| `GET evaluators` | List, by name |
+| `POST evaluators` | Create: `{name, kind, description?, config}` → `201` |
+| `GET evaluators/{name}` | Read one |
+| `PUT evaluators/{name}` | Change `description` and/or `config` (the kind stays) |
+
+```json
+{"name": "judge", "kind": "ai_judge", "description": "", "config": {...}, "version": 2, "updated_at": "…"}
+```
+
+`version` goes up on every config change; an experiment keeps the configs and versions it started with. Each evaluator gives several named scores per run, each `{evaluator, name, passed, value, reason}`; `passed: null` means "no score" (neither pass nor fail). Score and criterion names are 1–63 letters, digits, `-`, `.` and `_`, unique within the evaluator.
+
+<AccordionGroup>
+  <Accordion title="assertion — checks on the output">
+    ```json
+    {"name": "shape", "kind": "assertion", "config": {"checks": [
+      {"name": "schema", "op": "schema"},
+      {"name": "id_number", "path": "output.id_number", "op": "matches", "value": "[0-9]{11}"},
+      {"name": "short", "path": "output.summary", "op": "max_words", "value": 80}]}}
+    ```
+
+    1–50 checks, one score each. Paths are `output` or `output.a.b` (`output.items.0` for a list item).
+
+    | `op` | Passes when |
+    |---|---|
+    | `exists` | The path is there and not null |
+    | `equals` | The value equals `value` (JSON equality) |
+    | `matches` | The whole string matches the regular expression `value` (at most 500 characters) |
+    | `schema` | The whole output fits the capability's output schema (no `path` or `value`) |
+    | `contains` / `not_contains` | The string has / hasn't the text `value`, ignoring case and extra whitespace |
+    | `max_words` | The string has at most `value` words |
+  </Accordion>
+  <Accordion title="reference — compare with the expected answer">
+    ```json
+    {"name": "fields", "kind": "reference",
+     "config": {"fields": "all", "mode": {"full_name": "normalized", "amount": "number"}, "tolerance": 0.01}}
+    ```
+
+    One score per compared field of the item's expected answer, named by its path. `fields` is `"all"` (every key of the expected answer) or a list of paths like `address.city`. An expected answer that isn't an object gives one score, `value`. Items without an expected answer get no scores from it.
+
+    | `mode` | Compares |
+    |---|---|
+    | `exact` (default) | JSON equality |
+    | `normalized` | Ignoring case and extra whitespace, Turkish-aware (`ALİ` matches `ali`, `IŞIK` matches `ışık`) |
+    | `number` | Numbers within `tolerance`: one number for every field, or `{"<path>": number}` per field |
+  </Accordion>
+  <Accordion title="ai_judge — a model grades the output">
+    ```json
+    {"name": "judge", "kind": "ai_judge", "config": {
+      "model": "bedrock-prod/us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+      "criteria": [{"name": "no_invention", "rubric": "Every field is read from the card; nothing is made up."}]}}
+    ```
+
+    1–10 criteria, rubrics up to 2,000 characters, one score per criterion. The model must be on the environment's [Models](/agentos/platform/models-and-providers) page. It makes one call per run at temperature 0, given the input, the whole output and the expected answer (files are named by id, not sent). Its tokens are counted in the experiment's `judge_tokens`. When the judge can't be reached or doesn't answer JSON, its scores are "no score".
+  </Accordion>
+</AccordionGroup>
+
+## Evals
+
+| Route | What |
+|---|---|
+| `GET evals` | List, by name |
+| `POST evals` | Create: `{name, title?, dataset, agent, capability, mapping?, evaluators, repeats?}` → `201` |
+| `GET evals/{name}` | Read one |
+| `PUT evals/{name}` | Change the fields you send (the name stays) |
+| `GET evals/{name}/fit?version=vN&dataset_version=draft\|vN` | The fit check |
+| `POST evals/{name}/suggest` | [Suggest answers](#suggest-answers) for items without one |
+
+```json
+{"name": "id-cards-read", "title": "", "dataset": "id-cards", "agent": "ocr-agent", "capability": "read",
+ "mapping": {"input": {"document": "{{ item.input.file_id }}"}, "expected": null},
+ "evaluators": ["fields", "judge"], "repeats": 1, "created_by": "ayse@example.com", "created_at": "…"}
+```
+
+The eval names the capability, not a version: any version that has it can be measured. `repeats` is 1–10 (default 1); at most 20 evaluators. Changing an eval doesn't change experiments already started.
+
+### Mapping
+
+`{"input": <template or null>, "expected": <path or null>}`. `null` means as is: the item's input is the capability's input, and the item's expected answer is compared with the whole output.
+
+- **`input`** is a JSON template. A string that is exactly `{{ item.<path> }}` (`item.input.…`, `item.expected.…`, `item.metadata.…`; list items by index) becomes the value at that path, of any JSON type. Every other string is literal.
+- **`expected`** is a path like `output.fields`: the part of the output that `reference` evaluators compare with the expected answer.
+
+### Fit check
+
+Every item, mapped, checked against the input schema of a version's capability. Defaults: the live version and the draft.
+
+```bash
+curl -sS "${H[@]}" "$E/evals/id-cards-read/fit?version=v3&dataset_version=draft"
+# 200 {"items": [{"item_id": "i_7", "problem": "input.document: required"}], "checked": 42}
+```
+
+`items` is the needs-fix list with each item's first problem. An experiment refuses to start while any item doesn't fit.
+
+### Suggest answers
+
+`POST evals/{name}/suggest` runs the agent — usually with a stronger model as an override — on the dataset's items that have **no** expected answer, and keeps each output as that item's answer, marked `needs_review` until a person confirms (`POST …/items/{item_id}/confirm`) or corrects it (`PATCH` its `expected`).
+
+```bash
+curl -sS -X POST "${H[@]}" $E/evals/id-cards-read/suggest \
+  -d '{"overrides": {"models": {"reader": "anthropic/claude-sonnet-4-5"}}, "then_score": true}'
+# 202 {"experiment_id": "e_12", "purpose": "label", ...}
+```
+
+<ParamField body="version" type="string">The version that answers; default the live one.</ParamField>
+<ParamField body="overrides" type="object">A temporary config, as for an experiment.</ParamField>
+<ParamField body="then_score" type="boolean" default="false">Once the answers are in, start the eval's first experiment on the live version.</ParamField>
+
+It is a labelling run: an experiment with `purpose: "label"`, listed with `GET experiments?purpose=label` and never compared with scoring experiments. `409 nothing_to_suggest` when every item already has an answer.
+
+## Experiments
+
+| Route | What |
+|---|---|
+| `POST experiments` | Start one: `{eval, version, overrides?, repeats?}` → `202` |
+| `GET experiments` | List, newest first: `eval`, `purpose=score\|label` (default `score`), `limit` 1–100 (default 20), `before=e_N` |
+| `GET experiments/{e_N}` | One, with its results |
+| `GET experiments/{e_N}/items` | Its item × repeat rows, in dataset order: `limit` 1–500 (default 200), `offset` |
+| `POST experiments/{e_N}/cancel` | Cancel → `202` |
+| `POST experiments/{e_N}/save-expected` | Save outputs as expected answers: `{dataset}` → `200 {added}` |
+| `POST experiments/{e_N}/candidate` | Make a candidate version from the override (admin) → `201 {version}` |
+
+### Start an experiment
+
+<ParamField body="eval" type="string" required>The eval's name.</ParamField>
+<ParamField body="version" type="string" required>The agent's live, previous or a candidate version (`v3`).</ParamField>
+<ParamField body="overrides" type="object">
+  A temporary config: `{"models": {role: model}, "prompts": {name: text}, "params": {key: value}}`. It may only name keys the version's config has, and models must be on the Models page. No new version is made.
+</ParamField>
+<ParamField body="repeats" type="integer">Runs per item, 1–10; default the eval's.</ParamField>
+
+The dataset's latest published version is used, and every item must fit (else `422 items_do_not_fit` with the needs-fix list). Each item × repeat runs as an **experiment run** on that version: it gets the override merged into its config and the item's recorded holds (see [the agent contract](/agentos/build/agent-contract)), and doesn't appear in the dashboard, metrics, the runs list or webhooks. An experiment runs a few items at a time.
+
+### The experiment object
+
+```json
+{"experiment_id": "e_8", "purpose": "score", "eval": "id-cards-read", "dataset": "id-cards", "dataset_version": "v1",
+ "agent": "ocr-agent", "version": "v3", "version_status": "latest",
+ "overrides": {"models": {"reader": "bedrock-prod/qwen-vl-35b"}}, "repeats": 1, "status": "completed",
+ "created_by": "ayse@example.com", "created_at": "…", "started_at": "…", "finished_at": "…", "saved_to": "",
+ "results": {"items": 42, "done": 42,
+             "scores": {"fields.full_name": 0.95, "fields.id_number": 1.0, "judge.no_invention": 0.98},
+             "items_passed": 39, "asked": 0, "errors": 0, "cost_per_item": 0.0021, "tokens_per_item": 1830.5,
+             "p95_ms": 4210, "judge_tokens": 61200, "override_unused": false}}
+```
+
+<ResponseField name="status" type="string">`queued`, `running`, `completed`, `failed` or `cancelled`.</ResponseField>
+<ResponseField name="results.items" type="integer">Item × repeat rows.</ResponseField>
+<ResponseField name="results.done" type="integer">Rows scored so far.</ResponseField>
+<ResponseField name="results.scores" type="object">Pass rate per `"<evaluator>.<score>"`: passed ÷ (passed + failed) over the runs that produced it; `null` when none did.</ResponseField>
+<ResponseField name="results.items_passed" type="integer">Rows that passed every score.</ResponseField>
+<ResponseField name="results.asked" type="integer">Rows whose run asked a person (neither pass nor fail).</ResponseField>
+<ResponseField name="results.errors" type="integer">Rows whose run failed, was cancelled or couldn't start.</ResponseField>
+<ResponseField name="results.cost_per_item, tokens_per_item" type="number | null">Model calls of the item's runs, child runs included, per item run.</ResponseField>
+<ResponseField name="results.p95_ms" type="integer | null">95th percentile run duration.</ResponseField>
+<ResponseField name="results.judge_tokens" type="integer">Tokens the AI judges used.</ResponseField>
+<ResponseField name="results.override_unused" type="boolean">An overridden model that some completed item's runs never called — usually the agent doesn't read its model from `config.models`.</ResponseField>
+<ResponseField name="saved_to" type="string">The dataset draft its outputs were saved to, once they were.</ResponseField>
+
+### Item rows
+
+```bash
+curl -sS "${H[@]}" "$E/experiments/e_8/items?limit=50"
+```
+
+```json
+[{"item_id": "i_1", "repeat": 1, "run_id": "r_812", "outcome": "failed", "error": "", "tokens": 1790,
+  "duration_ms": 3900,
+  "scores": [{"evaluator": "fields", "name": "full_name", "passed": false, "value": null,
+              "reason": "expected 'AYŞE YILMAZ', got 'AYSE YILMAZ'"}]}]
+```
+
+`outcome` is `pending`, `passed` (every score passed), `failed` (a score failed), `asked` (the run asked for a person), `error` (the run failed, was cancelled or couldn't start; no scores) or `no_scores` (it completed but no evaluator gave a score). `error` says why a run couldn't start.
+
+### Cancel
+
+The experiment is `cancelled` at once; items not started become errors and its unfinished runs are cancelled. `409 experiment_finished` once it has ended.
+
+### Save outputs as expected
+
+Once the experiment has ended, each item's input (with its metadata and holds) and its first repeat's output, as `expected`, are added to a dataset's draft with `source: experiment`. Items whose run didn't complete are skipped. If an output doesn't fit the dataset's item schema, nothing is added. Use it to label a dataset with a strong model, then review the answers.
+
+```bash
+curl -sS -X POST "${H[@]}" $E/experiments/e_9/save-expected -d '{"dataset": "id-cards-labelled"}'
+# 200 {"added": 41}
+```
+
+### Make a candidate
+
+When an override wins, make it a version: the experiment's version with the override merged into its config, the same image, status `candidate` at once with no build. It is recorded as a deploy of kind `config`. Promote it with the [Deploys API](/agentos/api/deploys#promote-a-version). Admins only.
+
+```bash
+curl -sS -X POST "${H[@]}" $E/experiments/e_8/candidate
+# 201 {"version": "v4"}
+```
+
+## Errors
+
+| Status | Code | When |
+|---|---|---|
+| `404` | `not_found` | No such environment, dataset, item, dataset version, run, evaluator, eval, agent, version or experiment |
+| `409` | `name_taken` | A dataset, evaluator or eval of that name exists |
+| `409` | `not_finished` | Adding a run that didn't complete; saving outputs of an experiment still running |
+| `409` | `session_run` | Adding a run that belongs to a session |
+| `409` | `empty_draft` | Publishing a draft without active items, or an experiment on such a dataset |
+| `409` | `no_live_version` | A fit check without `version` for an agent with no live version |
+| `409` | `version_unavailable` | An experiment on a version that isn't the live, previous or a candidate one |
+| `409` | `nothing_to_suggest` | Suggesting answers when every item has one |
+| `409` | `experiment_finished` | Cancelling an experiment that has ended |
+| `409` | `no_override` | Making a candidate from an experiment without an override |
+| `409` | `deploy_busy` | Making a candidate while a deploy of the agent runs |
+| `403` | `forbidden` | No role in the environment; the collect rule or a candidate without the admin role |
+| `413` | `too_large` | An import over 10 MB |
+| `415` | `unsupported_media_type` | An import in another content type |
+| `422` | `invalid_request` | A wrong field (with `errors`): a name, an item schema, an item that doesn't fit, a JSONL line, overrides, repeats, a query parameter… |
+| `422` | `invalid_mapping` | A mapping that isn't `{input, expected}`, or whose `expected` isn't an `output.…` path |
+| `422` | `invalid_evaluator` | An unknown kind or a config it can't use (`errors` names each problem) |
+| `422` | `items_do_not_fit` | Starting an experiment while items don't fit; `items` is the needs-fix list |
+| `422` | `invalid_config` | The candidate's merged config doesn't validate |

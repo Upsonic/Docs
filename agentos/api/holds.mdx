@@ -1,0 +1,127 @@
+---
+title: "Holds API"
+sidebarTitle: "Holds"
+description: "List the approvals agents are waiting on and decide them from your own systems."
+---
+
+A **hold** is a question an agent asked a person mid-run: approve these payments, check these extracted fields, give feedback on this draft. The run is `held` until someone decides it, then the agent is called again with the decision. People decide holds in the panel's [Review queue](/agentos/platform/review-queue); this API lets your own tools do the same — a Slack bot, a back-office screen, an automated rule. For how an agent asks, see [Human approvals](/agentos/build/human-approvals).
+
+Reading holds needs any role in the environment. Deciding one needs a role the capability lists as `approvers` in [agentos.yaml](/agentos/build/agentos-yaml) (`[admin, member]` by default), for people and service accounts alike.
+
+## List holds
+
+`GET /v0/envs/{env}/holds`
+
+The environment's holds, newest first. Experiment runs' holds aren't listed.
+
+<CodeGroup>
+```bash Waiting for a decision
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" "$AGENTOS/v0/envs/default/holds?status=pending"
+```
+
+```bash Only the ones I may decide
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" "$AGENTOS/v0/envs/default/holds?decidable=true"
+```
+</CodeGroup>
+
+<ParamField query="status" type="string">`pending`, `resolved`, `expired` or `cancelled`.</ParamField>
+<ParamField query="decidable" type="boolean" default="false">
+  Only the holds waiting for a decision that you may decide — what your Review queue shows. Without it, every hold of the environment is listed, including ones your role can't decide.
+</ParamField>
+<ParamField query="limit" type="integer" default="20">1–100.</ParamField>
+<ParamField query="before" type="string">A `hold_id`: only older holds.</ParamField>
+
+## Get a hold
+
+`GET /v0/envs/{env}/holds/{hold_id}`
+
+The ask as the agent made it and, once decided, the decision.
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/holds/h_7
+```
+
+```json
+{"hold_id": "h_7", "run_id": "r_501", "agent": "invoice-agent", "capability": "pay_invoices", "version": "v3",
+ "status": "pending",
+ "intent": "Pay 2 invoices",
+ "actions": ["approve", "edit", "reject"],
+ "items": [
+   {"id": "INV-1", "title": "Aksa Lojistik · 18400.00",
+    "data": {"payee": "Aksa Lojistik", "amount": "18400.00"}, "confidence": {"amount": 0.68}},
+   {"id": "INV-2", "title": "Kuzey Ofis · 2150.00",
+    "data": {"payee": "Kuzey Ofis", "amount": "2150.00"}}],
+ "details": "Approve to pay as shown, **edit** the payee or amount first, or reject.",
+ "files": [{"file_id": "f_9", "name": "invoice-1.pdf", "content_type": "application/pdf", "size": 48213,
+            "sha256": "…", "created_at": "…"}],
+ "approvers": ["admin", "member"],
+ "expires_at": "2026-10-28T09:00:00Z", "created_at": "2026-10-27T09:00:00Z",
+ "resolved_at": null, "resolved_by": null, "decision": null}
+```
+
+### The hold object
+
+<ResponseField name="status" type="string">`pending` (waiting), `resolved` (decided), `expired`, or `cancelled` (its run was cancelled).</ResponseField>
+<ResponseField name="intent" type="string">One sentence: what the agent wants to do.</ResponseField>
+<ResponseField name="actions" type="array">The actions the reviewer may choose for each item: `approve`, `edit`, `reject`, `feedback`.</ResponseField>
+<ResponseField name="items" type="array">
+  What is decided, together: each `{id, title, data, confidence?}`. `confidence` maps a field of `data` to how sure the agent is (0–1).
+</ResponseField>
+<ResponseField name="details" type="string">Markdown for the reviewer.</ResponseField>
+<ResponseField name="files" type="array">Files to look at with the ask. Download them with the [Files API](/agentos/api/files#download-a-file).</ResponseField>
+<ResponseField name="approvers" type="array">The roles that may decide it.</ResponseField>
+<ResponseField name="expires_at" type="string | null">When it expires on its own; `null` for never. An expired hold resumes the agent with `resolved_by: "expired"` and no items.</ResponseField>
+<ResponseField name="resolved_by" type="string | null">`human` once decided, `expired` once expired.</ResponseField>
+<ResponseField name="decision" type="object | null">
+  Once decided: `{items, comment, reviewer, reviewer_kind, decided_at}`. `reviewer_kind` is `person` or `service_account`; `items` is what was decided per item.
+</ResponseField>
+
+## Decide a hold
+
+`POST /v0/envs/{env}/holds/{hold_id}/decision`
+
+Decide every item of the ask, each once, with an action the ask offered. The caller is the reviewer. The run is called again right after with the decision.
+
+```bash
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  $AGENTOS/v0/envs/default/holds/h_7/decision -d '{
+    "items": [
+      {"id": "INV-1", "action": "edit", "data": {"payee": "Aksa Lojistik A.Ş.", "amount": "18400.00"}},
+      {"id": "INV-2", "action": "reject", "comment": "paid last week"}],
+    "comment": "one of two"}'
+```
+
+```json
+200 {"hold_id": "h_7", "status": "resolved", "run_status": "running"}
+```
+
+<ParamField body="items" type="array" required>
+  One entry per item of the ask: `{id, action, data?, comment?}`.
+  - `action`: one the ask offered (`approve`, `edit`, `reject`, `feedback`).
+  - `data`: only with `edit`, and it is the item's **full** data with the asked item's keys, not a patch. An edit whose data equals the item as asked is stored as an approve.
+  - `comment`: optional per item; required with `feedback`.
+</ParamField>
+<ParamField body="comment" type="string">
+  A comment on the whole decision, at most 2,000 characters.
+</ParamField>
+
+A person who started the run may decide its hold too, if their role is an approver.
+
+### Errors
+
+| Status | Code | When |
+|---|---|---|
+| `400` | `unknown_item` | An `id` that isn't in the ask |
+| `400` | `missing_item` | An item of the ask wasn't decided |
+| `400` | `action_not_offered` | An action the ask didn't offer |
+| `400` | `edit_requires_data` | An `edit` without `data` |
+| `403` | `not_an_approver` | Your role isn't in the capability's `approvers` |
+| `404` | `not_found` | No such hold in this environment |
+| `409` | `already_decided` | Someone decided it already (the message names them), or it expired, or its run was cancelled or ended |
+| `409` | `run_not_held` | The agent hasn't finished suspending yet; try again in a moment |
+| `413` | `too_large` | The decision is over 1 MiB |
+| `422` | `invalid_request` | An edit's `data` isn't an object with the item's keys, `data` on another action, `feedback` without a `comment`, or a comment over 2,000 characters |
+
+<Tip>
+To be told when a hold is waiting instead of polling, subscribe a [webhook](/agentos/platform/webhooks) to `run.held`; `hold.decided` tells you when someone decided it.
+</Tip>

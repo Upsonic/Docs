@@ -1,0 +1,87 @@
+---
+title: "Users and API keys"
+description: "Tenants, environments and roles; adding people; service accounts and API keys for your own systems."
+---
+
+## Tenants and environments
+
+AgentOS is organised in three levels:
+
+- A **tenant** is your organisation. Everything you do happens inside it, and tenants never see each other.
+- A tenant holds **environments** (`default`, `staging`, `prod`…). Each environment has its own agents, models, guardrails, secrets, data and roles.
+- Every **user** and **service account** belongs to exactly one tenant. Someone who works for two tenants has two accounts.
+
+If you have a role in two or more environments, the tenant block at the bottom of the left rail becomes a menu: use **Switch environment** to move between them.
+
+## Roles
+
+A role is given **per environment**. Without one you have no access to that environment.
+
+| Role | Can |
+|---|---|
+| **Member** | Run agents, read runs, holds, memory and logs, decide holds the capability allows members to decide, work on evals, and see the configuration (guardrails, network rules, secret names, webhook endpoints). |
+| **Admin** | Everything a member can, plus deploy and roll back agents, manage providers and models, guardrails, network rules, secrets and webhooks, delete and erase memory, and read the [audit log](/agentos/platform/audit-log). |
+
+A **tenant admin** manages the tenant's users, service accounts and API keys, and creates environments. Being tenant admin opens no environment by itself: a tenant admin also needs a role in each environment they work in. Whoever creates an environment becomes its admin.
+
+## Manage people
+
+Tenant admins open **Users** from the avatar menu (top right). The page shows the tenant's users and service accounts.
+
+<Steps>
+  <Step title="Add a user">
+    Click **Add user**, enter their **Email** and a **Temporary password**. The password isn't sent anywhere: give it to the person yourself.
+  </Step>
+  <Step title="Give roles">
+    Set their **Role in** each environment (**No access**, **Member** or **Admin**), and whether they are a **Tenant admin**. Click **Save roles** to change them later.
+  </Step>
+  <Step title="They change their password">
+    After signing in with the temporary password, they choose their own under **avatar menu → Change password**.
+  </Step>
+</Steps>
+
+From a user's page a tenant admin can also:
+
+- **Reset password**: set a new temporary password. This signs the person out everywhere.
+- **Deactivate**: they can't sign in until reactivated, and their sessions end. Their roles are kept. **Reactivate** lets them sign in again with their current password.
+
+There is no delete: users are deactivated instead.
+
+### New environments
+
+Tenant admins create environments from **Users → New environment**. You become the new environment's admin; give others roles on their user pages.
+
+## Service accounts and API keys
+
+Scripts, CI pipelines, schedulers and your own backends use a **service account**: an account with roles and API keys, which can't sign in to the panel.
+
+<Steps>
+  <Step title="Add a service account">
+    On **Users**, click **Add service account**. Give it a **Name** (lowercase letters, digits and hyphens, such as `github-ci`) and a **Description** of what uses it.
+  </Step>
+  <Step title="Give it roles">
+    Give it a role in each environment it calls: **Member** to run agents and decide holds, **Admin** to also deploy.
+  </Step>
+  <Step title="Create a key">
+    Click **Create key**. The key (`aos_…`) is shown **once**: copy it now. If nobody copied it, revoke it and create another.
+  </Step>
+</Steps>
+
+Send the key as a bearer token on any `/v0` request:
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/agents/hello-agent
+```
+
+No CSRF token or cookie is needed with a key. See the [API overview](/agentos/api/overview).
+
+The service account's page lists its keys with when each was created and last used.
+
+- **Revoke** a key: requests that send it are refused at once. A revoked key can't be brought back; whoever used it needs a new one.
+- **Deactivate** the service account: all its keys stop working until it is reactivated. Its roles and keys are kept, and keys that weren't revoked work again after **Reactivate**.
+
+<Warning>
+Never put an API key in a browser or a mobile app. Call AgentOS from your backend, and let the backend pass results (or a [passthrough stream](/agentos/api/runs)) to the browser.
+</Warning>
+
+Signing in, failed sign-ins, user and role changes, and key creation and revocation are all recorded in the [audit log](/agentos/platform/audit-log).

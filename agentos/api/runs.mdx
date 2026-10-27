@@ -1,0 +1,233 @@
+---
+title: "Runs API"
+sidebarTitle: "Runs"
+description: "Start runs of an agent's capabilities, wait for them, stream them, follow their events and cancel them."
+---
+
+A **run** is one call of one capability of an agent. You start it with an input that must match the capability's input schema; AgentOS calls the agent's live version and records the output or error, every model call with its tokens and cost, and every event along the way. Starting and cancelling runs needs the **member** or **admin** role; reading them needs any role.
+
+## Start a run
+
+`POST /v0/envs/{env}/agents/{agent}/capabilities/{capability}/runs`
+
+A run can be started three ways: answer at once and follow it, wait for the result, or stream the agent's own response.
+
+<CodeGroup>
+```bash Wait for the result
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/llm-agent/capabilities/ask/runs?wait=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -H "Idempotency-Key: $(uuidgen)" -d '{"input": {"question": "What is AgentOS?"}}'
+# 200 {"run_id": "r_12", "status": "completed", "output": {...}, "error": null, "usage": {...}, ...}
+```
+
+```bash Answer at once
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/llm-agent/capabilities/ask/runs" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"question": "What is AgentOS?"}}'
+# 202 {"run_id": "r_13", "status": "queued"}
+```
+
+```bash Stream the agent's response
+curl -sS -N -D - -X POST "$AGENTOS/v0/envs/default/agents/stream-agent/capabilities/chat/runs?passthrough=true" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"message": "What is AgentOS?"}}'
+# the agent's own status, Content-Type and body, as it arrives, plus X-AgentOS-Run-Id
+```
+</CodeGroup>
+
+### Body
+
+<ParamField body="input" type="any" required>
+  The capability's input. It must match the capability's input schema, or the request is a `422` listing the problems (at most 50) and no run is created. At most 1 MiB.
+</ParamField>
+<ParamField body="session_id" type="string">
+  A session you created with [Create a session](/agentos/api/sessions#create-a-session): this run is its next turn.
+</ParamField>
+<ParamField body="metadata" type="object">
+  Your own tags, returned with the run and in [webhooks](/agentos/platform/webhooks). An object of at most 16 KiB.
+</ParamField>
+
+### Query
+
+<ParamField query="wait" type="boolean" default="false">
+  Wait for the run to end or to be held for a person, for the capability's timeout plus 5 seconds and at most 5 minutes, then answer `200` with the run, whatever its status is by then (`completed`, `failed`, `held`, or still `queued` / `running`). It never hangs.
+</ParamField>
+<ParamField query="passthrough" type="boolean" default="false">
+  Answer with exactly what the agent returns, as it arrives. Not together with `wait`. See [Passthrough](#passthrough).
+</ParamField>
+
+Without either, the answer is `202 {"run_id", "status": "queued"}`. Follow the run with [Follow a run](#follow-a-run) or poll [Get a run](#get-a-run).
+
+Runs always use the agent's **live** version. Your installation limits how many runs execute at once; extra runs stay `queued` until one ends.
+
+### Idempotency
+
+Send an `Idempotency-Key` header (up to 200 characters) to make a retry safe: the same key from the same caller with the same body returns the run it started the first time instead of starting another. The same key with a different agent, capability, `input`, `metadata` or `session_id` is a `409 idempotency_key_reused`.
+
+```bash
+curl -sS -X POST "$AGENTOS/v0/envs/default/agents/invoice-agent/capabilities/pay/runs" \
+  -H "Authorization: Bearer $AGENTOS_API_KEY" -H "Content-Type: application/json" \
+  -H "Idempotency-Key: order-8812-pay" -d '{"input": {"order": "8812"}}'
+```
+
+### Passthrough
+
+With `?passthrough=true` the answer is the agent's own response, relayed as it is written: its status code, its `Content-Type` and its body byte for byte. That makes it easy to put a chat UI in front of an agent: your backend starts the run with its API key and hands the response to the browser unchanged, and the browser reads the agent's own stream format — for example the Vercel AI SDK's `useChat` reading a UI message stream — with no mapping. See [Streaming](/agentos/build/streaming) for the agent side.
+
+<Warning>
+Never put an API key in a browser. Call this from your backend and relay the response.
+</Warning>
+
+- The response carries the agent's `Content-Type`, `Cache-Control`, `Content-Language`, `Content-Disposition`, `X-Accel-Buffering` and `X-Vercel-AI-*` headers (no others), plus `X-AgentOS-Run-Id` with the run's id and `Content-Security-Policy: sandbox`, so an agent's HTML can't run as a page of the platform.
+- It is a normal run otherwise: the same authentication, input validation, idempotency, events and holds.
+- A response that broke off, or passed 10 MiB, ends without its last chunk, so your HTTP client reports an error; GET the run to learn how it ended. A cancelled run's stream is cut the same way within about a second.
+- Closing the connection doesn't stop the run. [Cancel it](#cancel-a-run) if you want it stopped.
+- A run held for a person mid-answer ends its stream as the agent ends it; the output after the decision is read with [Get a run](#get-a-run).
+- When there is nothing to relay — the agent was never reached, the run was cancelled before it answered, or an `Idempotency-Key` names a run started without passthrough — the answer is the run, as `?wait=true` gives it.
+- The relayed bytes are kept for 10 minutes after the agent's last write, so replaying the same `Idempotency-Key` within that time streams the response again.
+- An agent status code HTTP can't carry (outside 100–599) is a `502 agent_bad_status`; the run goes on.
+- Output [guardrails](/agentos/platform/guardrails) check the run's output when it completes, which is after the bytes were relayed: what was already streamed can't be recalled.
+
+### Errors
+
+| Status | Code | When |
+|---|---|---|
+| `403` | `forbidden` | No member or admin role in the environment |
+| `404` | `not_found` | No such agent or capability |
+| `409` | `no_live_version` | The agent has no live version yet |
+| `409` | `session_busy` | Another turn of the session is queued or running |
+| `409` | `idempotency_key_reused` | The key was used with a different request |
+| `413` | `too_large` | `input` is over 1 MiB |
+| `422` | `invalid_request` | The body isn't JSON, `input` doesn't match the input schema, `metadata` isn't an object of at most 16 KiB, `session_id` isn't a session you can use, or both `wait` and `passthrough` are set |
+| `422` | `blocked_by_guardrail` | A guardrail blocked the input or metadata; no run is made (see below) |
+| `502` | `agent_bad_status` | Passthrough only: the agent answered a status HTTP can't carry |
+
+A guardrail block names the guardrail, the checkpoint and the hit id, so you can find it on the Guardrails page:
+
+```json
+{"code": "blocked_by_guardrail", "message": "No national IDs to agents.",
+ "guardrail": {"guardrail": "no-tckn", "at": "run_input", "hit": "gh_01M4VJ3C14H3DNEKQE4PFDWYPJ"}}
+```
+
+A masking guardrail doesn't refuse the run; it stores the input masked.
+
+## Get a run
+
+`GET /v0/envs/{env}/runs/{run_id}`
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_13
+```
+
+```json
+{"run_id": "r_13", "agent": "llm-agent", "capability": "ask", "version": "v3", "status": "completed",
+ "session_id": null, "user": null, "parent_run_id": null,
+ "input": {"question": "What is AgentOS?"}, "output": {"answer": "…"}, "error": null,
+ "metadata": {}, "created_at": "2026-10-27T09:00:00.120Z", "started_at": "2026-10-27T09:00:00.310Z",
+ "finished_at": "2026-10-27T09:00:03.904Z", "hold": null,
+ "usage": {"llm_calls": 1, "input_tokens": 412, "output_tokens": 188, "cost": 0.00405}}
+```
+
+### The run object
+
+<ResponseField name="run_id" type="string">`r_` followed by a number.</ResponseField>
+<ResponseField name="agent" type="string">The agent's name.</ResponseField>
+<ResponseField name="capability" type="string">The capability that ran.</ResponseField>
+<ResponseField name="version" type="string">The version it ran on (`v3`). A run stays on the version it started on, even across a deploy.</ResponseField>
+<ResponseField name="status" type="string">
+  `queued`, `running`, `held` (waiting for a person), `completed`, `failed` or `cancelled`.
+</ResponseField>
+<ResponseField name="session_id" type="string | null">The session it is a turn of.</ResponseField>
+<ResponseField name="user" type="string | null">The end user it is for: its session's, or for a child run its parent's. See [Sessions](/agentos/api/sessions).</ResponseField>
+<ResponseField name="parent_run_id" type="string | null">For a [child run](/agentos/build/child-runs), the run that started it.</ResponseField>
+<ResponseField name="input" type="any">The input, masked if a guardrail masked it.</ResponseField>
+<ResponseField name="output" type="any">
+  The output once `completed`. A run that failed with `invalid_output` keeps the output the agent sent; a run whose output a guardrail blocked has `output: null`.
+</ResponseField>
+<ResponseField name="error" type="object | null">`{code, message}` once `failed` or `cancelled`. See [Error codes](#error-codes).</ResponseField>
+<ResponseField name="metadata" type="object">Yours, as sent.</ResponseField>
+<ResponseField name="created_at, started_at, finished_at" type="string">ISO 8601 times, UTC.</ResponseField>
+<ResponseField name="hold" type="object | null">While `held`: `{hold_id, intent, expires_at}`, the hold it waits on. Decide it with the [Holds API](/agentos/api/holds).</ResponseField>
+<ResponseField name="usage" type="object">`{llm_calls, input_tokens, output_tokens, cost}` of the run's model calls; `cost` in USD.</ResponseField>
+
+### Error codes
+
+A failed run's `error.code` is either the agent's own code (see [the agent contract](/agentos/build/agent-contract)) or one of these:
+
+| Code | Meaning |
+|---|---|
+| `agent_interrupted` | The agent got the request but didn't answer: a timeout, a crash, or a non-2xx status. Nothing is retried once the agent has the request; start a new run. |
+| `agent_unreachable` | The agent couldn't be reached. |
+| `version_unavailable` | The version the run belongs to can't run anymore. |
+| `invalid_output` | The output doesn't match the capability's output schema. The run keeps the output. |
+| `invalid_response` | The agent's answer doesn't follow the contract. |
+| `blocked_by_guardrail` | A guardrail blocked the output, or the agent reported a blocked model call. |
+| `too_many_resumes` | A run has at most 100 invocations: its start and one resume per decision. |
+| `asked_for_human` | An experiment run asked a person (see [Evals](/agentos/platform/evals)). |
+| `not_started` | The run stayed queued too long without being picked up; start a new run. |
+| `internal_error` | Something went wrong on the platform. |
+
+## List runs
+
+`GET /v0/envs/{env}/agents/{agent}/runs`
+
+The agent's runs, newest first. Experiment runs aren't listed (get them by id).
+
+```bash
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" \
+  "$AGENTOS/v0/envs/default/agents/llm-agent/runs?status=failed&limit=50"
+curl -sS -H "Authorization: Bearer $AGENTOS_API_KEY" \
+  "$AGENTOS/v0/envs/default/agents/support-agent/runs?user=cust-123"
+```
+
+<ParamField query="limit" type="integer" default="20">1–100.</ParamField>
+<ParamField query="before" type="string">A `run_id`: only older runs.</ParamField>
+<ParamField query="status" type="string">`queued`, `running`, `held`, `completed`, `failed` or `cancelled`.</ParamField>
+<ParamField query="user" type="string">Only the runs of this end user.</ParamField>
+
+Any other query parameter is a `422`.
+
+## Follow a run
+
+`GET /v0/envs/{env}/runs/{run_id}/events`
+
+The run's timeline as [server-sent events](/agentos/api/overview#server-sent-events). The stream ends after the final event; reconnect with `Last-Event-ID` to resume, `204` once you have seen the end.
+
+```bash
+curl -sS -N -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_13/events
+```
+
+| Event | When |
+|---|---|
+| `run.queued` | The run was created. |
+| `run.started` | The agent was called. |
+| `llm.call` | A model call through the gateway, with its model, tokens, cost and latency. |
+| `tool.call` | A tool the model asked for (`{name, id, input}`). |
+| `tool.result` | A tool's result sent back to the model (`{id, output}`). |
+| `agent.<name>` | An event the agent posted itself (see [Files and events](/agentos/build/files-and-events)). |
+| `guardrail.blocked`, `guardrail.masked`, `guardrail.flagged` | A guardrail's verdict. |
+| `run.held` | The agent asked a person: `{hold_id}`. |
+| `hold.decided` | Someone decided the hold: `{hold_id, by, reviewer_kind, items}`. |
+| `run.resumed` | The agent was called again with the decision: `{hold_id, resolved_by, invocation}`. |
+| `run.completed`, `run.failed`, `run.cancelled` | The end; the stream closes after it. |
+
+Model call reports (`llm.call`, `tool.call`, `tool.result`) can land just after the run ended. GET the run for its final `usage`.
+
+## Cancel a run
+
+`POST /v0/envs/{env}/runs/{run_id}/cancel`
+
+Cancel a queued, running or held run. It is `cancelled` at once: the agent's run token stops working, its open hold is cancelled, and whatever the agent still answers is dropped. The cancel reaches the run's unfinished [child runs](/agentos/build/child-runs) at every depth too; each one's `run.cancelled` event says `because: "parent r_N was cancelled"`. A run that completes or fails normally leaves its children running.
+
+```bash
+curl -sS -X POST -H "Authorization: Bearer $AGENTOS_API_KEY" $AGENTOS/v0/envs/default/runs/r_13/cancel
+# 200 {the run, "status": "cancelled", ...}
+```
+
+The answer is the run. `run.cancelled` records who cancelled it (`{by}`: a user, a service account, or `system`).
+
+| Status | Code | When |
+|---|---|---|
+| `403` | `forbidden` | No member or admin role in the environment |
+| `404` | `not_found` | No such run |
+| `409` | `run_finished` | The run has already ended |

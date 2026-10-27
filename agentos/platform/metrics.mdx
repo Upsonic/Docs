@@ -1,0 +1,53 @@
+---
+title: "Metrics"
+description: "Executions, outcomes, tokens, cost and latency across the environment and per agent."
+---
+
+AgentOS counts everything that passes through it, so there is nothing to instrument in your agent. Every run, hold and model call made through the gateway is counted.
+
+## Dashboard
+
+The **Dashboard** is the environment's front page: executions, tokens, cost and outcomes across every agent, and a card per live agent (the denser its flow line, the busier the agent).
+
+Pick a range in the top right:
+
+| Range | Covers | Each bar is |
+|---|---|---|
+| **D** | the last 24 hours | an hour |
+| **M** | the last 30 days | a day |
+| **Y** | the last 12 months | a month |
+
+What it shows:
+
+- **Executions.** Every run counts, and a child run counts as an execution of its own. The throughput chart stacks each bucket's failed runs (red) on top of the others (green), on the same scale.
+- **How executions ended.**
+  - **completed on their own**: finished without asking anyone,
+  - **went to a person**: asked a person at least once, whatever happened next,
+  - **failed or cancelled**.
+
+  A held run is not a failure: its agent asked a person to decide.
+- **Waiting for a person now**: the holds open at this moment. Decide them in the [Review queue](/agentos/platform/review-queue).
+- **Tokens** and **Cost** of the model calls. Costs come from the gateway's price table for each model.
+- Changes against the previous period of the same length.
+
+## An agent's Overview
+
+The agent's **Overview** tab shows the same numbers for one agent, with the same D / M / Y ranges:
+
+- **Executions** (and their rate per hour, day or month), **Tokens** (per run), **Cost**, and **Held for a person**, with how long the oldest one has been waiting.
+- **Executions and latency**: throughput, with p50 and p95 run duration. A run's duration includes the time it waited for a review. The latency line breaks where a bucket had no runs.
+- **How runs ended**, as on the Dashboard.
+- **What went wrong**: failed runs grouped by error code. Guardrail blocks are also grouped by their message.
+- **Recent runs**, **Versions**, and the **Declared configuration** and **Capabilities** of the selected version, from its `agentos.yaml`.
+
+## Models page usage
+
+The **Models** page shows each model's calls, tokens and cost over the last 30 days. A model that cost nothing is marked **on-prem**. See [Models and providers](/agentos/platform/models-and-providers).
+
+## How the numbers are counted
+
+- **Cost.** A model the price table doesn't know costs $0. A cost under a cent shows as `<$0.01`. "On-prem models cost $0" is shown only when every model called in the range cost nothing.
+- **Eval runs** are not counted anywhere on these pages, and an AI judge's tokens appear on its experiment, not on the Models page. See [Evals](/agentos/platform/evals).
+- **Times are UTC.**
+
+For one run's own tokens, cost and model calls, open the run: its `usage` and timeline list every call. See [Runs API](/agentos/api/runs).

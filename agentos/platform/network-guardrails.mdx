@@ -1,0 +1,90 @@
+---
+title: "Network guardrails"
+description: "Decide which hosts each agent may connect to, and see every host it tried."
+---
+
+By default an agent reaches **nothing** outside AgentOS. Its container has no route out; the one way out is the platform's **egress proxy**, which lets a connection through only when a rule allows it. The platform itself and its model gateway are always reachable, so calling models, keeping state or asking a person never needs a rule.
+
+Two sources of rules decide what an agent may reach:
+
+- **The developer** lists the hosts a version needs under `network.allow` in its `agentos.yaml`. See [Network access](/agentos/build/network-access).
+- **Admins** add allow and block rules on the agent's **Guardrails** tab, live for every version.
+
+## Each agent on its own network
+
+Every agent gets a private network of its own. Agents can't reach each other directly, by name or by address: one agent can only use another through a [run](/agentos/api/runs) or a [child run](/agentos/build/child-runs), so guardrails, approvals and the audit log always apply. Your agent's code doesn't need to know any of this.
+
+## The Guardrails tab
+
+Open an agent and choose **Guardrails**. Admins manage it; members can see it.
+
+### Network
+
+- **The mode**: **ENFORCE** or **LOG ONLY**, with a button to switch.
+- **FROM AGENTOS.YAML**: the live version's `network.allow` list. It changes only with a new version.
+- **SET HERE**: the admins' **ALLOW** and **BLOCK** rules, with who added each and when. **Add a rule** takes a rule in the syntax below; **Remove** deletes one. Changes apply to every version of the agent within about 3 seconds.
+
+### Where it connected
+
+One row per host and port the agent tried, with:
+
+- the latest verdict: **ALLOWED**, **BLOCKED** or **WOULD BLOCK** (log only),
+- why, and the address it resolved to,
+- how many connections and how many were stopped, when it was last seen, and the bytes moved.
+
+A blocked row has an **Allow** button that adds a rule for that host (with its port, unless it is 80 or 443). An allowed row has a **Block** button. This is the quickest way to open exactly what an agent needs: run it, look at what it was refused, and allow those hosts.
+
+<Note>
+HTTPS connections are end-to-end encrypted: the proxy sees the host and port, never a path, a header or the content.
+</Note>
+
+The tab also lists the environment's [content guardrails](/agentos/platform/guardrails) that cover this agent, and **Recent changes**: every rule added or removed and every mode switch, with who did it.
+
+## Enforce and log only
+
+| Mode | Connections no rule allows |
+|---|---|
+| **Enforce** | Blocked. The agent gets `403` with a sentence naming the host, why, and where to allow it. |
+| **Log only** | Let through and recorded as **WOULD BLOCK**. |
+
+**New agents start in enforce.** Unlike content guardrails, a log-only default would give every new agent the whole internet until someone looked. Switch an agent to log only for a while to learn what it needs, allow those hosts, and switch back.
+
+Log only never opens the addresses that are never reachable (below).
+
+## How a connection is decided
+
+For every connection, the proxy works out which agent and version is calling, resolves the host, and decides:
+
+1. **Never reachable**, whatever the rules or mode: loopback and link-local addresses (including cloud metadata at `169.254.169.254`), the machine AgentOS runs on, and the platform's own internal networks and services, other agents included.
+2. An admin's **block** rule beats every allow.
+3. An **allow** rule from the Guardrails tab or from the version's `network.allow` lets it through.
+4. Everything else is **blocked** (or WOULD BLOCK in log only).
+
+A host name that resolves to a private address (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `100.64.0.0/10`, `fc00::/7`) needs an IP or network rule: allowing the name is not enough, because a public name pointing inside your network is how server-side request forgery works. The proxy then connects to the exact address it checked, so a name can't resolve to something else the second time.
+
+## Rule syntax
+
+| Rule | Covers |
+|---|---|
+| `api.example.com` | That host on ports 80 and 443 |
+| `*.example.com` | Any subdomain, not `example.com` itself |
+| `api.example.com:8443` | That host on another port |
+| `api.example.com:*` | That host on any port |
+| `10.20.0.5:5432` | An address and port |
+| `10.20.0.0/16:5432` | A network and port |
+| `[2001:db8::1]:443`, `2001:db8::/32` | IPv6 addresses and networks |
+| `*` | Any public host, on ports 80 and 443 |
+| `*:*` | Any public host, on any port |
+
+`*` and `*:*` cover public hosts only: private ranges still need their own network rule.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Network access" icon="globe" href="/agentos/build/network-access">
+    Declare the hosts your agent needs, and how HTTP clients pick up the proxy.
+  </Card>
+  <Card title="Guardrails" icon="shield" href="/agentos/platform/guardrails">
+    Check the content that runs and models send and receive.
+  </Card>
+</CardGroup>

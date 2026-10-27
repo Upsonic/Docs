@@ -1,0 +1,72 @@
+---
+title: "Review queue"
+description: "Decide what agents asked a person: approve, edit, reject or send feedback."
+---
+
+When an agent needs a person, it asks with a **hold**: what it wants to do, the items to decide (invoices to pay, fields it read from a document, emails to send…), and the actions you may take. The run waits until someone decides. The **Review queue** is where those holds land. To ask from your agent's code, see [Ask a person](/agentos/build/human-approvals).
+
+## Who sees what
+
+The Review queue lists only the holds **you may decide**: holds of capabilities whose `approvers` include your role in the environment. By default both admins and members may decide; a capability can restrict that to admins in [agentos.yaml](/agentos/build/agentos-yaml):
+
+```yaml agentos.yaml
+capabilities:
+  pay_invoices:
+    approvers: [admin]
+```
+
+The rail shows how many holds are waiting for you. Service accounts can decide too, through the [Holds API](/agentos/api/holds).
+
+## The queue
+
+Holds are listed oldest first, each with the agent, its intent and how long it has been waiting. A row's waiting time turns amber when the hold has **low confidence** (an item reported a confidence under 0.8 for some field) or **expires within the hour**. The **Low confidence** filter shows only the first kind.
+
+Select a hold to see:
+
+- **What the agent wants to do**: its intent, in one sentence, and its details (formatted text from the agent).
+- **The items**: each with its fields. Fields the agent wasn't sure about are highlighted.
+- **Files**: documents the agent attached, with **Download** (images and PDFs also open in the browser).
+- **Your decision**: the buttons the agent offered.
+
+## Decide
+
+The agent chooses which actions to offer. Up to four exist:
+
+| Action | What it does |
+|---|---|
+| **Approve** | Go ahead with the item as shown. |
+| **Edit** | Change the item's fields, then approve it. You don't press an edit button: changing a field makes that item an edit (**EDITED**), and **revert** undoes your change. |
+| **Reject** | Don't do it. |
+| **Feedback** | **Inject feedback & rerun**: send the agent a comment to act on. A comment is required. |
+
+With one item, the buttons decide it. With several items, each item has its own **approve / reject** toggle, and the main button sends every item as you set it (it names what it will send, such as `Submit · 1 approved · 1 rejected`, or **Approve all** when nothing was changed). **Reject all** and feedback decide every item at once.
+
+Use the comment box to explain your decision. It is copied onto every item you edited, rejected or sent feedback on, so the agent can read why.
+
+<Tip>
+Keyboard: **A** presses the main button and **R** rejects. With several items, the first press asks you to press the key again, so a stray key never decides a whole batch.
+</Tip>
+
+## What happens next
+
+As soon as you decide, the same run continues: AgentOS invokes the agent again, on the version the run started on, with your decision (each item's action, its data as you left it, and the comments). The agent then completes, fails, or asks again.
+
+- A hold can be decided **once**. If someone else decided it first, you are told who.
+- If the agent set an **expiry** and nobody decides in time, the hold expires and the agent continues with no decision.
+- If the run is cancelled, its open hold is cancelled with it.
+
+Every hold and its decision (who decided, when, and each item as decided) are kept on the run's page and in the [audit log](/agentos/platform/audit-log). They can also become test cases: a run page's **Add to dataset** copies its holds and decisions into an [eval dataset](/agentos/platform/evals), and a dataset's collect rule can do it automatically for runs a person decided.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Ask a person" icon="user-check" href="/agentos/build/human-approvals">
+    Create holds from your agent's code and continue on the decision.
+  </Card>
+  <Card title="Holds API" icon="terminal" href="/agentos/api/holds">
+    List holds and decide them from your own systems.
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/agentos/platform/webhooks">
+    Get `run.held` and `hold.decided` events in your systems.
+  </Card>
+</CardGroup>
